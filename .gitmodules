@@ -1,0 +1,3 @@
+[submodule "libs/cctest"]
+	path = libs/cctest
+	url = https://github.com/jpcx/cctest.git
