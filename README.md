@@ -1,4 +1,4 @@
-# pputl 0.1.2 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.1.2/CHANGELOG.md)
+# pputl 0.1.3 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.1.3/CHANGELOG.md)
 
 ```
                         __    ___
@@ -67,7 +67,7 @@ Output is sent to stdout.
 
 ```shell
 # node genReduceMacro [NAMESPACE] [PREFIX=REDUCE] [STACK_DEPTH=256] [DETAIL=true]
-node tools/genReduceMacro NS REDUCE 4 false # true makes entry macro name `NS_DETAIL_REDUCE`
+node tools/genReduceMacro NS REDUCE 4 false # true makes entry macro name NS_DETAIL_REDUCE
 ```
 ```
 #define NS_REDUCE(reducer, initial, ...) \
