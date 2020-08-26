@@ -1,4 +1,4 @@
-# pputl 0.1.0 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.1.0/CHANGELOG.md)
+# pputl 0.1.1 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.1.1/CHANGELOG.md)
 
 ```
                         __    ___
@@ -68,8 +68,8 @@ Output is sent to stdout.
 ```shell
 # node genReduceMacro [NAMESPACE] [PREFIX=REDUCE] [STACK_DEPTH=256] [DETAIL=true]
 node tools/genReduceMacro NS REDUCE 4 false # true makes entry macro name `NS_DETAIL_REDUCE`
-
-: '
+```
+```
 #define NS_REDUCE(reducer, initial, ...) \
   NS_DETAIL_REDUCE_CHOOSER(__VA_ARGS__)  \
   (reducer, initial, (0, 1, 2, 3)__VA_OPT__(, ) __VA_ARGS__)
@@ -90,7 +90,6 @@ node tools/genReduceMacro NS REDUCE 4 false # true makes entry macro name `NS_DE
 #
 #define NS_DETAIL_REDUCE_CHOOSER(...) \
   NS_DETAIL_REDUCE_CHOICE(__VA_ARGS__ __VA_OPT__(, ) 3, 2, 1, 0)
-'
 ```
 
 The reducing control flow is capable of perfoming any kind of operation,  
