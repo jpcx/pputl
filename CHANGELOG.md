@@ -1,6 +1,12 @@
 # Changelog
 
-## [Upcoming](https://github.com/jpcx/pputl/compare/0.1.3...devel)
+## [Upcoming](https://github.com/jpcx/pputl/compare/0.1.4...devel)
+
+## [0.1.4](https://github.com/jpcx/pputl/releases/tag/0.1.4)
+
+### Fixed
+
+- fixed documentation link in README
 
 ## [0.1.3](https://github.com/jpcx/pputl/releases/tag/0.1.3)
 
