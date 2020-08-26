@@ -1,6 +1,12 @@
 # Changelog
 
-## [Upcoming](https://github.com/jpcx/pputl/compare/0.1.2...devel)
+## [Upcoming](https://github.com/jpcx/pputl/compare/0.1.3...devel)
+
+## [0.1.3](https://github.com/jpcx/pputl/releases/tag/0.1.3)
+
+### Fixed
+
+- fixed doxygen HTML parse issue due to backtick
 
 ## [0.1.2](https://github.com/jpcx/pputl/releases/tag/0.1.2)
 
