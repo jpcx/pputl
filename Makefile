@@ -12,5 +12,6 @@ clean:
 		! -path '*master*' \
 		! -path '.'        \
 		-delete
+	rm gen*.html
 
 .PHONY: all docs clean

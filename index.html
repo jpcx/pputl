@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.18"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>pputl 0.1.0</title>
+<title>pputl 0.1.2</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -27,7 +27,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname"><a href="index.html" style="text-decoration: none">pputl</a>
-   &#160;<span id="projectnumber">0.1.0</span>
+   &#160;<span id="projectnumber">0.1.2</span>
    </div>
    <div id="projectbrief">pputl Preprocessor Utilities</div>
   </td>
@@ -74,7 +74,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">pputl 0.1.0 | <a href="https://github.com/jpcx/pputl"><em>Repo</em></a> | <a href="http://jpcx.github.io/pputl/group__pputl.html"><em>API Docs</em></a> | <a href="https://github.com/jpcx/pputl/blob/0.1.0/CHANGELOG.md"><em>CHANGELOG</em></a> </div>  </div>
+<div class="title">pputl 0.1.2 | <a href="https://github.com/jpcx/pputl"><em>Repo</em></a> | <a href="http://jpcx.github.io/pputl/group__pputl.html"><em>API Docs</em></a> | <a href="https://github.com/jpcx/pputl/blob/0.1.2/CHANGELOG.md"><em>CHANGELOG</em></a> </div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_master_pputl_README"></a> </p><div class="fragment"><div class="line">                        __    ___</div>
@@ -124,8 +124,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
  it's necessary to generate a new set of macros if <code>REDUCE</code> call chaining is desired.</p>
 <p>Output is sent to stdout.</p>
 <p>```shell </p><h1>node genReduceMacro [NAMESPACE] [PREFIX=REDUCE] [STACK_DEPTH=256] [DETAIL=true]</h1>
-<p>node tools/genReduceMacro NS REDUCE 4 false # true makes entry macro name <code>NS_DETAIL_REDUCE</code></p>
-<p>: ' #define NS_REDUCE(reducer, initial, ...) \ NS_DETAIL_REDUCE_CHOOSER(<b>VA_ARGS</b>) \ (reducer, initial, (0, 1, 2, 3)__VA_OPT__(, ) <b>VA_ARGS</b>) # #define NS_DETAIL_REDUCE_CAT_X(a, b) a##b #define NS_DETAIL_REDUCE_CAT(a, b) NS_DETAIL_REDUCE_CAT_X(a, b) # #define NS_DETAIL_REDUCE_FIRST(i, ...) i #define NS_DETAIL_REDUCE_REST(_, ...) <b>VA_ARGS</b> #/* */ // clang-format off #define NS_DETAIL_REDUCE_0(r, a, is) a #define NS_DETAIL_REDUCE_1(r, a, is, v) r(a, v, NS_DETAIL_REDUCE_FIRST is) #define NS_DETAIL_REDUCE_2(r, a, is, v, ...) NS_DETAIL_REDUCE_1(r, r(a, v, NS_DETAIL_REDUCE_FIRST is), (NS_DETAIL_REDUCE_REST is), <b>VA_ARGS</b>) #define NS_DETAIL_REDUCE_3(r, a, is, v, ...) NS_DETAIL_REDUCE_2(r, r(a, v, NS_DETAIL_REDUCE_FIRST is), (NS_DETAIL_REDUCE_REST is), <b>VA_ARGS</b>) #/* */ // clang-format on #define NS_DETAIL_REDUCE_CHOICE(&lt;em&gt;3, _2, _1, size, ...) \ NS_DETAIL_REDUCE_CAT(NS_DETAIL_REDUCE, size) # #define NS_DETAIL_REDUCE_CHOOSER(...) \ NS_DETAIL_REDUCE_CHOICE(<b>VA_ARGS</b> <b>VA_OPT</b>(, ) 3, 2, 1, 0) ' </p><div class="fragment"><div class="line">The reducing control flow is capable of perfoming any kind of operation,  </div>
+<p>node tools/genReduceMacro NS REDUCE 4 false # true makes entry macro name <code>NS_DETAIL_REDUCE</code> </p><div class="fragment"></div><!-- fragment --><p>#define NS_REDUCE(reducer, initial, ...) \ NS_DETAIL_REDUCE_CHOOSER(<b>VA_ARGS</b>) \ (reducer, initial, (0, 1, 2, 3)__VA_OPT__(, ) <b>VA_ARGS</b>) # #define NS_DETAIL_REDUCE_CAT_X(a, b) a##b #define NS_DETAIL_REDUCE_CAT(a, b) NS_DETAIL_REDUCE_CAT_X(a, b) # #define NS_DETAIL_REDUCE_FIRST(i, ...) i #define NS_DETAIL_REDUCE_REST(_, ...) <b>VA_ARGS</b> #/* */ // clang-format off #define NS_DETAIL_REDUCE_0(r, a, is) a #define NS_DETAIL_REDUCE_1(r, a, is, v) r(a, v, NS_DETAIL_REDUCE_FIRST is) #define NS_DETAIL_REDUCE_2(r, a, is, v, ...) NS_DETAIL_REDUCE_1(r, r(a, v, NS_DETAIL_REDUCE_FIRST is), (NS_DETAIL_REDUCE_REST is), <b>VA_ARGS</b>) #define NS_DETAIL_REDUCE_3(r, a, is, v, ...) NS_DETAIL_REDUCE_2(r, r(a, v, NS_DETAIL_REDUCE_FIRST is), (NS_DETAIL_REDUCE_REST is), <b>VA_ARGS</b>) #/* */ // clang-format on #define NS_DETAIL_REDUCE_CHOICE(&lt;em&gt;3, _2, _1, size, ...) \ NS_DETAIL_REDUCE_CAT(NS_DETAIL_REDUCE, size) # #define NS_DETAIL_REDUCE_CHOOSER(...) \ NS_DETAIL_REDUCE_CHOICE(<b>VA_ARGS</b> <b>VA_OPT</b>(, ) 3, 2, 1, 0) </p><div class="fragment"><div class="line">The reducing control flow is capable of perfoming any kind of operation,  </div>
 <div class="line">but other types (e.g. transform) may be useful. More generation scripts may be added here.</div>
 <div class="line"> </div>
 <div class="line">## Testing</div>
