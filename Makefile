@@ -4,6 +4,7 @@ docs: gen/build.js gen/Doxyfile
 	node $<
 
 clean:
+	rm -rf libs/cctest
 	find .               \
 		! -path './.git*'  \
 		! -path './gen*'   \
