@@ -17,7 +17,7 @@
 
 pputl is a C++ preprocessor utilities library. It provides basic preprocessor tools  
 such as concatenation of multiple symbols, control flow, integer manipulation, etc.  
-It utilizes a `reduce` mechanism for some of the logic; [see below](#tools) for more info.
+It utilizes a reduce mechanism for some of the logic; [see below](#tools) for more info.
 
 Currently, it uses `__VA_OPT__`, so a supportive compiler is required (or C++20).  
 Future releases may ship with a build script for generating the project without this requirement.
