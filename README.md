@@ -1,4 +1,4 @@
-# pputl 0.1.4 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.1.4/CHANGELOG.md)
+# pputl 0.2.0 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.2.0/CHANGELOG.md)
 
 ```
                         __    ___
@@ -58,7 +58,7 @@ static_assert(false);
 
 ## Tools <a id=tools />
 
-pputl comes with a `REDUCE` macro generator in the `tools/` folder.  
+pputl comes with a reduce macro generator in the `tools/` folder.  
 This script generates a set of macros that allow for pseudo-recursive value reduction.  
 Due to the inability for the preprocessor to recurse (without special, [slow!] expansion logic),  
 it's necessary to generate a new set of macros if `REDUCE` call chaining is desired.
