@@ -104,7 +104,7 @@ but other types (e.g. transform) may be useful. More generation scripts may be a
 All API features are statically tested with [jpcx/cctest](https://github.com/jpcx/cctest)
 
 ```shell
-make test
+make -j8 test
 ```
 
 ## Contributing
