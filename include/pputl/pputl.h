@@ -34,6 +34,7 @@
 #
 #include "pputl/add.h"
 #include "pputl/cat.h"
+#include "pputl/choose.h"
 #include "pputl/dec.h"
 #include "pputl/eat.h"
 #include "pputl/empty.h"
@@ -41,7 +42,6 @@
 #include "pputl/expand.h"
 #include "pputl/first.h"
 #include "pputl/gen.h"
-#include "pputl/repeatgen.h"
 #include "pputl/iif.h"
 #include "pputl/inc.h"
 #include "pputl/includes.h"
@@ -55,8 +55,6 @@
 #include "pputl/separate.h"
 #include "pputl/stringize.h"
 #include "pputl/sum.h"
-#include "pputl/switch.h"
 #include "pputl/tuple.h"
-#include "pputl/join.h"
 #
 #endif

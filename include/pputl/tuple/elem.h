@@ -31,13 +31,13 @@
 #//  along with this program.  If not, see <https://www.gnu.org/licenses/>. ////
 #///////////////////////////////////////////////////////////////////////////////
 #
-#include "pputl/switch.h"
+#include "pputl/choose.h"
 #
 #/// chooses tuple element at index idx [0, 256)
 #/// @ingroup tuple
 #/// @anchor  PPUTL_TUPLE_ELEM
 #/// @param idx - index [0, 256)
 #/// @param tup - tuple
-#define PPUTL_TUPLE_ELEM(idx, tup) PPUTL_SWITCH(idx) tup
+#define PPUTL_TUPLE_ELEM(idx, tup) PPUTL_CHOOSE(idx) tup
 #
 #endif

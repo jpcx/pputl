@@ -29,15 +29,15 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/switch.h>
+#include <pputl/choose.h>
 
 TEST(pputl.switch, "expands to arg at index idx [0, 256)") << [] {
-  STATIC_CHECK(PPUTL_SWITCH(0)(1) == 1);
-  STATIC_CHECK(PPUTL_SWITCH(0)(1, 2) == 1);
-  STATIC_CHECK(PPUTL_SWITCH(1)(1, 2) == 2);
-  STATIC_CHECK(PPUTL_SWITCH(1)(1, 2, 3) == 2);
+  STATIC_CHECK(PPUTL_CHOOSE(0)(1) == 1);
+  STATIC_CHECK(PPUTL_CHOOSE(0)(1, 2) == 1);
+  STATIC_CHECK(PPUTL_CHOOSE(1)(1, 2) == 2);
+  STATIC_CHECK(PPUTL_CHOOSE(1)(1, 2, 3) == 2);
   STATIC_CHECK(
-      PPUTL_SWITCH(0)(
+      PPUTL_CHOOSE(0)(
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
           21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
           38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
@@ -56,7 +56,7 @@ TEST(pputl.switch, "expands to arg at index idx [0, 256)") << [] {
           231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
           245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256) == 1);
   STATIC_CHECK(
-      PPUTL_SWITCH(127)(
+      PPUTL_CHOOSE(127)(
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
           21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
           38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
@@ -75,7 +75,7 @@ TEST(pputl.switch, "expands to arg at index idx [0, 256)") << [] {
           231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
           245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256) == 128);
   STATIC_CHECK(
-      PPUTL_SWITCH(255)(
+      PPUTL_CHOOSE(255)(
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
           21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
           38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,

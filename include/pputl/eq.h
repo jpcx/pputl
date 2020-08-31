@@ -31,8 +31,8 @@
 #//  along with this program.  If not, see <https://www.gnu.org/licenses/>. ////
 #///////////////////////////////////////////////////////////////////////////////
 #
+#include "pputl/choose.h"
 #include "pputl/gen/repeat.h"
-#include "pputl/switch.h"
 #
 #/// expands to 1 if two numbers a and b [0, 256) are equal, or 0 if not
 #/// @ingroup pputl
@@ -41,14 +41,14 @@
 #/// @param b number [0, 256)
 #define PPUTL_EQ(a, b) PPUTL_DETAIL_EQ_X(a, b)
 #
-#define PPUTL_DETAIL_EQ_X(a, b)                                                \
-  PPUTL_SWITCH(a)(PPUTL_DETAIL_EQ_BITS_CHOICE(b)(b))
-#define PPUTL_DETAIL_EQ_BITS_CHOICE(i)                                         \
-  PPUTL_SWITCH(i)                                                              \
+#define PPUTL_DETAIL_EQ_X(a, b) \
+  PPUTL_CHOOSE(a)(PPUTL_DETAIL_EQ_BITS_CHOICE(b)(b))
+#define PPUTL_DETAIL_EQ_BITS_CHOICE(i) \
+  PPUTL_CHOOSE(i)                      \
   (PPUTL_DETAIL_EQ_BITS_EQ0, PPUTL_GEN_REPEAT(255, PPUTL_DETAIL_EQ_BITS_GT0))
 #
 #define PPUTL_DETAIL_EQ_BITS_EQ0(i) 1, PPUTL_GEN_REPEAT(255, 0)
-#define PPUTL_DETAIL_EQ_BITS_GT0(i)                                            \
+#define PPUTL_DETAIL_EQ_BITS_GT0(i) \
   PPUTL_GEN_REPEAT(i, 0), 1, PPUTL_GEN_REPEAT(254, 0)
 #
 #endif

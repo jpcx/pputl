@@ -31,7 +31,7 @@
 #//  along with this program.  If not, see <https://www.gnu.org/licenses/>. ////
 #///////////////////////////////////////////////////////////////////////////////
 #
-#include <pputl/cat.h>
+#include "pputl/cat.h"
 #
 #/// return the first passed argument
 #///
