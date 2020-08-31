@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.18"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>pputl: master/pputl/pputl/add.h Source File</title>
+<title>pputl: master/pputl/include/pputl/add.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -27,7 +27,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname"><a href="index.html" style="text-decoration: none">pputl</a>
-   &#160;<span id="projectnumber">0.1.4</span>
+   &#160;<span id="projectnumber">0.2.0</span>
    </div>
    <div id="projectbrief">pputl Preprocessor Utilities</div>
   </td>
@@ -73,7 +73,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_c1346cf4828efdd0d2baf0d391d01b77.html">master</a></li><li class="navelem"><a class="el" href="dir_4e6f6abbc58dd21b061dac77ceeb9174.html">pputl</a></li><li class="navelem"><a class="el" href="dir_a3411b2190bbdd8141ce41b47ecbb76e.html">pputl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_c1346cf4828efdd0d2baf0d391d01b77.html">master</a></li><li class="navelem"><a class="el" href="dir_4e6f6abbc58dd21b061dac77ceeb9174.html">pputl</a></li><li class="navelem"><a class="el" href="dir_e812685a6275fb7b9593f397cb49bb4b.html">include</a></li><li class="navelem"><a class="el" href="dir_dc6fd9da1b69f997a7f895b7364dd98a.html">pputl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -114,7 +114,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#</span><span class="comment">//  along with this program.  If not, see &lt;https://www.gnu.org/licenses/&gt;. ////</span></div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#</span><span class="comment">///////////////////////////////////////////////////////////////////////////////</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">#</span></div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#</span><span class="preprocessor">include</span> <span class="preprocessor">&quot;pputl/genrepeat.h&quot;</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#</span><span class="preprocessor">include</span> <span class="preprocessor">&quot;pputl/gen/repeat.h&quot;</span></div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#</span><span class="preprocessor">include</span> <span class="preprocessor">&quot;pputl/inc.h&quot;</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#</span></div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#</span><span class="comment">/// add two numbers together [0, 256)</span></div>
@@ -124,7 +124,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor">#</span><span class="comment">/// @param b number [0, 256)</span></div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="preprocessor">#</span><span class="comment">/// @return a + b [0, 256)</span></div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="preprocessor">#</span><span class="preprocessor">define</span> <span class="preprocessor">PPUTL_ADD</span><span class="preprocessor">(</span><span class="preprocessor">a</span><span class="preprocessor">,</span> <span class="preprocessor">b</span><span class="preprocessor">)</span></div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;  <a class="code" href="add_8h.html#aa8819338e169a82fdc3cf119abe6d96d">PPUTL_DETAIL_ADD_REDUCE</a><span class="preprocessor">(</span><a class="code" href="add_8h.html#ae586a5ee94d3c89c755f60008c31afbc">PPUTL_DETAIL_ADD_REDUCER</a><span class="preprocessor">,</span> <span class="preprocessor">a</span><span class="preprocessor">,</span> <span class="preprocessor">PPUTL_GENREPEAT</span><span class="preprocessor">(</span><span class="preprocessor">b</span><span class="preprocessor">,</span> 0<span class="preprocessor">)</span><span class="preprocessor">)</span></div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;  <a class="code" href="add_8h.html#aa8819338e169a82fdc3cf119abe6d96d">PPUTL_DETAIL_ADD_REDUCE</a><span class="preprocessor">(</span><a class="code" href="add_8h.html#ae586a5ee94d3c89c755f60008c31afbc">PPUTL_DETAIL_ADD_REDUCER</a><span class="preprocessor">,</span> <span class="preprocessor">a</span><span class="preprocessor">,</span> <a class="code" href="group__gen.html#gac5eec1958e903666d9a6e45261b120b6">PPUTL_GEN_REPEAT</a><span class="preprocessor">(</span><span class="preprocessor">b</span><span class="preprocessor">,</span> 0<span class="preprocessor">)</span><span class="preprocessor">)</span></div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="preprocessor">#</span></div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="preprocessor">#</span><span class="preprocessor">define</span> <span class="preprocessor">PPUTL_DETAIL_ADD_REDUCER</span><span class="preprocessor">(</span><span class="preprocessor">a</span><span class="preprocessor">,</span> <span class="preprocessor">v</span><span class="preprocessor">,</span> <span class="preprocessor">i</span><span class="preprocessor">)</span> <span class="preprocessor">PPUTL_INC</span><span class="preprocessor">(</span><span class="preprocessor">a</span><span class="preprocessor">)</span></div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="preprocessor">#</span></div>
@@ -699,6 +699,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="aadd_8h_html_abb06928ed710cb23e4bd886f701814c0"><div class="ttname"><a href="add_8h.html#abb06928ed710cb23e4bd886f701814c0">PPUTL_DETAIL_ADD_REDUCE_CB</a></div><div class="ttdeci">#define PPUTL_DETAIL_ADD_REDUCE_CB(r, a, is, v,...)</div><div class="ttdef"><b>Definition:</b> add.h:278</div></div>
 <div class="ttc" id="aadd_8h_html_a11d328e4151cd850c68bc596b698ec28"><div class="ttname"><a href="add_8h.html#a11d328e4151cd850c68bc596b698ec28">PPUTL_DETAIL_ADD_REDUCE_4B</a></div><div class="ttdeci">#define PPUTL_DETAIL_ADD_REDUCE_4B(r, a, is, v,...)</div><div class="ttdef"><b>Definition:</b> add.h:150</div></div>
 <div class="ttc" id="aadd_8h_html_a2a90e3d4200cdf5e5de792f653d8924e"><div class="ttname"><a href="add_8h.html#a2a90e3d4200cdf5e5de792f653d8924e">PPUTL_DETAIL_ADD_REDUCE_DF</a></div><div class="ttdeci">#define PPUTL_DETAIL_ADD_REDUCE_DF(r, a, is, v,...)</div><div class="ttdef"><b>Definition:</b> add.h:298</div></div>
+<div class="ttc" id="agroup__gen_html_gac5eec1958e903666d9a6e45261b120b6"><div class="ttname"><a href="group__gen.html#gac5eec1958e903666d9a6e45261b120b6">PPUTL_GEN_REPEAT</a></div><div class="ttdeci">#define PPUTL_GEN_REPEAT(n,...)</div><div class="ttdef"><b>Definition:</b> repeat.h:43</div></div>
 <div class="ttc" id="aadd_8h_html_ab2bfc435c0a7a9679fb796ee43ebf7f5"><div class="ttname"><a href="add_8h.html#ab2bfc435c0a7a9679fb796ee43ebf7f5">PPUTL_DETAIL_ADD_REDUCE_3B</a></div><div class="ttdeci">#define PPUTL_DETAIL_ADD_REDUCE_3B(r, a, is, v,...)</div><div class="ttdef"><b>Definition:</b> add.h:134</div></div>
 <div class="ttc" id="aadd_8h_html_a7305c7aab8551f300c8f6bd30874b1dc"><div class="ttname"><a href="add_8h.html#a7305c7aab8551f300c8f6bd30874b1dc">PPUTL_DETAIL_ADD_REDUCE_7F</a></div><div class="ttdeci">#define PPUTL_DETAIL_ADD_REDUCE_7F(r, a, is, v,...)</div><div class="ttdef"><b>Definition:</b> add.h:202</div></div>
 <div class="ttc" id="aadd_8h_html_a0352f5b68076655af0a01c789e356f03"><div class="ttname"><a href="add_8h.html#a0352f5b68076655af0a01c789e356f03">PPUTL_DETAIL_ADD_REDUCE_32</a></div><div class="ttdeci">#define PPUTL_DETAIL_ADD_REDUCE_32(r, a, is, v,...)</div><div class="ttdef"><b>Definition:</b> add.h:125</div></div>

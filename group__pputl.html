@@ -27,7 +27,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname"><a href="index.html" style="text-decoration: none">pputl</a>
-   &#160;<span id="projectnumber">0.1.4</span>
+   &#160;<span id="projectnumber">0.2.0</span>
    </div>
    <div id="projectbrief">pputl Preprocessor Utilities</div>
   </td>
@@ -83,15 +83,21 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="groups"></a>
 Modules</h2></td></tr>
+<tr class="memitem:group__gen"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__gen.html">gen</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:group__join"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__join.html">join</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:group__tuple"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tuple.html">tuple</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ga8aff7f50065fd7cee58770f710742494"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga8aff7f50065fd7cee58770f710742494">PPUTL_ADD</a>(a,  b)&#160;&#160;&#160;PPUTL_DETAIL_ADD_REDUCE(PPUTL_DETAIL_ADD_REDUCER, a, <a class="el" href="group__pputl.html#ga4238247513db3876c0b787e6772c0b5d">PPUTL_GENREPEAT</a>(b, 0))</td></tr>
+<tr class="memitem:ga8aff7f50065fd7cee58770f710742494"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga8aff7f50065fd7cee58770f710742494">PPUTL_ADD</a>(a,  b)&#160;&#160;&#160;PPUTL_DETAIL_ADD_REDUCE(PPUTL_DETAIL_ADD_REDUCER, a, <a class="el" href="group__gen.html#gac5eec1958e903666d9a6e45261b120b6">PPUTL_GEN_REPEAT</a>(b, 0))</td></tr>
 <tr class="separator:ga8aff7f50065fd7cee58770f710742494"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0fb9f0f8e2b6f8b16150122052310fe6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(...)&#160;&#160;&#160;PPUTL_DETAIL_CAT_X(__VA_ARGS__)</td></tr>
 <tr class="separator:ga0fb9f0f8e2b6f8b16150122052310fe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabdfbf37030f826e51b3a5b366deeef31"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#gabdfbf37030f826e51b3a5b366deeef31">PPUTL_CHOOSE</a>(idx)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_CHOOSE_, idx)</td></tr>
+<tr class="separator:gabdfbf37030f826e51b3a5b366deeef31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3e831653f10cf691f51acae52636feef"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga3e831653f10cf691f51acae52636feef">PPUTL_DEC</a>(n)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_DEC_, n)</td></tr>
 <tr class="separator:ga3e831653f10cf691f51acae52636feef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8a4e7b2ce9f37c3074775a06baa3e3b4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga8a4e7b2ce9f37c3074775a06baa3e3b4">PPUTL_EAT</a>(...)</td></tr>
@@ -102,10 +108,8 @@ Macros</h2></td></tr>
 <tr class="separator:ga552a483e17e2089543b5152a1af58041"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gace1e4eb76f722f40486cd6fc49e9bd2c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#gace1e4eb76f722f40486cd6fc49e9bd2c">PPUTL_EXPAND</a>(...)&#160;&#160;&#160;PPUTL_DETAIL_EXPAND_X(__VA_ARGS__)</td></tr>
 <tr class="separator:gace1e4eb76f722f40486cd6fc49e9bd2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7db02e18cfa6cf877892eda8c3d6b90d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga7db02e18cfa6cf877892eda8c3d6b90d">PPUTL_GEN</a>(n,  gen, ...)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_GEN_, n)(gen, __VA_ARGS__)</td></tr>
-<tr class="separator:ga7db02e18cfa6cf877892eda8c3d6b90d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4238247513db3876c0b787e6772c0b5d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga4238247513db3876c0b787e6772c0b5d">PPUTL_GENREPEAT</a>(n, ...)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga7db02e18cfa6cf877892eda8c3d6b90d">PPUTL_GEN</a>(n, PPUTL_DETAIL_GENREPEAT_GEN, __VA_ARGS__)</td></tr>
-<tr class="separator:ga4238247513db3876c0b787e6772c0b5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9f0ac64271bdd3fa778201e655424875"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga9f0ac64271bdd3fa778201e655424875">PPUTL_FIRST</a>(...)&#160;&#160;&#160;PPUTL_DETAIL_FIRST_X(__VA_ARGS__)</td></tr>
+<tr class="separator:ga9f0ac64271bdd3fa778201e655424875"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad279b5775dc8afc5e896022ae1fb6317"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#gad279b5775dc8afc5e896022ae1fb6317">PPUTL_IIF</a>(bit)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_IIF_, bit)</td></tr>
 <tr class="separator:gad279b5775dc8afc5e896022ae1fb6317"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3dc83dae9ef6f47faafe71836e0561bc"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga3dc83dae9ef6f47faafe71836e0561bc">PPUTL_INC</a>(n)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_INC_, n)</td></tr>
@@ -122,14 +126,12 @@ Macros</h2></td></tr>
 <tr class="separator:ga5299b90cbbfc834ebc5b835a1c8744bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab44d2efc1910873ba1788b9506c3fca7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#gab44d2efc1910873ba1788b9506c3fca7">PPUTL_REDUCE</a>(reducer,  initial, ...)</td></tr>
 <tr class="separator:gab44d2efc1910873ba1788b9506c3fca7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2fe586bde1b74b028add0e7b274495c0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga2fe586bde1b74b028add0e7b274495c0">PPUTL_SEPARATE</a>(...)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_SEPARATE_, <a class="el" href="group__pputl.html#gafd887579629b64a5f585ea83fd1c3c3b">PPUTL_NARGS</a>(__VA_ARGS__))(__VA_ARGS__)</td></tr>
-<tr class="separator:ga2fe586bde1b74b028add0e7b274495c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7bd5cd2cb15f0fe5b0e09634fa46b0b3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">PPUTL_REST</a>(...)&#160;&#160;&#160;PPUTL_DETAIL_REST_X(__VA_ARGS__)</td></tr>
+<tr class="separator:ga7bd5cd2cb15f0fe5b0e09634fa46b0b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0889497d5955746554f12b53afd69301"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga0889497d5955746554f12b53afd69301">PPUTL_STRINGIZE</a>(...)&#160;&#160;&#160;PPUTL_DETAIL_STRINGIZE_X(__VA_ARGS__)</td></tr>
 <tr class="separator:ga0889497d5955746554f12b53afd69301"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8ce34b569f877c25285b75fd2f191299"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#ga8ce34b569f877c25285b75fd2f191299">PPUTL_SUM</a>(...)&#160;&#160;&#160;PPUTL_DETAIL_SUM_REDUCE(PPUTL_DETAIL_SUM_REDUCER, 0, __VA_ARGS__)</td></tr>
 <tr class="separator:ga8ce34b569f877c25285b75fd2f191299"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaf911b3073bf0971ff8953b78ecf2d18b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pputl.html#gaf911b3073bf0971ff8953b78ecf2d18b">PPUTL_SWITCH</a>(idx)&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_SWITCH_, idx)</td></tr>
-<tr class="separator:gaf911b3073bf0971ff8953b78ecf2d18b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <h2 class="groupheader">Macro Definition Documentation</h2>
@@ -154,7 +156,7 @@ Macros</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td>&#160;&#160;&#160;PPUTL_DETAIL_ADD_REDUCE(PPUTL_DETAIL_ADD_REDUCER, a, <a class="el" href="group__pputl.html#ga4238247513db3876c0b787e6772c0b5d">PPUTL_GENREPEAT</a>(b, 0))</td>
+          <td></td><td>&#160;&#160;&#160;PPUTL_DETAIL_ADD_REDUCE(PPUTL_DETAIL_ADD_REDUCER, a, <a class="el" href="group__gen.html#gac5eec1958e903666d9a6e45261b120b6">PPUTL_GEN_REPEAT</a>(b, 0))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -188,6 +190,31 @@ Macros</h2></td></tr>
 <p>concatenate [0, 256) args</p>
 <p><a class="anchor" id="PPUTL_CAT"></a> </p>
 
+</div>
+</div>
+<a id="gabdfbf37030f826e51b3a5b366deeef31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gabdfbf37030f826e51b3a5b366deeef31">&#9670;&nbsp;</a></span>PPUTL_CHOOSE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PPUTL_CHOOSE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">idx</td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_CHOOSE_, idx)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>expands to arg at index idx [0, 256)</p>
+<p><a class="anchor" id="PPUTL_CHOOSE"></a></p><div class="fragment"><div class="line"><a class="code" href="group__pputl.html#gabdfbf37030f826e51b3a5b366deeef31">PPUTL_CHOOSE</a>(0)(1, 2, 3) <span class="comment">// 1</span></div>
+<div class="line"><a class="code" href="group__pputl.html#gabdfbf37030f826e51b3a5b366deeef31">PPUTL_CHOOSE</a>(1)(1, 2, 3) <span class="comment">// 2</span></div>
+<div class="line"><a class="code" href="group__pputl.html#gabdfbf37030f826e51b3a5b366deeef31">PPUTL_CHOOSE</a>(2)(1, 2, 3) <span class="comment">// 3</span></div>
+<div class="line"><span class="comment">// args are expanded before selection</span></div>
+<div class="line">#define ARGS 1, 2, 3</div>
+<div class="line"><a class="code" href="group__pputl.html#gabdfbf37030f826e51b3a5b366deeef31">PPUTL_CHOOSE</a>(0)(ARGS) <span class="comment">// 1</span></div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a id="ga3e831653f10cf691f51acae52636feef"></a>
@@ -310,81 +337,33 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="ga7db02e18cfa6cf877892eda8c3d6b90d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga7db02e18cfa6cf877892eda8c3d6b90d">&#9670;&nbsp;</a></span>PPUTL_GEN</h2>
+<a id="ga9f0ac64271bdd3fa778201e655424875"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9f0ac64271bdd3fa778201e655424875">&#9670;&nbsp;</a></span>PPUTL_FIRST</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PPUTL_GEN</td>
+          <td class="memname">#define PPUTL_FIRST</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">n, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">gen, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>...</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td>&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_GEN_, n)(gen, __VA_ARGS__)</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;PPUTL_DETAIL_FIRST_X(__VA_ARGS__)</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>generates [0, 256) args using a generator macro function</p>
-<p><a class="anchor" id="PPUTL_GEN"></a></p><dl class="params"><dt>Parameters</dt><dd>
+<p>return the first passed argument</p>
+<p><a class="anchor" id="PPUTL_FIRST"></a></p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">n</td><td>- number of args to generate [0, 256) </td></tr>
-    <tr><td class="paramname">gen</td><td>- generator macro function of the form: f(idx) -&gt; token </td></tr>
+    <tr><td class="paramname">...</td><td>args </td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a id="ga4238247513db3876c0b787e6772c0b5d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga4238247513db3876c0b787e6772c0b5d">&#9670;&nbsp;</a></span>PPUTL_GENREPEAT</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define PPUTL_GENREPEAT</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">n, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>...</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td>&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga7db02e18cfa6cf877892eda8c3d6b90d">PPUTL_GEN</a>(n, PPUTL_DETAIL_GENREPEAT_GEN, __VA_ARGS__)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>generates args by repeating <b>VA_ARGS</b> [0, 256) times</p>
-<p><a class="anchor" id="PPUTL_GENREPEAT"></a></p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">n</td><td>- number of times to repeat [0, 256) </td></tr>
-    <tr><td class="paramname">...</td><td>- args to repeat </td></tr>
-  </table>
-  </dd>
-</dl>
+<dl class="section return"><dt>Returns</dt><dd>first arg <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="first_8h.html">pputl/first.h</a>&gt;</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga9f0ac64271bdd3fa778201e655424875">PPUTL_FIRST</a>();     <span class="comment">// expands to nothing</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga9f0ac64271bdd3fa778201e655424875">PPUTL_FIRST</a>(a);    <span class="comment">// a</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga9f0ac64271bdd3fa778201e655424875">PPUTL_FIRST</a>(a, b); <span class="comment">// a</span></div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -647,23 +626,34 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="ga2fe586bde1b74b028add0e7b274495c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga2fe586bde1b74b028add0e7b274495c0">&#9670;&nbsp;</a></span>PPUTL_SEPARATE</h2>
+<a id="ga7bd5cd2cb15f0fe5b0e09634fa46b0b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">&#9670;&nbsp;</a></span>PPUTL_REST</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PPUTL_SEPARATE</td>
+          <td class="memname">#define PPUTL_REST</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>...</em></td><td>)</td>
-          <td>&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_SEPARATE_, <a class="el" href="group__pputl.html#gafd887579629b64a5f585ea83fd1c3c3b">PPUTL_NARGS</a>(__VA_ARGS__))(__VA_ARGS__)</td>
+          <td>&#160;&#160;&#160;PPUTL_DETAIL_REST_X(__VA_ARGS__)</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>separates [0, 256) args with spaces (removes commas from args)</p>
-<p><a class="anchor" id="PPUTL_SEPARATE"></a> </p>
+<p>return all passed arguments except for the first</p>
+<p><a class="anchor" id="PPUTL_REST"></a></p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">...</td><td>args </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>all args but the first <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="rest_8h.html">pputl/rest.h</a>&gt;</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">PPUTL_REST</a>();        <span class="comment">// expands to nothing</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">PPUTL_REST</a>(a);       <span class="comment">// expands to nothing</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">PPUTL_REST</a>(a, b);    <span class="comment">// b</span></div>
+<div class="line"><a class="code" href="group__pputl.html#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">PPUTL_REST</a>(a, b, c); <span class="comment">// b, c</span></div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -714,38 +704,17 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="gaf911b3073bf0971ff8953b78ecf2d18b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaf911b3073bf0971ff8953b78ecf2d18b">&#9670;&nbsp;</a></span>PPUTL_SWITCH</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define PPUTL_SWITCH</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">idx</td><td>)</td>
-          <td>&#160;&#160;&#160;<a class="el" href="group__pputl.html#ga0fb9f0f8e2b6f8b16150122052310fe6">PPUTL_CAT</a>(PPUTL_DETAIL_SWITCH_, idx)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>expands to arg at index idx [0, 256)</p>
-<p><a class="anchor" id="PPUTL_SWITCH"></a></p><div class="fragment"><div class="line"><a class="code" href="group__pputl.html#gaf911b3073bf0971ff8953b78ecf2d18b">PPUTL_SWITCH</a>(0)(1, 2, 3) <span class="comment">// 1</span></div>
-<div class="line"><a class="code" href="group__pputl.html#gaf911b3073bf0971ff8953b78ecf2d18b">PPUTL_SWITCH</a>(1)(1, 2, 3) <span class="comment">// 2</span></div>
-<div class="line"><a class="code" href="group__pputl.html#gaf911b3073bf0971ff8953b78ecf2d18b">PPUTL_SWITCH</a>(2)(1, 2, 3) <span class="comment">// 3</span></div>
-<div class="line"><span class="comment">// args are expanded before selection</span></div>
-<div class="line">#define ARGS 1, 2, 3</div>
-<div class="line"><a class="code" href="group__pputl.html#gaf911b3073bf0971ff8953b78ecf2d18b">PPUTL_SWITCH</a>(0)(ARGS) <span class="comment">// 1</span></div>
-</div><!-- fragment --> 
-</div>
-</div>
 </div><!-- contents -->
+<div class="ttc" id="arest_8h_html"><div class="ttname"><a href="rest_8h.html">rest.h</a></div><div class="ttdoc">PPUTL_REST - return all passed arguments except for the first</div></div>
+<div class="ttc" id="afirst_8h_html"><div class="ttname"><a href="first_8h.html">first.h</a></div><div class="ttdoc">PPUTL_FIRST - return the first passed argument</div></div>
 <div class="ttc" id="aadd_8h_html"><div class="ttname"><a href="add_8h.html">add.h</a></div><div class="ttdoc">PPUTL_ADD - add two numbers together [0, 256)</div></div>
 <div class="ttc" id="areduce_8h_html"><div class="ttname"><a href="reduce_8h.html">reduce.h</a></div><div class="ttdoc">PPUTL_REDUCE - reduces [0, 256) args to one expansion using a reducer macro</div></div>
-<div class="ttc" id="agroup__pputl_html_gaf911b3073bf0971ff8953b78ecf2d18b"><div class="ttname"><a href="group__pputl.html#gaf911b3073bf0971ff8953b78ecf2d18b">PPUTL_SWITCH</a></div><div class="ttdeci">#define PPUTL_SWITCH(idx)</div><div class="ttdef"><b>Definition:</b> switch.h:47</div></div>
 <div class="ttc" id="agroup__tuple_html_ga3b52c1254da7bab8e03809767b0680fa"><div class="ttname"><a href="group__tuple.html#ga3b52c1254da7bab8e03809767b0680fa">PPUTL_TUPLE_ELEM</a></div><div class="ttdeci">#define PPUTL_TUPLE_ELEM(idx, tup)</div><div class="ttdef"><b>Definition:</b> elem.h:41</div></div>
+<div class="ttc" id="agroup__pputl_html_ga7bd5cd2cb15f0fe5b0e09634fa46b0b3"><div class="ttname"><a href="group__pputl.html#ga7bd5cd2cb15f0fe5b0e09634fa46b0b3">PPUTL_REST</a></div><div class="ttdeci">#define PPUTL_REST(...)</div><div class="ttdef"><b>Definition:</b> rest.h:49</div></div>
 <div class="ttc" id="agroup__pputl_html_gab44d2efc1910873ba1788b9506c3fca7"><div class="ttname"><a href="group__pputl.html#gab44d2efc1910873ba1788b9506c3fca7">PPUTL_REDUCE</a></div><div class="ttdeci">#define PPUTL_REDUCE(reducer, initial,...)</div><div class="ttdef"><b>Definition:</b> reduce.h:57</div></div>
+<div class="ttc" id="agroup__pputl_html_ga9f0ac64271bdd3fa778201e655424875"><div class="ttname"><a href="group__pputl.html#ga9f0ac64271bdd3fa778201e655424875">PPUTL_FIRST</a></div><div class="ttdeci">#define PPUTL_FIRST(...)</div><div class="ttdef"><b>Definition:</b> first.h:48</div></div>
 <div class="ttc" id="agroup__pputl_html_gad279b5775dc8afc5e896022ae1fb6317"><div class="ttname"><a href="group__pputl.html#gad279b5775dc8afc5e896022ae1fb6317">PPUTL_IIF</a></div><div class="ttdeci">#define PPUTL_IIF(bit)</div><div class="ttdef"><b>Definition:</b> iif.h:47</div></div>
+<div class="ttc" id="agroup__pputl_html_gabdfbf37030f826e51b3a5b366deeef31"><div class="ttname"><a href="group__pputl.html#gabdfbf37030f826e51b3a5b366deeef31">PPUTL_CHOOSE</a></div><div class="ttdeci">#define PPUTL_CHOOSE(idx)</div><div class="ttdef"><b>Definition:</b> choose.h:47</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">

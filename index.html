@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.18"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>pputl 0.1.4</title>
+<title>pputl 0.2.0</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -27,7 +27,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname"><a href="index.html" style="text-decoration: none">pputl</a>
-   &#160;<span id="projectnumber">0.1.4</span>
+   &#160;<span id="projectnumber">0.2.0</span>
    </div>
    <div id="projectbrief">pputl Preprocessor Utilities</div>
   </td>
@@ -74,7 +74,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">pputl 0.1.4 | <a href="https://github.com/jpcx/pputl"><em>Repo</em></a> | <a href="http://jpcx.github.io/pputl/group__pputl.html"><em>API Docs</em></a> | <a href="https://github.com/jpcx/pputl/blob/0.1.4/CHANGELOG.md"><em>CHANGELOG</em></a> </div>  </div>
+<div class="title">pputl 0.2.0 | <a href="https://github.com/jpcx/pputl"><em>Repo</em></a> | <a href="http://jpcx.github.io/pputl/group__pputl.html"><em>API Docs</em></a> | <a href="https://github.com/jpcx/pputl/blob/0.2.0/CHANGELOG.md"><em>CHANGELOG</em></a> </div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_master_pputl_README"></a> </p><div class="fragment"><div class="line">                        __    ___</div>
@@ -90,7 +90,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --><h1>About</h1>
 <p>pputl is a C++ preprocessor utilities library. It provides basic preprocessor tools <br  />
  such as concatenation of multiple symbols, control flow, integer manipulation, etc. <br  />
- It utilizes a <code>reduce</code> mechanism for some of the logic; <a href="#tools">see below</a> for more info.</p>
+ It utilizes a reduce mechanism for some of the logic; <a href="#tools">see below</a> for more info.</p>
 <p>Currently, it uses <code>__VA_OPT__</code>, so a supportive compiler is required (or C++20). <br  />
  Future releases may ship with a build script for generating the project without this requirement.</p>
 <h1>Requirements</h1>
@@ -98,7 +98,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>C++20 (or <code>__VA_OPT__</code> support)</li>
 </ul>
 <h1>Usage</h1>
-<p>This is a header-only library; include the project root directory for access.</p>
+<p>This is a header-only library; include the <code>include/</code> directory for access.</p>
 <p><b>install</b></p>
 <div class="fragment"><div class="line"># copies headers to ${DESTDIR}${PREFIX}/include/pputl/</div>
 <div class="line">make install</div>
@@ -117,8 +117,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><span class="preprocessor">#define SUM(...) PPUTL_REDUCE(SUM_REDUCER, 0, __VA_ARGS__)</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define SEVEN SUM(1, 2, 4)</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// const char *my_cool_string = &quot;my.cool.string&quot;;</span></div>
+<div class="line"><span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code" href="group__join.html#ga7875dd292df381a68b28a17fe8beb2dd">PPUTL_JOIN_GLUE</a>(_, my, cool, <span class="keywordtype">string</span>) =</div>
+<div class="line">    <a class="code" href="group__pputl.html#ga0889497d5955746554f12b53afd69301">PPUTL_STRINGIZE</a>(<a class="code" href="group__join.html#gae7df12bed2d13424457aa1ec01660b01">PPUTL_JOIN_DOT</a>(my, cool, <span class="keywordtype">string</span>));</div>
 </div><!-- fragment --><h1>Tools <a class="anchor" id="tools"></a></h1>
-<p>pputl comes with a <code>REDUCE</code> macro generator in the <code>tools/</code> folder. <br  />
+<p>pputl comes with a reduce macro generator in the <code>tools/</code> folder. <br  />
  This script generates a set of macros that allow for pseudo-recursive value reduction. <br  />
  Due to the inability for the preprocessor to recurse (without special, [slow!] expansion logic), <br  />
  it's necessary to generate a new set of macros if <code>REDUCE</code> call chaining is desired.</p>
@@ -149,7 +153,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
  but other types (e.g. transform) may be useful. More generation scripts may be added here.</p>
 <h1>Testing</h1>
 <p>All API features are statically tested with <a href="https://github.com/jpcx/cctest">jpcx/cctest</a></p>
-<div class="fragment"><div class="line">make test</div>
+<div class="fragment"><div class="line">make -j8 test</div>
 </div><!-- fragment --><h1>Contributing</h1>
 <p>Contribution is welcome! Please make a pull request. <br  />
  I'd like to maximize the utility of the preprocessor, especially in the wake of <code>__VA_OPT__</code>.</p>
@@ -158,6 +162,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <div class="ttc" id="apputl_8h_html"><div class="ttname"><a href="pputl_8h.html">pputl.h</a></div><div class="ttdoc">Group file for pputl - Contains all library functionality.</div></div>
+<div class="ttc" id="agroup__join_html_ga7875dd292df381a68b28a17fe8beb2dd"><div class="ttname"><a href="group__join.html#ga7875dd292df381a68b28a17fe8beb2dd">PPUTL_JOIN_GLUE</a></div><div class="ttdeci">#define PPUTL_JOIN_GLUE(glue,...)</div><div class="ttdef"><b>Definition:</b> glue.h:61</div></div>
+<div class="ttc" id="agroup__pputl_html_ga0889497d5955746554f12b53afd69301"><div class="ttname"><a href="group__pputl.html#ga0889497d5955746554f12b53afd69301">PPUTL_STRINGIZE</a></div><div class="ttdeci">#define PPUTL_STRINGIZE(...)</div><div class="ttdef"><b>Definition:</b> stringize.h:37</div></div>
+<div class="ttc" id="agroup__join_html_gae7df12bed2d13424457aa1ec01660b01"><div class="ttname"><a href="group__join.html#gae7df12bed2d13424457aa1ec01660b01">PPUTL_JOIN_DOT</a></div><div class="ttdeci">#define PPUTL_JOIN_DOT(...)</div><div class="ttdef"><b>Definition:</b> dot.h:59</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">
