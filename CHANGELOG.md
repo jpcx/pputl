@@ -10,7 +10,7 @@
 - added `pputl.gen`  featureset
 - added more `pputl.gen.repeat` tests
 
-## Changed
+### Changed
 
 - renamed `pputl.gen` -> `pputl.gen.any`
 - renamed `pputl.genrepeat` -> `pputl.gen.repeat`
@@ -19,7 +19,7 @@
 - moved headers to `include/` directory
 - separated `pputl.gen.any` from `pputl.gen.repeat`
 
-## Removed
+### Removed
 
 - removed `pputl.separate`; `pputl.join.space` is functionally equivalent and has clearer semantics
 
