@@ -63,16 +63,17 @@
 #///   PPUTL_JOIN_ANY(JOIN_CAT,        foo, bar) // foobar
 #///   PPUTL_JOIN_ANY(JOIN_UNDERSCORE, foo, bar) // foo_bar
 #/// @endcode
-#/// 
+#///
 #/// @see PPUTL_JOIN_DOT
+#/// @see PPUTL_JOIN_GLUE
+#/// @see PPUTL_JOIN_HYPHEN
 #/// @see PPUTL_JOIN_SLASH
 #/// @see PPUTL_JOIN_SPACE
-#/// @see PPUTL_JOIN_GLUE
 #/// @see PPUTL_CAT
 #///
 #/// @ingroup join
 #/// @anchor  PPUTL_JOIN_ANY
-#define PPUTL_JOIN_ANY(joining_fn, ...)     \
+#define PPUTL_JOIN_ANY(joining_fn, ...) \
   PPUTL_TUPLE_ELEM(                     \
       1, PPUTL_DETAIL_JOIN_REDUCE(      \
              PPUTL_DETAIL_JOIN_REDUCER, \

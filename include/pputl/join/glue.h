@@ -3,7 +3,7 @@
 #/////                                                                     c++20
 #///////////////////////////////////////////////////////////////////////////////
 #/// @brief \link PPUTL_JOIN_GLUE PPUTL_JOIN_GLUE\endlink -
-#/// joins [0, 256) args using a glue token
+#/// joins [0, 256) args using a non-separatory glue token
 #/// @file
 #//                          __    ___
 #//                         /\ \__/\_ \
@@ -36,7 +36,7 @@
 #include "pputl/rest.h"
 #include "pputl/tuple/elem.h"
 #
-#/// joins [0, 256) args using a glue token
+#/// joins [0, 256) args using a non-separatory glue token
 #///
 #/// @param   glue - token to insert between joined args
 #/// @param   ...  - args to join
@@ -49,15 +49,17 @@
 #///   PPUTL_JOIN_GLUE(_, foo, bar) // foo_bar
 #/// @endcode
 #///
+#/// @see PPUTL_JOIN_ANY
 #/// @see PPUTL_JOIN_DOT
+#/// @see PPUTL_JOIN_HYPHEN
 #/// @see PPUTL_JOIN_SLASH
 #/// @see PPUTL_JOIN_SPACE
 #/// @see PPUTL_CAT
 #///
 #/// @ingroup join
 #/// @anchor  PPUTL_JOIN_GLUE
-#define PPUTL_JOIN_GLUE(glue, ...)                                        \
-  PPUTL_TUPLE_ELEM(                                                       \
+#define PPUTL_JOIN_GLUE(glue, ...)                                             \
+  PPUTL_TUPLE_ELEM(                                                            \
       1, PPUTL_DETAIL_JOIN_GLUE_REDUCE(                                        \
              PPUTL_DETAIL_JOIN_GLUE_REDUCER, (glue, PPUTL_FIRST(__VA_ARGS__)), \
              PPUTL_REST(__VA_ARGS__)))

@@ -47,9 +47,11 @@
 #///   PPUTL_JOIN_SPACE(foo, bar) // foo bar
 #/// @endcode
 #///
+#/// @see PPUTL_JOIN_ANY
 #/// @see PPUTL_JOIN_DOT
-#/// @see PPUTL_JOIN_SLASH
 #/// @see PPUTL_JOIN_GLUE
+#/// @see PPUTL_JOIN_HYPHEN
+#/// @see PPUTL_JOIN_SLASH
 #/// @see PPUTL_CAT
 #///
 #/// @ingroup join
@@ -68,8 +70,8 @@
 #define PPUTL_DETAIL_JOIN_SPACE_REDUCER(a, v, i) a v
 #/*                          */ // clang-format on
 #
-#define PPUTL_DETAIL_JOIN_SPACE_REDUCE(reducer, initial, ...)                   \
-  PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOOSER(__VA_ARGS__)                           \
+#define PPUTL_DETAIL_JOIN_SPACE_REDUCE(reducer, initial, ...)                  \
+  PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOOSER(__VA_ARGS__)                          \
   (reducer, initial,                                                           \
    (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,  \
     21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,    \
@@ -353,7 +355,7 @@
 #define PPUTL_DETAIL_JOIN_SPACE_REDUCE_FE(r, a, is, v, ...) PPUTL_DETAIL_JOIN_SPACE_REDUCE_FD(r, r(a, v, PPUTL_DETAIL_JOIN_SPACE_REDUCE_FIRST is), (PPUTL_DETAIL_JOIN_SPACE_REDUCE_REST is), __VA_ARGS__)
 #define PPUTL_DETAIL_JOIN_SPACE_REDUCE_FF(r, a, is, v, ...) PPUTL_DETAIL_JOIN_SPACE_REDUCE_FE(r, r(a, v, PPUTL_DETAIL_JOIN_SPACE_REDUCE_FIRST is), (PPUTL_DETAIL_JOIN_SPACE_REDUCE_REST is), __VA_ARGS__)
 #/*                                                                                                                                                                                */ // clang-format on
-#define PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOICE(                                  \
+#define PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOICE(                                 \
     _FF, _FE, _FD, _FC, _FB, _FA, _F9, _F8, _F7, _F6, _F5, _F4, _F3, _F2, _F1, \
     _F0, _EF, _EE, _ED, _EC, _EB, _EA, _E9, _E8, _E7, _E6, _E5, _E4, _E3, _E2, \
     _E1, _E0, _DF, _DE, _DD, _DC, _DB, _DA, _D9, _D8, _D7, _D6, _D5, _D4, _D3, \
@@ -374,8 +376,8 @@
     size, ...)                                                                 \
   PPUTL_DETAIL_JOIN_SPACE_REDUCE_CAT(PPUTL_DETAIL_JOIN_SPACE_REDUCE_, size)
 #
-#define PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOOSER(...)                            \
-  PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOICE(                                       \
+#define PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOOSER(...)                           \
+  PPUTL_DETAIL_JOIN_SPACE_REDUCE_CHOICE(                                      \
       __VA_ARGS__ __VA_OPT__(, ) FF, FE, FD, FC, FB, FA, F9, F8, F7, F6, F5,  \
       F4, F3, F2, F1, F0, EF, EE, ED, EC, EB, EA, E9, E8, E7, E6, E5, E4, E3, \
       E2, E1, E0, DF, DE, DD, DC, DB, DA, D9, D8, D7, D6, D5, D4, D3, D2, D1, \

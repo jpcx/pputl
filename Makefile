@@ -55,11 +55,13 @@ test: testpputl
 
 install: ${PPUTL_ALL_HEADERS}
 	install -d ${PPUTL_INSTALL_DIR}
-	install -d ${PPUTL_INSTALL_DIR}tuple/
+	install -d ${PPUTL_INSTALL_DIR}gen/
 	install -d ${PPUTL_INSTALL_DIR}join/
+	install -d ${PPUTL_INSTALL_DIR}tuple/
 	install -m 644 ${PPUTL_HEADERS} ${PPUTL_INSTALL_DIR}
-	install -m 644 ${PPUTL_TUPLE_HEADERS} ${PPUTL_INSTALL_DIR}tuple/
+	install -m 644 ${PPUTL_GEN_HEADERS} ${PPUTL_INSTALL_DIR}gen/
 	install -m 644 ${PPUTL_JOIN_HEADERS} ${PPUTL_INSTALL_DIR}join/
+	install -m 644 ${PPUTL_TUPLE_HEADERS} ${PPUTL_INSTALL_DIR}tuple/
 
 clean:
 	${RM} testpputl

@@ -28,7 +28,7 @@ Future releases may ship with a build script for generating the project without 
 
 ## Usage
 
-This is a header-only library; include the project root directory for access.
+This is a header-only library; include the `include/` directory for access.
 
 __install__
 
@@ -54,6 +54,10 @@ static_assert(false);
 #define SUM(...) PPUTL_REDUCE(SUM_REDUCER, 0, __VA_ARGS__)
 
 #define SEVEN SUM(1, 2, 4)
+
+// const char *my_cool_string = "my.cool.string";
+const char *PPUTL_JOIN_GLUE(_, my, cool, string) =
+    PPUTL_STRINGIZE(PPUTL_JOIN_DOT(my, cool, string));
 ```
 
 ## Tools <a id=tools />
