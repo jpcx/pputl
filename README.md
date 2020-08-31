@@ -1,4 +1,4 @@
-# pputl 0.2.0 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.2.0/CHANGELOG.md)
+# pputl 0.2.1 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.2.1/CHANGELOG.md)
 
 ```
                         __    ___

@@ -1,6 +1,12 @@
 # Changelog
 
-## [Upcoming](https://github.com/jpcx/pputl/compare/0.2.0...devel)
+## [Upcoming](https://github.com/jpcx/pputl/compare/0.2.1...devel)
+
+## [0.2.1](https://github.com/jpcx/pputl/releases/tag/0.2.1)
+
+### Fixed
+
+- Fixed changelog heading levels
 
 ## [0.2.0](https://github.com/jpcx/pputl/releases/tag/0.2.0)
 
