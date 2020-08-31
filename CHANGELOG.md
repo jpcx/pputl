@@ -1,6 +1,23 @@
 # Changelog
 
-## [Upcoming](https://github.com/jpcx/pputl/compare/0.1.4...devel)
+## [Upcoming](https://github.com/jpcx/pputl/compare/0.2.0...devel)
+
+## [0.2.0](https://github.com/jpcx/pputl/releases/tag/0.2.0)
+
+### Added
+
+- added `join` featureset
+- added `gen`  featureset
+- added more `gen.repeat` tests
+
+## Changed
+
+- renamed `gen` -> `gen.any`
+- renamed `genrepeat` -> `gen.repeat`
+- renamed `switch` -> `choose`
+- improved Makefile
+- moved headers to `include/` directory
+- separated `gen.any` from `gen.repeat`
 
 ## [0.1.4](https://github.com/jpcx/pputl/releases/tag/0.1.4)
 
