@@ -54,7 +54,7 @@
 #/// @see PPUTL_JOIN_SPACE
 #/// @see PPUTL_CAT
 #///
-#/// @ingroup pputl
+#/// @ingroup join
 #/// @anchor  PPUTL_JOIN_GLUE
 #define PPUTL_JOIN_GLUE(glue, ...)                                        \
   PPUTL_TUPLE_ELEM(                                                       \

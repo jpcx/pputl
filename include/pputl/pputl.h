@@ -52,7 +52,6 @@
 #include "pputl/nothing.h"
 #include "pputl/reduce.h"
 #include "pputl/rest.h"
-#include "pputl/separate.h"
 #include "pputl/stringize.h"
 #include "pputl/sum.h"
 #include "pputl/tuple.h"
