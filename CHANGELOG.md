@@ -1,6 +1,27 @@
 # Changelog
 
-## [Upcoming](https://github.com/jpcx/pputl/compare/0.1.4...devel)
+## [Upcoming](https://github.com/jpcx/pputl/compare/0.2.0...devel)
+
+## [0.2.0](https://github.com/jpcx/pputl/releases/tag/0.2.0)
+
+### Added
+
+- added `pputl.join` featureset
+- added `pputl.gen`  featureset
+- added more `pputl.gen.repeat` tests
+
+## Changed
+
+- renamed `pputl.gen` -> `pputl.gen.any`
+- renamed `pputl.genrepeat` -> `pputl.gen.repeat`
+- renamed `pputl.switch` -> `pputl.choose`
+- improved Makefile
+- moved headers to `include/` directory
+- separated `pputl.gen.any` from `pputl.gen.repeat`
+
+## Removed
+
+- removed `pputl.separate`; `pputl.join.space` is functionally equivalent and has clearer semantics
 
 ## [0.1.4](https://github.com/jpcx/pputl/releases/tag/0.1.4)
 

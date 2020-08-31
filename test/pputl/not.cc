@@ -29,7 +29,7 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/not.h>
 
 #define PPRESULT0 false
 #define PPRESULT1 true

@@ -29,7 +29,7 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/add.h>
 
 #define SAMP1 2
 #define SAMP2 3

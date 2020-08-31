@@ -29,21 +29,24 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/reduce.h>
+#include <pputl/tuple/cat.h>
+#include <pputl/stringize.h>
 
 #include "streq.h"
 
-#define SUMREDUCE(accum, cur, idx) accum + cur
-#define IDXREDUCE(accum, cur, idx) accum + idx
-#define SUBREDUCE(accum, cur, idx) accum - cur
+#define SUMREDUCE(accum, cur, idx)     accum + cur
+#define IDXREDUCE(accum, cur, idx)     accum + idx
+#define SUBREDUCE(accum, cur, idx)     accum - cur
 #define IDXMARKREDUCE(accum, cur, idx) PPUTL_TUPLE_CAT(accum, ((cur, idx)))
 
 #define STR PPUTL_STRINGIZE
 
 using namespace testpputl;
 
-TEST(pputl.reduce,
-     "reduces [0, 256) args to one expansion using a reducer macro")
+TEST(
+    pputl.reduce,
+    "reduces [0, 256) args to one expansion using a reducer macro")
     <<
     [] {
       STATIC_CHECK(PPUTL_REDUCE(SUMREDUCE, 0) == 0);
@@ -52,8 +55,9 @@ TEST(pputl.reduce,
       STATIC_CHECK(PPUTL_REDUCE(IDXREDUCE, 0, 1, 2, 3) == 3);
       STATIC_CHECK(PPUTL_REDUCE(SUBREDUCE, 0, 1, 2, 3) == -6);
       STATIC_CHECK(PPUTL_REDUCE(SUBREDUCE, 0, 1, 2, 3) == -6);
-      STATIC_CHECK(streq(STR(PPUTL_REDUCE(IDXMARKREDUCE, (), 1, 2, 3)),
-                         "((1, 0), (2, 1), (3, 2))"));
+      STATIC_CHECK(streq(
+          STR(PPUTL_REDUCE(IDXMARKREDUCE, (), 1, 2, 3)),
+          "((1, 0), (2, 1), (3, 2))"));
       STATIC_CHECK(
           PPUTL_REDUCE(
               SUMREDUCE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,

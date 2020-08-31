@@ -29,10 +29,10 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/inc.h>
 
-#define PPRESULT1 true
-#define PPRESULT2 true
+#define PPRESULT1   true
+#define PPRESULT2   true
 #define PPRESULT255 true
 
 TEST(pputl.inc, "increment a number [0, 255)") << [] {

@@ -29,7 +29,7 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/nargs.h>
 
 TEST(pputl.nargs, "returns argument list size [0, 256)") << [] {
   STATIC_CHECK(PPUTL_NARGS() == 0);
@@ -37,17 +37,17 @@ TEST(pputl.nargs, "returns argument list size [0, 256)") << [] {
   STATIC_CHECK(PPUTL_NARGS(a, b) == 2);
   STATIC_CHECK(PPUTL_NARGS(a, b, c) == 3);
   STATIC_CHECK(
-      PPUTL_NARGS(o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
-                  o, o, o) == 255);
+      PPUTL_NARGS(
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o, o,
+          o, o) == 255);
 };

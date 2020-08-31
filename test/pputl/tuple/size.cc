@@ -29,7 +29,7 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/tuple/size.h>
 
 TEST(pputl.tuple.size, "number of elements within a tuple [0, 256)") << [] {
   STATIC_CHECK(PPUTL_TUPLE_SIZE(()) == 0);

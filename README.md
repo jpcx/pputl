@@ -1,4 +1,4 @@
-# pputl 0.1.4 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.1.4/CHANGELOG.md)
+# pputl 0.2.0 | [_API Docs_](http://jpcx.github.io/pputl/group__pputl.html) | [_CHANGELOG_](https://github.com/jpcx/pputl/blob/0.2.0/CHANGELOG.md)
 
 ```
                         __    ___
@@ -17,7 +17,7 @@
 
 pputl is a C++ preprocessor utilities library. It provides basic preprocessor tools  
 such as concatenation of multiple symbols, control flow, integer manipulation, etc.  
-It utilizes a `reduce` mechanism for some of the logic; [see below](#tools) for more info.
+It utilizes a reduce mechanism for some of the logic; [see below](#tools) for more info.
 
 Currently, it uses `__VA_OPT__`, so a supportive compiler is required (or C++20).  
 Future releases may ship with a build script for generating the project without this requirement.
@@ -28,7 +28,7 @@ Future releases may ship with a build script for generating the project without 
 
 ## Usage
 
-This is a header-only library; include the project root directory for access.
+This is a header-only library; include the `include/` directory for access.
 
 __install__
 
@@ -54,11 +54,15 @@ static_assert(false);
 #define SUM(...) PPUTL_REDUCE(SUM_REDUCER, 0, __VA_ARGS__)
 
 #define SEVEN SUM(1, 2, 4)
+
+// const char *my_cool_string = "my.cool.string";
+const char *PPUTL_JOIN_GLUE(_, my, cool, string) =
+    PPUTL_STRINGIZE(PPUTL_JOIN_DOT(my, cool, string));
 ```
 
 ## Tools <a id=tools />
 
-pputl comes with a `REDUCE` macro generator in the `tools/` folder.  
+pputl comes with a reduce macro generator in the `tools/` folder.  
 This script generates a set of macros that allow for pseudo-recursive value reduction.  
 Due to the inability for the preprocessor to recurse (without special, [slow!] expansion logic),  
 it's necessary to generate a new set of macros if `REDUCE` call chaining is desired.
@@ -100,7 +104,7 @@ but other types (e.g. transform) may be useful. More generation scripts may be a
 All API features are statically tested with [jpcx/cctest](https://github.com/jpcx/cctest)
 
 ```shell
-make test
+make -j8 test
 ```
 
 ## Contributing

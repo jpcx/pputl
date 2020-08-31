@@ -1,9 +1,9 @@
-#ifndef PPUTL_GENREPEAT_H_INCLUDED
-#define PPUTL_GENREPEAT_H_INCLUDED
+#ifndef PPUTL_FIRST_H_INCLUDED
+#define PPUTL_FIRST_H_INCLUDED
 #/////                                                                     c++20
 #///////////////////////////////////////////////////////////////////////////////
-#/// @brief \link PPUTL_GENREPEAT PPUTL_GENREPEAT\endlink -
-#/// generates args by repeating __VA_ARGS__ [0, 256) times
+#/// @brief \link PPUTL_FIRST PPUTL_FIRST\endlink -
+#/// return the first passed argument
 #/// @file
 #//                          __    ___
 #//                         /\ \__/\_ \
@@ -31,16 +31,27 @@
 #//  along with this program.  If not, see <https://www.gnu.org/licenses/>. ////
 #///////////////////////////////////////////////////////////////////////////////
 #
-#include "pputl/gen.h"
+#include "pputl/cat.h"
 #
-#/// generates args by repeating __VA_ARGS__ [0, 256) times
+#/// return the first passed argument
+#///
 #/// @ingroup pputl
-#/// @anchor  PPUTL_GENREPEAT
-#/// @param n   - number of times to repeat [0, 256)
-#/// @param ... - args to repeat
-#define PPUTL_GENREPEAT(n, ...)                                                \
-  PPUTL_GEN(n, PPUTL_DETAIL_GENREPEAT_GEN, __VA_ARGS__)
+#/// @anchor  PPUTL_FIRST
+#/// @param   ... args
+#/// @returns first arg
+#/// @code
+#///   #include <pputl/first.h>
+#///   PPUTL_FIRST();     // expands to nothing
+#///   PPUTL_FIRST(a);    // a
+#///   PPUTL_FIRST(a, b); // a
+#/// @endcode
+#define PPUTL_FIRST(...) PPUTL_DETAIL_FIRST_X(__VA_ARGS__)
 #
-#define PPUTL_DETAIL_GENREPEAT_GEN(i, ...) __VA_ARGS__
+#define PPUTL_DETAIL_FIRST_X(...) \
+  PPUTL_DETAIL_FIRST_CHOOSER(__VA_OPT__(, ) SIZEY, EMPTY)(__VA_ARGS__)
+#define PPUTL_DETAIL_FIRST_CHOOSER(_, choice, ...) \
+  PPUTL_CAT(PPUTL_DETAIL_FIRST_, choice)
+#define PPUTL_DETAIL_FIRST_EMPTY()
+#define PPUTL_DETAIL_FIRST_SIZEY(_1, ...) _1
 #
 #endif

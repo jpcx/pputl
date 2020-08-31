@@ -1,10 +1,12 @@
-#ifndef PPUTL_EQ_H_INCLUDED
-#define PPUTL_EQ_H_INCLUDED
+#ifndef PPUTL_JOIN_H_INCLUDED
+#define PPUTL_JOIN_H_INCLUDED
 #/////                                                                     c++20
 #///////////////////////////////////////////////////////////////////////////////
-#/// @brief \link PPUTL_EQ PPUTL_EQ\endlink -
-#/// expands to 1 if two numbers a and b [0, 256) are equal, or 0 if not
+#/// @brief Group file for \link join pputl.join\endlink -
+#///        Contains tools for preprocessor argument joining
 #/// @file
+#/// @defgroup join join
+#/// @ingroup  pputl
 #//                          __    ___
 #//                         /\ \__/\_ \
 #//   _____   _____   __  __\ \ ,_\//\ \
@@ -31,24 +33,10 @@
 #//  along with this program.  If not, see <https://www.gnu.org/licenses/>. ////
 #///////////////////////////////////////////////////////////////////////////////
 #
-#include "pputl/genrepeat.h"
-#include "pputl/switch.h"
-#
-#/// expands to 1 if two numbers a and b [0, 256) are equal, or 0 if not
-#/// @ingroup pputl
-#/// @anchor  PPUTL_EQ
-#/// @param a number [0, 256)
-#/// @param b number [0, 256)
-#define PPUTL_EQ(a, b) PPUTL_DETAIL_EQ_X(a, b)
-#
-#define PPUTL_DETAIL_EQ_X(a, b)                                                \
-  PPUTL_SWITCH(a)(PPUTL_DETAIL_EQ_BITS_CHOICE(b)(b))
-#define PPUTL_DETAIL_EQ_BITS_CHOICE(i)                                         \
-  PPUTL_SWITCH(i)                                                              \
-  (PPUTL_DETAIL_EQ_BITS_EQ0, PPUTL_GENREPEAT(255, PPUTL_DETAIL_EQ_BITS_GT0))
-#
-#define PPUTL_DETAIL_EQ_BITS_EQ0(i) 1, PPUTL_GENREPEAT(255, 0)
-#define PPUTL_DETAIL_EQ_BITS_GT0(i)                                            \
-  PPUTL_GENREPEAT(i, 0), 1, PPUTL_GENREPEAT(254, 0)
+#include "pputl/join/any.h"
+#include "pputl/join/dot.h"
+#include "pputl/join/glue.h"
+#include "pputl/join/slash.h"
+#include "pputl/join/space.h"
 #
 #endif

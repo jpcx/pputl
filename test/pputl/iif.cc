@@ -29,7 +29,7 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/iif.h>
 
 TEST(pputl.iif, "conditionally expands based on a 0 or 1 bit") << [] {
   STATIC_CHECK(PPUTL_IIF(0)(123, 321) == 321);

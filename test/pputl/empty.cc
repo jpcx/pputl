@@ -29,7 +29,8 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/empty.h>
+#include <pputl/stringize.h>
 
 #include "streq.h"
 

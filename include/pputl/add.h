@@ -31,7 +31,7 @@
 #//  along with this program.  If not, see <https://www.gnu.org/licenses/>. ////
 #///////////////////////////////////////////////////////////////////////////////
 #
-#include "pputl/genrepeat.h"
+#include "pputl/gen/repeat.h"
 #include "pputl/inc.h"
 #
 #/// add two numbers together [0, 256)
@@ -41,7 +41,7 @@
 #/// @param b number [0, 256)
 #/// @return a + b [0, 256)
 #define PPUTL_ADD(a, b)                                                        \
-  PPUTL_DETAIL_ADD_REDUCE(PPUTL_DETAIL_ADD_REDUCER, a, PPUTL_GENREPEAT(b, 0))
+  PPUTL_DETAIL_ADD_REDUCE(PPUTL_DETAIL_ADD_REDUCER, a, PPUTL_GEN_REPEAT(b, 0))
 #
 #define PPUTL_DETAIL_ADD_REDUCER(a, v, i) PPUTL_INC(a)
 #

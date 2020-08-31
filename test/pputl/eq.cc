@@ -29,13 +29,14 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/eq.h>
 
 #define PPRESULT0 false
 #define PPRESULT1 true
 
-TEST(pputl.eq,
-     "expands to 1 if two numbers a and b [0, 256) are equal, or 0 if not")
+TEST(
+    pputl.eq,
+    "expands to 1 if two numbers a and b [0, 256) are equal, or 0 if not")
     << [] {
          STATIC_CHECK(PPUTL_EQ(0, 0));
          STATIC_CHECK(PPUTL_EQ(1, 1));

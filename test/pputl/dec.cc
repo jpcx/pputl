@@ -29,10 +29,10 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/dec.h>
 
-#define PPRESULT0 true
-#define PPRESULT1 true
+#define PPRESULT0   true
+#define PPRESULT1   true
 #define PPRESULT254 true
 
 TEST(pputl.dec, "decrement a number [1, 256)") << [] {

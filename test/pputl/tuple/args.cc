@@ -29,7 +29,9 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/stringize.h>
+#include <pputl/choose.h>
+#include <pputl/tuple/args.h>
 
 #include "streq.h"
 
@@ -43,6 +45,6 @@ TEST(pputl.tuple.args, "returns tuple elements as args") << [] {
   STATIC_CHECK(streq(STR(PPUTL_TUPLE_ARGS(())), ""));
   STATIC_CHECK(streq(STR(PPUTL_TUPLE_ARGS((a))), "a"));
   STATIC_CHECK(streq(STR(PPUTL_TUPLE_ARGS((1, 2, 3))), "1, 2, 3"));
-  STATIC_CHECK(streq(STR(PPUTL_SWITCH(0)(PPUTL_TUPLE_ARGS(TUP))), "3"));
+  STATIC_CHECK(streq(STR(PPUTL_CHOOSE(0)(PPUTL_TUPLE_ARGS(TUP))), "3"));
   STATIC_CHECK(PPUTL_TUPLE_ARGS((123)) == 123);
 };
