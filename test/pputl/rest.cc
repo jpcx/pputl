@@ -29,17 +29,20 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/eat.h>
+#include <pputl/rest.h>
 #include <pputl/stringize.h>
 
 #include "streq.h"
 
 #define STR PPUTL_STRINGIZE
 
+using namespace cctest;
 using namespace testpputl;
 
-TEST(pputl.eat, "eats any arguments; expands to nothing") << [] {
-  STATIC_CHECK(streq(STR(PPUTL_EAT()), ""));
-  STATIC_CHECK(streq(STR(PPUTL_EAT(a)), ""));
-  STATIC_CHECK(streq(STR(PPUTL_EAT(a, b)), ""));
-};
+#include <iostream>
+
+TEST(pputl.rest, "return all passed arguments except for the first")
+    << (static_require<streq(STR(PPUTL_REST()), "")>)
+    << (static_require<streq(STR(PPUTL_REST(a)), "")>)
+    << (static_require<streq(STR(PPUTL_REST(a, b)), "b")>)
+    << (static_require<streq(STR(PPUTL_REST(a, b, c)), "b, c")>);

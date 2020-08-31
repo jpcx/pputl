@@ -29,7 +29,7 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/switch.h>
 
 TEST(pputl.switch, "expands to arg at index idx [0, 256)") << [] {
   STATIC_CHECK(PPUTL_SWITCH(0)(1) == 1);

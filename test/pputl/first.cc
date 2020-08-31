@@ -29,17 +29,19 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/first.h>
+#include <pputl/stringize.h>
 
 #include "streq.h"
 
 #define STR PPUTL_STRINGIZE
 
+using namespace cctest;
 using namespace testpputl;
 
-TEST(pputl.genrepeat, "generates args by repeating __VA_ARGS__ [0, 256) times")
-    << [] {
-         STATIC_CHECK(streq(STR(PPUTL_GENREPEAT(0)), ""));
-         STATIC_CHECK(streq(STR(PPUTL_GENREPEAT(1)), ""));
-         STATIC_CHECK(streq(STR(PPUTL_GENREPEAT(2)), ","));
-       };
+#include <iostream>
+
+TEST(pputl.first, "return the first passed argument")
+    << (static_require<streq(STR(PPUTL_FIRST()), "")>)
+    << (static_require<streq(STR(PPUTL_FIRST(a)), "a")>)
+    << (static_require<streq(STR(PPUTL_FIRST(a, b)), "a")>);

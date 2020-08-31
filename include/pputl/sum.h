@@ -32,7 +32,6 @@
 #///////////////////////////////////////////////////////////////////////////////
 #
 #include "pputl/add.h"
-#include "pputl/genrepeat.h"
 #
 #/// sum N numbers [0, 256)
 #/// @ingroup pputl

@@ -29,7 +29,8 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/tuple/chk.h>
+#include <pputl/cat.h>
 
 #define BIT0 0
 #define BIT1 1

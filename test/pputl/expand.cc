@@ -29,14 +29,15 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/expand.h>
+#include <pputl/stringize.h>
 
 #include "streq.h"
 
 #define STR PPUTL_STRINGIZE
 
 #define THREESUM(a, b, c) a + b + c
-#define EXPAND_ME() (1, 2, 3)
+#define EXPAND_ME()       (1, 2, 3)
 
 using namespace testpputl;
 

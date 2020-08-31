@@ -29,13 +29,14 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/neq.h>
 
 #define PPRESULT0 false
 #define PPRESULT1 true
 
-TEST(pputl.neq,
-     "expands to 1 if two numbers a and b [0, 256) are NOT equal, or 0 if not")
+TEST(
+    pputl.neq,
+    "expands to 1 if two numbers a and b [0, 256) are NOT equal, or 0 if not")
     << [] {
          STATIC_CHECK(!PPUTL_NEQ(1, 1));
          STATIC_CHECK(!PPUTL_NEQ(2, 2));

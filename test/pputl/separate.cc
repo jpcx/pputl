@@ -29,7 +29,8 @@
 
 #include <cctest/cctest.h>
 
-#include <pputl/pputl.h>
+#include <pputl/separate.h>
+#include <pputl/stringize.h>
 
 #include "streq.h"
 
@@ -37,8 +38,9 @@
 
 using namespace testpputl;
 
-TEST(pputl.separate,
-     "separates [0, 256) args with spaces (removes commas from args)")
+TEST(
+    pputl.separate,
+    "separates [0, 256) args with spaces (removes commas from args)")
     <<
     [] {
       STATIC_CHECK(streq(STR(PPUTL_SEPARATE()), ""));
