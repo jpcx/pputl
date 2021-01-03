@@ -15,7 +15,7 @@
 #//     \/_/    \/_/
 #//
 #//  pputl Preprocessor Utilities
-#//  Copyright (C) 2020 Justin Collier <m@jpcx.dev>
+#//  Copyright (C) 2020, 2021 Justin Collier <m@jpcx.dev>
 #//
 #//    This program is free software: you can redistribute it and/or modify
 #//    it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 #///////////////////////////////////////////////////////////////////////////////
 #
 #include "pputl/nargs.h"
-
 #
 #/// concatenate [0, 256) args
 #/// @ingroup pputl

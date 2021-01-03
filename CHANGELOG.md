@@ -2,6 +2,17 @@
 
 ## [Upcoming](https://github.com/jpcx/pputl/compare/0.2.1...devel)
 
+## [0.2.2](https://github.com/jpcx/pputl/releases/tag/0.2.2)
+
+### Changed
+
+- Extended copyright to 2021
+- Updated cctest library to 0.5.1
+
+### Added
+
+- Added copyright notice to README
+
 ## [0.2.1](https://github.com/jpcx/pputl/releases/tag/0.2.1)
 
 ### Fixed
