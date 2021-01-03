@@ -9,7 +9,7 @@
 #      \/_/    \/_/
 # 
 #   pputl Preprocessor Utilities
-#   Copyright (C) 2020 Justin Collier <m@jpcx.dev>
+#   Copyright (C) 2020, 2021 Justin Collier <m@jpcx.dev>
 # 
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 #   - - - - - - - - - - - - -    configuration     - - - - - - - - - - - - -   #
 
-CXXFLAGS += -Iinclude -Itest -Ilibs/cctest -std=c++20
+CXXFLAGS += -Iinclude -Itest/src -Itest/libs -std=c++20
 
 # set prefix to /usr/local by default
 ifeq ($(PREFIX),)
@@ -43,8 +43,8 @@ PPUTL_TUPLE_HEADERS = ${shell find include/pputl/tuple -maxdepth 1 -type f -name
 PPUTL_HEADERS       = ${shell find include/pputl       -maxdepth 1 -type f -name "*.h"}
 PPUTL_ALL_HEADERS   = ${PPUTL_GEN_HEADERS} ${PPUTL_JOIN_HEADERS} ${PPUTL_TUPLE_HEADERS} ${PPUTL_HEADERS}
 
-TEST_SOURCES = ${shell find test -type f -name "*.cc"}
-TEST_OBJECTS = $(patsubst test/%.cc, .build/%.o, ${TEST_SOURCES})
+TEST_SOURCES = ${shell find test/src -type f -name "*.cc"}
+TEST_OBJECTS = $(patsubst test/src/%.cc, .build/%.o, ${TEST_SOURCES})
 
 #   - - - - - - - - - - - - - - -    phony   - - - - - - - - - - - - - - - -   #
 
@@ -84,10 +84,10 @@ ${TEST_OBJECTS}: | .build .build/pputl .build/pputl/gen .build/pputl/join .build
 .build/pputl/tuple:
 	@mkdir -p $@
 
-.build/%.o: test/%.cc
+.build/%.o: test/src/%.cc
 	${CXX} ${CXXFLAGS} -MD -MP -c $< -o $@
 
-.build/main.o: test/main.cc
+.build/main.o: test/src/main.cc
 	${CXX} ${CXXFLAGS} -MD -MP -c $< -o $@
 
 testpputl: ${TEST_OBJECTS}

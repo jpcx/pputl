@@ -15,7 +15,7 @@
 #//     \/_/    \/_/
 #//
 #//  pputl Preprocessor Utilities
-#//  Copyright (C) 2020 Justin Collier <m@jpcx.dev>
+#//  Copyright (C) 2020, 2021 Justin Collier <m@jpcx.dev>
 #//
 #//	   This program is free software: you can redistribute it and/or modify
 #//	   it under the terms of the GNU General Public License as published by
@@ -302,7 +302,7 @@
 #define PPUTL_DETAIL_CHOOSE_253(...) PPUTL_DETAIL_CHOOSE_253_X(__VA_ARGS__)
 #define PPUTL_DETAIL_CHOOSE_254(...) PPUTL_DETAIL_CHOOSE_254_X(__VA_ARGS__)
 #define PPUTL_DETAIL_CHOOSE_255(...) PPUTL_DETAIL_CHOOSE_255_X(__VA_ARGS__)
-
+#
 #define PPUTL_DETAIL_CHOOSE_0_X(_, ...) _
 #define PPUTL_DETAIL_CHOOSE_1_X(_, ...) PPUTL_DETAIL_CHOOSE_0_X(__VA_ARGS__)
 #define PPUTL_DETAIL_CHOOSE_2_X(_, ...) PPUTL_DETAIL_CHOOSE_1_X(__VA_ARGS__)
