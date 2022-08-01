@@ -25,21 +25,41 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.   # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-CXX       ?= g++
-CXXFLAGS  += -std=c++20
-TEST_SRC   = tests.cc
-MAKEFLAGS += --no-print-directory
+CXX      ?= g++
+CXXFLAGS += -std=c++20 -I.
+RM       ?= rm -f
+MKDIR    ?= mkdir
+BIN      ?= bin
+SRCS     += $(shell find . -type f -name "*.cc")
+OBJS      = $(patsubst ./%.cc, .build/%.o, $(SRCS))
+DEPS      = $(patsubst %.o, %.d, $(OBJS))
 
-all: codegen
+all: $(BIN)
 
-test: $(TEST_SRC)
-	$(CXX) -c $(CXXFLAGS) -o /dev/null $<
-
-codegen:
-	$(MAKE) run -C codegen
-	$(MAKE) test
+run: $(BIN)
+	./$(BIN)
 
 clean:
-	$(MAKE) clean -C codegen
+	$(RM) $(BIN)
+	$(RM) .depend
+	$(RM) -r .build
 
-.PHONY: all test codegen clean
+.build:
+	$(MKDIR) .build
+
+.build/%.o: %.cc
+	$(MKDIR) -p $(shell dirname $@)
+	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
+
+%.d: %.o
+	@find .build/ -type f -name "*.d" -exec cat > .depend {} +
+
+$(BIN): $(OBJS) | $(DEPS)
+	$(CXX) $(CXXFLAGS) -o $(BIN) $^
+
+.depend:
+	@touch .depend
+
+include .depend
+
+.PHONY: all clean

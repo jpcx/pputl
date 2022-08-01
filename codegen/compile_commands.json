@@ -1,0 +1,44 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-I.",
+      "-c",
+      "-o",
+      ".build/main.o",
+      "main.cc"
+    ],
+    "directory": "/home/user/dev/pputl/codegen",
+    "file": "/home/user/dev/pputl/codegen/main.cc",
+    "output": "/home/user/dev/pputl/codegen/.build/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-I.",
+      "-c",
+      "-o",
+      ".build/codegen.o",
+      "codegen.cc"
+    ],
+    "directory": "/home/user/dev/pputl/codegen",
+    "file": "/home/user/dev/pputl/codegen/codegen.cc",
+    "output": "/home/user/dev/pputl/codegen/.build/codegen.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-I.",
+      "-c",
+      "-o",
+      ".build/config/uint_max.o",
+      "config/uint_max.cc"
+    ],
+    "directory": "/home/user/dev/pputl/codegen",
+    "file": "/home/user/dev/pputl/codegen/config/uint_max.cc",
+    "output": "/home/user/dev/pputl/codegen/.build/config/uint_max.o"
+  }
+]
