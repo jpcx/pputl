@@ -1,3 +1,4 @@
+#pragma once
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,24 +26,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
+#include "codegen.h"
 #include "config.h"
+#include "lang.h"
+#include "meta.h"
+#include "numeric.h"
+#include "type.h"
 
 namespace api {
 
-using namespace codegen;
+inline codegen::category<"control"> control;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
-});
+extern codegen::def<"if(...: b: bool, t: tup, f: tup) -> b ? ...t : ...f"> const&             if_;
+extern codegen::def<"switch(...: case: uint, cases: tup...) -<4+2n>-> ...cases[case]"> const& switch_;
+
+NIFTY_DECL(if_);
+NIFTY_DECL(switch_);
 
 } // namespace api

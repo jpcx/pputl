@@ -1,3 +1,4 @@
+#pragma once
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,24 +26,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
+#include "codegen.h"
 #include "config.h"
+#include "lang.h"
+#include "type.h"
 
 namespace api {
 
-using namespace codegen;
+inline codegen::category<"meta"> meta;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
-});
+extern codegen::def<"lp -> <left parens>"> const& lp;
+extern codegen::def<"rp -> <left parens>"> const& rp;
+
+std::string                                                                    xct_expected(unsigned n);
+extern codegen::def<"xct -> <xct expr>"> const&                                xct;
+extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
+
+NIFTY_DECL(lp);
+NIFTY_DECL(rp);
+namespace detail {
+extern codegen::def<>& xct_a;
+extern codegen::def<>& xct_b;
+NIFTY_DECL(xct_a);
+NIFTY_DECL(xct_b);
+} // namespace detail
+NIFTY_DECL(xct);
+NIFTY_DECL(x);
 
 } // namespace api

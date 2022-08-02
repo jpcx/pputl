@@ -44,6 +44,8 @@ slice(std::string const& s, int end_ofs) {
 std::string
 slice(std::string const& s, int begin_ofs, int end_ofs) {
   std::string res{};
+  if (begin_ofs < 0)
+    begin_ofs = s.size() + begin_ofs;
   res.resize(s.size() + end_ofs - begin_ofs);
   std::ranges::copy(std::next(s.begin(), begin_ofs), std::prev(s.end(), -end_ofs), res.begin());
   return res;
@@ -723,7 +725,9 @@ static_assert(test_signature<                  //
 struct def_base::instance*
 def_base::get_instance() {
   /// the empty instance to be returned on macro default constructions.
-  static struct instance default_instance { .context = {}, .id = {}, .name = {}, .source_loc = {}, };
+  static struct instance default_instance {
+    .context = {}, .id = {}, .category = {}, .name = {}, .source_loc = {},
+  };
   return &default_instance;
 }
 
@@ -731,8 +735,14 @@ struct def_base::instance*
 def_base::get_instance(std::string const& name, detail::source_location const& loc) {
   // construct id
   std::string id{};
-  for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it)
-    id += (*it)->name + "_";
+  for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it) {
+    // simplify expansion layering
+    static std::regex xx{"[xX]+", std::regex_constants::optimize};
+    if (std::regex_match((*it)->name, xx) and std::regex_match(name, xx))
+      id += (*it)->name;
+    else
+      id += (*it)->name + "_";
+  }
   id += name;
 
   // apply naming scheme
@@ -761,17 +771,16 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
     });
     if (ins_it == _instances.end())
       throw std::logic_error{"cannot find instance " + _exec_stack.back()->id + " in the instances list"};
-    ins_it           = std::next(ins_it);
-    // set category to parent category
-    ins_it->category = _exec_stack.back()->category;
+    ins_it = std::next(ins_it);
   } else {
     ins_it = _instances.end();
   }
 
   // insert after parent (if any), and return
-  return &*_instances.insert(ins_it, (struct instance){
+  return &*_instances.insert(ins_it, instance{
                                          .context    = _exec_stack,
                                          .id         = id,
+                                         .category   = _cur_category,
                                          .name       = name,
                                          .source_loc = loc,
                                      });
@@ -988,19 +997,6 @@ tests::expected::operator=(example_tag const& expected) const {
 tests::expected
 tests::operator<<(std::string const& actual) const {
   return expected{actual};
-}
-
-class category const&
-category::operator=(std::string const& name) const {
-  if (def_base::_exec_stack.empty())
-    throw std::runtime_error{"cannot use category outside of a macro body"};
-  if (def_base::_exec_stack.size() > 1)
-    throw std::runtime_error{"cannot set a category in a child def"};
-  if (name.empty())
-    throw std::runtime_error{"cannot define an empty category."};
-  def_base::_exec_stack.back()->category = name;
-  def_base::_defined_categories.push_back(name);
-  return *this;
 }
 
 void

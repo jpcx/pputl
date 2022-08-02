@@ -1,3 +1,4 @@
+#pragma once
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,24 +26,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
+#include "codegen.h"
 #include "config.h"
+#include "type.h"
 
 namespace api {
 
-using namespace codegen;
+inline codegen::category<"numeric"> numeric;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
-});
+extern codegen::def<"inc(...: n: uint) -> uint{n+1}"> const&  inc;
+extern codegen::def<"dec(...: n: uint) -> uint{n-1}"> const&  dec;
+extern codegen::def<"eqz(...: n: uint) -> uint{n==0}"> const& eqz;
+extern codegen::def<"nez(...: n: uint) -> uint{n!=0}"> const& nez;
+
+NIFTY_DECL(inc);
+NIFTY_DECL(dec);
+NIFTY_DECL(eqz);
+NIFTY_DECL(nez);
 
 } // namespace api

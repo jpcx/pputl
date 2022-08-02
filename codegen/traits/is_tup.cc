@@ -25,24 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
+  docs << "detects if args is a tuple.";
+
+  tests << is_tup()                 = "0" >> docs;
+  tests << is_tup("1, 2")           = "0" >> docs;
+  tests << is_tup("()")             = "1" >> docs;
+  tests << is_tup("(1, 2)")         = "1" >> docs;
+  tests << is_tup("(), ()")         = "0";
+  tests << is_tup(esc + "(())")     = "1";
+  tests << is_tup(esc + "((1, 2))") = "1";
+  tests << is_tup(", ")             = "0";
+  tests << is_tup(", , ")           = "0";
+  tests << is_tup("a, ")            = "0";
+  tests << is_tup("a, , ")          = "0";
+  tests << is_tup(", a")            = "0";
+  tests << is_tup(", a, ")          = "0";
+  tests << is_tup(", , a")          = "0";
+  tests << is_tup("(, )")           = "1";
+  tests << is_tup("(, , )")         = "1";
+  tests << is_tup("(a, )")          = "1";
+  tests << is_tup("(a, , )")        = "1";
+  tests << is_tup("(, a)")          = "1";
+  tests << is_tup("(, a, )")        = "1";
+  tests << is_tup("(, , a)")        = "1";
+
+  return is_empty(eat + " " + args);
 });
 
 } // namespace api

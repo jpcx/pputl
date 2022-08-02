@@ -1,3 +1,4 @@
+#pragma once
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,24 +26,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
+#include "codegen.h"
 #include "config.h"
 
 namespace api {
 
-using namespace codegen;
+inline codegen::category<"lang"> lang;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
-});
+extern codegen::def<"eat(...) -> <nothing>"> const&                      eat;
+extern codegen::def<"esc(...: args: any...) -> ...args"> const&          esc;
+extern codegen::def<"str(...: args: any...) -> #...args"> const&         str;
+extern codegen::def<"cat(...: a: any, b: any) -> a##b"> const&           cat;
+extern codegen::def<"first(...: _: any, args: any...) -> a"> const&      first;
+extern codegen::def<"rest(...: _: any, args: any...) -> ...args"> const& rest;
+
+NIFTY_DECL(eat);
+NIFTY_DECL(esc);
+NIFTY_DECL(str);
+NIFTY_DECL(cat);
+NIFTY_DECL(first);
+NIFTY_DECL(rest);
 
 } // namespace api

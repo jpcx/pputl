@@ -25,24 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(is_sizey) is_sizey = NIFTY_DEF(is_sizey, [&](va) {
+  docs << "detects if args is non-empty.";
+
+  tests << is_sizey("")         = "0" >> docs;
+  tests << is_sizey("foo")      = "1" >> docs;
+  tests << is_sizey("foo, bar") = "1" >> docs;
+  tests << is_sizey(esc())      = "0" >> docs;
+  tests << is_sizey(", ")       = "1";
+  tests << is_sizey(", , ")     = "1";
+  tests << is_sizey("a, ")      = "1";
+  tests << is_sizey("a, , ")    = "1";
+  tests << is_sizey(", a")      = "1";
+  tests << is_sizey(", a, ")    = "1";
+  tests << is_sizey(", , a")    = "1";
+
+  def<"o"> o = [&] {
+    return "0";
+  };
+
+  def<"o1">{} = [&] {
+    return "1";
+  };
+
+  return pp::cat(o, pp::va_opt("1"));
 });
 
 } // namespace api

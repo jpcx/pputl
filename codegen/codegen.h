@@ -149,10 +149,8 @@ constexpr char const project_header[]{
     "//    GUIDELINES                                                              //\n"
     "//    ----------                                                              //\n"
     "//                                                                            //\n"
-    "//    Most API functions are chainable such that the outputs of one may be    //\n"
-    "//    used as inputs to another.  Unless stated otherwise, non-nullary API    //\n"
-    "//    functions are fully variadic  and separate inputs during the primary    //\n"
-    "//    expansion.                                                              //\n"
+    "//    Non-nullary API functions are fully variadic and chainable such that    //\n"
+    "//    the outputs of one may be used as inputs to another.                    //\n"
     "//                                                                            //\n"
     "//    Tuples are used only when necessary;  most functions that operate on    //\n"
     "//    data ranges both input and output a variadic argument list. Creating    //\n"
@@ -272,6 +270,62 @@ template<std::unsigned_integral Int>
 [[nodiscard]] std::vector<Int> prime_factors(Int n);
 template<std::unsigned_integral Int>
 [[nodiscard]] inline Int largest_pow2_up_to(Int n);
+
+template<class T>
+using storage = std::aligned_storage_t<sizeof(std::remove_cvref_t<T>), alignof(std::remove_cvref_t<T>)>;
+
+template<class T>
+class nifty {
+ public:
+  using value_type = std::remove_cvref_t<T>;
+
+ private:
+  unsigned            _refct{0};
+  storage<value_type> _data{};
+
+ public:
+  [[nodiscard]] constexpr operator value_type const&() const noexcept {
+    return reinterpret_cast<value_type const&>(_data);
+  }
+
+  [[nodiscard]] constexpr
+  operator value_type&() noexcept {
+    return reinterpret_cast<value_type&>(_data);
+  }
+
+  template<class... Args>
+    requires(std::constructible_from<value_type, Args...>)
+  void
+  ref(Args&&... args) noexcept {
+    if (not _refct++)
+      new (&_data) value_type{std::forward<Args>(args)...};
+  }
+
+  void
+  unref() noexcept {
+    if (not --_refct)
+      reinterpret_cast<value_type&>(_data).~value_type();
+  }
+};
+
+#define NIFTY_DECL(extern_ref_name)                                                                \
+  extern codegen::utl::nifty<decltype(extern_ref_name)> internal_nifty##extern_ref_name##storage_; \
+  static struct internal_nifty##extern_ref_name##decl_ {                                           \
+    internal_nifty##extern_ref_name##decl_();                                                      \
+    ~internal_nifty##extern_ref_name##decl_();                                                     \
+  } internal_nifty##extern_ref_name##decl_
+
+#define NIFTY_DEF(extern_ref_name, ...)                                                       \
+  internal_nifty##extern_ref_name##storage_;                                                  \
+  codegen::utl::nifty<decltype(extern_ref_name)> internal_nifty##extern_ref_name##storage_{}; \
+  internal_nifty##extern_ref_name##decl_::internal_nifty##extern_ref_name##decl_() {          \
+    internal_nifty##extern_ref_name##storage_.ref(__VA_ARGS__);                               \
+  }                                                                                           \
+  internal_nifty##extern_ref_name##decl_::~internal_nifty##extern_ref_name##decl_() {         \
+    internal_nifty##extern_ref_name##storage_.unref();                                        \
+  }                                                                                           \
+  static std::nullptr_t internal_nifty##extern_ref_name##decl_record_ = nullptr
+
 } // namespace utl
 
 [[nodiscard]] std::string apiname(std::string const& short_name);  // uses conf::api_prefix
@@ -293,6 +347,8 @@ template<utl::string_representable... Args>
 [[nodiscard]] std::string cat(Args&&... args);
 template<utl::string_representable... Args>
 [[nodiscard]] std::string tup(Args&&... args);
+template<utl::string_representable... Args>
+[[nodiscard]] std::string str(Args&&... args);
 template<utl::string_representable Fn, utl::string_representable... Args>
 [[nodiscard]] std::string call(Fn&& fn, Args&&... args);
 
@@ -511,16 +567,16 @@ struct opt_literal {
 // [[ warning: does not own char data ]]
 //
 // examples:
-//                            name,  params,     docparams, xout, docreturn
-//   foo                      "foo", "",         "",        ""    ""
-//   foo -> bar               "foo", "",         "",        ""    "bar"
-//   foo()                    "foo", "",         "",        ""    ""
-//   foo()         -> bar     "foo", "",         "",        ""    "bar"
-//   foo(bar)      -> baz     "foo", "bar",      "",        ""    "baz"
-//   foo(bar, baz) -> qux     "foo", "bar, baz", "",        ""    "qux"
-//   foo(...: bar) -> baz     "foo", "...",      "bar",     ""    "baz"
-//   foo(bar: baz) -> qux     "foo", "bar",      "baz",     ""    "qux"
-//   foo(bar: baz) -<3>-> qux "foo", "bar",      "baz",     "3"   "qux"
+//                            name,  params,     docparams, xct, docreturn
+//   foo                      "foo", "",         "",        ""   ""
+//   foo -> bar               "foo", "",         "",        ""   "bar"
+//   foo()                    "foo", "",         "",        ""   ""
+//   foo()         -> bar     "foo", "",         "",        ""   "bar"
+//   foo(bar)      -> baz     "foo", "bar",      "",        ""   "baz"
+//   foo(bar, baz) -> qux     "foo", "bar, baz", "",        ""   "qux"
+//   foo(...: bar) -> baz     "foo", "...",      "bar",     ""   "baz"
+//   foo(bar: baz) -> qux     "foo", "bar",      "baz",     ""   "qux"
+//   foo(bar: baz) -<3>-> qux "foo", "bar",      "baz",     "3"  "qux"
 struct signature_literal {
   using span_literal = detail::span_literal<char const>;
   template<class T>
@@ -797,6 +853,9 @@ class def_base {
   /// all defined categories sorted by their position in the dependency graph.
   static inline std::vector<std::string> _defined_categories{};
 
+  /// the current feature category. set by a codegen::category definition.
+  static inline std::string _cur_category{};
+
   struct instance {
     /// a copy of the exec_stack at the time of creation.
     /// ensures that no two macros defined in different places have the same ID.
@@ -806,16 +865,16 @@ class def_base {
     /// if this instance is a child, uses implname. else, uses apiname.
     /// no two instances may share the same id.
     std::string const id;
+    //
+    /// category of the macro.
+    /// set by codegen::begin_category.
+    std::string const category;
 
     /// name of the macro.
     std::string const name;
 
     /// the line number of the definition used for documentation and errors.
     detail::source_location const source_loc;
-
-    /// category of the macro.
-    /// assigned by codegen::category or by its parent.
-    std::string category;
 
     /// macro parameters, if this is a function.
     std::optional<std::string> params{};
@@ -868,6 +927,8 @@ class def_base {
  public:
   friend class tests;
   friend class docs;
+  template<detail::string_literal Name>
+    requires(not Name.empty())
   friend class category;
   friend class arg;
   friend class va;
@@ -903,11 +964,11 @@ class def_base {
 
   /// construct a call string using this id and any string-representable args.
   template<utl::string_representable... Args>
-  [[nodiscard]] std::string operator()(Args&&... args);
+  [[nodiscard]] std::string operator()(Args&&... args) const;
 
   /// construct a call string using this id and any string-representable args.
   template<detail::forward_iterable_for<std::string const> Args>
-  [[nodiscard]] std::string operator()(Args&& args);
+  [[nodiscard]] std::string operator()(Args&& args) const;
 };
 
 template<std::convertible_to<std::string> T>
@@ -959,12 +1020,16 @@ inline class tests {
 ///   tests << "actual" = "expected" >> docs; // both tested and documented
 [[nodiscard]] tests::example_tag operator>>(std::string const& expected, class docs const&) noexcept;
 
-/// category setter for use inside def body.
-/// may only be set once per execution.
-inline class category {
+/// sets the category for all newly constructed defs.
+template<detail::string_literal Name>
+  requires(not Name.empty())
+class category {
  public:
-  category const& operator=(std::string const& name) const;
-} category{};
+  category() {
+    def_base::_cur_category = Name.c_str();
+    def_base::_defined_categories.push_back(def_base::_cur_category);
+  }
+};
 
 class arg {
   std::string         _value;

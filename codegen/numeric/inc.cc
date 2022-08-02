@@ -25,24 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "numeric.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
+  docs << "uint increment w/ overflow.";
+
+  tests << inc(0)                  = "1" >> docs;
+  tests << inc(1)                  = "2" >> docs;
+  tests << inc(2)                  = "3";
+  tests << inc(conf::uint_max)     = "0" >> docs;
+  tests << inc(conf::uint_max - 1) = uint_max_s;
+
+  std::array<def<>, conf::uint_max + 1> n{};
+
+  for (size_t i = 0; i < n.size() - 1; ++i) {
+    n[i] = def{"n_" + utl::to_string(i)} = [&] {
+      return utl::to_string(i + 1);
+    };
+  }
+
+  n[conf::uint_max] = def{"n_" + uint_max_s} = [&] {
+    return "0";
+  };
+
+  return def<"x(n)">{[&](arg n_) {
+    return def<"x(n)">{[&](arg n_) {
+      return pp::cat(utl::slice(n[0], -1), n_);
+    }}(n_);
+  }}(uint(args));
 });
 
 } // namespace api

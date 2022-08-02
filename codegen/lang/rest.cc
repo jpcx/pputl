@@ -25,24 +25,27 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(rest) rest = NIFTY_DEF(rest, [&](va args) {
+  docs << "returns all arguments except for the first.";
+
+  tests << rest("")              = "" >> docs;
+  tests << rest(", ")            = "" >> docs;
+  tests << rest("a")             = "" >> docs;
+  tests << rest("a, b")          = "b" >> docs;
+  tests << rest("a, b, c")       = "b, c" >> docs;
+  tests << rest(rest("a, b, c")) = "c" >> docs;
+  tests << rest("a, , ")         = "," >> docs;
+  tests << rest("a, b, , ")      = "b, ," >> docs;
+
+  return def<"x(_, ...)">{[&](arg, va args) {
+    return args;
+  }}(args);
 });
 
 } // namespace api

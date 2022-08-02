@@ -25,22 +25,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "uint_max.h"
+#include "config.h"
 
 namespace api {
 
 using namespace codegen;
 
-uint_max::uint_max() {
-  def& uint_max = *this;
-  using codegen::def;
-  uint_max = [&] {
-    category = "config";
-    docs << "the maximum value of a pputl unsigned int."
-         << "upper bound on the number of args for many pputl functions."
-         << "see the readme code generation section to configure.";
-    return value;
-  };
-}
+decltype(uint_max) uint_max = NIFTY_DEF(uint_max, [&] {
+  docs << "the maximum value of a pputl unsigned int."
+       << "upper bound on the number of args for many pputl functions."
+       << "see the readme code generation section to configure.";
+  return uint_max_s;
+});
 
 } // namespace api

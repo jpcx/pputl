@@ -116,6 +116,12 @@ tup(Args&& args) {
   return "(" + utl::cat(std::forward<Args>(args), ", ") + ")";
 }
 
+template<detail::forward_iterable_for<std::string const> Args>
+[[nodiscard]] std::string
+str(Args&& args) {
+  return "\"" + utl::cat(std::forward<Args>(args), ", ") + "\"";
+}
+
 template<std::convertible_to<std::string> Fn, detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string
 call(Fn&& fn, Args&& args) {
@@ -126,7 +132,7 @@ template<utl::string_representable... Args>
 [[nodiscard]] std::string
 va_opt(Args&&... args) {
   return va_opt(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
-};
+}
 
 template<utl::string_representable... Args>
 [[nodiscard]] std::string
@@ -138,6 +144,12 @@ template<utl::string_representable... Args>
 [[nodiscard]] std::string
 tup(Args&&... args) {
   return tup(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+}
+
+template<utl::string_representable... Args>
+[[nodiscard]] std::string
+str(Args&&... args) {
+  return str(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
 }
 
 template<utl::string_representable Fn, utl::string_representable... Args>
@@ -263,7 +275,13 @@ def_base::define(Body&& body) {
 
   if (not _instance->description.empty() or not _instance->examples.empty()) {
     def += "\n";
-    def += "/// [" + _instance->category + "." + _instance->name + "]\n";
+
+    if (_exec_stack.empty()) { // only put category for top-level macros
+      auto catstr = "[" + _instance->category + "." + _instance->name + "]";
+      def += "/// " + catstr + "\n";
+      def += "/// " + utl::cat(std::vector<std::string>(catstr.size(), "-")) + "\n";
+    }
+
     if (not _instance->description.empty())
       def += utl::prefix_lines("/// ", _instance->description) + "\n";
     if (not _instance->examples.empty()) {
@@ -326,7 +344,7 @@ def_base::operator=(Body&& body) noexcept {
 
 template<utl::string_representable... Args>
 [[nodiscard]] std::string
-def_base::operator()(Args&&... args) {
+def_base::operator()(Args&&... args) const {
   if (not _instance->params)
     throw std::runtime_error{"cannot call a non-function macro " + _instance->id};
   return pp::call(*this, std::forward<Args>(args)...);
@@ -334,7 +352,7 @@ def_base::operator()(Args&&... args) {
 
 template<detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string
-def_base::operator()(Args&& args) {
+def_base::operator()(Args&& args) const {
   if (not _instance->params)
     throw std::runtime_error{"cannot call a non-function macro " + _instance->id};
   return pp::call(*this, std::forward<Args>(args));

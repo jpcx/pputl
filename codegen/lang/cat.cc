@@ -25,24 +25,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(cat) cat = NIFTY_DEF(cat, [&](va args) {
+  docs << "concatenates two args after an expansion."
+       << "args must be compatible with the ## operator.";
+
+  tests << cat("foo", "bar")      = "foobar" >> docs;
+  tests << cat("foo", eat("bar")) = "foo" >> docs;
+
+  return def<"x(a, b)">{[&](arg a, arg b) {
+    return pp::cat(a, b);
+  }}(args);
 });
 
 } // namespace api

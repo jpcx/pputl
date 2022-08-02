@@ -25,20 +25,15 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "eat.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-eat::eat() {
-  def& eat = *this;
-  using codegen::def;
-  eat = [&](va) {
-    category = "lang";
-    docs << "eats arguments; return nothing.";
-    return "";
-  };
-}
+decltype(eat) eat = NIFTY_DEF(eat, [&](va) {
+  docs << "eats arguments; return nothing.";
+  return "";
+});
 
 } // namespace api

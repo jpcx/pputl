@@ -25,24 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "numeric.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
+  docs << "uint decrement w/ underflow.";
+
+  tests << dec(0)                  = uint_max_s >> docs;
+  tests << dec(1)                  = "0" >> docs;
+  tests << dec(2)                  = "1";
+  tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1) >> docs;
+  tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
+
+  std::array<def<>, conf::uint_max + 1> n{};
+
+  n[0] = def{"n_0"} = [&] {
+    return uint_max_s;
+  };
+
+  for (size_t i = 1; i < n.size(); ++i) {
+    n[i] = def{"n_" + utl::to_string(i)} = [&] {
+      return utl::to_string(i - 1);
+    };
+  }
+
+  return def<"x(n)">{[&](arg n_) {
+    return def<"x(n)">{[&](arg n_) {
+      return pp::cat(utl::slice(n[0], -1), n_);
+    }}(n_);
+  }}(uint(args));
 });
 
 } // namespace api

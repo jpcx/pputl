@@ -25,24 +25,48 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "numeric.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
+  docs << "detects if uint n is not zero.";
+
+  tests << nez("0")             = "0" >> docs;
+  tests << nez("1")             = "1" >> docs;
+  tests << nez("2")             = "1" >> docs;
+  tests << nez(uint_max_s)      = "1" >> docs;
+  tests << nez(inc(uint_max_s)) = "0" >> docs;
+
+  def<"0"> _0 = [&]() {
+    return "";
+  };
+
+  def<"fail"> fail = [&] {
+    return "0";
+  };
+
+  def<"no_fail"> no_fail = [&] {
+    return "1";
+  };
+
+  def<"res(...)"> res = [&](va args) {
+    std::string const prefix    = utl::slice(fail, -4);
+    std::string const fail_s    = utl::slice(fail, prefix.size(), 0);
+    std::string const no_fail_s = utl::slice(no_fail, prefix.size(), 0);
+
+    return pp::cat(prefix,
+                   pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
+                   fail_s);
+  };
+
+  return def<"x(n)">{[&](arg n) {
+    return def<"x(n)">{[&](arg n) {
+      return res(pp::cat(utl::slice(_0, -1), n));
+    }}(n);
+  }}(uint(args));
 });
 
 } // namespace api

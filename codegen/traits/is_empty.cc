@@ -25,24 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(is_empty) is_empty = NIFTY_DEF(is_empty, [&](va) {
+  docs << "detects if args has no elements.";
+
+  tests << is_empty("")         = "1" >> docs;
+  tests << is_empty("foo")      = "0" >> docs;
+  tests << is_empty("foo, bar") = "0" >> docs;
+  tests << is_empty(esc())      = "1" >> docs;
+  tests << is_empty(", ")       = "0";
+  tests << is_empty(", , ")     = "0";
+  tests << is_empty("a, ")      = "0";
+  tests << is_empty("a, , ")    = "0";
+  tests << is_empty(", a")      = "0";
+  tests << is_empty(", a, ")    = "0";
+  tests << is_empty(", , a")    = "0";
+
+  def<"o"> o = [] {
+    return "1";
+  };
+
+  def<"o0">{} = [] {
+    return "0";
+  };
+
+  return pp::cat(o, pp::va_opt("0"));
 });
 
 } // namespace api

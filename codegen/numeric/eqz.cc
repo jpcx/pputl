@@ -25,24 +25,48 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "numeric.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
+  docs << "detects if uint n is zero.";
+
+  tests << eqz("0")             = "1" >> docs;
+  tests << eqz("1")             = "0" >> docs;
+  tests << eqz("2")             = "0" >> docs;
+  tests << eqz(uint_max_s)      = "0" >> docs;
+  tests << eqz(inc(uint_max_s)) = "1" >> docs;
+
+  def<"0"> _0 = [&]() {
+    return "";
+  };
+
+  def<"pass"> pass = [&] {
+    return "1";
+  };
+
+  def<"no_pass"> no_pass = [&] {
+    return "0";
+  };
+
+  def<"res(...)"> res = [&](va args) {
+    std::string const prefix    = utl::slice(pass, -4);
+    std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
+    std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);
+
+    return pp::cat(prefix,
+                   pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
+                   pass_s);
+  };
+
+  return def<"x(n)">{[&](arg n) {
+    return def<"x(n)">{[&](arg n) {
+      return res(pp::cat(utl::slice(_0, -1), n));
+    }}(n);
+  }}(uint(args));
 });
 
 } // namespace api

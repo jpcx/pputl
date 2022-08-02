@@ -25,24 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "control.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
+  docs << "conditionally expands items based on a boolean.";
+
+  tests << if_(1, "(t), ()")     = "t" >> docs;
+  tests << if_(0, "(t), ()")     = "" >> docs;
+  tests << if_(1, "(t), (f)")    = "t" >> docs;
+  tests << if_(0, "(t), (f)")    = "f" >> docs;
+  tests << if_(1, "(a), (b, c)") = "a" >> docs;
+  tests << if_(0, "(a), (b, c)") = "b, c" >> docs;
+
+  def<"oo_0(b, t, f)"> oo_0 = [&](arg, arg, arg f) {
+    docs << "second parentheses; false result";
+    return def<"x(f)">{[&](arg f) {
+      return esc + " " + f;
+    }}(tup(f));
+  };
+
+  def<"oo_1(b, t, f)">{} = [&](arg, arg t, arg) {
+    docs << "second parentheses; true result";
+    return def<"x(t)">{[&](arg t) {
+      return esc + " " + t;
+    }}(tup(t));
+  };
+
+  def<"o(b, ...)"> o = [&](arg b, va) {
+    docs << "first parentheses; chooses next function based on b";
+    return def<"x(b)">{[&](arg b) {
+      return def<"x(b)">{[&](arg b) {
+        return pp::cat(utl::slice(oo_0, -1), b);
+      }}(b);
+    }}(bool_(b));
+  };
+
+  return pp::call(o(args), args);
 });
 
 } // namespace api

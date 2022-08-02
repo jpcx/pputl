@@ -25,24 +25,29 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-#include "config.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
+decltype(str) str = NIFTY_DEF(str, [&](va args) {
+  docs << "stringizes args after an expansion.";
+
+  tests << str()           = "\"\"" >> docs;
+  tests << str("foo")      = "\"foo\"";
+  tests << str("foo, bar") = "\"foo, bar\"" >> docs;
+  tests << str(", ")       = "\",\"";
+  tests << str(", , ")     = "\", ,\"";
+  tests << str("a, ")      = "\"a,\"";
+  tests << str("a, , ")    = "\"a, ,\"";
+  tests << str(", a")      = "\", a\"";
+  tests << str(", a, ")    = "\", a,\"";
+  tests << str(", , a")    = "\", , a\"";
+
+  return def<"x(...)">{[&](va args) {
+    return "#" + args;
+  }}(args);
 });
 
 } // namespace api

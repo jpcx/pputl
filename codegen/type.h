@@ -1,3 +1,4 @@
+#pragma once
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,24 +26,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
+#include "codegen.h"
 #include "config.h"
+#include "lang.h"
 
 namespace api {
 
-using namespace codegen;
+inline codegen::category<"type"> type;
 
-decltype(build) build = NIFTY_DEF(build, [&] {
-  docs << "the build number of this pputl release (ISO8601).";
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
-  return std::regex_replace(ss.str(), repl, "");
-});
+extern codegen::def<"tup(...: t: any...) -> tup{t}"> const&   tup;
+extern codegen::def<"bool(...: b: any...) -> bool{b}"> const& bool_;
+extern codegen::def<"uint(...: n: any...) -> uint{n}"> const& uint;
+
+NIFTY_DECL(tup);
+NIFTY_DECL(bool_);
+NIFTY_DECL(uint);
 
 } // namespace api

@@ -26,7 +26,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 CXX      ?= g++
-CXXFLAGS += -std=c++20 -I.
+CXXFLAGS += -std=c++20 -I. -pedantic
 RM       ?= rm -f
 MKDIR    ?= mkdir
 BIN      ?= bin
@@ -45,10 +45,10 @@ clean:
 	$(RM) -r .build
 
 .build:
-	$(MKDIR) .build
+	@$(MKDIR) .build
 
 .build/%.o: %.cc
-	$(MKDIR) -p $(shell dirname $@)
+	@$(MKDIR) -p $(shell dirname $@)
 	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
 
 %.d: %.o
