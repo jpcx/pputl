@@ -30,16 +30,18 @@ CXXFLAGS  += -std=c++20
 TEST_SRC   = tests.cc
 MAKEFLAGS += --no-print-directory
 
-all: codegen
+all:
+	$(MAKE) -C codegen
+
+dev:
+	bear -- $(MAKE) -j24
+	$(MAKE) run -C codegen
+	$(MAKE) test
 
 test: $(TEST_SRC)
 	$(CXX) -c $(CXXFLAGS) -o /dev/null $<
 
-codegen:
-	$(MAKE) run -C codegen
-	$(MAKE) test
-
 clean:
 	$(MAKE) clean -C codegen
 
-.PHONY: all test codegen clean
+.PHONY: all dev test clean
