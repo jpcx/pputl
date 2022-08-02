@@ -1,6 +1,6 @@
 #ifndef CODEGEN_CODEGEN_TCC_INCLUDED
 #define CODEGEN_CODEGEN_TCC_INCLUDED
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -25,7 +25,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #ifndef CODEGEN_H_INCLUDED
 #  include "codegen.h"

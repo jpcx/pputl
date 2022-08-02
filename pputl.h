@@ -1,6 +1,6 @@
 #ifndef PPUTL_H_INCLUDED
 #define PPUTL_H_INCLUDED
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___                                         //
 //                         /\ \__/\_ \                                        //
 //   _____   _____   __  __\ \ ,_\//\ \                                       //
@@ -55,14 +55,13 @@
 //    See range.split and algo.reduce for useful examples of the two types    //
 //    of recursive calls supported by this library.                           //
 //                                                                            //
-//    pputl requires __VA_ARGS__ and __VA_OPT__ support (C++20) but has no    //
-//    other dependencies;  it is a single-header library with no includes.    //
-//    Any preprocessor that supports __VA_ARGS__ and __VA_OPT__  should be    //
-//    able to run pputl.                                                      //
+//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //
+//    support (which are guaranteed by C++20)  but has no dependencies and    //
+//    is single-header.                                                       //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
-//    Copy pputl.h and include. The default build uses 8-bit unsigned ints    //
+//    Copy pputl.h and include. The default build uses a 10-bit uint range    //
 //    for  arithmetic  and  comparisons.  Integers  overflow and underflow    //
 //    according to  standard unsigned rules.  Variadic argument sizes  are    //
 //    usually capped by the uint max. Modify the head of codegen/codegen.h    //
@@ -113,7 +112,7 @@
 //    pputl  is statically tested by the build system.  Run `make test` to   ///
 //    validate the library or open tests.cc in an LSP-enabled editor.       ////
 //                                                                         /////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 /// [config.build]
 /// --------------
@@ -156,7 +155,7 @@
 ///
 /// PTL_CAT(foo, bar)          // foobar
 /// PTL_CAT(foo, PTL_EAT(bar)) // foo
-#define PTL_CAT(/* a: any, b: any */...) /* -> a##b */ PPUTLCAT_X(__VA_ARGS__)
+#define PTL_CAT(/* a: any, b: any */...) /* -> a##b */ __VA_OPT__(PPUTLCAT_X(__VA_ARGS__))
 #define PPUTLCAT_X(a, b)                 a##b
 
 /// [lang.first]
@@ -167,7 +166,7 @@
 /// PTL_FIRST(, )   // <nothing>
 /// PTL_FIRST(a)    // a
 /// PTL_FIRST(a, b) // a
-#define PTL_FIRST(/* _: any, args: any... */...) /* -> a */ PPUTLFIRST_X(__VA_ARGS__)
+#define PTL_FIRST(/* _: any, args: any... */...) /* -> a */ __VA_OPT__(PPUTLFIRST_X(__VA_ARGS__))
 #define PPUTLFIRST_X(_, ...)                     _
 
 /// [lang.rest]
@@ -182,7 +181,7 @@
 /// PTL_REST(PTL_REST(a, b, c)) // c
 /// PTL_REST(a, , )             // ,
 /// PTL_REST(a, b, , )          // b, ,
-#define PTL_REST(/* _: any, args: any... */...) /* -> ...args */ PPUTLREST_X(__VA_ARGS__)
+#define PTL_REST(/* _: any, args: any... */...) /* -> ...args */ __VA_OPT__(PPUTLREST_X(__VA_ARGS__))
 #define PPUTLREST_X(_, ...)                     __VA_ARGS__
 
 /// [type.tup]
@@ -282,55 +281,100 @@
 #define PPUTLUINT_OO(_, ...)      PPUTLUINT_OO_RES(PTL_EAT _)
 #define PPUTLUINT_OO_RES(...)     PPUTLUINT_OO_##__VA_OPT__(NO_)##FAIL()
 #define PPUTLUINT_OO_NO_FAIL(...) PPUTLUINT_OOO
-#define PPUTLUINT_OO_FAIL(...)    PPUTLUINT_OOO_NO_PASS
+#define PPUTLUINT_OO_FAIL(...)    PPUTLUINT_OOO_FAIL
 
 /// third parentheses; asserts one of 0 through 35.
-#define PPUTLUINT_OOO(...)         PPUTLUINT_OOO_RES(PPUTLUINT_CHK_##__VA_ARGS__)
-#define PPUTLUINT_OOO_RES(...)     PPUTLUINT_OOO_##__VA_OPT__(NO_)##PASS()
-#define PPUTLUINT_OOO_PASS(...)    PPUTLUINT_PASS
-#define PPUTLUINT_OOO_NO_PASS(...) PPUTLUINT_FAIL
+#define PPUTLUINT_OOO(...)          PPUTLUINT_OOO_RES(PPUTLUINT_NEXT_##__VA_ARGS__)
+#define PPUTLUINT_OOO_RES(...)      PPUTLUINT_OOO_RES_X(__VA_ARGS__)
+#define PPUTLUINT_OOO_RES_X(_, ...) PPUTLUINT_OOO_##__VA_OPT__(NO_)##FAIL()
+#define PPUTLUINT_OOO_NO_FAIL(...)  PPUTLUINT_PASS
+#define PPUTLUINT_OOO_FAIL(...)     PPUTLUINT_FAIL
 
 /// fourth parentheses; returns
 #define PPUTLUINT_PASS(...) __VA_ARGS__
 #define PPUTLUINT_FAIL(...) PTL_UINT(__VA_ARGS__)
 
-/// concat existence checks
-#define PPUTLUINT_CHK_35
-#define PPUTLUINT_CHK_34
-#define PPUTLUINT_CHK_33
-#define PPUTLUINT_CHK_32
-#define PPUTLUINT_CHK_31
-#define PPUTLUINT_CHK_30
-#define PPUTLUINT_CHK_29
-#define PPUTLUINT_CHK_28
-#define PPUTLUINT_CHK_27
-#define PPUTLUINT_CHK_26
-#define PPUTLUINT_CHK_25
-#define PPUTLUINT_CHK_24
-#define PPUTLUINT_CHK_23
-#define PPUTLUINT_CHK_22
-#define PPUTLUINT_CHK_21
-#define PPUTLUINT_CHK_20
-#define PPUTLUINT_CHK_19
-#define PPUTLUINT_CHK_18
-#define PPUTLUINT_CHK_17
-#define PPUTLUINT_CHK_16
-#define PPUTLUINT_CHK_15
-#define PPUTLUINT_CHK_14
-#define PPUTLUINT_CHK_13
-#define PPUTLUINT_CHK_12
-#define PPUTLUINT_CHK_11
-#define PPUTLUINT_CHK_10
-#define PPUTLUINT_CHK_9
-#define PPUTLUINT_CHK_8
-#define PPUTLUINT_CHK_7
-#define PPUTLUINT_CHK_6
-#define PPUTLUINT_CHK_5
-#define PPUTLUINT_CHK_4
-#define PPUTLUINT_CHK_3
-#define PPUTLUINT_CHK_2
-#define PPUTLUINT_CHK_1
-#define PPUTLUINT_CHK_0
+/// uint cycle macros. verifies uint validity if cat result has two values
+#define PPUTLUINT_NEXT_35 0, .
+#define PPUTLUINT_NEXT_34 35, .
+#define PPUTLUINT_NEXT_33 34, .
+#define PPUTLUINT_NEXT_32 33, .
+#define PPUTLUINT_NEXT_31 32, .
+#define PPUTLUINT_NEXT_30 31, .
+#define PPUTLUINT_NEXT_29 30, .
+#define PPUTLUINT_NEXT_28 29, .
+#define PPUTLUINT_NEXT_27 28, .
+#define PPUTLUINT_NEXT_26 27, .
+#define PPUTLUINT_NEXT_25 26, .
+#define PPUTLUINT_NEXT_24 25, .
+#define PPUTLUINT_NEXT_23 24, .
+#define PPUTLUINT_NEXT_22 23, .
+#define PPUTLUINT_NEXT_21 22, .
+#define PPUTLUINT_NEXT_20 21, .
+#define PPUTLUINT_NEXT_19 20, .
+#define PPUTLUINT_NEXT_18 19, .
+#define PPUTLUINT_NEXT_17 18, .
+#define PPUTLUINT_NEXT_16 17, .
+#define PPUTLUINT_NEXT_15 16, .
+#define PPUTLUINT_NEXT_14 15, .
+#define PPUTLUINT_NEXT_13 14, .
+#define PPUTLUINT_NEXT_12 13, .
+#define PPUTLUINT_NEXT_11 12, .
+#define PPUTLUINT_NEXT_10 11, .
+#define PPUTLUINT_NEXT_9  10, .
+#define PPUTLUINT_NEXT_8  9, .
+#define PPUTLUINT_NEXT_7  8, .
+#define PPUTLUINT_NEXT_6  7, .
+#define PPUTLUINT_NEXT_5  6, .
+#define PPUTLUINT_NEXT_4  5, .
+#define PPUTLUINT_NEXT_3  4, .
+#define PPUTLUINT_NEXT_2  3, .
+#define PPUTLUINT_NEXT_1  2, .
+#define PPUTLUINT_NEXT_0  1, .
+#define PPUTLUINT_PREV_35 34, .
+#define PPUTLUINT_PREV_34 33, .
+#define PPUTLUINT_PREV_33 32, .
+#define PPUTLUINT_PREV_32 31, .
+#define PPUTLUINT_PREV_31 30, .
+#define PPUTLUINT_PREV_30 29, .
+#define PPUTLUINT_PREV_29 28, .
+#define PPUTLUINT_PREV_28 27, .
+#define PPUTLUINT_PREV_27 26, .
+#define PPUTLUINT_PREV_26 25, .
+#define PPUTLUINT_PREV_25 24, .
+#define PPUTLUINT_PREV_24 23, .
+#define PPUTLUINT_PREV_23 22, .
+#define PPUTLUINT_PREV_22 21, .
+#define PPUTLUINT_PREV_21 20, .
+#define PPUTLUINT_PREV_20 19, .
+#define PPUTLUINT_PREV_19 18, .
+#define PPUTLUINT_PREV_18 17, .
+#define PPUTLUINT_PREV_17 16, .
+#define PPUTLUINT_PREV_16 15, .
+#define PPUTLUINT_PREV_15 14, .
+#define PPUTLUINT_PREV_14 13, .
+#define PPUTLUINT_PREV_13 12, .
+#define PPUTLUINT_PREV_12 11, .
+#define PPUTLUINT_PREV_11 10, .
+#define PPUTLUINT_PREV_10 9, .
+#define PPUTLUINT_PREV_9  8, .
+#define PPUTLUINT_PREV_8  7, .
+#define PPUTLUINT_PREV_7  6, .
+#define PPUTLUINT_PREV_6  5, .
+#define PPUTLUINT_PREV_5  4, .
+#define PPUTLUINT_PREV_4  3, .
+#define PPUTLUINT_PREV_3  2, .
+#define PPUTLUINT_PREV_2  1, .
+#define PPUTLUINT_PREV_1  0, .
+#define PPUTLUINT_PREV_0  35, .
+
+/// full unsigned integer sequences
+#define PPUTLUINT_SEQ                                                                                       \
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, \
+      29, 30, 31, 32, 33, 34, 35
+#define PPUTLUINT_RSEQ                                                                                       \
+  35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, \
+      8, 7, 6, 5, 4, 3, 2, 1, 0
 
 /// [meta.lp]
 /// ---------
@@ -413,45 +457,8 @@
 /// PTL_INC(0)  // 1
 /// PTL_INC(1)  // 2
 /// PTL_INC(35) // 0
-#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ PPUTLINC_X(PTL_UINT(__VA_ARGS__))
-#define PPUTLINC_X(n)             PPUTLINC_XX(n)
-#define PPUTLINC_XX(n)            PPUTLINC_N_##n
-#define PPUTLINC_N_35             0
-#define PPUTLINC_N_34             35
-#define PPUTLINC_N_33             34
-#define PPUTLINC_N_32             33
-#define PPUTLINC_N_31             32
-#define PPUTLINC_N_30             31
-#define PPUTLINC_N_29             30
-#define PPUTLINC_N_28             29
-#define PPUTLINC_N_27             28
-#define PPUTLINC_N_26             27
-#define PPUTLINC_N_25             26
-#define PPUTLINC_N_24             25
-#define PPUTLINC_N_23             24
-#define PPUTLINC_N_22             23
-#define PPUTLINC_N_21             22
-#define PPUTLINC_N_20             21
-#define PPUTLINC_N_19             20
-#define PPUTLINC_N_18             19
-#define PPUTLINC_N_17             18
-#define PPUTLINC_N_16             17
-#define PPUTLINC_N_15             16
-#define PPUTLINC_N_14             15
-#define PPUTLINC_N_13             14
-#define PPUTLINC_N_12             13
-#define PPUTLINC_N_11             12
-#define PPUTLINC_N_10             11
-#define PPUTLINC_N_9              10
-#define PPUTLINC_N_8              9
-#define PPUTLINC_N_7              8
-#define PPUTLINC_N_6              7
-#define PPUTLINC_N_5              6
-#define PPUTLINC_N_4              5
-#define PPUTLINC_N_3              4
-#define PPUTLINC_N_2              3
-#define PPUTLINC_N_1              2
-#define PPUTLINC_N_0              1
+#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
+  PTL_FIRST(PTL_CAT(PPUTLUINT_NEXT_, PTL_UINT(__VA_ARGS__)))
 
 /// [numeric.dec]
 /// -------------
@@ -460,45 +467,8 @@
 /// PTL_DEC(0)  // 35
 /// PTL_DEC(1)  // 0
 /// PTL_DEC(35) // 34
-#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ PPUTLDEC_X(PTL_UINT(__VA_ARGS__))
-#define PPUTLDEC_X(n)             PPUTLDEC_XX(n)
-#define PPUTLDEC_XX(n)            PPUTLDEC_N_##n
-#define PPUTLDEC_N_35             34
-#define PPUTLDEC_N_34             33
-#define PPUTLDEC_N_33             32
-#define PPUTLDEC_N_32             31
-#define PPUTLDEC_N_31             30
-#define PPUTLDEC_N_30             29
-#define PPUTLDEC_N_29             28
-#define PPUTLDEC_N_28             27
-#define PPUTLDEC_N_27             26
-#define PPUTLDEC_N_26             25
-#define PPUTLDEC_N_25             24
-#define PPUTLDEC_N_24             23
-#define PPUTLDEC_N_23             22
-#define PPUTLDEC_N_22             21
-#define PPUTLDEC_N_21             20
-#define PPUTLDEC_N_20             19
-#define PPUTLDEC_N_19             18
-#define PPUTLDEC_N_18             17
-#define PPUTLDEC_N_17             16
-#define PPUTLDEC_N_16             15
-#define PPUTLDEC_N_15             14
-#define PPUTLDEC_N_14             13
-#define PPUTLDEC_N_13             12
-#define PPUTLDEC_N_12             11
-#define PPUTLDEC_N_11             10
-#define PPUTLDEC_N_10             9
-#define PPUTLDEC_N_9              8
-#define PPUTLDEC_N_8              7
-#define PPUTLDEC_N_7              6
-#define PPUTLDEC_N_6              5
-#define PPUTLDEC_N_5              4
-#define PPUTLDEC_N_4              3
-#define PPUTLDEC_N_3              2
-#define PPUTLDEC_N_2              1
-#define PPUTLDEC_N_1              0
-#define PPUTLDEC_N_0              35
+#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
+  PTL_FIRST(PTL_CAT(PPUTLUINT_PREV_, PTL_UINT(__VA_ARGS__)))
 
 /// [numeric.eqz]
 /// -------------
@@ -629,55 +599,28 @@
 #define PTL_IS_UINT(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_UINT_CHK_, PTL_UINT(__VA_ARGS__)))
 #define PPUTLIS_UINT_CHK_PTL_UINT(...)
 
-/// [traits.qty]
-/// ------------
-/// computes the quantity of args (size <= 35).
-/// creates an invalid uint if too large.
+/// [traits.count]
+/// --------------
+/// computes the uint quantity of args.
+/// terminates expansion with an error if too many args passed.
 ///
-/// PTL_QTY()     // 0
-/// PTL_QTY(a)    // 1
-/// PTL_QTY(a, b) // 2
-/// PTL_QTY(, )   // 2
-#define PTL_QTY(...) /* -> uint */                                                                           \
-  PTL_FIRST(PPUTLQTY_READ(__VA_ARGS__ __VA_OPT__(, ) 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, \
-                          21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
-#define PPUTLQTY_READ(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, \
-                      D, E, F, G, H, I, sz, ...)                                                             \
-  sz, PPUTLQTY_VERIFY_34(__VA_ARGS__)
-#define PPUTLQTY_VERIFY_34(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_33(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_33(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_32(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_32(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_31(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_31(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_30(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_30(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_29(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_29(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_28(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_28(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_27(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_27(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_26(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_26(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_25(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_25(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_24(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_24(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_23(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_23(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_22(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_22(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_21(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_21(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_20(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_20(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_19(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_19(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_18(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_18(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_17(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_17(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_16(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_16(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_15(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_15(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_14(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_14(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_13(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_13(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_12(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_12(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_11(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_11(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_10(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_10(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_9(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_9(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_8(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_8(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_7(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_7(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_6(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_6(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_5(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_5(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_4(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_4(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_3(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_3(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_2(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_2(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_1(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_1(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_0(__VA_ARGS__))
-#define PPUTLQTY_VERIFY_0(_, ...)  __VA_OPT__(PTL_UINT(too many args passed to PTL_QTY))
+/// PTL_COUNT()     // 0
+/// PTL_COUNT(a)    // 1
+/// PTL_COUNT(a, b) // 2
+/// PTL_COUNT(, )   // 2
+#define PTL_COUNT(...) /* -> uint */ \
+  PTL_IF(PTL_IS_NONE(__VA_ARGS__), (0), (PTL_X(34)(PPUTLCOUNT_A(1, __VA_ARGS__, ))))
+#define PPUTLCOUNT_B(i, ...)                                            \
+  PTL_IF(PTL_IS_NONE(__VA_ARGS__), (PPUTLCOUNT_RETURN),                 \
+         (PTL_IF(PTL_EQZ(i), (PPUTLCOUNT_THROW), (PPUTLCOUNT_B_CONT)))) \
+  (i, __VA_ARGS__)
+#define PPUTLCOUNT_B_CONT(i, _, ...) PPUTLCOUNT_A PTL_LP PTL_INC(i), __VA_ARGS__ PTL_RP
+#define PPUTLCOUNT_A(i, ...)                                            \
+  PTL_IF(PTL_IS_NONE(__VA_ARGS__), (PPUTLCOUNT_RETURN),                 \
+         (PTL_IF(PTL_EQZ(i), (PPUTLCOUNT_THROW), (PPUTLCOUNT_A_CONT)))) \
+  (i, __VA_ARGS__)
+#define PPUTLCOUNT_A_CONT(i, _, ...) PPUTLCOUNT_B PTL_LP PTL_INC(i), __VA_ARGS__ PTL_RP
+#define PPUTLCOUNT_THROW(...)        PTL_COUNT(Error : too many args)
+#define PPUTLCOUNT_RETURN(i, ...)    PTL_DEC(i)
 
 #endif

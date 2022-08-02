@@ -1,6 +1,6 @@
 #ifndef CODEGEN_H_INCLUDED
 #define CODEGEN_H_INCLUDED
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -25,7 +25,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #ifdef __cpp_lib_source_location
 #  include <source_location>
@@ -78,7 +78,7 @@ constexpr enum class name_case {
 } name_case{name_case::screaming};
 
 constexpr char const project_header[]{
-    "////////////////////////////////////////////////////////////////////////////////\n"
+    "/* /////////////////////////////////////////////////////////////////////////////\n"
     "//                          __    ___                                         //\n"
     "//                         /\\ \\__/\\_ \\                                        //\n"
     "//   _____   _____   __  __\\ \\ ,_\\//\\ \\                                       //\n"
@@ -133,14 +133,13 @@ constexpr char const project_header[]{
     "//    See range.split and algo.reduce for useful examples of the two types    //\n"
     "//    of recursive calls supported by this library.                           //\n"
     "//                                                                            //\n"
-    "//    pputl requires __VA_ARGS__ and __VA_OPT__ support (C++20) but has no    //\n"
-    "//    other dependencies;  it is a single-header library with no includes.    //\n"
-    "//    Any preprocessor that supports __VA_ARGS__ and __VA_OPT__  should be    //\n"
-    "//    able to run pputl.                                                      //\n"
+    "//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //\n"
+    "//    support (which are guaranteed by C++20)  but has no dependencies and    //\n"
+    "//    is single-header.                                                       //\n"
     "//                                                                            //\n"
     "//    USAGE                                                                   //\n"
     "//    -----                                                                   //\n"
-    "//    Copy pputl.h and include. The default build uses 8-bit unsigned ints    //\n"
+    "//    Copy pputl.h and include. The default build uses a 10-bit uint range    //\n"
     "//    for  arithmetic  and  comparisons.  Integers  overflow and underflow    //\n"
     "//    according to  standard unsigned rules.  Variadic argument sizes  are    //\n"
     "//    usually capped by the uint max. Modify the head of codegen/codegen.h    //\n"
@@ -191,7 +190,7 @@ constexpr char const project_header[]{
     "//    pputl  is statically tested by the build system.  Run `make test` to   ///\n"
     "//    validate the library or open tests.cc in an LSP-enabled editor.       ////\n"
     "//                                                                         /////\n"
-    "////////////////////////////////////////////////////////////////////////////////"};
+    "///////////////////////////////////////////////////////////////////////////// */"};
 
 } // namespace conf
 
@@ -315,16 +314,16 @@ class nifty {
     ~internal_nifty##extern_ref_name##decl_();                                                     \
   } internal_nifty##extern_ref_name##decl_
 
-#define NIFTY_DEF(extern_ref_name, ...)                                                       \
-  internal_nifty##extern_ref_name##storage_;                                                  \
-  codegen::utl::nifty<decltype(extern_ref_name)> internal_nifty##extern_ref_name##storage_{}; \
-  internal_nifty##extern_ref_name##decl_::internal_nifty##extern_ref_name##decl_() {          \
-    internal_nifty##extern_ref_name##storage_.ref(__VA_ARGS__);                               \
-  }                                                                                           \
-  internal_nifty##extern_ref_name##decl_::~internal_nifty##extern_ref_name##decl_() {         \
-    internal_nifty##extern_ref_name##storage_.unref();                                        \
-  }                                                                                           \
-  static std::nullptr_t internal_nifty##extern_ref_name##decl_record_ = nullptr
+#define NIFTY_DEF(extern_ref_name, ...)                                                      \
+  internal_nifty##extern_ref_name##storage_;                                                 \
+  internal_nifty##extern_ref_name##decl_::internal_nifty##extern_ref_name##decl_() {         \
+    internal_nifty##extern_ref_name##storage_.ref(__VA_ARGS__);                              \
+  }                                                                                          \
+  internal_nifty##extern_ref_name##decl_::~internal_nifty##extern_ref_name##decl_() {        \
+    internal_nifty##extern_ref_name##storage_.unref();                                       \
+  }                                                                                          \
+  codegen::utl::nifty<decltype(extern_ref_name)> internal_nifty##extern_ref_name##storage_ { \
+  }
 
 } // namespace utl
 

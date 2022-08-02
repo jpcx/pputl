@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "lang.h"
 
@@ -38,9 +38,9 @@ decltype(cat) cat = NIFTY_DEF(cat, [&](va args) {
   tests << cat("foo", "bar")      = "foobar" >> docs;
   tests << cat("foo", eat("bar")) = "foo" >> docs;
 
-  return def<"x(a, b)">{[&](arg a, arg b) {
+  return pp::va_opt(def<"x(a, b)">{[&](arg a, arg b) {
     return pp::cat(a, b);
-  }}(args);
+  }}(args));
 });
 
 } // namespace api

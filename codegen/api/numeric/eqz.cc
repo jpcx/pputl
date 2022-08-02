@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "numeric.h"
 
@@ -52,7 +52,7 @@ decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
     return "0";
   };
 
-  def<"res(...)"> res = [&](va args) {
+  def<"res(...)"> res = [&](va) {
     std::string const prefix    = utl::slice(pass, -4);
     std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
     std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);

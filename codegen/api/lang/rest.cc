@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "lang.h"
 
@@ -43,9 +43,9 @@ decltype(rest) rest = NIFTY_DEF(rest, [&](va args) {
   tests << rest("a, , ")         = "," >> docs;
   tests << rest("a, b, , ")      = "b, ," >> docs;
 
-  return def<"x(_, ...)">{[&](arg, va args) {
+  return pp::va_opt(def<"x(_, ...)">{[&](arg, va args) {
     return args;
-  }}(args);
+  }}(args));
 });
 
 } // namespace api

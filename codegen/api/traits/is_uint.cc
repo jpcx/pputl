@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "traits.h"
 
@@ -51,7 +51,7 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint(", a, ")            = "0";
   tests << is_uint(", , a")            = "0";
 
-  def chk_uint = def{"chk_" + uint + "(...)"} = [&](va args) {
+  def chk_uint = def{"chk_" + uint + "(...)"} = [&](va) {
     return "";
   };
 

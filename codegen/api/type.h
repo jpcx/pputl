@@ -1,5 +1,5 @@
 #pragma once
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -24,7 +24,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "codegen.h"
 #include "config.h"
@@ -40,6 +40,16 @@ extern codegen::def<"uint(...: n: any...) -> uint{n}"> const& uint;
 
 NIFTY_DECL(tup);
 NIFTY_DECL(bool_);
+namespace detail {
+extern codegen::def<>&                                          uint_seq;
+extern codegen::def<>&                                          uint_rseq;
+extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_next;
+extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_prev;
+NIFTY_DECL(uint_seq);
+NIFTY_DECL(uint_rseq);
+NIFTY_DECL(uint_next);
+NIFTY_DECL(uint_prev);
+} // namespace detail
 NIFTY_DECL(uint);
 
 } // namespace api

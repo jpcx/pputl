@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___                                         //
 //                         /\ \__/\_ \                                        //
 //   _____   _____   __  __\ \ ,_\//\ \                                       //
@@ -53,14 +53,13 @@
 //    See range.split and algo.reduce for useful examples of the two types    //
 //    of recursive calls supported by this library.                           //
 //                                                                            //
-//    pputl requires __VA_ARGS__ and __VA_OPT__ support (C++20) but has no    //
-//    other dependencies;  it is a single-header library with no includes.    //
-//    Any preprocessor that supports __VA_ARGS__ and __VA_OPT__  should be    //
-//    able to run pputl.                                                      //
+//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //
+//    support (which are guaranteed by C++20)  but has no dependencies and    //
+//    is single-header.                                                       //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
-//    Copy pputl.h and include. The default build uses 8-bit unsigned ints    //
+//    Copy pputl.h and include. The default build uses a 10-bit uint range    //
 //    for  arithmetic  and  comparisons.  Integers  overflow and underflow    //
 //    according to  standard unsigned rules.  Variadic argument sizes  are    //
 //    usually capped by the uint max. Modify the head of codegen/codegen.h    //
@@ -111,7 +110,7 @@
 //    pputl  is statically tested by the build system.  Run `make test` to   ///
 //    validate the library or open tests.cc in an LSP-enabled editor.       ////
 //                                                                         /////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "pputl.h"
 
@@ -318,16 +317,16 @@ ASSERT_PP_EQ((PTL_IS_UINT(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(, , a)), (0));
 
-ASSERT_PP_EQ((PTL_QTY()), (0));
-ASSERT_PP_EQ((PTL_QTY(a)), (1));
-ASSERT_PP_EQ((PTL_QTY(a, b)), (2));
-ASSERT_PP_EQ((PTL_QTY(, )), (2));
-ASSERT_PP_EQ((PTL_QTY(a, b, c)), (3));
-ASSERT_PP_EQ((PTL_QTY(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34)), (35));
-ASSERT_PP_EQ((PTL_QTY(, , )), (3));
-ASSERT_PP_EQ((PTL_QTY(a, )), (2));
-ASSERT_PP_EQ((PTL_QTY(a, , )), (3));
-ASSERT_PP_EQ((PTL_QTY(, a)), (2));
-ASSERT_PP_EQ((PTL_QTY(, a, )), (3));
-ASSERT_PP_EQ((PTL_QTY(, , a)), (3));
+ASSERT_PP_EQ((PTL_COUNT()), (0));
+ASSERT_PP_EQ((PTL_COUNT(a)), (1));
+ASSERT_PP_EQ((PTL_COUNT(a, b)), (2));
+ASSERT_PP_EQ((PTL_COUNT(, )), (2));
+ASSERT_PP_EQ((PTL_COUNT(a, b, c)), (3));
+ASSERT_PP_EQ((PTL_COUNT(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34)), (35));
+ASSERT_PP_EQ((PTL_COUNT(, , )), (3));
+ASSERT_PP_EQ((PTL_COUNT(a, )), (2));
+ASSERT_PP_EQ((PTL_COUNT(a, , )), (3));
+ASSERT_PP_EQ((PTL_COUNT(, a)), (2));
+ASSERT_PP_EQ((PTL_COUNT(, a, )), (3));
+ASSERT_PP_EQ((PTL_COUNT(, , a)), (3));
 // clang-format on

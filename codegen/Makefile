@@ -26,7 +26,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 CXX      ?= g++
-CXXFLAGS += -std=c++20 -I. -Iapi -pedantic
+CXXFLAGS += -std=c++20 -I. -Iapi -Wall -Wextra -Werror -pedantic -Wno-gnu-zero-variadic-macro-arguments
 RM       ?= rm -f
 MKDIR    ?= mkdir
 BIN      ?= .build/bin

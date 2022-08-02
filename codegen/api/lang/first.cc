@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "lang.h"
 
@@ -39,9 +39,9 @@ decltype(first) first = NIFTY_DEF(first, [&](va args) {
   tests << first("a")    = "a" >> docs;
   tests << first("a, b") = "a" >> docs;
 
-  return def<"x(_, ...)">{[&](arg _, va) {
+  return pp::va_opt(def<"x(_, ...)">{[&](arg _, va) {
     return _;
-  }}(args);
+  }}(args));
 });
 
 } // namespace api

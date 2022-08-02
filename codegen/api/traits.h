@@ -1,5 +1,5 @@
 #pragma once
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -24,11 +24,13 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "codegen.h"
 #include "config.h"
+#include "control.h"
 #include "lang.h"
+#include "meta.h"
 #include "type.h"
 
 namespace api {
@@ -39,12 +41,12 @@ extern codegen::def<"is_none(...) -> bool"> const& is_none;
 extern codegen::def<"is_some(...) -> bool"> const& is_some;
 extern codegen::def<"is_tup(...) -> bool"> const&  is_tup;
 extern codegen::def<"is_uint(...) -> bool"> const& is_uint;
-extern codegen::def<"qty(...) -> uint"> const&     qty;
+extern codegen::def<"count(...) -> uint"> const&   count;
 
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_some);
 NIFTY_DECL(is_tup);
 NIFTY_DECL(is_uint);
-NIFTY_DECL(qty);
+NIFTY_DECL(count);
 
 } // namespace api

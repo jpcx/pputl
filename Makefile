@@ -25,18 +25,21 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.   # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+CP        ?= cp
 CXX       ?= g++
-CXXFLAGS  += -std=c++20
+CXXFLAGS  += -std=c++20 -Wall -Wextra -pedantic -Wno-gnu-zero-variadic-macro-arguments
 TEST_SRC   = tests.cc
 MAKEFLAGS += --no-print-directory
 
 all:
 	$(MAKE) -C codegen
-
-dev:
-	bear -- $(MAKE) -j24
 	$(MAKE) run -C codegen
 	$(MAKE) test
+
+dev:
+	$(MAKE) clean
+	bear -- $(MAKE)
+	$(CP) compile_commands.json codegen
 
 test: $(TEST_SRC)
 	$(CXX) -c $(CXXFLAGS) -o /dev/null $<

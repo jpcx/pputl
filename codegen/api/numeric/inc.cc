@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "numeric.h"
 
@@ -40,23 +40,7 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   tests << inc(conf::uint_max)     = "0" >> docs;
   tests << inc(conf::uint_max - 1) = uint_max_s;
 
-  std::array<def<>, conf::uint_max + 1> n{};
-
-  for (size_t i = 0; i < n.size() - 1; ++i) {
-    n[i] = def{"n_" + utl::to_string(i)} = [&] {
-      return utl::to_string(i + 1);
-    };
-  }
-
-  n[conf::uint_max] = def{"n_" + uint_max_s} = [&] {
-    return "0";
-  };
-
-  return def<"x(n)">{[&](arg n_) {
-    return def<"x(n)">{[&](arg n_) {
-      return pp::cat(utl::slice(n[0], -1), n_);
-    }}(n_);
-  }}(uint(args));
+  return first(cat(utl::slice(detail::uint_next[0], -1), uint(args)));
 });
 
 } // namespace api

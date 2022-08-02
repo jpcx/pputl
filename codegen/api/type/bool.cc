@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "type.h"
 
@@ -37,12 +37,12 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
 
   tests << bool_(0)             = "0" >> docs;
   tests << bool_(1)             = "1" >> docs;
-  tests << str(bool_(2))        = "\"" + bool_ + "(2)" + "\"" >> docs;
-  tests << str(bool_("1, 2"))   = "\"" + bool_ + "(1, 2)" + "\"" >> docs;
-  tests << str(bool_("1,"))     = "\"" + bool_ + "(1,)" + "\"" >> docs;
-  tests << str(bool_("foo"))    = "\"" + bool_ + "(foo)" + "\"" >> docs;
-  tests << str(bool_("()"))     = "\"" + bool_ + "(())" + "\"" >> docs;
-  tests << str(bool_("(), ()")) = "\"" + bool_ + "((), ())" + "\"" >> docs;
+  tests << str(bool_(2))        = ("\"" + bool_ + "(2)" + "\"") >> docs;
+  tests << str(bool_("1, 2"))   = ("\"" + bool_ + "(1, 2)" + "\"") >> docs;
+  tests << str(bool_("1,"))     = ("\"" + bool_ + "(1,)" + "\"") >> docs;
+  tests << str(bool_("foo"))    = ("\"" + bool_ + "(foo)" + "\"") >> docs;
+  tests << str(bool_("()"))     = ("\"" + bool_ + "(())" + "\"") >> docs;
+  tests << str(bool_("(), ()")) = ("\"" + bool_ + "((), ())" + "\"") >> docs;
 
   def<"chk_0"> chk_0 = [&] {
     return "";
@@ -74,7 +74,7 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
       return pass;
     };
 
-    return def<"res(...)">{[&](va args) {
+    return def<"res(...)">{[&](va) {
       std::string const prefix    = utl::slice(ooo_pass, -4);
       std::string const pass_s    = utl::slice(ooo_pass, prefix.size(), 0);
       std::string const no_pass_s = utl::slice(ooo_no_pass, prefix.size(), 0);
@@ -97,7 +97,7 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
       return ooo;
     };
 
-    return def<"res(...)">{[&](va args) {
+    return def<"res(...)">{[&](va) {
       std::string const prefix    = utl::slice(oo_fail, -4);
       std::string const fail_s    = utl::slice(oo_fail, prefix.size(), 0);
       std::string const no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);

@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "control.h"
 
@@ -63,7 +63,7 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
     def<"cont(i, _, ...)"> cont = [&](arg i, arg, va args) {
       return b + " " + lp + " " + dec(i) + " " + rp + " " + pp::tup(dec(i), args);
     };
-    def<"break(i, _, ...)"> break_ = [&](arg, arg _, va args) {
+    def<"break(i, _, ...)"> break_ = [&](arg, arg _, va) {
       docs << "A branches";
       return esc + " " + _;
     };
@@ -75,7 +75,7 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
     def<"cont(i, _, ...)"> cont = [&](arg i, arg, va args) {
       return a + " " + lp + " " + dec(i) + " " + rp + " " + pp::tup(dec(i), args);
     };
-    def<"break(i, _, ...)"> break_ = [&](arg, arg _, va args) {
+    def<"break(i, _, ...)"> break_ = [&](arg, arg _, va) {
       docs << "B branches";
       return esc + " " + _;
     };

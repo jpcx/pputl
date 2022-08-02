@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
 //   _____   _____   __  __\ \ ,_\//\ \
@@ -23,7 +23,7 @@
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////// */
 
 #include "type.h"
 
@@ -37,11 +37,11 @@ decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
 
   tests << tup(pp::tup())     = "()" >> docs;
   tests << tup(pp::tup(1, 2)) = "(1, 2)" >> docs;
-  tests << str(tup(0))        = "\"" + tup + "(0)" + "\"" >> docs;
-  tests << str(tup("1, 2"))   = "\"" + tup + "(1, 2)" + "\"" >> docs;
-  tests << str(tup("1,"))     = "\"" + tup + "(1,)" + "\"" >> docs;
-  tests << str(tup("foo"))    = "\"" + tup + "(foo)" + "\"" >> docs;
-  tests << str(tup("(), ()")) = "\"" + tup + "((), ())" + "\"" >> docs;
+  tests << str(tup(0))        = ("\"" + tup + "(0)" + "\"") >> docs;
+  tests << str(tup("1, 2"))   = ("\"" + tup + "(1, 2)" + "\"") >> docs;
+  tests << str(tup("1,"))     = ("\"" + tup + "(1,)" + "\"") >> docs;
+  tests << str(tup("foo"))    = ("\"" + tup + "(foo)" + "\"") >> docs;
+  tests << str(tup("(), ()")) = ("\"" + tup + "((), ())" + "\"") >> docs;
 
   def<"fail(...)"> fail = [&](va args) {
     return tup(args);
@@ -64,7 +64,7 @@ decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
       return pass;
     };
 
-    return def<"res(...)">{[&](va args) {
+    return def<"res(...)">{[&](va) {
       std::string const prefix    = utl::slice(oo_pass, -4);
       std::string const pass_s    = utl::slice(oo_pass, prefix.size(), 0);
       std::string const no_pass_s = utl::slice(oo_no_pass, prefix.size(), 0);
