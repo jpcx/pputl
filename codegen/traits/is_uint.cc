@@ -31,30 +31,31 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_empty) is_empty = NIFTY_DEF(is_empty, [&](va) {
-  docs << "detects if args has no elements.";
+decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
+  docs << "detects if args is a uint.";
 
-  tests << is_empty("")         = "1" >> docs;
-  tests << is_empty("foo")      = "0" >> docs;
-  tests << is_empty("foo, bar") = "0" >> docs;
-  tests << is_empty(esc())      = "1" >> docs;
-  tests << is_empty(", ")       = "0";
-  tests << is_empty(", , ")     = "0";
-  tests << is_empty("a, ")      = "0";
-  tests << is_empty("a, , ")    = "0";
-  tests << is_empty(", a")      = "0";
-  tests << is_empty(", a, ")    = "0";
-  tests << is_empty(", , a")    = "0";
+  tests << is_uint()                   = "0" >> docs;
+  tests << is_uint("foo")              = "0" >> docs;
+  tests << is_uint(0)                  = "1" >> docs;
+  tests << is_uint("()")               = "0" >> docs;
+  tests << is_uint("(), ()")           = "0" >> docs;
+  tests << is_uint(0, 1)               = "0" >> docs;
+  tests << is_uint(conf::uint_max)     = "1" >> docs;
+  tests << is_uint("foo, bar")         = "0";
+  tests << is_uint(conf::uint_max - 1) = "1";
+  tests << is_uint(", ")               = "0";
+  tests << is_uint(", , ")             = "0";
+  tests << is_uint("a, ")              = "0";
+  tests << is_uint("a, , ")            = "0";
+  tests << is_uint(", a")              = "0";
+  tests << is_uint(", a, ")            = "0";
+  tests << is_uint(", , a")            = "0";
 
-  def<"o"> o = [] {
-    return "1";
+  def chk_uint = def{"chk_" + uint + "(...)"} = [&](va args) {
+    return "";
   };
 
-  def<"o0">{} = [] {
-    return "0";
-  };
-
-  return pp::cat(o, pp::va_opt("0"));
+  return is_some(cat(utl::slice(chk_uint, -((std::string const&)uint).size()), uint(args)));
 });
 
 } // namespace api

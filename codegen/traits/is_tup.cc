@@ -56,7 +56,7 @@ decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
   tests << is_tup("(, a, )")        = "1";
   tests << is_tup("(, , a)")        = "1";
 
-  return is_empty(eat + " " + args);
+  return is_none(eat + " " + args);
 });
 
 } // namespace api

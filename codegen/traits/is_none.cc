@@ -1,4 +1,3 @@
-#pragma once
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,25 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
-inline codegen::category<"traits"> traits;
+using namespace codegen;
 
-extern codegen::def<"is_none(...) -> bool"> const& is_none;
-extern codegen::def<"is_some(...) -> bool"> const& is_some;
-extern codegen::def<"is_tup(...) -> bool"> const&  is_tup;
-extern codegen::def<"is_uint(...) -> bool"> const& is_uint;
-extern codegen::def<"qty(...) -> uint"> const&     qty;
+decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
+  docs << "detects if args is nothing.";
 
-NIFTY_DECL(is_none);
-NIFTY_DECL(is_some);
-NIFTY_DECL(is_tup);
-NIFTY_DECL(is_uint);
-NIFTY_DECL(qty);
+  tests << is_none("")         = "1" >> docs;
+  tests << is_none("foo")      = "0" >> docs;
+  tests << is_none("foo, bar") = "0" >> docs;
+  tests << is_none(esc())      = "1" >> docs;
+  tests << is_none(", ")       = "0";
+  tests << is_none(", , ")     = "0";
+  tests << is_none("a, ")      = "0";
+  tests << is_none("a, , ")    = "0";
+  tests << is_none(", a")      = "0";
+  tests << is_none(", a, ")    = "0";
+  tests << is_none(", , a")    = "0";
+
+  def<"o"> o = [] {
+    return "1";
+  };
+
+  def<"o0">{} = [] {
+    return "0";
+  };
+
+  return pp::cat(o, pp::va_opt("0"));
+});
 
 } // namespace api

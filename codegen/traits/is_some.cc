@@ -31,20 +31,20 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_sizey) is_sizey = NIFTY_DEF(is_sizey, [&](va) {
-  docs << "detects if args is non-empty.";
+decltype(is_some) is_some = NIFTY_DEF(is_some, [&](va) {
+  docs << "detects if args is something.";
 
-  tests << is_sizey("")         = "0" >> docs;
-  tests << is_sizey("foo")      = "1" >> docs;
-  tests << is_sizey("foo, bar") = "1" >> docs;
-  tests << is_sizey(esc())      = "0" >> docs;
-  tests << is_sizey(", ")       = "1";
-  tests << is_sizey(", , ")     = "1";
-  tests << is_sizey("a, ")      = "1";
-  tests << is_sizey("a, , ")    = "1";
-  tests << is_sizey(", a")      = "1";
-  tests << is_sizey(", a, ")    = "1";
-  tests << is_sizey(", , a")    = "1";
+  tests << is_some("")         = "0" >> docs;
+  tests << is_some("foo")      = "1" >> docs;
+  tests << is_some("foo, bar") = "1" >> docs;
+  tests << is_some(esc())      = "0" >> docs;
+  tests << is_some(", ")       = "1";
+  tests << is_some(", , ")     = "1";
+  tests << is_some("a, ")      = "1";
+  tests << is_some("a, , ")    = "1";
+  tests << is_some(", a")      = "1";
+  tests << is_some(", a, ")    = "1";
+  tests << is_some(", , a")    = "1";
 
   def<"o"> o = [&] {
     return "0";

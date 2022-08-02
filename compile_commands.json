@@ -7,27 +7,12 @@
       "-pedantic",
       "-c",
       "-o",
-      ".build/control/if.o",
-      "control/if.cc"
+      ".build/traits/qty.o",
+      "traits/qty.cc"
     ],
     "directory": "/home/user/dev/pputl/codegen",
-    "file": "/home/user/dev/pputl/codegen/control/if.cc",
-    "output": "/home/user/dev/pputl/codegen/.build/control/if.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-I.",
-      "-pedantic",
-      "-c",
-      "-o",
-      ".build/control/switch.o",
-      "control/switch.cc"
-    ],
-    "directory": "/home/user/dev/pputl/codegen",
-    "file": "/home/user/dev/pputl/codegen/control/switch.cc",
-    "output": "/home/user/dev/pputl/codegen/.build/control/switch.o"
+    "file": "/home/user/dev/pputl/codegen/traits/qty.cc",
+    "output": "/home/user/dev/pputl/codegen/.build/traits/qty.o"
   },
   {
     "arguments": [

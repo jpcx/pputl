@@ -39,20 +39,21 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
     maxcases.push_back(pp::tup(utl::alpha_base52(i)));
   auto maxcases_s = utl::cat(maxcases, ", ");
 
-  tests << switch_(0, "(1)")                                     = "1" >> docs;
-  tests << switch_(0, "(1), (2)")                                = "1";
-  tests << switch_(1, "(1), (2)")                                = "2" >> docs;
-  tests << switch_(1, "(1), (2), (3)")                           = "2";
-  tests << switch_(2, "(1), (2), (3)")                           = "3";
-  tests << switch_(2, "(1), (2), (3, 4)")                        = "3, 4" >> docs;
-  tests << switch_(0, maxcases_s)                                = "a";
-  tests << switch_(1, maxcases_s)                                = "b";
-  tests << switch_(conf::uint_max, maxcases_s)                   = utl::alpha_base52(conf::uint_max);
-  tests << str(switch_(0, pp::tup(xct)))                         = pp::str(xct_expected(4));
-  tests << str(switch_(1, "()", pp::tup(xct)))                   = pp::str(xct_expected(6));
-  tests << str(switch_(2, "()", "()", pp::tup(xct)))             = pp::str(xct_expected(8));
-  tests << str(switch_(3, "()", "()", "()", pp::tup(xct)))       = pp::str(xct_expected(10));
-  tests << str(switch_(4, "()", "()", "()", "()", pp::tup(xct))) = pp::str(xct_expected(12));
+  tests << switch_(0, "(1)")                   = "1" >> docs;
+  tests << switch_(0, "(1), (2)")              = "1";
+  tests << switch_(1, "(1), (2)")              = "2" >> docs;
+  tests << switch_(1, "(1), (2), (3)")         = "2";
+  tests << switch_(2, "(1), (2), (3)")         = "3";
+  tests << switch_(2, "(1), (2), (3, 4)")      = "3, 4" >> docs;
+  tests << switch_(0, maxcases_s)              = "a";
+  tests << switch_(1, maxcases_s)              = "b";
+  tests << switch_(conf::uint_max, maxcases_s) = utl::alpha_base52(conf::uint_max);
+  for (std::size_t i = 0; i < 15 and i < conf::uint_max; ++i) {
+    std::vector<std::string> actual(i + 2, "()");
+    actual.front()                = std::to_string(i);
+    actual.back()                 = pp::tup(xct);
+    tests << str(switch_(actual)) = pp::str(xct_expected(4 + 2 * i));
+  }
 
   def<"a(i)"> a;
   def<"b(i)"> b;

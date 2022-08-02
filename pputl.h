@@ -547,9 +547,7 @@
 #define PTL_IF(/* b: bool, t: tup, f: tup */...) /* -> b ? ...t : ...f */ PPUTLIF_O(__VA_ARGS__)(__VA_ARGS__)
 
 /// first parentheses; chooses next function based on b
-#define PPUTLIF_O(b, ...) PPUTLIF_O_X(PTL_BOOL(b))
-#define PPUTLIF_O_X(b)    PPUTLIF_O_XX(b)
-#define PPUTLIF_O_XX(b)   PPUTLIF_OO_##b
+#define PPUTLIF_O(b, ...) PTL_CAT(PPUTLIF_OO_, PTL_BOOL(b))
 
 /// second parentheses; true result
 #define PPUTLIF_OO_1(b, t, f) PPUTLIF_OO_1_X(PTL_TUP(t))
@@ -566,7 +564,7 @@
 /// PTL_SWITCH(0, (1))              // 1
 /// PTL_SWITCH(1, (1), (2))         // 2
 /// PTL_SWITCH(2, (1), (2), (3, 4)) // 3, 4
-#define PTL_SWITCH(/* case: uint, cases: tup... */...) /* -<4+2n>-> ...cases[case] */ \
+#define PTL_SWITCH(/* cs: uint, cases: tup... */...) /* -<4+2cs>-> ...cases[cs] */ \
   PTL_X(PTL_FIRST(__VA_ARGS__))(PPUTLSWITCH_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)))(__VA_ARGS__))
 
 /// mutually recursive branch selector B
@@ -583,29 +581,29 @@
 #define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ESC _
 #define PPUTLSWITCH_A_CONT(i, _, ...)  PPUTLSWITCH_B PTL_LP PTL_DEC(i) PTL_RP(PTL_DEC(i), __VA_ARGS__)
 
-/// [traits.is_empty]
-/// -----------------
-/// detects if args has no elements.
+/// [traits.is_none]
+/// ----------------
+/// detects if args is nothing.
 ///
-/// PTL_IS_EMPTY()          // 1
-/// PTL_IS_EMPTY(foo)       // 0
-/// PTL_IS_EMPTY(foo, bar)  // 0
-/// PTL_IS_EMPTY(PTL_ESC()) // 1
-#define PTL_IS_EMPTY(...) /* -> bool */ PPUTLIS_EMPTY_O##__VA_OPT__(0)
-#define PPUTLIS_EMPTY_O0  0
-#define PPUTLIS_EMPTY_O   1
+/// PTL_IS_NONE()          // 1
+/// PTL_IS_NONE(foo)       // 0
+/// PTL_IS_NONE(foo, bar)  // 0
+/// PTL_IS_NONE(PTL_ESC()) // 1
+#define PTL_IS_NONE(...) /* -> bool */ PPUTLIS_NONE_O##__VA_OPT__(0)
+#define PPUTLIS_NONE_O0  0
+#define PPUTLIS_NONE_O   1
 
-/// [traits.is_sizey]
-/// -----------------
-/// detects if args is non-empty.
+/// [traits.is_some]
+/// ----------------
+/// detects if args is something.
 ///
-/// PTL_IS_SIZEY()          // 0
-/// PTL_IS_SIZEY(foo)       // 1
-/// PTL_IS_SIZEY(foo, bar)  // 1
-/// PTL_IS_SIZEY(PTL_ESC()) // 0
-#define PTL_IS_SIZEY(...) /* -> bool */ PPUTLIS_SIZEY_O##__VA_OPT__(1)
-#define PPUTLIS_SIZEY_O1  1
-#define PPUTLIS_SIZEY_O   0
+/// PTL_IS_SOME()          // 0
+/// PTL_IS_SOME(foo)       // 1
+/// PTL_IS_SOME(foo, bar)  // 1
+/// PTL_IS_SOME(PTL_ESC()) // 0
+#define PTL_IS_SOME(...) /* -> bool */ PPUTLIS_SOME_O##__VA_OPT__(1)
+#define PPUTLIS_SOME_O1  1
+#define PPUTLIS_SOME_O   0
 
 /// [traits.is_tup]
 /// ---------------
@@ -615,6 +613,71 @@
 /// PTL_IS_TUP(1, 2)   // 0
 /// PTL_IS_TUP(())     // 1
 /// PTL_IS_TUP((1, 2)) // 1
-#define PTL_IS_TUP(...) /* -> bool */ PTL_IS_EMPTY(PTL_EAT __VA_ARGS__)
+#define PTL_IS_TUP(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
+
+/// [traits.is_uint]
+/// ----------------
+/// detects if args is a uint.
+///
+/// PTL_IS_UINT()       // 0
+/// PTL_IS_UINT(foo)    // 0
+/// PTL_IS_UINT(0)      // 1
+/// PTL_IS_UINT(())     // 0
+/// PTL_IS_UINT((), ()) // 0
+/// PTL_IS_UINT(0, 1)   // 0
+/// PTL_IS_UINT(35)     // 1
+#define PTL_IS_UINT(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_UINT_CHK_, PTL_UINT(__VA_ARGS__)))
+#define PPUTLIS_UINT_CHK_PTL_UINT(...)
+
+/// [traits.qty]
+/// ------------
+/// computes the quantity of args (size <= 35).
+/// creates an invalid uint if too large.
+///
+/// PTL_QTY()     // 0
+/// PTL_QTY(a)    // 1
+/// PTL_QTY(a, b) // 2
+/// PTL_QTY(, )   // 2
+#define PTL_QTY(...) /* -> uint */                                                                           \
+  PTL_FIRST(PPUTLQTY_READ(__VA_ARGS__ __VA_OPT__(, ) 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, \
+                          21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+#define PPUTLQTY_READ(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, \
+                      D, E, F, G, H, I, sz, ...)                                                             \
+  sz, PPUTLQTY_VERIFY_34(__VA_ARGS__)
+#define PPUTLQTY_VERIFY_34(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_33(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_33(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_32(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_32(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_31(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_31(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_30(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_30(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_29(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_29(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_28(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_28(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_27(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_27(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_26(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_26(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_25(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_25(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_24(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_24(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_23(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_23(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_22(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_22(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_21(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_21(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_20(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_20(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_19(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_19(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_18(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_18(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_17(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_17(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_16(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_16(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_15(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_15(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_14(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_14(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_13(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_13(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_12(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_12(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_11(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_11(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_10(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_10(_, ...) __VA_OPT__(PPUTLQTY_VERIFY_9(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_9(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_8(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_8(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_7(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_7(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_6(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_6(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_5(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_5(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_4(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_4(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_3(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_3(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_2(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_2(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_1(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_1(_, ...)  __VA_OPT__(PPUTLQTY_VERIFY_0(__VA_ARGS__))
+#define PPUTLQTY_VERIFY_0(_, ...)  __VA_OPT__(PTL_UINT(too many args passed to PTL_QTY))
 
 #endif

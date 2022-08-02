@@ -57,11 +57,7 @@ decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
 
   def<"o(b, ...)"> o = [&](arg b, va) {
     docs << "first parentheses; chooses next function based on b";
-    return def<"x(b)">{[&](arg b) {
-      return def<"x(b)">{[&](arg b) {
-        return pp::cat(utl::slice(oo_0, -1), b);
-      }}(b);
-    }}(bool_(b));
+    return cat(utl::slice(oo_0, -1), bool_(b));
   };
 
   return pp::call(o(args), args);
