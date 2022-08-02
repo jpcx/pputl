@@ -26,10 +26,10 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 CXX      ?= g++
-CXXFLAGS += -std=c++20 -I. -pedantic
+CXXFLAGS += -std=c++20 -I. -Iapi -pedantic
 RM       ?= rm -f
 MKDIR    ?= mkdir
-BIN      ?= bin
+BIN      ?= .build/bin
 SRCS     += $(shell find . -type f -name "*.cc")
 OBJS      = $(patsubst ./%.cc, .build/%.o, $(SRCS))
 DEPS      = $(patsubst %.o, %.d, $(OBJS))

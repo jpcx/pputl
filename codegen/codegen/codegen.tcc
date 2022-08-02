@@ -27,7 +27,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CODEGEN_CODEGEN_H_INCLUDED
+#ifndef CODEGEN_H_INCLUDED
 #  include "codegen.h"
 #endif
 

@@ -1,5 +1,5 @@
-#ifndef CODEGEN_CODEGEN_H_INCLUDED
-#define CODEGEN_CODEGEN_H_INCLUDED
+#ifndef CODEGEN_H_INCLUDED
+#define CODEGEN_H_INCLUDED
 ////////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -1130,7 +1130,7 @@ class def : public def_base {
 } // namespace codegen
 
 #ifndef CODEGEN_CODEGEN_TCC_INCLUDED
-#  include "codegen.tcc"
+#  include "codegen/codegen.tcc"
 #endif
 
 #endif
