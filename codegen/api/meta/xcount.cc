@@ -25,7 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "meta.h"
 
 namespace api {
 
@@ -45,7 +45,7 @@ decltype(xcount) xcount = NIFTY_DEF(xcount, [&](va args) {
   tests << xcount(pp::call(x(conf::uint_max - 1), xtrace)) = uint_max_s;
 
   def<"res(_, __, ...)"> res = [&](arg, arg, va args) {
-    return count(args);
+    return size(args);
   };
 
   def a = def{detail::xtrace_a + "(...)"} = [&](va args) {

@@ -38,6 +38,7 @@
 #include <optional>
 #include <regex>
 #include <span>
+#include <unordered_set>
 
 namespace codegen {
 
@@ -793,9 +794,28 @@ struct runtime_signature : private signature_literal {
                              ? std::string{signature_literal::name->begin(), signature_literal::name->end()}
                              : ""};
   bool const        is_fn{signature_literal::params_decl and not signature_literal::params_decl->empty()};
-  std::string const params{signature_literal::params ? std::string{signature_literal::params->begin(),
-                                                                   signature_literal::params->end()}
-                                                     : ""};
+  std::string const params = utl::ii << [&] {
+    std::string params = signature_literal::params
+                           ? std::string{signature_literal::params->begin(), signature_literal::params->end()}
+                           : "";
+
+    if (params.empty())
+      return params;
+    // replace any keywords in parameters
+    static std::unordered_set<std::string> const reserved{
+        "and", "and_eq", "bitand", "bitor", "compl", "not", "not_eq", "or", "or_eq", "xor", "xor_eq"};
+
+    std::vector<std::string> clean_params{};
+    for (auto&& v : utl::split(params, std::regex{", ?"})) {
+      if (not reserved.contains(v))
+        clean_params.push_back(v);
+      else
+        clean_params.push_back("_" + v);
+    }
+    params = utl::cat(clean_params, ", ");
+    return params;
+  };
+
   std::string const docparams{
       signature_literal::docparams
           ? std::string{signature_literal::docparams->begin(), signature_literal::docparams->end()}

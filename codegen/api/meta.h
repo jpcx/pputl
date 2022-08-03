@@ -30,6 +30,7 @@
 #include "config.h"
 #include "lang.h"
 #include "numeric.h"
+#include "traits.h"
 #include "type.h"
 
 namespace api {
@@ -42,6 +43,7 @@ extern codegen::def<"rp -> <left parens>"> const& rp;
 std::string                                                                    xtrace_expected(unsigned n);
 extern codegen::def<"xtrace -> <xtrace expr>"> const&                          xtrace;
 extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
+extern codegen::def<"xcount(...: <xtrace expr>) -> uint"> const&               xcount;
 
 NIFTY_DECL(lp);
 NIFTY_DECL(rp);
@@ -53,5 +55,6 @@ NIFTY_DECL(xtrace_b);
 } // namespace detail
 NIFTY_DECL(xtrace);
 NIFTY_DECL(x);
+NIFTY_DECL(xcount);
 
 } // namespace api
