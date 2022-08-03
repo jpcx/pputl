@@ -56,10 +56,12 @@ decltype(count) count = NIFTY_DEF(count, [&](va args) {
   };
 
   def<"throw(...)"> throw_ = [&](va) {
+    docs << "exit macros";
     return count("Error : too many args");
   };
 
   a = [&](arg i, va args) {
+    docs << "mutually recursive branch A";
     def<"cont(i, _, ...)"> cont_ = [&](arg i, arg, va args) {
       return b + " " + lp + " " + inc(i) + ", " + args + " " + rp;
     };
@@ -68,6 +70,7 @@ decltype(count) count = NIFTY_DEF(count, [&](va args) {
   };
 
   b = [&](arg i, va args) {
+    docs << "mutually recursive branch B";
     def<"cont(i, _, ...)"> cont_ = [&](arg i, arg, va args) {
       return a + " " + lp + " " + inc(i) + ", " + args + " " + rp;
     };

@@ -212,8 +212,11 @@ def_base::define(Body&& body) {
       ins = std::ranges::find(_instances, _instance->context.back(), [](auto&& v) {
         return &v;
       });
-      if (ins != _instances.end())
+      if (ins != _instances.end()) {
+        // register this child with its parent
+        ins->children.push_back(_instance);
         ++ins;
+      }
     }
 
     _instances.splice(ins, _instances, it);

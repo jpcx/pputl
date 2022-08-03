@@ -52,7 +52,7 @@ decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
     return "1";
   };
 
-  def<"res(...)"> res = [&](va) {
+  return def<"x(...)">{[&](va) {
     std::string const prefix    = utl::slice(fail, -4);
     std::string const fail_s    = utl::slice(fail, prefix.size(), 0);
     std::string const no_fail_s = utl::slice(no_fail, prefix.size(), 0);
@@ -60,13 +60,7 @@ decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
     return pp::cat(prefix,
                    pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
                    fail_s);
-  };
-
-  return def<"x(n)">{[&](arg n) {
-    return def<"x(n)">{[&](arg n) {
-      return res(pp::cat(utl::slice(_0, -1), n));
-    }}(n);
-  }}(uint(args));
+  }}(cat(utl::slice(_0, -1), uint(args)));
 });
 
 } // namespace api

@@ -765,8 +765,10 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   }
 
   std::list<instance>::iterator ins_it;
+  instance*                     parent{nullptr};
   if (not _exec_stack.empty()) {
-    ins_it = std::ranges::find(_instances, _exec_stack.back(), [](auto&& v) {
+    parent = _exec_stack.back();
+    ins_it = std::ranges::find(_instances, parent, [](auto&& v) {
       return &v;
     });
     if (ins_it == _instances.end())
@@ -777,13 +779,14 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   }
 
   // insert after parent (if any), and return
-  return &*_instances.insert(ins_it, instance{
-                                         .context    = _exec_stack,
-                                         .id         = id,
-                                         .category   = _cur_category,
-                                         .name       = name,
-                                         .source_loc = loc,
-                                     });
+  auto res = &*_instances.insert(ins_it, instance{
+                                             .context    = _exec_stack,
+                                             .id         = id,
+                                             .category   = _cur_category,
+                                             .name       = name,
+                                             .source_loc = loc,
+                                         });
+  return res;
 }
 
 void
@@ -896,10 +899,21 @@ def_base::synopsis() {
 std::string
 def_base::definitions() {
   std::string res{};
+  instance*   fdm_end{nullptr};
   for (auto&& v : _instances) {
     if (not v.definition)
       throw std::runtime_error{"macro " + v.id + " missing definition"};
     res += *v.definition + "\n";
+    static auto buf = utl::cat(std::vector<std::string>(76), " ");
+    if (&v == fdm_end) {
+      res += "\n\n//" + buf + "}}}\n\n";
+      fdm_end = nullptr;
+    } else if (v.context.empty() and not v.children.empty()) {
+      fdm_end = v.children.front();
+      while (not fdm_end->children.empty())
+        fdm_end = fdm_end->children.front();
+      res += "\n\n//" + buf + "{{{\n\n";
+    }
   }
   if (not res.empty())
     res.pop_back();

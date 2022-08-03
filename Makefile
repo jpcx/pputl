@@ -39,7 +39,7 @@ all:
 dev:
 	$(MAKE) clean
 	bear -- $(MAKE)
-	$(CP) compile_commands.json codegen
+	@$(CP) compile_commands.json codegen
 
 test: $(TEST_SRC)
 	$(CXX) -c $(CXXFLAGS) -o /dev/null $<

@@ -50,7 +50,7 @@ main() {
     std::ofstream tout{conf::tests_output};
     lout << "#ifndef " << conf::header_guard << "\n#define " << conf::header_guard << "\n"
          << conf::project_header << "\n\n"
-         << def_base::definitions() << "\n\n#endif\n";
+         << def_base::definitions() << "\n\n// vim: fdm=marker:fmr={{{,}}}\n\n#endif\n";
     tout << conf::project_header << "\n\n"
          << "#include " << fs::relative(conf::lib_output, fs::path(conf::tests_output).remove_filename())
          << "\n\n"

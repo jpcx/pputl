@@ -64,7 +64,7 @@ constexpr char const impl_prefix[]{"PPUTL"};
 
 // maximum value of a pputl unsigned integer.
 // acts as an upper bound for the number of arguments to many functions.
-constexpr unsigned uint_max = 35;
+constexpr unsigned uint_max = 1023;
 
 // needed for documentation and tests
 static_assert(uint_max >= 7);
@@ -874,6 +874,9 @@ class def_base {
 
     /// the line number of the definition used for documentation and errors.
     detail::source_location const source_loc;
+
+    /// a vector of child instances. assigned by children.
+    std::vector<instance*> children{};
 
     /// macro parameters, if this is a function.
     std::optional<std::string> params{};

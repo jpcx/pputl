@@ -32,9 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(x) x = NIFTY_DEF(x, [&](va args) {
-  docs << "performs n secondary expansions (n=0 -> identity)."
+  docs << "performs uint n secondary expansions (n=0 -> identity)."
        << "args are expressed after n+1 expansions in total."
-       << "n <= " + uint_max_s + ".";
+       << "useful for implementing mutual recursion.";
 
   tests << pp::call(x(0), xct)              = esc(xct) >> docs;
   tests << pp::call(x(1), xct)              = esc(esc(xct)) >> docs;
