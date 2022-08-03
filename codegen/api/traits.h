@@ -39,14 +39,14 @@ extern codegen::def<"is_none(...) -> bool"> const&         is_none;
 extern codegen::def<"is_some(...) -> bool"> const&         is_some;
 extern codegen::def<"is_tuple(...) -> bool"> const&        is_tuple;
 extern codegen::def<"is_uint(...) -> bool"> const&         is_uint;
-extern codegen::def<"size(...) -> uint"> const&            size;
 extern codegen::def<"items(...: v: tuple) -> ...v"> const& items;
+extern codegen::def<"size(...) -> uint"> const&            size;
 
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_some);
 NIFTY_DECL(is_tuple);
 NIFTY_DECL(is_uint);
-NIFTY_DECL(size);
 NIFTY_DECL(items);
+NIFTY_DECL(size);
 
 } // namespace api

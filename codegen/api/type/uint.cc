@@ -39,7 +39,7 @@ decltype(uint_range) uint_range = NIFTY_DEF(uint_range);
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "uint type (0 through " + uint_max_s + ")."
-       << "expands to n if valid, else, terminates expansion with a self-reference.";
+       << "expands to n if valid. terminates expansion on non-uint.";
 
   tests << uint(0)                   = "0" >> docs;
   tests << uint(1)                   = "1" >> docs;

@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(tuple) tuple = NIFTY_DEF(tuple, [&](va args) {
   docs << "tuple type (any...)."
-       << "expands to t if valid. terminates expansion on non-tuple";
+       << "expands to t if valid. terminates expansion on non-tuple.";
 
   tests << tuple(pp::tup())     = "()" >> docs;
   tests << tuple(pp::tup(1, 2)) = "(1, 2)" >> docs;

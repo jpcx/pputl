@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
   docs << "bool type (0 or 1)."
-       << "expands to b if valid, else, terminates expansion with a self-reference.";
+       << "expands to b if valid. terminates expansion on non-bool.";
 
   tests << bool_(0)             = "0" >> docs;
   tests << bool_(1)             = "1" >> docs;

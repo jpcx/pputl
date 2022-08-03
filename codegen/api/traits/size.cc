@@ -33,22 +33,27 @@ using namespace codegen;
 
 decltype(size) size = NIFTY_DEF(size, [&](va args) {
   docs << "computes the uint size of args in O(1) time."
-       << "terminates expansion with an error if too many args passed.";
+       << "terminates expansion if too many args passed.";
 
-  tests << size()                                = "0" >> docs;
-  tests << size("a")                             = "1" >> docs;
-  tests << size("a, b")                          = "2" >> docs;
-  tests << size("a, b, c")                       = "3";
-  tests << size(utl::base10_seq(conf::uint_max)) = uint_max_s;
-  tests << size(", ")                            = "2" >> docs;
-  tests << size(", , ")                          = "3";
-  tests << size("a, ")                           = "2";
-  tests << size("a, , ")                         = "3";
-  tests << size(", a")                           = "2";
-  tests << size(", a, ")                         = "3";
-  tests << size(", , a")                         = "3";
+  auto bigseq = utl::cat(std::array<std::string, conf::uint_max + 1>{}, ",");
+  auto maxseq = bigseq;
+  maxseq.pop_back();
 
-  def read = def{"read(" + utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ") + ", _sz, ...)"};
+  tests << size()            = "0" >> docs;
+  tests << size("a")         = "1" >> docs;
+  tests << size("a, b")      = "2" >> docs;
+  tests << size("a, b, c")   = "3";
+  tests << size(maxseq)      = uint_max_s;
+  tests << size(", ")        = "2" >> docs;
+  tests << size(", , ")      = "3";
+  tests << size("a, ")       = "2";
+  tests << size("a, , ")     = "3";
+  tests << size(", a")       = "2";
+  tests << size(", a, ")     = "3";
+  tests << size(", , a")     = "3";
+  tests << str(size(bigseq)) = pp::str(size(bigseq));
+
+  def read = def{"read(_va, " + utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ") + ", _sz, ...)"};
 
   std::string prefix = utl::slice(read, -4);
   if (prefix.back() == '_')
@@ -63,25 +68,26 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
       return args;
     };
 
-    def<"0(_sz)"> _0 = [&](arg) {
-      return uint(size("Error : too many args"));
+    def<"0(_va, _sz)"> _0 = [&](arg _va, arg) {
+      return size(items(_va));
     };
 
-    def<"1(_sz)">{} = [&](arg sz) {
+    def<"1(_va, _sz)">{} = [&](arg, arg sz) {
       return pp::cat(utl::slice(res, -prefix.size()), sz);
     };
 
     auto sz = args[args.size() - 2];
-    return pp::call(cat(utl::slice(_0, -1), is_none(pp::cat(utl::slice(verifier, -prefix.size()), sz))), sz);
+    return pp::call(cat(utl::slice(_0, -1), is_none(pp::cat(utl::slice(verifier, -prefix.size()), sz))),
+                    args.front(), sz);
   };
 
-  return def<"x(_, ...)">{[&](arg _, va args) {
+  return def<"x(_va, _, ...)">{[&](arg _va, arg _, va args) {
     auto rseq = utl::base10_seq(conf::uint_max + 1);
     std::ranges::reverse(rseq);
     for (auto&& v : rseq)
       v = pp::call(_, v);
-    return read(args + " " + pp::va_opt(", ") + " " + utl::cat(rseq, ", "));
-  }}(prefix, args);
+    return read(_va, args + " " + pp::va_opt(", ") + " " + utl::cat(rseq, ", "));
+  }}(pp::tup(args), prefix, args);
 });
 
 } // namespace api
