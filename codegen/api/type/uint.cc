@@ -32,10 +32,9 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(uint_seq)  uint_seq  = NIFTY_DEF(uint_seq);
-decltype(uint_rseq) uint_rseq = NIFTY_DEF(uint_rseq);
-decltype(uint_next) uint_next = NIFTY_DEF(uint_next);
-decltype(uint_prev) uint_prev = NIFTY_DEF(uint_prev);
+decltype(uint_seq)   uint_seq   = NIFTY_DEF(uint_seq);
+decltype(uint_rseq)  uint_rseq  = NIFTY_DEF(uint_rseq);
+decltype(uint_range) uint_range = NIFTY_DEF(uint_range);
 } // namespace detail
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
@@ -68,23 +67,17 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   };
 
   // set up next/prev
-  detail::uint_prev[0] = def{"prev_0"} = [&] {
-    return uint_max_s + ", .";
+  detail::uint_range[0] = def{"range_0"} = [&] {
+    return uint_max_s + ", 1";
   };
-  for (size_t i = 1; i < detail::uint_prev.size(); ++i) {
-    detail::uint_prev[i] = def{"prev_" + utl::to_string(i)} = [&] {
-      return utl::to_string(i - 1) + ", .";
+  for (std::size_t i = 1; i < detail::uint_range.size() - 1; ++i) {
+    detail::uint_range[i] = def{"range_" + std::to_string(i)} = [&] {
+      return std::to_string(i - 1) + ", " + std::to_string(i + 1);
     };
   }
-
-  for (size_t i = 0; i < detail::uint_next.size() - 1; ++i) {
-    detail::uint_next[i] = def{"next_" + utl::to_string(i)} = [&] {
-      return utl::to_string(i + 1) + ", .";
-    };
-  }
-  detail::uint_next[conf::uint_max] = def{"next_" + uint_max_s} = [&] {
-    docs << "uint cycle macros. verifies uint validity if cat result has two values";
-    return "0, .";
+  detail::uint_range.back() = def{"range_" + uint_max_s} = [&] {
+    docs << "int decrement and increment values.";
+    return std::to_string(conf::uint_max - 1) + ", 0";
   };
 
   def<"fail(...)"> fail = [&](va args) {
@@ -118,7 +111,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
             prefix, pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
             fail_s));
       }}(args);
-    }}(pp::cat(utl::slice(detail::uint_next[0], -1), args));
+    }}(pp::cat(utl::slice(detail::uint_range[0], -1), args));
   };
 
   def<>             oo_fail{};

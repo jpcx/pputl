@@ -904,7 +904,16 @@ def_base::definitions() {
     if (not v.definition)
       throw std::runtime_error{"macro " + v.id + " missing definition"};
     res += *v.definition + "\n";
-    static auto buf = utl::cat(std::vector<std::string>(76), " ");
+    static auto buf = utl::ii << [&] {
+      std::array<std::string, 73> dashes;
+      for (std::size_t i = 0; i < 73; ++i) {
+        if (i % 2 == 0)
+          dashes[i] = "-";
+        else
+          dashes[i] = " ";
+      }
+      return " " + utl::cat(dashes) + " ";
+    };
     if (&v == fdm_end) {
       res += "\n\n//" + buf + "}}}\n\n";
       fdm_end = nullptr;

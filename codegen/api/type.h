@@ -43,12 +43,10 @@ NIFTY_DECL(bool_);
 namespace detail {
 extern codegen::def<>&                                          uint_seq;
 extern codegen::def<>&                                          uint_rseq;
-extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_next;
-extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_prev;
+extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_range;
 NIFTY_DECL(uint_seq);
 NIFTY_DECL(uint_rseq);
-NIFTY_DECL(uint_next);
-NIFTY_DECL(uint_prev);
+NIFTY_DECL(uint_range);
 } // namespace detail
 NIFTY_DECL(uint);
 

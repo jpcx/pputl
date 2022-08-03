@@ -40,7 +40,7 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   tests << inc(conf::uint_max)     = "0" >> docs;
   tests << inc(conf::uint_max - 1) = uint_max_s;
 
-  return first(cat(utl::slice(detail::uint_next[0], -1), uint(args)));
+  return rest(cat(utl::slice(detail::uint_range[0], -1), uint(args)));
 });
 
 } // namespace api
