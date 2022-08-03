@@ -37,16 +37,18 @@ namespace api {
 
 inline codegen::category<"traits"> traits;
 
-extern codegen::def<"is_none(...) -> bool"> const& is_none;
-extern codegen::def<"is_some(...) -> bool"> const& is_some;
-extern codegen::def<"is_tup(...) -> bool"> const&  is_tup;
-extern codegen::def<"is_uint(...) -> bool"> const& is_uint;
-extern codegen::def<"count(...) -> uint"> const&   count;
+extern codegen::def<"is_none(...) -> bool"> const&               is_none;
+extern codegen::def<"is_some(...) -> bool"> const&               is_some;
+extern codegen::def<"is_tup(...) -> bool"> const&                is_tup;
+extern codegen::def<"is_uint(...) -> bool"> const&               is_uint;
+extern codegen::def<"count(...) -> uint"> const&                 count;
+extern codegen::def<"xcount(...: <xtrace expr>) -> uint"> const& xcount;
 
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_some);
 NIFTY_DECL(is_tup);
 NIFTY_DECL(is_uint);
 NIFTY_DECL(count);
+NIFTY_DECL(xcount);
 
 } // namespace api

@@ -1458,6 +1458,66 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [numeric.inc]
+/// -------------
+/// uint increment w/ overflow.
+///
+/// PTL_INC(0)    // 1
+/// PTL_INC(1)    // 2
+/// PTL_INC(1023) // 0
+#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
+  PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
+
+/// [numeric.dec]
+/// -------------
+/// uint decrement w/ underflow.
+///
+/// PTL_DEC(0)    // 1023
+/// PTL_DEC(1)    // 0
+/// PTL_DEC(1023) // 1022
+#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
+  PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
+
+/// [numeric.eqz]
+/// -------------
+/// detects if uint n is zero.
+///
+/// PTL_EQZ(0)             // 1
+/// PTL_EQZ(1)             // 0
+/// PTL_EQZ(2)             // 0
+/// PTL_EQZ(1023)          // 0
+/// PTL_EQZ(PTL_INC(1023)) // 1
+#define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ PPUTLEQZ_X(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLEQZ_X(...)  PPUTLEQZ_##__VA_OPT__(NO_)##PASS
+#define PPUTLEQZ_NO_PASS 0
+#define PPUTLEQZ_PASS    1
+#define PPUTLEQZ_0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.nez]
+/// -------------
+/// detects if uint n is not zero.
+///
+/// PTL_NEZ(0)             // 0
+/// PTL_NEZ(1)             // 1
+/// PTL_NEZ(2)             // 1
+/// PTL_NEZ(1023)          // 1
+/// PTL_NEZ(PTL_INC(1023)) // 0
+#define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ PPUTLNEZ_X(PTL_CAT(PPUTLNEZ_, PTL_UINT(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLNEZ_X(...)  PPUTLNEZ_##__VA_OPT__(NO_)##FAIL
+#define PPUTLNEZ_NO_FAIL 1
+#define PPUTLNEZ_FAIL    0
+#define PPUTLNEZ_0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [meta.lp]
 /// ---------
 /// hides a left parens behind an expansion.
@@ -1470,22 +1530,22 @@
 /// needed for implementing pair recursion.
 #define PTL_RP /* -> <left parens> */ )
 
-/// [meta.xct]
-/// ----------
+/// [meta.xtrace]
+/// -------------
 /// counts the number of expansions undergone after expression.
 /// uses recursion; can track any number of expansions.
 /// the number of commas indicates the number of expansions.
 ///
-/// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
-/// PTL_STR(PTL_ESC(PTL_XCT))                   // "PPUTLXCT_B ( ,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
-#define PTL_XCT /* -> <xct expr> */ PPUTLXCT_A PTL_LP /**/, PTL_RP
+/// PTL_STR(PTL_XTRACE)                            // "PPUTLXTRACE_A ( , )"
+/// PTL_STR(PTL_ESC(PTL_XTRACE))                   // "PPUTLXTRACE_B ( ,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // "PPUTLXTRACE_A ( ,,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // "PPUTLXTRACE_B ( ,,,, )"
+#define PTL_XTRACE /* -> <xtrace expr> */ PPUTLXTRACE_A PTL_LP /**/, PTL_RP
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP __VA_ARGS__, PTL_RP
-#define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP __VA_ARGS__, PTL_RP
+#define PPUTLXTRACE_B(...) PPUTLXTRACE_A PTL_LP __VA_ARGS__, PTL_RP
+#define PPUTLXTRACE_A(...) PPUTLXTRACE_B PTL_LP __VA_ARGS__, PTL_RP
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1495,10 +1555,10 @@
 /// args are expressed after n+1 expansions in total.
 /// useful for implementing mutual recursion.
 ///
-/// PTL_X(0)(PTL_XCT) // PTL_ESC(PTL_XCT)
-/// PTL_X(1)(PTL_XCT) // PTL_ESC(PTL_ESC(PTL_XCT))
-/// PTL_X(0)(PTL_XCT) // PPUTLXCT_A ( , )
-/// PTL_X(1)(PTL_XCT) // PPUTLXCT_B ( ,, )
+/// PTL_X(0)(PTL_XTRACE) // PTL_ESC(PTL_XTRACE)
+/// PTL_X(1)(PTL_XTRACE) // PTL_ESC(PTL_ESC(PTL_XTRACE))
+/// PTL_X(0)(PTL_XTRACE) // PPUTLXTRACE_A ( , )
+/// PTL_X(1)(PTL_XTRACE) // PPUTLXTRACE_B ( ,, )
 #define PTL_X(/* n: uint */...) /* -> (args: any...) -<n>-> ...args */ PTL_CAT(PPUTLX_, PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -2530,66 +2590,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [numeric.inc]
-/// -------------
-/// uint increment w/ overflow.
-///
-/// PTL_INC(0)    // 1
-/// PTL_INC(1)    // 2
-/// PTL_INC(1023) // 0
-#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
-  PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
-
-/// [numeric.dec]
-/// -------------
-/// uint decrement w/ underflow.
-///
-/// PTL_DEC(0)    // 1023
-/// PTL_DEC(1)    // 0
-/// PTL_DEC(1023) // 1022
-#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
-  PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
-
-/// [numeric.eqz]
-/// -------------
-/// detects if uint n is zero.
-///
-/// PTL_EQZ(0)             // 1
-/// PTL_EQZ(1)             // 0
-/// PTL_EQZ(2)             // 0
-/// PTL_EQZ(1023)          // 0
-/// PTL_EQZ(PTL_INC(1023)) // 1
-#define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ PPUTLEQZ_X(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLEQZ_X(...)  PPUTLEQZ_##__VA_OPT__(NO_)##PASS
-#define PPUTLEQZ_NO_PASS 0
-#define PPUTLEQZ_PASS    1
-#define PPUTLEQZ_0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.nez]
-/// -------------
-/// detects if uint n is not zero.
-///
-/// PTL_NEZ(0)             // 0
-/// PTL_NEZ(1)             // 1
-/// PTL_NEZ(2)             // 1
-/// PTL_NEZ(1023)          // 1
-/// PTL_NEZ(PTL_INC(1023)) // 0
-#define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ PPUTLNEZ_X(PTL_CAT(PPUTLNEZ_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLNEZ_X(...)  PPUTLNEZ_##__VA_OPT__(NO_)##FAIL
-#define PPUTLNEZ_NO_FAIL 1
-#define PPUTLNEZ_FAIL    0
-#define PPUTLNEZ_0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [control.if]
 /// ------------
 /// conditionally expands items based on a boolean.
@@ -2813,6 +2813,29 @@
 /// exit macros
 #define PPUTLCOUNT_THROW(...)     PTL_COUNT(Error : too many args)
 #define PPUTLCOUNT_RETURN(i, ...) PTL_DEC(i)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.xcount]
+/// ---------------
+/// extracts the result from an PTL_XTRACE expression.
+/// expansion count must be no greater than 1023.
+///
+/// ignores the expansion required to read the result;
+/// result ranges from 0 to 1023.
+///
+/// PTL_XCOUNT(PTL_XTRACE)           // 0
+/// PTL_XCOUNT(PTL_X(0)(PTL_XTRACE)) // 1
+/// PTL_XCOUNT(PTL_X(1)(PTL_XTRACE)) // 2
+/// PTL_XCOUNT(PTL_X(2)(PTL_XTRACE)) // 3
+#define PTL_XCOUNT(/* <xtrace expr> */...) /* -> uint */ PPUTLXCOUNT_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXCOUNT_X(...)             PPUTLXCOUNT_##__VA_ARGS__
+#define PPUTLXCOUNT_PPUTLXTRACE_B(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
+#define PPUTLXCOUNT_PPUTLXTRACE_A(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
+#define PPUTLXCOUNT_RES(_, __, ...)    PTL_COUNT(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

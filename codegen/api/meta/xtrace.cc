@@ -32,38 +32,38 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(xct_a) xct_a = NIFTY_DEF(xct_a, );
-decltype(xct_b) xct_b = NIFTY_DEF(xct_b, );
+decltype(xtrace_a) xtrace_a = NIFTY_DEF(xtrace_a, );
+decltype(xtrace_b) xtrace_b = NIFTY_DEF(xtrace_b, );
 } // namespace detail
 
 std::string
-xct_expected(unsigned n) {
-  return (n % 2 == 0 ? detail::xct_a : detail::xct_b) + " ( " + utl::cat(std::vector<std::string>(n + 1, ","))
-       + " )";
+xtrace_expected(unsigned n) {
+  return (n % 2 == 0 ? detail::xtrace_a : detail::xtrace_b) + " ( "
+       + utl::cat(std::vector<std::string>(n + 1, ",")) + " )";
 }
 
-decltype(xct) xct = NIFTY_DEF(xct, [&] {
+decltype(xtrace) xtrace = NIFTY_DEF(xtrace, [&] {
   docs << "counts the number of expansions undergone after expression."
        << "uses recursion; can track any number of expansions."
        << "the number of commas indicates the number of expansions.";
 
-  detail::xct_a = def{"a(...)"};
-  detail::xct_b = def{"b(...)"};
+  detail::xtrace_a = def{"a(...)"};
+  detail::xtrace_b = def{"b(...)"};
 
-  detail::xct_a = [&](va args) {
-    return detail::xct_b + " " + lp + " " + args + ", " + rp;
+  detail::xtrace_a = [&](va args) {
+    return detail::xtrace_b + " " + lp + " " + args + ", " + rp;
   };
 
-  detail::xct_b = [&](va args) {
-    return detail::xct_a + " " + lp + " " + args + ", " + rp;
+  detail::xtrace_b = [&](va args) {
+    return detail::xtrace_a + " " + lp + " " + args + ", " + rp;
   };
 
-  tests << str(xct)                = pp::str(xct_expected(0)) >> docs;
-  tests << str(esc(xct))           = pp::str(xct_expected(1)) >> docs;
-  tests << str(esc(esc(xct)))      = pp::str(xct_expected(2)) >> docs;
-  tests << str(esc(esc(esc(xct)))) = pp::str(xct_expected(3)) >> docs;
+  tests << str(xtrace)                = pp::str(xtrace_expected(0)) >> docs;
+  tests << str(esc(xtrace))           = pp::str(xtrace_expected(1)) >> docs;
+  tests << str(esc(esc(xtrace)))      = pp::str(xtrace_expected(2)) >> docs;
+  tests << str(esc(esc(esc(xtrace)))) = pp::str(xtrace_expected(3)) >> docs;
 
-  return detail::xct_a + " " + lp + " /**/, " + rp;
+  return detail::xtrace_a + " " + lp + " /**/, " + rp;
 });
 
 } // namespace api

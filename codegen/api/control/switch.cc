@@ -51,8 +51,8 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   for (std::size_t i = 0; i < 15 and i < conf::uint_max; ++i) {
     std::vector<std::string> actual(i + 2, "()");
     actual.front()                = std::to_string(i);
-    actual.back()                 = pp::tup(xct);
-    tests << str(switch_(actual)) = pp::str(xct_expected(4 + 2 * i));
+    actual.back()                 = pp::tup(xtrace);
+    tests << str(switch_(actual)) = pp::str(xtrace_expected(4 + 2 * i));
   }
 
   def<"a(i)"> a;

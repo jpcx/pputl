@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,32 +25,40 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "numeric.h"
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
-inline codegen::category<"meta"> meta;
+using namespace codegen;
 
-extern codegen::def<"lp -> <left parens>"> const& lp;
-extern codegen::def<"rp -> <left parens>"> const& rp;
+decltype(xcount) xcount = NIFTY_DEF(xcount, [&](va args) {
+  docs << "extracts the result from an " + xtrace + " expression."
+       << "expansion count must be no greater than " + uint_max_s + "."
+       << ""
+       << "ignores the expansion required to read the result;"
+       << "result ranges from 0 to " + uint_max_s + ".";
 
-std::string                                                                    xtrace_expected(unsigned n);
-extern codegen::def<"xtrace -> <xtrace expr>"> const&                          xtrace;
-extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
+  tests << xcount(xtrace)                                  = "0" >> docs;
+  tests << xcount(pp::call(x(0), xtrace))                  = "1" >> docs;
+  tests << xcount(pp::call(x(1), xtrace))                  = "2" >> docs;
+  tests << xcount(pp::call(x(2), xtrace))                  = "3" >> docs;
+  tests << xcount(pp::call(x(conf::uint_max - 1), xtrace)) = uint_max_s;
 
-NIFTY_DECL(lp);
-NIFTY_DECL(rp);
-namespace detail {
-extern codegen::def<>& xtrace_a;
-extern codegen::def<>& xtrace_b;
-NIFTY_DECL(xtrace_a);
-NIFTY_DECL(xtrace_b);
-} // namespace detail
-NIFTY_DECL(xtrace);
-NIFTY_DECL(x);
+  def<"res(_, __, ...)"> res = [&](arg, arg, va args) {
+    return count(args);
+  };
+
+  def a = def{detail::xtrace_a + "(...)"} = [&](va args) {
+    return res(args + ".");
+  };
+
+  def{detail::xtrace_b + "(...)"} = [&](va args) {
+    return res(args + ".");
+  };
+
+  return def<"x(...)">{[&](va args) {
+    return pp::cat(utl::slice(a, -((std::string const&)detail::xtrace_a).size()), args);
+  }}(args);
+});
 
 } // namespace api
