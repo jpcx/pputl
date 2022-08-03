@@ -41,17 +41,18 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "uint type (0 through " + uint_max_s + ")."
        << "expands to n if valid, else, terminates expansion with a self-reference.";
 
-  tests << uint(0)              = "0" >> docs;
-  tests << uint(1)              = "1" >> docs;
-  tests << uint(2)              = "2" >> docs;
-  tests << uint(conf::uint_max) = uint_max_s >> docs;
+  tests << uint(0)                   = "0" >> docs;
+  tests << uint(1)                   = "1" >> docs;
+  tests << uint(2)                   = "2" >> docs;
+  tests << uint(conf::uint_max)      = uint_max_s >> docs;
+  tests << str(uint(conf::uint_max)) = pp::str(conf::uint_max) >> docs;
   tests << str(uint(conf::uint_max + 1)) =
-      ("\"" + uint + "(" + std::to_string(conf::uint_max + 1) + ")" + "\"") >> docs;
-  tests << str(uint("1, 2"))   = ("\"" + uint + "(1, 2)" + "\"") >> docs;
-  tests << str(uint("1,"))     = ("\"" + uint + "(1,)" + "\"") >> docs;
-  tests << str(uint("foo"))    = ("\"" + uint + "(foo)" + "\"") >> docs;
-  tests << str(uint("()"))     = ("\"" + uint + "(())" + "\"") >> docs;
-  tests << str(uint("(), ()")) = ("\"" + uint + "((), ())" + "\"") >> docs;
+      pp::str(uint + "(" + std::to_string(conf::uint_max + 1) + ")") >> docs;
+  tests << str(uint("1, 2"))   = pp::str(uint + "(1, 2)") >> docs;
+  tests << str(uint("1,"))     = pp::str(uint + "(1,)") >> docs;
+  tests << str(uint("foo"))    = pp::str(uint + "(foo)") >> docs;
+  tests << str(uint("()"))     = pp::str(uint + "(())") >> docs;
+  tests << str(uint("(), ()")) = pp::str(uint + "((), ())") >> docs;
 
   auto seq  = utl::base10_seq(conf::uint_max + 1);
   auto rseq = seq;

@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,24 +25,48 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "control.h"
-#include "lang.h"
-#include "meta.h"
-#include "numeric.h"
-#include "type.h"
+#include "math.h"
 
 namespace api {
 
-inline codegen::category<"math"> math;
+using namespace codegen;
 
-extern codegen::def<"add(...: a: uint, b: uint) -> uint{a + b}"> const& add;
-extern codegen::def<"sub(...: a: uint, b: uint) -> uint{a - b}"> const& sub;
-/* extern codegen::def<"mul(...: a: uint, b: uint) -> uint{a * b}"> const& mul; */
+decltype(add) add = NIFTY_DEF(add, [&](va args) {
+  docs << "uint addition with overflow.";
 
-NIFTY_DECL(add);
-NIFTY_DECL(sub);
-/* NIFTY_DECL(mul); */
+  tests << add("0, 0")            = "0" >> docs;
+  tests << add("0, 1")            = "1" >> docs;
+  tests << add("1, 2")            = "3" >> docs;
+  tests << add(conf::uint_max, 1) = "0" >> docs;
+  tests << add(conf::uint_max, 2) = "1" >> docs;
+
+  def<"a(a, b)"> a;
+  def<"b(a, b)"> b;
+
+  def<"return(a, b)"> return_ = [&](arg a_, arg) {
+    docs << "returns result";
+    return a_;
+  };
+
+  a = [&](arg a_, arg b_) {
+    docs << "mutually recursive side A";
+    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
+      return b + " " + lp() + " " + inc(a_) + ", " + dec(b_) + " " + rp();
+    };
+
+    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
+  };
+
+  b = [&](arg a_, arg b_) {
+    docs << "mutually recursive side B";
+    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
+      return a + " " + lp() + " " + inc(a_) + ", " + dec(b_) + " " + rp();
+    };
+
+    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
+  };
+
+  return pp::call(x(rest(args)), a(uint(first(args)), uint(rest(args))));
+});
 
 } // namespace api

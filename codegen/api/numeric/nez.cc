@@ -32,35 +32,64 @@ namespace api {
 using namespace codegen;
 
 decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
-  docs << "detects if uint n is not zero.";
+  docs << "detects if uint n is not zero. terminates expansion on non-uint.";
 
-  tests << nez("0")             = "0" >> docs;
-  tests << nez("1")             = "1" >> docs;
-  tests << nez("2")             = "1" >> docs;
-  tests << nez(uint_max_s)      = "1" >> docs;
-  tests << nez(inc(uint_max_s)) = "0" >> docs;
+  tests << nez("0")                 = "0" >> docs;
+  tests << nez("1")                 = "1" >> docs;
+  tests << nez("2")                 = "1" >> docs;
+  tests << nez(uint_max_s)          = "1" >> docs;
+  tests << nez(inc(uint_max_s))     = "0" >> docs;
+  tests << str(nez(conf::uint_max)) = pp::str(1) >> docs;
+  tests << str(nez())               = pp::str(nez()) >> docs;
+  tests << str(nez('a'))            = pp::str(nez('a')) >> docs;
+  tests << str(nez("foo"))          = pp::str(nez("foo")) >> docs;
 
-  def<"0"> _0 = [&]() {
-    return "";
+  def<"ooo_throw(...)"> ooo_throw_ = [&](va args) {
+    return nez(args);
   };
 
-  def<"fail"> fail = [&] {
+  def<"ooo_fail(...)"> ooo_fail = [&](va) {
     return "0";
   };
 
-  def<"no_fail"> no_fail = [&] {
+  def<"ooo_no_fail(...)"> ooo_no_fail = [&](va) {
+    docs << "third parentheses; returns or throws";
     return "1";
   };
 
-  return def<"x(...)">{[&](va) {
-    std::string const prefix    = utl::slice(fail, -4);
-    std::string const fail_s    = utl::slice(fail, prefix.size(), 0);
-    std::string const no_fail_s = utl::slice(no_fail, prefix.size(), 0);
+  def<"oo_fail(...)"> oo_fail = [&](va) {
+    return ooo_throw_;
+  };
 
-    return pp::cat(prefix,
-                   pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-                   fail_s);
-  }}(cat(utl::slice(_0, -1), uint(args)));
+  def<"oo_no_fail(n)"> oo_no_fail = [&](arg n) {
+    docs << "second parentheses; verifies not literal 0.";
+    return def<"x(...)">{[&](va) {
+      std::string prefix = utl::slice(ooo_fail, -4);
+      if (prefix.back() == '_')
+        prefix.pop_back();
+      std::string fail_s    = utl::slice(ooo_fail, prefix.size(), 0);
+      std::string no_fail_s = utl::slice(ooo_no_fail, prefix.size(), 0);
+      std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
+
+      return pp::cat(prefix, pp::va_opt(no_s), fail_s);
+    }}(cat(utl::slice(detail::eqz_0, -1), n));
+  };
+
+  return pp::call(pp::call(def<"o(...)">{[&](va args) {
+                             docs << "first parentheses; asserts uint";
+                             return def<"x(_, ...)">{[&](arg, va) {
+                               std::string prefix = utl::slice(oo_fail, -4);
+                               if (prefix.back() == '_')
+                                 prefix.pop_back();
+                               std::string fail_s    = utl::slice(oo_fail, prefix.size(), 0);
+                               std::string no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
+                               std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
+
+                               return pp::cat(prefix, pp::va_opt(no_s), fail_s);
+                             }}(args);
+                           }}(cat(utl::slice(detail::uint_range[0], -1), uint(args))),
+                           args),
+                  args);
 });
 
 } // namespace api

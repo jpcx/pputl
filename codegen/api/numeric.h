@@ -42,6 +42,10 @@ extern codegen::def<"nez(...: n: uint) -> uint{n!=0}"> const& nez;
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);
+namespace detail {
+extern codegen::def<>& eqz_0;
+NIFTY_DECL(eqz_0);
+} // namespace detail
 NIFTY_DECL(eqz);
 NIFTY_DECL(nez);
 

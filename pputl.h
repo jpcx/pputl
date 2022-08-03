@@ -305,6 +305,7 @@
 /// PTL_UINT(1)               // 1
 /// PTL_UINT(2)               // 2
 /// PTL_UINT(1023)            // 1023
+/// PTL_STR(PTL_UINT(1023))   // "1023"
 /// PTL_STR(PTL_UINT(1024))   // "PTL_UINT(1024)"
 /// PTL_STR(PTL_UINT(1, 2))   // "PTL_UINT(1, 2)"
 /// PTL_STR(PTL_UINT(1,))     // "PTL_UINT(1,)"
@@ -1474,61 +1475,124 @@
 
 /// [numeric.inc]
 /// -------------
-/// uint increment w/ overflow.
+/// uint increment w/ overflow. terminates expansion on non-uint.
 ///
-/// PTL_INC(0)    // 1
-/// PTL_INC(1)    // 2
-/// PTL_INC(1023) // 0
+/// PTL_INC(0)             // 1
+/// PTL_INC(1)             // 2
+/// PTL_INC(1023)          // 0
+/// PTL_STR(PTL_INC(1023)) // "0"
+/// PTL_STR(PTL_INC())     // "PTL_INC()"
+/// PTL_STR(PTL_INC(a))    // "PTL_INC(a)"
+/// PTL_STR(PTL_INC(foo))  // "PTL_INC(foo)"
 #define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
-  PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
+  PPUTLINC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// first parentheses; asserts uint
+#define PPUTLINC_O(...)      PPUTLINC_O_X(__VA_ARGS__)
+#define PPUTLINC_O_X(_, ...) PPUTLINC_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; returns incremented value from uint range or throws.
+#define PPUTLINC_OO_NO_FAIL(n) PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, n))
+#define PPUTLINC_OO_FAIL(...)  PTL_INC(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [numeric.dec]
 /// -------------
-/// uint decrement w/ underflow.
+/// uint decrement w/ underflow. terminates expansion on non-uint.
 ///
-/// PTL_DEC(0)    // 1023
-/// PTL_DEC(1)    // 0
-/// PTL_DEC(1023) // 1022
+/// PTL_DEC(0)             // 1023
+/// PTL_DEC(1)             // 0
+/// PTL_DEC(1023)          // 1022
+/// PTL_STR(PTL_DEC(1023)) // "1022"
+/// PTL_STR(PTL_DEC())     // "PTL_DEC()"
+/// PTL_STR(PTL_DEC(a))    // "PTL_DEC(a)"
+/// PTL_STR(PTL_DEC(foo))  // "PTL_DEC(foo)"
 #define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
-  PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
+  PPUTLDEC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// first parentheses; asserts uint
+#define PPUTLDEC_O(...)      PPUTLDEC_O_X(__VA_ARGS__)
+#define PPUTLDEC_O_X(_, ...) PPUTLDEC_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; returns decremented value from uint range or throws.
+#define PPUTLDEC_OO_NO_FAIL(n) PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, n))
+#define PPUTLDEC_OO_FAIL(...)  PTL_DEC(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [numeric.eqz]
 /// -------------
-/// detects if uint n is zero.
+/// detects if uint n is zero. terminates expansion on non-uint.
 ///
 /// PTL_EQZ(0)             // 1
 /// PTL_EQZ(1)             // 0
 /// PTL_EQZ(2)             // 0
 /// PTL_EQZ(1023)          // 0
 /// PTL_EQZ(PTL_INC(1023)) // 1
-#define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ PPUTLEQZ_X(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
+/// PTL_STR(PTL_EQZ(1023)) // "0"
+/// PTL_STR(PTL_EQZ())     // "PTL_EQZ()"
+/// PTL_STR(PTL_EQZ(a))    // "PTL_EQZ(a)"
+/// PTL_STR(PTL_EQZ(foo))  // "PTL_EQZ(foo)"
+#define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ \
+  PPUTLEQZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLEQZ_X(...)  PPUTLEQZ_##__VA_OPT__(NO_)##PASS
-#define PPUTLEQZ_NO_PASS 0
-#define PPUTLEQZ_PASS    1
+/// first parentheses; asserts uint
+#define PPUTLEQZ_O(...)      PPUTLEQZ_O_X(__VA_ARGS__)
+#define PPUTLEQZ_O_X(_, ...) PPUTLEQZ_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; verifies literal 0.
+#define PPUTLEQZ_OO_NO_FAIL(n)     PPUTLEQZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
+#define PPUTLEQZ_OO_NO_FAIL_X(...) PPUTLEQZ_OOO##__VA_OPT__(_NO)##_PASS
+#define PPUTLEQZ_OO_FAIL(...)      PPUTLEQZ_OOO_THROW
+
+/// third parentheses; returns or throws
+#define PPUTLEQZ_OOO_NO_PASS(...) 0
+#define PPUTLEQZ_OOO_PASS(...)    1
+#define PPUTLEQZ_OOO_THROW(...)   PTL_EQZ(__VA_ARGS__)
+
+/// validator for literal 0
 #define PPUTLEQZ_0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [numeric.nez]
 /// -------------
-/// detects if uint n is not zero.
+/// detects if uint n is not zero. terminates expansion on non-uint.
 ///
 /// PTL_NEZ(0)             // 0
 /// PTL_NEZ(1)             // 1
 /// PTL_NEZ(2)             // 1
 /// PTL_NEZ(1023)          // 1
 /// PTL_NEZ(PTL_INC(1023)) // 0
-#define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ PPUTLNEZ_X(PTL_CAT(PPUTLNEZ_, PTL_UINT(__VA_ARGS__)))
+/// PTL_STR(PTL_NEZ(1023)) // "1"
+/// PTL_STR(PTL_NEZ())     // "PTL_NEZ()"
+/// PTL_STR(PTL_NEZ(a))    // "PTL_NEZ(a)"
+/// PTL_STR(PTL_NEZ(foo))  // "PTL_NEZ(foo)"
+#define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ \
+  PPUTLNEZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLNEZ_X(...)  PPUTLNEZ_##__VA_OPT__(NO_)##FAIL
-#define PPUTLNEZ_NO_FAIL 1
-#define PPUTLNEZ_FAIL    0
-#define PPUTLNEZ_0
+/// first parentheses; asserts uint
+#define PPUTLNEZ_O(...)      PPUTLNEZ_O_X(__VA_ARGS__)
+#define PPUTLNEZ_O_X(_, ...) PPUTLNEZ_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; verifies not literal 0.
+#define PPUTLNEZ_OO_NO_FAIL(n)     PPUTLNEZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
+#define PPUTLNEZ_OO_NO_FAIL_X(...) PPUTLNEZ_OOO##__VA_OPT__(_NO)##_FAIL
+#define PPUTLNEZ_OO_FAIL(...)      PPUTLNEZ_OOO_THROW
+
+/// third parentheses; returns or throws
+#define PPUTLNEZ_OOO_NO_FAIL(...) 1
+#define PPUTLNEZ_OOO_FAIL(...)    0
+#define PPUTLNEZ_OOO_THROW(...)   PTL_NEZ(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2836,24 +2900,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.paste]
-/// ------------
-/// pastes an expression by separating arguments with spaces.
-///
-/// PTL_PASTE()        // <nothing>
-/// PTL_PASTE(a)       // a
-/// PTL_PASTE(a, b)    // a b
-/// PTL_PASTE(a, b, c) // a b c
-#define PTL_PASTE(/* v: any... */...) /* -> v[0] v[1] ... */ \
-  __VA_OPT__(PTL_ITEMS((PTL_X(PTL_SIZE(__VA_ARGS__))(PPUTLPASTE_A(__VA_ARGS__)))))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLPASTE_B(_, ...) _ __VA_OPT__(PPUTLPASTE_A PTL_LP() __VA_ARGS__ PTL_RP())
-#define PPUTLPASTE_A(_, ...) _ __VA_OPT__(PPUTLPASTE_B PTL_LP() __VA_ARGS__ PTL_RP())
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [control.if]
 /// ------------
 /// conditionally expands items based on a boolean.
@@ -2982,6 +3028,80 @@
 /// PTL_XNOR(1, 1) // 1
 #define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ \
   PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))), (PTL_NOT(PTL_REST(__VA_ARGS__))))
+
+/// [math.add]
+/// ----------
+/// uint addition with overflow.
+///
+/// PTL_ADD(0, 0)    // 0
+/// PTL_ADD(0, 1)    // 1
+/// PTL_ADD(1, 2)    // 3
+/// PTL_ADD(1023, 1) // 0
+/// PTL_ADD(1023, 2) // 1
+#define PTL_ADD(/* a: uint, b: uint */...) /* -> uint{a + b} */ \
+  PTL_X(PTL_REST(__VA_ARGS__))(PPUTLADD_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_UINT(PTL_REST(__VA_ARGS__))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// mutually recursive side B
+#define PPUTLADD_B(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLADD_RETURN), (PPUTLADD_B_CONTINUE))(a, b)
+#define PPUTLADD_B_CONTINUE(a, b) PPUTLADD_A PTL_LP() PTL_INC(a), PTL_DEC(b) PTL_RP()
+
+/// mutually recursive side A
+#define PPUTLADD_A(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLADD_RETURN), (PPUTLADD_A_CONTINUE))(a, b)
+#define PPUTLADD_A_CONTINUE(a, b) PPUTLADD_B PTL_LP() PTL_INC(a), PTL_DEC(b) PTL_RP()
+
+/// returns result
+#define PPUTLADD_RETURN(a, b) a
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [math.sub]
+/// ----------
+/// uint subtraction with underflow.
+///
+/// PTL_SUB(0, 0)    // 0
+/// PTL_SUB(0, 1)    // 1023
+/// PTL_SUB(1, 0)    // 1
+/// PTL_SUB(1, 1)    // 0
+/// PTL_SUB(3, 1)    // 2
+/// PTL_SUB(1, 3)    // 1022
+/// PTL_SUB(0, 1023) // 1
+#define PTL_SUB(/* a: uint, b: uint */...) /* -> uint{a - b} */ \
+  PTL_X(PTL_REST(__VA_ARGS__))(PPUTLSUB_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_UINT(PTL_REST(__VA_ARGS__))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// mutually recursive side B
+#define PPUTLSUB_B(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLSUB_RETURN), (PPUTLSUB_B_CONTINUE))(a, b)
+#define PPUTLSUB_B_CONTINUE(a, b) PPUTLSUB_A PTL_LP() PTL_DEC(a), PTL_DEC(b) PTL_RP()
+
+/// mutually recursive side A
+#define PPUTLSUB_A(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLSUB_RETURN), (PPUTLSUB_A_CONTINUE))(a, b)
+#define PPUTLSUB_A_CONTINUE(a, b) PPUTLSUB_B PTL_LP() PTL_DEC(a), PTL_DEC(b) PTL_RP()
+
+/// returns result
+#define PPUTLSUB_RETURN(a, b) a
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [algo.paste]
+/// ------------
+/// pastes an expression by separating arguments with spaces.
+///
+/// PTL_PASTE()        // <nothing>
+/// PTL_PASTE(a)       // a
+/// PTL_PASTE(a, b)    // a b
+/// PTL_PASTE(a, b, c) // a b c
+#define PTL_PASTE(/* v: any... */...) /* -> v[0] v[1] ... */ \
+  __VA_OPT__(PTL_ITEMS((PTL_X(PTL_SIZE(__VA_ARGS__))(PPUTLPASTE_A(__VA_ARGS__)))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLPASTE_B(_, ...) _ __VA_OPT__(PPUTLPASTE_A PTL_LP() __VA_ARGS__ PTL_RP())
+#define PPUTLPASTE_A(_, ...) _ __VA_OPT__(PPUTLPASTE_B PTL_LP() __VA_ARGS__ PTL_RP())
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // vim: fdm=marker:fmr={{{,}}}
 
