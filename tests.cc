@@ -33,9 +33,9 @@
 //    C++ has evolved to facilitate  countless  metaprogramming techniques    //
 //    that  should be  preferred in most cases,  as they are  predictable,    //
 //    type-safe, scoped, and easier to debug. pputl is primarily  intended    //
-//    for research purposes  and for various edge cases that still must be    //
-//    solved using text replacement,  such as certain  optimizations  that    //
-//    reduce the number of template specializations.                          //
+//    for  research purposes and for various edge cases that still must be    //
+//    solved using  text replacement,  such as optimizations that minimize    //
+//    template specializations and syntactical boilerplate reduction.         //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
@@ -59,11 +59,11 @@
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
-//    Copy pputl.h and include. The default build uses a 10-bit uint range    //
-//    for  arithmetic  and  comparisons.  Integers  overflow and underflow    //
-//    according to  standard unsigned rules.  Variadic argument sizes  are    //
-//    usually capped by the uint max. Modify the head of codegen/codegen.h    //
-//    and run `make` to set custom integer limits and naming preferences.     //
+//    Copy pputl.h and include. The default build defines a 10bit unsigned    //
+//    type  that  underflows and overflows  according to standard unsigned    //
+//    rules.  Variadic argument sizes are usually  capped by the uint max.    //
+//    Modify the head of codegen/codegen.h  and make  to set a custom uint    //
+//    maximum or change the symbol naming rules.                              //
 //                                                                            //
 //    GUIDELINES                                                              //
 //    ----------                                                              //
@@ -76,10 +76,13 @@
 //    data ranges both input and output a variadic argument list. Creating    //
 //    a tuple is trivial but extraction costs an expansion.                   //
 //                                                                            //
-//    pputl has three major types: tup, uint, and bool. pputl types verify    //
-//    that the type  is as expected  using various detection methods.  Any    //
-//    function signature  that accepts  one of these types  as a parameter    //
-//    will cast the value using the associated verifier.                      //
+//    pputl defines three types: tuple, uint, and bool. Functions that use    //
+//    these types in their parameter documentation  will assert their that    //
+//    the inputs are of the correct type.                                     //
+//                                                                            //
+//    pputl errors  are thrown  by invoking a directly-recursive call with    //
+//    the original arguments. This has the effect of terminating expansion    //
+//    in a way that preserves both the function name and its arguments.       //
 //                                                                            //
 //    TESTING                                                                 //
 //    -------                                                                 //
@@ -143,13 +146,13 @@ ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
 ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
 
-ASSERT_PP_EQ((PTL_TUP(())), (()));
-ASSERT_PP_EQ((PTL_TUP((1, 2))), ((1, 2)));
-ASSERT_PP_EQ((PTL_STR(PTL_TUP(0))), ("PTL_TUP(0)"));
-ASSERT_PP_EQ((PTL_STR(PTL_TUP(1, 2))), ("PTL_TUP(1, 2)"));
-ASSERT_PP_EQ((PTL_STR(PTL_TUP(1,))), ("PTL_TUP(1,)"));
-ASSERT_PP_EQ((PTL_STR(PTL_TUP(foo))), ("PTL_TUP(foo)"));
-ASSERT_PP_EQ((PTL_STR(PTL_TUP((), ()))), ("PTL_TUP((), ())"));
+ASSERT_PP_EQ((PTL_TUPLE(())), (()));
+ASSERT_PP_EQ((PTL_TUPLE((1, 2))), ((1, 2)));
+ASSERT_PP_EQ((PTL_STR(PTL_TUPLE(0))), ("PTL_TUPLE(0)"));
+ASSERT_PP_EQ((PTL_STR(PTL_TUPLE(1, 2))), ("PTL_TUPLE(1, 2)"));
+ASSERT_PP_EQ((PTL_STR(PTL_TUPLE(1,))), ("PTL_TUPLE(1,)"));
+ASSERT_PP_EQ((PTL_STR(PTL_TUPLE(foo))), ("PTL_TUPLE(foo)"));
+ASSERT_PP_EQ((PTL_STR(PTL_TUPLE((), ()))), ("PTL_TUPLE((), ())"));
 
 ASSERT_PP_EQ((PTL_BOOL(0)), (0));
 ASSERT_PP_EQ((PTL_BOOL(1)), (1));
@@ -212,19 +215,6 @@ ASSERT_PP_EQ((PTL_STR(PTL_NEZ())), ("PTL_NEZ()"));
 ASSERT_PP_EQ((PTL_STR(PTL_NEZ(a))), ("PTL_NEZ(a)"));
 ASSERT_PP_EQ((PTL_STR(PTL_NEZ(foo))), ("PTL_NEZ(foo)"));
 
-ASSERT_PP_EQ((PTL_ITEMS(())), ());
-ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
-ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
-ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
-ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
-ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
-ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
-ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
-ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
-ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
-ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
-ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
-
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
@@ -249,27 +239,27 @@ ASSERT_PP_EQ((PTL_IS_SOME(, a)), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, a, )), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, , a)), (1));
 
-ASSERT_PP_EQ((PTL_IS_TUP()), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(())), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((1, 2))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC(()))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC((1, 2)))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP((, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE()), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(())), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((1, 2))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(PTL_ESC(()))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE(PTL_ESC((1, 2)))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, , a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((a, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, a))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, , a))), (1));
 
 ASSERT_PP_EQ((PTL_IS_UINT()), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
@@ -300,6 +290,22 @@ ASSERT_PP_EQ((PTL_SIZE(a, , )), (3));
 ASSERT_PP_EQ((PTL_SIZE(, a)), (2));
 ASSERT_PP_EQ((PTL_SIZE(, a, )), (3));
 ASSERT_PP_EQ((PTL_SIZE(, , a)), (3));
+
+ASSERT_PP_EQ((PTL_ITEMS(())), ());
+ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
+ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
+ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
+ASSERT_PP_EQ((PTL_STR(PTL_ITEMS((a, b, c)))), ("a, b, c"));
+ASSERT_PP_EQ((PTL_STR(PTL_ITEMS())), ("PTL_ITEMS()"));
+ASSERT_PP_EQ((PTL_STR(PTL_ITEMS(not, tuple))), ("PTL_ITEMS(not, tuple)"));
+ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
+ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
+ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
+ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
+ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
+ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
+ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
+ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
 
 ASSERT_PP_EQ((PTL_STR(PTL_XTRACE)), ("PPUTLXTRACE_A ( , )"));
 ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XTRACE))), ("PPUTLXTRACE_B ( ,, )"));

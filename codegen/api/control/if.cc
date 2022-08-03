@@ -45,14 +45,14 @@ decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
     docs << "second parentheses; false result";
     return def<"x(f)">{[&](arg f) {
       return esc + " " + f;
-    }}(tup(f));
+    }}(tuple(f));
   };
 
   def<"oo_1(b, t, f)">{} = [&](arg, arg t, arg) {
     docs << "second parentheses; true result";
     return def<"x(t)">{[&](arg t) {
       return esc + " " + t;
-    }}(tup(t));
+    }}(tuple(t));
   };
 
   def<"o(b, ...)"> o = [&](arg b, va) {

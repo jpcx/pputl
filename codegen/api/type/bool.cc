@@ -37,12 +37,12 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
 
   tests << bool_(0)             = "0" >> docs;
   tests << bool_(1)             = "1" >> docs;
-  tests << str(bool_(2))        = ("\"" + bool_ + "(2)" + "\"") >> docs;
-  tests << str(bool_("1, 2"))   = ("\"" + bool_ + "(1, 2)" + "\"") >> docs;
-  tests << str(bool_("1,"))     = ("\"" + bool_ + "(1,)" + "\"") >> docs;
-  tests << str(bool_("foo"))    = ("\"" + bool_ + "(foo)" + "\"") >> docs;
-  tests << str(bool_("()"))     = ("\"" + bool_ + "(())" + "\"") >> docs;
-  tests << str(bool_("(), ()")) = ("\"" + bool_ + "((), ())" + "\"") >> docs;
+  tests << str(bool_(2))        = pp::str(bool_ + "(2)") >> docs;
+  tests << str(bool_("1, 2"))   = pp::str(bool_ + "(1, 2)") >> docs;
+  tests << str(bool_("1,"))     = pp::str(bool_ + "(1,)") >> docs;
+  tests << str(bool_("foo"))    = pp::str(bool_ + "(foo)") >> docs;
+  tests << str(bool_("()"))     = pp::str(bool_ + "(())") >> docs;
+  tests << str(bool_("(), ()")) = pp::str(bool_ + "((), ())") >> docs;
 
   def<"chk_0"> chk_0 = [&] {
     return "";

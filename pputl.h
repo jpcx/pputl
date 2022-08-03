@@ -35,9 +35,9 @@
 //    C++ has evolved to facilitate  countless  metaprogramming techniques    //
 //    that  should be  preferred in most cases,  as they are  predictable,    //
 //    type-safe, scoped, and easier to debug. pputl is primarily  intended    //
-//    for research purposes  and for various edge cases that still must be    //
-//    solved using text replacement,  such as certain  optimizations  that    //
-//    reduce the number of template specializations.                          //
+//    for  research purposes and for various edge cases that still must be    //
+//    solved using  text replacement,  such as optimizations that minimize    //
+//    template specializations and syntactical boilerplate reduction.         //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
@@ -61,11 +61,11 @@
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
-//    Copy pputl.h and include. The default build uses a 10-bit uint range    //
-//    for  arithmetic  and  comparisons.  Integers  overflow and underflow    //
-//    according to  standard unsigned rules.  Variadic argument sizes  are    //
-//    usually capped by the uint max. Modify the head of codegen/codegen.h    //
-//    and run `make` to set custom integer limits and naming preferences.     //
+//    Copy pputl.h and include. The default build defines a 10bit unsigned    //
+//    type  that  underflows and overflows  according to standard unsigned    //
+//    rules.  Variadic argument sizes are usually  capped by the uint max.    //
+//    Modify the head of codegen/codegen.h  and make  to set a custom uint    //
+//    maximum or change the symbol naming rules.                              //
 //                                                                            //
 //    GUIDELINES                                                              //
 //    ----------                                                              //
@@ -78,10 +78,13 @@
 //    data ranges both input and output a variadic argument list. Creating    //
 //    a tuple is trivial but extraction costs an expansion.                   //
 //                                                                            //
-//    pputl has three major types: tup, uint, and bool. pputl types verify    //
-//    that the type  is as expected  using various detection methods.  Any    //
-//    function signature  that accepts  one of these types  as a parameter    //
-//    will cast the value using the associated verifier.                      //
+//    pputl defines three types: tuple, uint, and bool. Functions that use    //
+//    these types in their parameter documentation  will assert their that    //
+//    the inputs are of the correct type.                                     //
+//                                                                            //
+//    pputl errors  are thrown  by invoking a directly-recursive call with    //
+//    the original arguments. This has the effect of terminating expansion    //
+//    in a way that preserves both the function name and its arguments.       //
 //                                                                            //
 //    TESTING                                                                 //
 //    -------                                                                 //
@@ -218,36 +221,28 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.tup]
-/// ----------
+/// [type.tuple]
+/// ------------
 /// tuple type (any...).
-/// expands to t if valid, else, terminates expansion with a self-reference.
+/// expands to t if valid. terminates expansion on non-tuple
 ///
-/// PTL_TUP(())              // ()
-/// PTL_TUP((1, 2))          // (1, 2)
-/// PTL_STR(PTL_TUP(0))      // "PTL_TUP(0)"
-/// PTL_STR(PTL_TUP(1, 2))   // "PTL_TUP(1, 2)"
-/// PTL_STR(PTL_TUP(1,))     // "PTL_TUP(1,)"
-/// PTL_STR(PTL_TUP(foo))    // "PTL_TUP(foo)"
-/// PTL_STR(PTL_TUP((), ())) // "PTL_TUP((), ())"
-#define PTL_TUP(/* t: any... */...) /* -> tup{t} */ PPUTLTUP_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)
+/// PTL_TUPLE(())              // ()
+/// PTL_TUPLE((1, 2))          // (1, 2)
+/// PTL_STR(PTL_TUPLE(0))      // "PTL_TUPLE(0)"
+/// PTL_STR(PTL_TUPLE(1, 2))   // "PTL_TUPLE(1, 2)"
+/// PTL_STR(PTL_TUPLE(1,))     // "PTL_TUPLE(1,)"
+/// PTL_STR(PTL_TUPLE(foo))    // "PTL_TUPLE(foo)"
+/// PTL_STR(PTL_TUPLE((), ())) // "PTL_TUPLE((), ())"
+#define PTL_TUPLE(/* t: any... */...) /* -> tuple{t} */ PPUTLTUPLE_O(PTL_EAT __VA_ARGS__)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// first parentheses; asserts only one arg.
-#define PPUTLTUP_O(_, ...)      PPUTLTUP_O_##__VA_OPT__(NO_)##PASS()
-#define PPUTLTUP_O_NO_PASS(...) PPUTLTUP_OO_NO_PASS
-#define PPUTLTUP_O_PASS(...)    PPUTLTUP_OO
+/// first parentheses; detects tuple
+#define PPUTLTUPLE_O(...) PPUTLTUPLE_OO##__VA_OPT__(_NO)##_PASS
 
-/// second parentheses; asserts tuple.
-#define PPUTLTUP_OO(_, ...)      PPUTLTUP_OO_RES(PTL_EAT _)
-#define PPUTLTUP_OO_RES(...)     PPUTLTUP_OO_##__VA_OPT__(NO_)##PASS()
-#define PPUTLTUP_OO_PASS(...)    PPUTLTUP_PASS
-#define PPUTLTUP_OO_NO_PASS(...) PPUTLTUP_FAIL
-
-/// fourth parentheses; returns
-#define PPUTLTUP_PASS(...) __VA_ARGS__
-#define PPUTLTUP_FAIL(...) PTL_TUP(__VA_ARGS__)
+/// second parentheses; returns or throws
+#define PPUTLTUPLE_OO_NO_PASS(...) PTL_TUPLE(__VA_ARGS__)
+#define PPUTLTUPLE_OO_PASS(...)    __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1596,16 +1591,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.items]
-/// --------------
-/// extracts tuple items.
-///
-/// PTL_ITEMS(())        // <nothing>
-/// PTL_ITEMS((a))       // a
-/// PTL_ITEMS((a, b))    // a, b
-/// PTL_ITEMS((a, b, c)) // a, b, c
-#define PTL_ITEMS(/* tup */...) /* -> ...tup */ PTL_ESC __VA_ARGS__
-
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.
@@ -1640,15 +1625,15 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_tup]
-/// ---------------
+/// [traits.is_tuple]
+/// -----------------
 /// detects if args is a tuple.
 ///
-/// PTL_IS_TUP()       // 0
-/// PTL_IS_TUP(1, 2)   // 0
-/// PTL_IS_TUP(())     // 1
-/// PTL_IS_TUP((1, 2)) // 1
-#define PTL_IS_TUP(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
+/// PTL_IS_TUPLE()       // 0
+/// PTL_IS_TUPLE(1, 2)   // 0
+/// PTL_IS_TUPLE(())     // 1
+/// PTL_IS_TUPLE((1, 2)) // 1
+#define PTL_IS_TUPLE(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
 
 /// [traits.is_uint]
 /// ----------------
@@ -1814,6 +1799,30 @@
 #define PPUTLSIZE_READ_0(_sz)         PTL_UINT(PTL_SIZE(Error : too many args))
 #define PPUTLSIZE_READ_PPUTLSIZE(...) __VA_ARGS__
 #define PPUTLSIZE_PPUTLSIZE(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.items]
+/// --------------
+/// extracts tuple items. terminates expansion on non-tup.
+///
+/// PTL_ITEMS(())                  // <nothing>
+/// PTL_ITEMS((a))                 // a
+/// PTL_ITEMS((a, b))              // a, b
+/// PTL_ITEMS((a, b, c))           // a, b, c
+/// PTL_STR(PTL_ITEMS((a, b, c)))  // "a, b, c"
+/// PTL_STR(PTL_ITEMS())           // "PTL_ITEMS()"
+/// PTL_STR(PTL_ITEMS(not, tuple)) // "PTL_ITEMS(not, tuple)"
+#define PTL_ITEMS(/* v: tuple */...) /* -> ...v */ \
+  PTL_CAT(PPUTLITEMS_, PTL_IS_TUPLE(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// tuple; extract and return
+#define PPUTLITEMS_1(...) PTL_ESC __VA_ARGS__
+
+/// non-tuple; throw
+#define PPUTLITEMS_0(...) PTL_ITEMS(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2910,7 +2919,8 @@
 /// PTL_IF(0, (t), (f))    // f
 /// PTL_IF(1, (a), (b, c)) // a
 /// PTL_IF(0, (a), (b, c)) // b, c
-#define PTL_IF(/* b: bool, t: tup, f: tup */...) /* -> b ? ...t : ...f */ PPUTLIF_O(__VA_ARGS__)(__VA_ARGS__)
+#define PTL_IF(/* b: bool, t: tuple, f: tuple */...) /* -> b ? ...t : ...f */ \
+  PPUTLIF_O(__VA_ARGS__)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2918,11 +2928,11 @@
 #define PPUTLIF_O(b, ...) PTL_CAT(PPUTLIF_OO_, PTL_BOOL(b))
 
 /// second parentheses; true result
-#define PPUTLIF_OO_1(b, t, f) PPUTLIF_OO_1_X(PTL_TUP(t))
+#define PPUTLIF_OO_1(b, t, f) PPUTLIF_OO_1_X(PTL_TUPLE(t))
 #define PPUTLIF_OO_1_X(t)     PTL_ESC t
 
 /// second parentheses; false result
-#define PPUTLIF_OO_0(b, t, f) PPUTLIF_OO_0_X(PTL_TUP(f))
+#define PPUTLIF_OO_0(b, t, f) PPUTLIF_OO_0_X(PTL_TUPLE(f))
 #define PPUTLIF_OO_0_X(f)     PTL_ESC f
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
@@ -2934,7 +2944,7 @@
 /// PTL_SWITCH(0, (1))              // 1
 /// PTL_SWITCH(1, (1), (2))         // 2
 /// PTL_SWITCH(2, (1), (2), (3, 4)) // 3, 4
-#define PTL_SWITCH(/* cs: uint, cases: tup... */...) /* -> ...cases[cs] */ \
+#define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */ \
   PTL_X(PTL_FIRST(__VA_ARGS__))(PPUTLSWITCH_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)))(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{

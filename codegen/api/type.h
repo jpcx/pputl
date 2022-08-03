@@ -34,11 +34,11 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tup(...: t: any...) -> tup{t}"> const&   tup;
-extern codegen::def<"bool(...: b: any...) -> bool{b}"> const& bool_;
-extern codegen::def<"uint(...: n: any...) -> uint{n}"> const& uint;
+extern codegen::def<"tuple(...: t: any...) -> tuple{t}"> const& tuple;
+extern codegen::def<"bool(...: b: any...) -> bool{b}"> const&   bool_;
+extern codegen::def<"uint(...: n: any...) -> uint{n}"> const&   uint;
 
-NIFTY_DECL(tup);
+NIFTY_DECL(tuple);
 NIFTY_DECL(bool_);
 namespace detail {
 extern codegen::def<>&                                          uint_seq;
