@@ -64,10 +64,10 @@ decltype(paste) paste = NIFTY_DEF(paste, [&](va args) {
   def<"b(_, ...)"> b;
 
   a = [&](arg _0, va args) {
-    return _0 + " " + pp::va_opt(b + " " + lp + " " + args + " " + rp);
+    return _0 + " " + pp::va_opt(b + " " + lp() + " " + args + " " + rp());
   };
   b = [&](arg _0, va args) {
-    return _0 + " " + pp::va_opt(a + " " + lp + " " + args + " " + rp);
+    return _0 + " " + pp::va_opt(a + " " + lp() + " " + args + " " + rp());
   };
 
   return pp::va_opt(items(pp::tup(pp::call(x(size(args)), a(args)))));

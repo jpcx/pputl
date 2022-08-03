@@ -106,13 +106,13 @@
 /// ---------
 /// hides a left parens behind an expansion.
 /// needed for implementing pair recursion.
-#define PTL_LP /* -> <left parens> */ (
+#define PTL_LP() /* -> <left parens> */ (
 
 /// [lang.rp]
 /// ---------
 /// hides a right parens behind an expansion.
 /// needed for implementing pair recursion.
-#define PTL_RP /* -> <left parens> */ )
+#define PTL_RP() /* -> <left parens> */ )
 
 /// [lang.eat]
 /// ----------
@@ -1763,12 +1763,12 @@
 /// PTL_STR(PTL_ESC(PTL_XTRACE))                   // "PPUTLXTRACE_B ( ,, )"
 /// PTL_STR(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // "PPUTLXTRACE_A ( ,,, )"
 /// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // "PPUTLXTRACE_B ( ,,,, )"
-#define PTL_XTRACE /* -> <xtrace expr> */ PPUTLXTRACE_A PTL_LP /**/, PTL_RP
+#define PTL_XTRACE /* -> <xtrace expr> */ PPUTLXTRACE_A PTL_LP() /**/, PTL_RP()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXTRACE_B(...) PPUTLXTRACE_A PTL_LP __VA_ARGS__, PTL_RP
-#define PPUTLXTRACE_A(...) PPUTLXTRACE_B PTL_LP __VA_ARGS__, PTL_RP
+#define PPUTLXTRACE_B(...) PPUTLXTRACE_A PTL_LP() __VA_ARGS__, PTL_RP()
+#define PPUTLXTRACE_A(...) PPUTLXTRACE_B PTL_LP() __VA_ARGS__, PTL_RP()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2849,8 +2849,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLPASTE_B(_, ...) _ __VA_OPT__(PPUTLPASTE_A PTL_LP __VA_ARGS__ PTL_RP)
-#define PPUTLPASTE_A(_, ...) _ __VA_OPT__(PPUTLPASTE_B PTL_LP __VA_ARGS__ PTL_RP)
+#define PPUTLPASTE_B(_, ...) _ __VA_OPT__(PPUTLPASTE_A PTL_LP() __VA_ARGS__ PTL_RP())
+#define PPUTLPASTE_A(_, ...) _ __VA_OPT__(PPUTLPASTE_B PTL_LP() __VA_ARGS__ PTL_RP())
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2898,14 +2898,14 @@
 
 /// B branches
 #define PPUTLSWITCH_B_BREAK(i, _, ...) PTL_ESC _
-#define PPUTLSWITCH_B_CONT(i, _, ...)  PPUTLSWITCH_A PTL_LP PTL_DEC(i) PTL_RP(PTL_DEC(i), __VA_ARGS__)
+#define PPUTLSWITCH_B_CONT(i, _, ...)  PPUTLSWITCH_A PTL_LP() PTL_DEC(i) PTL_RP()(PTL_DEC(i), __VA_ARGS__)
 
 /// mutually recursive branch selector A
 #define PPUTLSWITCH_A(i) PTL_IF(PTL_EQZ(i), (PPUTLSWITCH_A_BREAK), (PPUTLSWITCH_A_CONT))
 
 /// A branches
 #define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ESC _
-#define PPUTLSWITCH_A_CONT(i, _, ...)  PPUTLSWITCH_B PTL_LP PTL_DEC(i) PTL_RP(PTL_DEC(i), __VA_ARGS__)
+#define PPUTLSWITCH_A_CONT(i, _, ...)  PPUTLSWITCH_B PTL_LP() PTL_DEC(i) PTL_RP()(PTL_DEC(i), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

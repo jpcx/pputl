@@ -51,11 +51,11 @@ decltype(xtrace) xtrace = NIFTY_DEF(xtrace, [&] {
   detail::xtrace_b = def{"b(...)"};
 
   detail::xtrace_a = [&](va args) {
-    return detail::xtrace_b + " " + lp + " " + args + ", " + rp;
+    return detail::xtrace_b + " " + lp() + " " + args + ", " + rp();
   };
 
   detail::xtrace_b = [&](va args) {
-    return detail::xtrace_a + " " + lp + " " + args + ", " + rp;
+    return detail::xtrace_a + " " + lp() + " " + args + ", " + rp();
   };
 
   tests << str(xtrace)                = pp::str(xtrace_expected(0)) >> docs;
@@ -63,7 +63,7 @@ decltype(xtrace) xtrace = NIFTY_DEF(xtrace, [&] {
   tests << str(esc(esc(xtrace)))      = pp::str(xtrace_expected(2)) >> docs;
   tests << str(esc(esc(esc(xtrace)))) = pp::str(xtrace_expected(3)) >> docs;
 
-  return detail::xtrace_a + " " + lp + " /**/, " + rp;
+  return detail::xtrace_a + " " + lp() + " /**/, " + rp();
 });
 
 } // namespace api

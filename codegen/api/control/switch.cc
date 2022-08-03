@@ -61,7 +61,7 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   a = [&](arg i) {
     docs << "mutually recursive branch selector A";
     def<"cont(i, _, ...)"> cont = [&](arg i, arg, va args) {
-      return b + " " + lp + " " + dec(i) + " " + rp + " " + pp::tup(dec(i), args);
+      return b + " " + lp() + " " + dec(i) + " " + rp() + " " + pp::tup(dec(i), args);
     };
     def<"break(i, _, ...)"> break_ = [&](arg, arg _, va) {
       docs << "A branches";
@@ -73,7 +73,7 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   b = [&](arg i) {
     docs << "mutually recursive branch selector B";
     def<"cont(i, _, ...)"> cont = [&](arg i, arg, va args) {
-      return a + " " + lp + " " + dec(i) + " " + rp + " " + pp::tup(dec(i), args);
+      return a + " " + lp() + " " + dec(i) + " " + rp() + " " + pp::tup(dec(i), args);
     };
     def<"break(i, _, ...)"> break_ = [&](arg, arg _, va) {
       docs << "B branches";

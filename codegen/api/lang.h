@@ -33,8 +33,8 @@ namespace api {
 
 inline codegen::category<"lang"> lang;
 
-extern codegen::def<"lp -> <left parens>"> const&                                             lp;
-extern codegen::def<"rp -> <left parens>"> const&                                             rp;
+extern codegen::def<"lp() -> <left parens>"> const&                                           lp;
+extern codegen::def<"rp() -> <left parens>"> const&                                           rp;
 extern codegen::def<"eat(...) -> <nothing>"> const&                                           eat;
 extern codegen::def<"esc(...: v: any...) -> ...v"> const&                                     esc;
 extern codegen::def<"str(...: v: any...) -> #...v"> const&                                    str;
