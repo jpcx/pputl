@@ -29,27 +29,18 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "math.h"
+#include "meta.h"
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
 
 namespace api {
 
-inline codegen::category<"meta"> meta;
+inline codegen::category<"algo"> algo;
 
-std::string                                                                    xtrace_expected(unsigned n);
-extern codegen::def<"xtrace -> <xtrace expr>"> const&                          xtrace;
-extern codegen::def<"xcount(...: <xtrace expr>) -> uint"> const&               xcount;
-extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
+extern codegen::def<"paste(...: v: any...) -> v[0] v[1] ..."> const& paste;
 
-namespace detail {
-extern codegen::def<>& xtrace_a;
-extern codegen::def<>& xtrace_b;
-NIFTY_DECL(xtrace_a);
-NIFTY_DECL(xtrace_b);
-} // namespace detail
-NIFTY_DECL(xtrace);
-NIFTY_DECL(xcount);
-NIFTY_DECL(x);
+NIFTY_DECL(paste);
 
 } // namespace api
