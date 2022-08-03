@@ -2645,6 +2645,80 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [logic.not]
+/// -----------
+/// logical NOT.
+///
+/// PTL_NOT(0) // 1
+/// PTL_NOT(1) // 0
+#define PTL_NOT(/* v: bool */...) /* -> bool{!v} */ PTL_IF(__VA_ARGS__, (0), (1))
+
+/// [logic.and]
+/// -----------
+/// logical AND.
+///
+/// PTL_AND(0, 0) // 0
+/// PTL_AND(0, 1) // 0
+/// PTL_AND(1, 0) // 0
+/// PTL_AND(1, 1) // 1
+#define PTL_AND(/* a: bool, b: bool */...) /* -> bool{a and b} */ \
+  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))), (0))
+
+/// [logic.or]
+/// ----------
+/// logical OR.
+///
+/// PTL_OR(0, 0) // 0
+/// PTL_OR(0, 1) // 1
+/// PTL_OR(1, 0) // 1
+/// PTL_OR(1, 1) // 1
+#define PTL_OR(/* a: bool, b: bool */...) /* -> bool{a or b} */ \
+  PTL_IF(PTL_FIRST(__VA_ARGS__), (1), (PTL_BOOL(PTL_REST(__VA_ARGS__))))
+
+/// [logic.nand]
+/// ------------
+/// logical NAND.
+///
+/// PTL_NAND(0, 0) // 1
+/// PTL_NAND(0, 1) // 1
+/// PTL_NAND(1, 0) // 1
+/// PTL_NAND(1, 1) // 0
+#define PTL_NAND(/* a: bool, b: bool */...) /* -> bool{!(a and b)} */ \
+  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_NOT(PTL_REST(__VA_ARGS__))), (1))
+
+/// [logic.nor]
+/// -----------
+/// logical NOR.
+///
+/// PTL_NOR(0, 0) // 1
+/// PTL_NOR(0, 1) // 0
+/// PTL_NOR(1, 0) // 0
+/// PTL_NOR(1, 1) // 0
+#define PTL_NOR(/* a: bool, b: bool */...) /* -> bool{!(a or b)} */ \
+  PTL_IF(PTL_FIRST(__VA_ARGS__), (0), (PTL_NOT(PTL_REST(__VA_ARGS__))))
+
+/// [logic.xor]
+/// -----------
+/// logical XOR.
+///
+/// PTL_XOR(0, 0) // 0
+/// PTL_XOR(0, 1) // 1
+/// PTL_XOR(1, 0) // 1
+/// PTL_XOR(1, 1) // 0
+#define PTL_XOR(/* a: bool, b: bool */...) /* -> bool{a xor b} */ \
+  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_NOT(PTL_REST(__VA_ARGS__))), (PTL_BOOL(PTL_REST(__VA_ARGS__))))
+
+/// [logic.xnor]
+/// ------------
+/// logical XNOR.
+///
+/// PTL_XNOR(0, 0) // 1
+/// PTL_XNOR(0, 1) // 0
+/// PTL_XNOR(1, 0) // 0
+/// PTL_XNOR(1, 1) // 1
+#define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ \
+  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))), (PTL_NOT(PTL_REST(__VA_ARGS__))))
+
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.

@@ -254,6 +254,39 @@ ASSERT_PP_EQ((PTL_STR(PTL_SWITCH(12, (), (), (), (), (), (), (), (), (), (), (),
 ASSERT_PP_EQ((PTL_STR(PTL_SWITCH(13, (), (), (), (), (), (), (), (), (), (), (), (), (), (PTL_XCT)))), ("PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, )"));
 ASSERT_PP_EQ((PTL_STR(PTL_SWITCH(14, (), (), (), (), (), (), (), (), (), (), (), (), (), (), (PTL_XCT)))), ("PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, )"));
 
+ASSERT_PP_EQ((PTL_NOT(0)), (1));
+ASSERT_PP_EQ((PTL_NOT(1)), (0));
+
+ASSERT_PP_EQ((PTL_AND(0, 0)), (0));
+ASSERT_PP_EQ((PTL_AND(0, 1)), (0));
+ASSERT_PP_EQ((PTL_AND(1, 0)), (0));
+ASSERT_PP_EQ((PTL_AND(1, 1)), (1));
+
+ASSERT_PP_EQ((PTL_OR(0, 0)), (0));
+ASSERT_PP_EQ((PTL_OR(0, 1)), (1));
+ASSERT_PP_EQ((PTL_OR(1, 0)), (1));
+ASSERT_PP_EQ((PTL_OR(1, 1)), (1));
+
+ASSERT_PP_EQ((PTL_NAND(0, 0)), (1));
+ASSERT_PP_EQ((PTL_NAND(0, 1)), (1));
+ASSERT_PP_EQ((PTL_NAND(1, 0)), (1));
+ASSERT_PP_EQ((PTL_NAND(1, 1)), (0));
+
+ASSERT_PP_EQ((PTL_NOR(0, 0)), (1));
+ASSERT_PP_EQ((PTL_NOR(0, 1)), (0));
+ASSERT_PP_EQ((PTL_NOR(1, 0)), (0));
+ASSERT_PP_EQ((PTL_NOR(1, 1)), (0));
+
+ASSERT_PP_EQ((PTL_XOR(0, 0)), (0));
+ASSERT_PP_EQ((PTL_XOR(0, 1)), (1));
+ASSERT_PP_EQ((PTL_XOR(1, 0)), (1));
+ASSERT_PP_EQ((PTL_XOR(1, 1)), (0));
+
+ASSERT_PP_EQ((PTL_XNOR(0, 0)), (1));
+ASSERT_PP_EQ((PTL_XNOR(0, 1)), (0));
+ASSERT_PP_EQ((PTL_XNOR(1, 0)), (0));
+ASSERT_PP_EQ((PTL_XNOR(1, 1)), (1));
+
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
