@@ -78,9 +78,10 @@
 //    data ranges both input and output a variadic argument list. Creating    //
 //    a tuple is trivial but extraction costs an expansion.                   //
 //                                                                            //
-//    pputl defines three types: tuple, uint, and bool. Functions that use    //
-//    these types in their parameter documentation  will assert their that    //
-//    the inputs are of the correct type.                                     //
+//    pputl defines four types: tuple, uint, bool, and xct (a recursively-    //
+//    defined expansion tracer available in meta). All functions that use     //
+//    one of these types  in their  parameter documentation  assert their     //
+//    validity before use.                                                    //
 //                                                                            //
 //    pputl errors  are thrown  by invoking a directly-recursive call with    //
 //    the original arguments. This has the effect of terminating expansion    //
@@ -93,13 +94,13 @@
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
-/// [config.build]
-/// --------------
+/// [lang.build]
+/// ------------
 /// the build number of this pputl release (ISO8601).
 #define PTL_BUILD /* -> <c++ int> */ 20220803
 
-/// [config.uint_max]
-/// -----------------
+/// [lang.uint_max]
+/// ---------------
 /// the maximum value of a pputl unsigned int.
 /// upper bound on the number of args for many pputl functions.
 /// see the readme code generation section to configure.
@@ -221,8 +222,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.tuple]
-/// ------------
+/// [control.tuple]
+/// ---------------
 /// tuple type (any...).
 /// expands to t if valid. terminates expansion on non-tuple.
 ///
@@ -246,8 +247,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.bool]
-/// -----------
+/// [control.bool]
+/// --------------
 /// bool type (0 or 1).
 /// expands to b if valid. terminates expansion on non-bool.
 ///
@@ -291,8 +292,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.uint]
-/// -----------
+/// [control.uint]
+/// --------------
 /// uint type (0 through 1023).
 /// expands to n if valid. terminates expansion on non-uint.
 ///
@@ -1468,131 +1469,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [numeric.inc]
-/// -------------
-/// uint increment w/ overflow. terminates expansion on non-uint.
-///
-/// PTL_INC(0)             // 1
-/// PTL_INC(1)             // 2
-/// PTL_INC(1023)          // 0
-/// PTL_STR(PTL_INC(1023)) // "0"
-/// PTL_STR(PTL_INC())     // "PTL_INC()"
-/// PTL_STR(PTL_INC(a))    // "PTL_INC(a)"
-/// PTL_STR(PTL_INC(foo))  // "PTL_INC(foo)"
-#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
-  PPUTLINC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// first parentheses; asserts uint
-#define PPUTLINC_O(...)      PPUTLINC_O_X(__VA_ARGS__)
-#define PPUTLINC_O_X(_, ...) PPUTLINC_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; returns incremented value from uint range or throws.
-#define PPUTLINC_OO_NO_FAIL(n) PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, n))
-#define PPUTLINC_OO_FAIL(...)  PTL_INC(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.dec]
-/// -------------
-/// uint decrement w/ underflow. terminates expansion on non-uint.
-///
-/// PTL_DEC(0)             // 1023
-/// PTL_DEC(1)             // 0
-/// PTL_DEC(1023)          // 1022
-/// PTL_STR(PTL_DEC(1023)) // "1022"
-/// PTL_STR(PTL_DEC())     // "PTL_DEC()"
-/// PTL_STR(PTL_DEC(a))    // "PTL_DEC(a)"
-/// PTL_STR(PTL_DEC(foo))  // "PTL_DEC(foo)"
-#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
-  PPUTLDEC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// first parentheses; asserts uint
-#define PPUTLDEC_O(...)      PPUTLDEC_O_X(__VA_ARGS__)
-#define PPUTLDEC_O_X(_, ...) PPUTLDEC_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; returns decremented value from uint range or throws.
-#define PPUTLDEC_OO_NO_FAIL(n) PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, n))
-#define PPUTLDEC_OO_FAIL(...)  PTL_DEC(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.eqz]
-/// -------------
-/// detects if uint n is zero. terminates expansion on non-uint.
-///
-/// PTL_EQZ(0)             // 1
-/// PTL_EQZ(1)             // 0
-/// PTL_EQZ(2)             // 0
-/// PTL_EQZ(1023)          // 0
-/// PTL_EQZ(PTL_INC(1023)) // 1
-/// PTL_STR(PTL_EQZ(1023)) // "0"
-/// PTL_STR(PTL_EQZ())     // "PTL_EQZ()"
-/// PTL_STR(PTL_EQZ(a))    // "PTL_EQZ(a)"
-/// PTL_STR(PTL_EQZ(foo))  // "PTL_EQZ(foo)"
-#define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ \
-  PPUTLEQZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// first parentheses; asserts uint
-#define PPUTLEQZ_O(...)      PPUTLEQZ_O_X(__VA_ARGS__)
-#define PPUTLEQZ_O_X(_, ...) PPUTLEQZ_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; verifies literal 0.
-#define PPUTLEQZ_OO_NO_FAIL(n)     PPUTLEQZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
-#define PPUTLEQZ_OO_NO_FAIL_X(...) PPUTLEQZ_OOO##__VA_OPT__(_NO)##_PASS
-#define PPUTLEQZ_OO_FAIL(...)      PPUTLEQZ_OOO_THROW
-
-/// third parentheses; returns or throws
-#define PPUTLEQZ_OOO_NO_PASS(...) 0
-#define PPUTLEQZ_OOO_PASS(...)    1
-#define PPUTLEQZ_OOO_THROW(...)   PTL_EQZ(__VA_ARGS__)
-
-/// validator for literal 0
-#define PPUTLEQZ_0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.nez]
-/// -------------
-/// detects if uint n is not zero. terminates expansion on non-uint.
-///
-/// PTL_NEZ(0)             // 0
-/// PTL_NEZ(1)             // 1
-/// PTL_NEZ(2)             // 1
-/// PTL_NEZ(1023)          // 1
-/// PTL_NEZ(PTL_INC(1023)) // 0
-/// PTL_STR(PTL_NEZ(1023)) // "1"
-/// PTL_STR(PTL_NEZ())     // "PTL_NEZ()"
-/// PTL_STR(PTL_NEZ(a))    // "PTL_NEZ(a)"
-/// PTL_STR(PTL_NEZ(foo))  // "PTL_NEZ(foo)"
-#define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ \
-  PPUTLNEZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// first parentheses; asserts uint
-#define PPUTLNEZ_O(...)      PPUTLNEZ_O_X(__VA_ARGS__)
-#define PPUTLNEZ_O_X(_, ...) PPUTLNEZ_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; verifies not literal 0.
-#define PPUTLNEZ_OO_NO_FAIL(n)     PPUTLNEZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
-#define PPUTLNEZ_OO_NO_FAIL_X(...) PPUTLNEZ_OOO##__VA_OPT__(_NO)##_FAIL
-#define PPUTLNEZ_OO_FAIL(...)      PPUTLNEZ_OOO_THROW
-
-/// third parentheses; returns or throws
-#define PPUTLNEZ_OOO_NO_FAIL(...) 1
-#define PPUTLNEZ_OOO_FAIL(...)    0
-#define PPUTLNEZ_OOO_THROW(...)   PTL_NEZ(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [traits.is_none]
-/// ----------------
+/// [control.is_none]
+/// -----------------
 /// detects if args is nothing.
 ///
 /// PTL_IS_NONE()          // 1
@@ -1608,8 +1486,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_some]
-/// ----------------
+/// [control.is_some]
+/// -----------------
 /// detects if args is something.
 ///
 /// PTL_IS_SOME()          // 0
@@ -1625,8 +1503,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_tuple]
-/// -----------------
+/// [control.is_tuple]
+/// ------------------
 /// detects if args is a tuple.
 ///
 /// PTL_IS_TUPLE()       // 0
@@ -1635,8 +1513,8 @@
 /// PTL_IS_TUPLE((1, 2)) // 1
 #define PTL_IS_TUPLE(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
 
-/// [traits.is_uint]
-/// ----------------
+/// [control.is_uint]
+/// -----------------
 /// detects if args is a uint.
 ///
 /// PTL_IS_UINT()       // 0
@@ -1654,8 +1532,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.items]
-/// --------------
+/// [control.items]
+/// ---------------
 /// extracts tuple items. terminates expansion on non-tup.
 ///
 /// PTL_ITEMS(())                  // <nothing>
@@ -1678,8 +1556,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.size]
-/// -------------
+/// [control.size]
+/// --------------
 /// computes the uint size of args in O(1) time.
 /// terminates expansion if too many args passed.
 ///
@@ -1826,58 +1704,67 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.xtrace]
+/// [control.xct]
 /// -------------
 /// counts the number of expansions undergone after expression.
 /// uses recursion; can track any number of expansions.
 /// the number of commas indicates the number of expansions.
 ///
-/// PTL_STR(PTL_XTRACE)                            // "PPUTLXTRACE_A ( , )"
-/// PTL_STR(PTL_ESC(PTL_XTRACE))                   // "PPUTLXTRACE_B ( ,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // "PPUTLXTRACE_A ( ,,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // "PPUTLXTRACE_B ( ,,,, )"
-#define PTL_XTRACE /* -> <xtrace expr> */ PPUTLXTRACE_A PTL_LP() /**/, PTL_RP()
+/// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
+/// PTL_STR(PTL_ESC(PTL_XCT))                   // "PPUTLXCT_B ( ,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
+#define PTL_XCT /* -> xct */ PPUTLXCT_A PTL_LP() /**/, PTL_RP()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXTRACE_B(...) PPUTLXTRACE_A PTL_LP() __VA_ARGS__, PTL_RP()
-#define PPUTLXTRACE_A(...) PPUTLXTRACE_B PTL_LP() __VA_ARGS__, PTL_RP()
+#define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
+#define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.xcount]
-/// -------------
-/// extracts the result from an PTL_XTRACE expression.
+/// [control.xct_size]
+/// ------------------
+/// measures an xct object to determine the number of expansions it experienced.
 /// expansion count must be no greater than 1023.
 ///
 /// ignores the expansion required to read the result;
 /// result ranges from 0 to 1023.
 ///
-/// PTL_XCOUNT(PTL_XTRACE)                            // 0
-/// PTL_XCOUNT(PTL_ESC(PTL_XTRACE))                   // 1
-/// PTL_XCOUNT(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // 2
-/// PTL_XCOUNT(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // 3
-#define PTL_XCOUNT(/* <xtrace expr> */...) /* -> uint */ PPUTLXCOUNT_X(__VA_ARGS__)
+/// PTL_XCT_SIZE(PTL_XCT)                            // 0
+/// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1
+/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))          // 2
+/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // 3
+/// PTL_STR(PTL_XCT_SIZE(PTL_XCT))                   // "0"
+/// PTL_STR(PTL_XCT_SIZE(foo))                       // "PTL_XCT_SIZE(foo)"
+#define PTL_XCT_SIZE(/* xct */...) /* -> uint */ \
+  PTL_CAT(PPUTLXCT_SIZE_, PTL_IS_NONE(PTL_CAT(PPUTLXCT_SIZE_DETECT_, __VA_ARGS__)))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXCOUNT_X(...)             PPUTLXCOUNT_##__VA_ARGS__
-#define PPUTLXCOUNT_PPUTLXTRACE_B(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
-#define PPUTLXCOUNT_PPUTLXTRACE_A(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
-#define PPUTLXCOUNT_RES(_, __, ...)    PTL_SIZE(__VA_ARGS__)
+#define PPUTLXCT_SIZE_1(...)               PPUTLXCT_SIZE_##__VA_ARGS__
+#define PPUTLXCT_SIZE_0(...)               PTL_XCT_SIZE(__VA_ARGS__)
+#define PPUTLXCT_SIZE_PPUTLXCT_B(__, ...)  PPUTLXCT_SIZE_RES(B, (__VA_ARGS__), __VA_ARGS__ _)
+#define PPUTLXCT_SIZE_PPUTLXCT_A(__, ...)  PPUTLXCT_SIZE_RES(A, (__VA_ARGS__), __VA_ARGS__ _)
+#define PPUTLXCT_SIZE_RES(pre, va, _, ...) PPUTLXCT_SIZE_RES_X(pre, va, PTL_SIZE(__VA_ARGS__))
+#define PPUTLXCT_SIZE_RES_X(pre, va, sz)   PTL_CAT(PPUTLXCT_SIZE_RES_, PTL_IS_UINT(sz))(pre, va, sz)
+#define PPUTLXCT_SIZE_RES_1(pre, va, sz)   sz
+#define PPUTLXCT_SIZE_RES_0(pre, va, sz)   PTL_XCT_SIZE(PPUTLXCT_##pre(PTL_REST(PTL_ITEMS(va))))
+#define PPUTLXCT_SIZE_DETECT_PPUTLXCT_B(...)
+#define PPUTLXCT_SIZE_DETECT_PPUTLXCT_A(...)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.x]
-/// --------
+/// [control.x]
+/// -----------
 /// performs uint n secondary expansions (n=0 -> identity).
 /// args are expressed after n+1 expansions in total.
 /// useful for implementing mutual recursion.
 ///
-/// PTL_X(0)(PTL_XTRACE) // PTL_ESC(PTL_XTRACE)
-/// PTL_X(1)(PTL_XTRACE) // PTL_ESC(PTL_ESC(PTL_XTRACE))
-/// PTL_X(0)(PTL_XTRACE) // PPUTLXTRACE_A ( , )
-/// PTL_X(1)(PTL_XTRACE) // PPUTLXTRACE_B ( ,, )
+/// PTL_X(0)(PTL_XCT) // PTL_ESC(PTL_XCT)
+/// PTL_X(1)(PTL_XCT) // PTL_ESC(PTL_ESC(PTL_XCT))
+/// PTL_X(0)(PTL_XCT) // PPUTLXCT_A ( , )
+/// PTL_X(1)(PTL_XCT) // PPUTLXCT_B ( ,, )
 #define PTL_X(/* n: uint */...) /* -> (args: any...) -<n>-> ...args */ PTL_CAT(PPUTLX_, PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -2906,6 +2793,129 @@
 #define PPUTLX_2(...)    PPUTLX_0(PPUTLX_0(__VA_ARGS__))
 #define PPUTLX_1(...)    PPUTLX_0(__VA_ARGS__)
 #define PPUTLX_0(...)    __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [control.inc]
+/// -------------
+/// uint increment w/ overflow. terminates expansion on non-uint.
+///
+/// PTL_INC(0)             // 1
+/// PTL_INC(1)             // 2
+/// PTL_INC(1023)          // 0
+/// PTL_STR(PTL_INC(1023)) // "0"
+/// PTL_STR(PTL_INC())     // "PTL_INC()"
+/// PTL_STR(PTL_INC(a))    // "PTL_INC(a)"
+/// PTL_STR(PTL_INC(foo))  // "PTL_INC(foo)"
+#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
+  PPUTLINC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// first parentheses; asserts uint
+#define PPUTLINC_O(...)      PPUTLINC_O_X(__VA_ARGS__)
+#define PPUTLINC_O_X(_, ...) PPUTLINC_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; returns incremented value from uint range or throws.
+#define PPUTLINC_OO_NO_FAIL(n) PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, n))
+#define PPUTLINC_OO_FAIL(...)  PTL_INC(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [control.dec]
+/// -------------
+/// uint decrement w/ underflow. terminates expansion on non-uint.
+///
+/// PTL_DEC(0)             // 1023
+/// PTL_DEC(1)             // 0
+/// PTL_DEC(1023)          // 1022
+/// PTL_STR(PTL_DEC(1023)) // "1022"
+/// PTL_STR(PTL_DEC())     // "PTL_DEC()"
+/// PTL_STR(PTL_DEC(a))    // "PTL_DEC(a)"
+/// PTL_STR(PTL_DEC(foo))  // "PTL_DEC(foo)"
+#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
+  PPUTLDEC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// first parentheses; asserts uint
+#define PPUTLDEC_O(...)      PPUTLDEC_O_X(__VA_ARGS__)
+#define PPUTLDEC_O_X(_, ...) PPUTLDEC_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; returns decremented value from uint range or throws.
+#define PPUTLDEC_OO_NO_FAIL(n) PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, n))
+#define PPUTLDEC_OO_FAIL(...)  PTL_DEC(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [control.eqz]
+/// -------------
+/// detects if uint n is zero. terminates expansion on non-uint.
+///
+/// PTL_EQZ(0)             // 1
+/// PTL_EQZ(1)             // 0
+/// PTL_EQZ(2)             // 0
+/// PTL_EQZ(1023)          // 0
+/// PTL_EQZ(PTL_INC(1023)) // 1
+/// PTL_STR(PTL_EQZ(1023)) // "0"
+/// PTL_STR(PTL_EQZ())     // "PTL_EQZ()"
+/// PTL_STR(PTL_EQZ(a))    // "PTL_EQZ(a)"
+/// PTL_STR(PTL_EQZ(foo))  // "PTL_EQZ(foo)"
+#define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ \
+  PPUTLEQZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// first parentheses; asserts uint
+#define PPUTLEQZ_O(...)      PPUTLEQZ_O_X(__VA_ARGS__)
+#define PPUTLEQZ_O_X(_, ...) PPUTLEQZ_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; verifies literal 0.
+#define PPUTLEQZ_OO_NO_FAIL(n)     PPUTLEQZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
+#define PPUTLEQZ_OO_NO_FAIL_X(...) PPUTLEQZ_OOO##__VA_OPT__(_NO)##_PASS
+#define PPUTLEQZ_OO_FAIL(...)      PPUTLEQZ_OOO_THROW
+
+/// third parentheses; returns or throws
+#define PPUTLEQZ_OOO_NO_PASS(...) 0
+#define PPUTLEQZ_OOO_PASS(...)    1
+#define PPUTLEQZ_OOO_THROW(...)   PTL_EQZ(__VA_ARGS__)
+
+/// validator for literal 0
+#define PPUTLEQZ_0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [control.nez]
+/// -------------
+/// detects if uint n is not zero. terminates expansion on non-uint.
+///
+/// PTL_NEZ(0)             // 0
+/// PTL_NEZ(1)             // 1
+/// PTL_NEZ(2)             // 1
+/// PTL_NEZ(1023)          // 1
+/// PTL_NEZ(PTL_INC(1023)) // 0
+/// PTL_STR(PTL_NEZ(1023)) // "1"
+/// PTL_STR(PTL_NEZ())     // "PTL_NEZ()"
+/// PTL_STR(PTL_NEZ(a))    // "PTL_NEZ(a)"
+/// PTL_STR(PTL_NEZ(foo))  // "PTL_NEZ(foo)"
+#define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ \
+  PPUTLNEZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// first parentheses; asserts uint
+#define PPUTLNEZ_O(...)      PPUTLNEZ_O_X(__VA_ARGS__)
+#define PPUTLNEZ_O_X(_, ...) PPUTLNEZ_OO##__VA_OPT__(_NO)##_FAIL
+
+/// second parentheses; verifies not literal 0.
+#define PPUTLNEZ_OO_NO_FAIL(n)     PPUTLNEZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
+#define PPUTLNEZ_OO_NO_FAIL_X(...) PPUTLNEZ_OOO##__VA_OPT__(_NO)##_FAIL
+#define PPUTLNEZ_OO_FAIL(...)      PPUTLNEZ_OOO_THROW
+
+/// third parentheses; returns or throws
+#define PPUTLNEZ_OOO_NO_FAIL(...) 1
+#define PPUTLNEZ_OOO_FAIL(...)    0
+#define PPUTLNEZ_OOO_THROW(...)   PTL_NEZ(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
