@@ -37,16 +37,12 @@ namespace api {
 
 inline codegen::category<"meta"> meta;
 
-extern codegen::def<"lp -> <left parens>"> const& lp;
-extern codegen::def<"rp -> <left parens>"> const& rp;
-
 std::string                                                                    xtrace_expected(unsigned n);
 extern codegen::def<"xtrace -> <xtrace expr>"> const&                          xtrace;
-extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
 extern codegen::def<"xcount(...: <xtrace expr>) -> uint"> const&               xcount;
+extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
+extern codegen::def<"paste(...: v: any...) -> v[0] v[1] ..."> const&           paste;
 
-NIFTY_DECL(lp);
-NIFTY_DECL(rp);
 namespace detail {
 extern codegen::def<>& xtrace_a;
 extern codegen::def<>& xtrace_b;
@@ -54,7 +50,8 @@ NIFTY_DECL(xtrace_a);
 NIFTY_DECL(xtrace_b);
 } // namespace detail
 NIFTY_DECL(xtrace);
-NIFTY_DECL(x);
 NIFTY_DECL(xcount);
+NIFTY_DECL(x);
+NIFTY_DECL(paste);
 
 } // namespace api

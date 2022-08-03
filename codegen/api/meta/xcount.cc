@@ -38,11 +38,10 @@ decltype(xcount) xcount = NIFTY_DEF(xcount, [&](va args) {
        << "ignores the expansion required to read the result;"
        << "result ranges from 0 to " + uint_max_s + ".";
 
-  tests << xcount(xtrace)                                  = "0" >> docs;
-  tests << xcount(pp::call(x(0), xtrace))                  = "1" >> docs;
-  tests << xcount(pp::call(x(1), xtrace))                  = "2" >> docs;
-  tests << xcount(pp::call(x(2), xtrace))                  = "3" >> docs;
-  tests << xcount(pp::call(x(conf::uint_max - 1), xtrace)) = uint_max_s;
+  tests << xcount(xtrace)                = "0" >> docs;
+  tests << xcount(esc(xtrace))           = "1" >> docs;
+  tests << xcount(esc(esc(xtrace)))      = "2" >> docs;
+  tests << xcount(esc(esc(esc(xtrace)))) = "3" >> docs;
 
   def<"res(_, __, ...)"> res = [&](arg, arg, va args) {
     return size(args);

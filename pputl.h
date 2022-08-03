@@ -102,6 +102,18 @@
 /// see the readme code generation section to configure.
 #define PTL_UINT_MAX /* -> uint */ 1023
 
+/// [lang.lp]
+/// ---------
+/// hides a left parens behind an expansion.
+/// needed for implementing pair recursion.
+#define PTL_LP /* -> <left parens> */ (
+
+/// [lang.rp]
+/// ---------
+/// hides a right parens behind an expansion.
+/// needed for implementing pair recursion.
+#define PTL_RP /* -> <left parens> */ )
+
 /// [lang.eat]
 /// ----------
 /// eats arguments; return nothing.
@@ -1741,18 +1753,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.lp]
-/// ---------
-/// hides a left parens behind an expansion.
-/// needed for implementing pair recursion.
-#define PTL_LP /* -> <left parens> */ (
-
-/// [meta.rp]
-/// ---------
-/// hides a right parens behind an expansion.
-/// needed for implementing pair recursion.
-#define PTL_RP /* -> <left parens> */ )
-
 /// [meta.xtrace]
 /// -------------
 /// counts the number of expansions undergone after expression.
@@ -1769,6 +1769,29 @@
 
 #define PPUTLXTRACE_B(...) PPUTLXTRACE_A PTL_LP __VA_ARGS__, PTL_RP
 #define PPUTLXTRACE_A(...) PPUTLXTRACE_B PTL_LP __VA_ARGS__, PTL_RP
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [meta.xcount]
+/// -------------
+/// extracts the result from an PTL_XTRACE expression.
+/// expansion count must be no greater than 1023.
+///
+/// ignores the expansion required to read the result;
+/// result ranges from 0 to 1023.
+///
+/// PTL_XCOUNT(PTL_XTRACE)                            // 0
+/// PTL_XCOUNT(PTL_ESC(PTL_XTRACE))                   // 1
+/// PTL_XCOUNT(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // 2
+/// PTL_XCOUNT(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // 3
+#define PTL_XCOUNT(/* <xtrace expr> */...) /* -> uint */ PPUTLXCOUNT_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXCOUNT_X(...)             PPUTLXCOUNT_##__VA_ARGS__
+#define PPUTLXCOUNT_PPUTLXTRACE_B(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
+#define PPUTLXCOUNT_PPUTLXTRACE_A(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
+#define PPUTLXCOUNT_RES(_, __, ...)    PTL_SIZE(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2813,26 +2836,21 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.xcount]
-/// -------------
-/// extracts the result from an PTL_XTRACE expression.
-/// expansion count must be no greater than 1023.
+/// [meta.paste]
+/// ------------
+/// pastes an expression by separating arguments with spaces.
 ///
-/// ignores the expansion required to read the result;
-/// result ranges from 0 to 1023.
-///
-/// PTL_XCOUNT(PTL_XTRACE)           // 0
-/// PTL_XCOUNT(PTL_X(0)(PTL_XTRACE)) // 1
-/// PTL_XCOUNT(PTL_X(1)(PTL_XTRACE)) // 2
-/// PTL_XCOUNT(PTL_X(2)(PTL_XTRACE)) // 3
-#define PTL_XCOUNT(/* <xtrace expr> */...) /* -> uint */ PPUTLXCOUNT_X(__VA_ARGS__)
+/// PTL_PASTE()        // <nothing>
+/// PTL_PASTE(a)       // a
+/// PTL_PASTE(a, b)    // a b
+/// PTL_PASTE(a, b, c) // a b c
+#define PTL_PASTE(/* v: any... */...) /* -> v[0] v[1] ... */ \
+  __VA_OPT__(PTL_ITEMS((PTL_X(PTL_SIZE(__VA_ARGS__))(PPUTLPASTE_A(__VA_ARGS__)))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXCOUNT_X(...)             PPUTLXCOUNT_##__VA_ARGS__
-#define PPUTLXCOUNT_PPUTLXTRACE_B(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
-#define PPUTLXCOUNT_PPUTLXTRACE_A(...) PPUTLXCOUNT_RES(__VA_ARGS__.)
-#define PPUTLXCOUNT_RES(_, __, ...)    PTL_SIZE(__VA_ARGS__)
+#define PPUTLPASTE_B(_, ...) _ __VA_OPT__(PPUTLPASTE_A PTL_LP __VA_ARGS__ PTL_RP)
+#define PPUTLPASTE_A(_, ...) _ __VA_OPT__(PPUTLPASTE_B PTL_LP __VA_ARGS__ PTL_RP)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

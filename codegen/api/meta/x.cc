@@ -36,14 +36,15 @@ decltype(x) x = NIFTY_DEF(x, [&](va args) {
        << "args are expressed after n+1 expansions in total."
        << "useful for implementing mutual recursion.";
 
-  tests << pp::call(x(0), xtrace)              = esc(xtrace) >> docs;
-  tests << pp::call(x(1), xtrace)              = esc(esc(xtrace)) >> docs;
-  tests << pp::call(x(0), xtrace)              = xtrace_expected(0) >> docs;
-  tests << pp::call(x(1), xtrace)              = xtrace_expected(1) >> docs;
-  tests << pp::call(x(2), xtrace)              = xtrace_expected(2);
-  tests << pp::call(x(3), xtrace)              = xtrace_expected(3);
-  tests << pp::call(x(4), xtrace)              = xtrace_expected(4);
-  tests << pp::call(x(conf::uint_max), xtrace) = xtrace_expected(conf::uint_max);
+  tests << pp::call(x(0), xtrace)                          = esc(xtrace) >> docs;
+  tests << pp::call(x(1), xtrace)                          = esc(esc(xtrace)) >> docs;
+  tests << pp::call(x(0), xtrace)                          = xtrace_expected(0) >> docs;
+  tests << pp::call(x(1), xtrace)                          = xtrace_expected(1) >> docs;
+  tests << pp::call(x(2), xtrace)                          = xtrace_expected(2);
+  tests << pp::call(x(3), xtrace)                          = xtrace_expected(3);
+  tests << pp::call(x(4), xtrace)                          = xtrace_expected(4);
+  tests << pp::call(x(conf::uint_max), xtrace)             = xtrace_expected(conf::uint_max);
+  tests << xcount(pp::call(x(conf::uint_max - 1), xtrace)) = uint_max_s;
 
   std::array<def<>, conf::uint_max + 1> _{};
 
