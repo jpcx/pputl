@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,27 +25,48 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
+#include "lang.h"
 
 namespace api {
 
-inline codegen::category<"lang"> lang;
+using namespace codegen;
 
-extern codegen::def<"eat(...) -> <nothing>"> const&                                           eat;
-extern codegen::def<"esc(...: v: any...) -> ...v"> const&                                     esc;
-extern codegen::def<"str(...: v: any...) -> #...v"> const&                                    str;
-extern codegen::def<"cat(...: a: any, b: any) -> a##b"> const&                                cat;
-extern codegen::def<"first(...: v: any...) -> v[0]"> const&                                   first;
-extern codegen::def<"rest(...:  v: any...) -> ...v"> const&                                   rest;
-extern codegen::def<"trim(...: v: any...) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
+decltype(trim) trim = NIFTY_DEF(trim, [&](va args) {
+  docs << "removes an unnecessary comma at the front of args"
+       << "if either the first arg or the rest args are nothing.";
 
-NIFTY_DECL(eat);
-NIFTY_DECL(esc);
-NIFTY_DECL(str);
-NIFTY_DECL(cat);
-NIFTY_DECL(first);
-NIFTY_DECL(rest);
-NIFTY_DECL(trim);
+  tests << trim("")        = "" >> docs;
+  tests << trim(", ")      = "" >> docs;
+  tests << trim("a")       = "a" >> docs;
+  tests << trim("a, b")    = "a, b" >> docs;
+  tests << trim("a, b, c") = "a, b, c";
+  tests << trim("a, ")     = "a" >> docs;
+  tests << trim(", b")     = "b";
+  tests << trim(", b, c")  = "b, c" >> docs;
+  tests << trim("a, b, ")  = "a, b," >> docs;
+  tests << trim("a, , c")  = "a,  , c";
+
+  def<"00(...)"> _00 = [&](va) {
+    return "";
+  };
+
+  def<"001(_, ...)">{} = [&](arg, va args) {
+    return args;
+  };
+
+  def<"010(_, ...)">{} = [&](arg _, va) {
+    return _;
+  };
+
+  def<"0101(_, ...)">{} = [&](arg _, va args) {
+    return _ + ", " + args;
+  };
+
+  def<"sel(...)"> sel = [&](va) {
+    return pp::cat(0, pp::va_opt(1));
+  };
+
+  return pp::call(cat(utl::slice(_00, -2), cat(sel(first(args)), sel(rest(args)))), args);
+});
 
 } // namespace api

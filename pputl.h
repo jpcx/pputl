@@ -137,7 +137,7 @@
 ///
 /// PTL_ESC ()        // <nothing>
 /// PTL_ESC (a, b, c) // a, b, c
-#define PTL_ESC(/* args: any... */...) /* -> ...args */ __VA_ARGS__
+#define PTL_ESC(/* v: any... */...) /* -> ...v */ __VA_ARGS__
 
 /// [lang.str]
 /// ----------
@@ -145,7 +145,7 @@
 ///
 /// PTL_STR()         // ""
 /// PTL_STR(foo, bar) // "foo, bar"
-#define PTL_STR(/* args: any... */...) /* -> #...args */ PPUTLSTR_X(__VA_ARGS__)
+#define PTL_STR(/* v: any... */...) /* -> #...v */ PPUTLSTR_X(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -176,7 +176,7 @@
 /// PTL_FIRST(, )   // <nothing>
 /// PTL_FIRST(a)    // a
 /// PTL_FIRST(a, b) // a
-#define PTL_FIRST(/* _: any, args: any... */...) /* -> a */ __VA_OPT__(PPUTLFIRST_X(__VA_ARGS__))
+#define PTL_FIRST(/* v: any... */...) /* -> v[0] */ __VA_OPT__(PPUTLFIRST_X(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -196,11 +196,37 @@
 /// PTL_REST(PTL_REST(a, b, c)) // c
 /// PTL_REST(a, , )             // ,
 /// PTL_REST(a, b, , )          // b, ,
-#define PTL_REST(/* _: any, args: any... */...) /* -> ...args */ __VA_OPT__(PPUTLREST_X(__VA_ARGS__))
+#define PTL_REST(/* v: any... */...) /* -> ...v */ __VA_OPT__(PPUTLREST_X(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLREST_X(_, ...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [lang.trim]
+/// -----------
+/// removes an unnecessary comma at the front of args
+/// if either the first arg or the rest args are nothing.
+///
+/// PTL_TRIM()       // <nothing>
+/// PTL_TRIM(, )     // <nothing>
+/// PTL_TRIM(a)      // a
+/// PTL_TRIM(a, b)   // a, b
+/// PTL_TRIM(a, )    // a
+/// PTL_TRIM(, b, c) // b, c
+/// PTL_TRIM(a, b, ) // a, b,
+#define PTL_TRIM(/* v: any... */...) /* -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:] */                       \
+  PTL_CAT(PPUTLTRIM_, PTL_CAT(PPUTLTRIM_SEL(PTL_FIRST(__VA_ARGS__)), PPUTLTRIM_SEL(PTL_REST(__VA_ARGS__)))) \
+  (__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLTRIM_SEL(...)     0##__VA_OPT__(1)
+#define PPUTLTRIM_0101(_, ...) _, __VA_ARGS__
+#define PPUTLTRIM_010(_, ...)  _
+#define PPUTLTRIM_001(_, ...)  __VA_ARGS__
+#define PPUTLTRIM_00(...)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

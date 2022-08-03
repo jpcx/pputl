@@ -156,6 +156,17 @@ ASSERT_PP_EQ((PTL_REST(PTL_REST(a, b, c))), (c));
 ASSERT_PP_EQ((PTL_REST(a, , )), (,));
 ASSERT_PP_EQ((PTL_REST(a, b, , )), (b, ,));
 
+ASSERT_PP_EQ((PTL_TRIM()), ());
+ASSERT_PP_EQ((PTL_TRIM(, )), ());
+ASSERT_PP_EQ((PTL_TRIM(a)), (a));
+ASSERT_PP_EQ((PTL_TRIM(a, b)), (a, b));
+ASSERT_PP_EQ((PTL_TRIM(a, )), (a));
+ASSERT_PP_EQ((PTL_TRIM(, b, c)), (b, c));
+ASSERT_PP_EQ((PTL_TRIM(a, b, )), (a, b,));
+ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
+ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
+ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
+
 ASSERT_PP_EQ((PTL_TUP(())), (()));
 ASSERT_PP_EQ((PTL_TUP((1, 2))), ((1, 2)));
 ASSERT_PP_EQ((PTL_STR(PTL_TUP(0))), ("PTL_TUP(0)"));
