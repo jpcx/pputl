@@ -69,41 +69,17 @@
 //    ----------                                                              //
 //                                                                            //
 //    Non-nullary API functions are fully variadic and chainable such that    //
-//    the outputs of one may be used as inputs to another.                    //
+//    the outputs of one may be used as inputs to another. Parameters must    //
+//    be fully expanded and distinguishable after the primary expansion.      //
 //                                                                            //
 //    Tuples are used only when necessary;  most functions that operate on    //
 //    data ranges both input and output a variadic argument list. Creating    //
-//    a tuple is trivial compared to extracting tuple items.                  //
+//    a tuple is trivial but extraction costs an expansion.                   //
 //                                                                            //
-//    Functions that parse or transform generic data are designed to allow    //
-//    for algorithmic manipulation of preprocessor syntax. This means that    //
-//    expansions  are applied  consistently  to all input elements and are    //
-//    known,  documented  and tested.  This is necessary for several pputl    //
-//    features including algo.recur and algo.reduce that use deferred left    //
-//    and right parens to construct recursive statements.                     //
-//                                                                            //
-//    API functions are documented with the following shorthand syntax:       //
-//                                                                            //
-//      name({in: type}) [-<xct>]-> {out[: type]}                             //
-//                                                                            //
-//      name: name of the feature                                             //
-//      in:   any number of input parameter names                             //
-//      type: a shorthand type description                                    //
-//      xct:  number of secondary expansions applied to generic inputs.       //
-//            any generic args deferred past xct will not be expanded.        //
-//      out:  name of an output; may be an input                              //
-//            name with a shorthand transformation.                           //
-//                                                                            //
-//    Generic types are documented with "any" and are the only targets for    //
-//    expansion documentation. Input parameter separations, variadic sizes    //
-//    and non-generic types (e.g. uint) must be fully expressed during the    //
-//    primary expansion.                                                      //
-//                                                                            //
-//    Library example [range.split]:                                          //
-//                                                                            //
-//      split(n: uint, args: any...) -<1>-> head: (...args[:n]),              //
-//                                          tail: (...args[n-size:]),         //
-//                                          type: bool                        //
+//    pputl has three major types: tup, uint, and bool. pputl types verify    //
+//    that the type  is as expected  using various detection methods.  Any    //
+//    function signature  that accepts  one of these types  as a parameter    //
+//    will cast the value using the associated verifier.                      //
 //                                                                            //
 //    TESTING                                                                 //
 //    -------                                                                 //
