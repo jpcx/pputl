@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,31 +25,29 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "control.h"
-#include "lang.h"
-#include "meta.h"
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
-inline codegen::category<"traits"> traits;
+using namespace codegen;
 
-extern codegen::def<"items(...: tup) -> ...tup"> const&          items;
-extern codegen::def<"is_none(...) -> bool"> const&               is_none;
-extern codegen::def<"is_some(...) -> bool"> const&               is_some;
-extern codegen::def<"is_tup(...) -> bool"> const&                is_tup;
-extern codegen::def<"is_uint(...) -> bool"> const&               is_uint;
-extern codegen::def<"count(...) -> uint"> const&                 count;
-extern codegen::def<"xcount(...: <xtrace expr>) -> uint"> const& xcount;
+decltype(items) items = NIFTY_DEF(items, [&](va args) {
+  docs << "extracts tuple items.";
 
-NIFTY_DECL(items);
-NIFTY_DECL(is_none);
-NIFTY_DECL(is_some);
-NIFTY_DECL(is_tup);
-NIFTY_DECL(is_uint);
-NIFTY_DECL(count);
-NIFTY_DECL(xcount);
+  tests << items("()")              = "" >> docs;
+  tests << items("(a)")             = "a" >> docs;
+  tests << items("(a, b)")          = "a, b" >> docs;
+  tests << items("(a, b, c)")       = "a, b, c" >> docs;
+  tests << items("((a), (b), (c))") = "(a), (b), (c)";
+  tests << items("(, )")            = ",";
+  tests << items("(, , )")          = ", ,";
+  tests << items("(a, )")           = "a,";
+  tests << items("(a, , )")         = "a, ,";
+  tests << items("(, a)")           = ", a";
+  tests << items("(, a, )")         = ", a,";
+  tests << items("(, , a)")         = ", , a";
+
+  return esc + " " + args;
+});
 
 } // namespace api

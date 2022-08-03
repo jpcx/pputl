@@ -2719,6 +2719,16 @@
 #define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ \
   PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))), (PTL_NOT(PTL_REST(__VA_ARGS__))))
 
+/// [traits.items]
+/// --------------
+/// extracts tuple items.
+///
+/// PTL_ITEMS(())        // <nothing>
+/// PTL_ITEMS((a))       // a
+/// PTL_ITEMS((a, b))    // a, b
+/// PTL_ITEMS((a, b, c)) // a, b, c
+#define PTL_ITEMS(/* tup */...) /* -> ...tup */ PTL_ESC __VA_ARGS__
+
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.

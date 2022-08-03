@@ -287,6 +287,19 @@ ASSERT_PP_EQ((PTL_XNOR(0, 1)), (0));
 ASSERT_PP_EQ((PTL_XNOR(1, 0)), (0));
 ASSERT_PP_EQ((PTL_XNOR(1, 1)), (1));
 
+ASSERT_PP_EQ((PTL_ITEMS(())), ());
+ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
+ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
+ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
+ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
+ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
+ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
+ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
+ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
+ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
+ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
+ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
+
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
