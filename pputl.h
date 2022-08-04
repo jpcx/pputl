@@ -2819,18 +2819,12 @@
 /// PTL_STR(PTL_INC())     // "PTL_INC()"
 /// PTL_STR(PTL_INC(a))    // "PTL_INC(a)"
 /// PTL_STR(PTL_INC(foo))  // "PTL_INC(foo)"
-#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
-  PPUTLINC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
+#define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ PTL_CAT(PPUTLINC_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// first parentheses; asserts uint
-#define PPUTLINC_O(...)      PPUTLINC_O_X(__VA_ARGS__)
-#define PPUTLINC_O_X(_, ...) PPUTLINC_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; returns incremented value from uint range or throws.
-#define PPUTLINC_OO_NO_FAIL(n) PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, n))
-#define PPUTLINC_OO_FAIL(...)  PTL_INC(__VA_ARGS__)
+#define PPUTLINC_1(n)   PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, n))
+#define PPUTLINC_0(...) PTL_INC(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2845,18 +2839,12 @@
 /// PTL_STR(PTL_DEC())     // "PTL_DEC()"
 /// PTL_STR(PTL_DEC(a))    // "PTL_DEC(a)"
 /// PTL_STR(PTL_DEC(foo))  // "PTL_DEC(foo)"
-#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
-  PPUTLDEC_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)
+#define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ PTL_CAT(PPUTLDEC_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// first parentheses; asserts uint
-#define PPUTLDEC_O(...)      PPUTLDEC_O_X(__VA_ARGS__)
-#define PPUTLDEC_O_X(_, ...) PPUTLDEC_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; returns decremented value from uint range or throws.
-#define PPUTLDEC_OO_NO_FAIL(n) PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, n))
-#define PPUTLDEC_OO_FAIL(...)  PTL_DEC(__VA_ARGS__)
+#define PPUTLDEC_1(n)   PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, n))
+#define PPUTLDEC_0(...) PTL_DEC(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2874,23 +2862,12 @@
 /// PTL_STR(PTL_EQZ(a))    // "PTL_EQZ(a)"
 /// PTL_STR(PTL_EQZ(foo))  // "PTL_EQZ(foo)"
 #define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ \
-  PPUTLEQZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
+  PTL_CAT(PPUTLEQZ_CHK_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// first parentheses; asserts uint
-#define PPUTLEQZ_O(...)      PPUTLEQZ_O_X(__VA_ARGS__)
-#define PPUTLEQZ_O_X(_, ...) PPUTLEQZ_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; verifies literal 0.
-#define PPUTLEQZ_OO_NO_FAIL(n)     PPUTLEQZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
-#define PPUTLEQZ_OO_NO_FAIL_X(...) PPUTLEQZ_OOO##__VA_OPT__(_NO)##_PASS
-#define PPUTLEQZ_OO_FAIL(...)      PPUTLEQZ_OOO_THROW
-
-/// third parentheses; returns or throws
-#define PPUTLEQZ_OOO_NO_PASS(...) 0
-#define PPUTLEQZ_OOO_PASS(...)    1
-#define PPUTLEQZ_OOO_THROW(...)   PTL_EQZ(__VA_ARGS__)
+#define PPUTLEQZ_CHK_1(n)   PTL_IS_NONE(PPUTLEQZ_##n)
+#define PPUTLEQZ_CHK_0(...) PTL_EQZ(__VA_ARGS__)
 
 /// validator for literal 0
 #define PPUTLEQZ_0
@@ -2911,23 +2888,12 @@
 /// PTL_STR(PTL_NEZ(a))    // "PTL_NEZ(a)"
 /// PTL_STR(PTL_NEZ(foo))  // "PTL_NEZ(foo)"
 #define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ \
-  PPUTLNEZ_O(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))(__VA_ARGS__)(__VA_ARGS__)
+  PTL_CAT(PPUTLNEZ_CHK_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// first parentheses; asserts uint
-#define PPUTLNEZ_O(...)      PPUTLNEZ_O_X(__VA_ARGS__)
-#define PPUTLNEZ_O_X(_, ...) PPUTLNEZ_OO##__VA_OPT__(_NO)##_FAIL
-
-/// second parentheses; verifies not literal 0.
-#define PPUTLNEZ_OO_NO_FAIL(n)     PPUTLNEZ_OO_NO_FAIL_X(PTL_CAT(PPUTLEQZ_, n))
-#define PPUTLNEZ_OO_NO_FAIL_X(...) PPUTLNEZ_OOO##__VA_OPT__(_NO)##_FAIL
-#define PPUTLNEZ_OO_FAIL(...)      PPUTLNEZ_OOO_THROW
-
-/// third parentheses; returns or throws
-#define PPUTLNEZ_OOO_NO_FAIL(...) 1
-#define PPUTLNEZ_OOO_FAIL(...)    0
-#define PPUTLNEZ_OOO_THROW(...)   PTL_NEZ(__VA_ARGS__)
+#define PPUTLNEZ_CHK_1(n)   PTL_IS_SOME(PPUTLEQZ_##n)
+#define PPUTLNEZ_CHK_0(...) PTL_NEZ(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

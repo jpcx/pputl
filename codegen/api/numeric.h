@@ -29,6 +29,7 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "traits.h"
 #include "type.h"
 
 namespace api {

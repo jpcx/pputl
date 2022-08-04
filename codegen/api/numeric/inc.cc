@@ -44,29 +44,15 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   tests << str(inc('a'))            = pp::str(inc('a')) >> docs;
   tests << str(inc("foo"))          = pp::str(inc("foo")) >> docs;
 
-  def<"oo_fail(...)"> oo_fail = [&](va args) {
+  def<"0(...)"> _0 = [&](va args) {
     return inc(args);
   };
 
-  def<"oo_no_fail(n)"> oo_no_fail = [&](arg n) {
-    docs << "second parentheses; returns incremented value from uint range or throws.";
+  def<"1(n)">{} = [&](arg n) {
     return rest(cat(utl::slice(detail::uint_range[0], -1), n));
   };
 
-  return pp::call(def<"o(...)">{[&](va args) {
-                    docs << "first parentheses; asserts uint";
-                    return def<"x(_, ...)">{[&](arg, va) {
-                      std::string prefix = utl::slice(oo_fail, -4);
-                      if (prefix.back() == '_')
-                        prefix.pop_back();
-                      std::string fail_s    = utl::slice(oo_fail, prefix.size(), 0);
-                      std::string no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
-                      std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
-
-                      return pp::cat(prefix, pp::va_opt(no_s), fail_s);
-                    }}(args);
-                  }}(cat(utl::slice(detail::uint_range[0], -1), uint(args))),
-                  args);
+  return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
 });
 
 } // namespace api
