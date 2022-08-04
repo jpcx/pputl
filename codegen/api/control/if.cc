@@ -31,29 +31,6 @@ namespace api {
 
 using namespace codegen;
 
-#define PTL_IF(/* b: bool, t: tuple, f: tuple */...) /* -> b ? ...t : ...f */ \
-  PTL_CAT(PTL_CAT(PPUTLIF_, PTL_IS_BOOL(PTL_FIRST(__VA_ARGS__))),             \
-          PTL_CAT(PTL_IS_TUPLE(PTL_FIRST(PTL_REST(__VA_ARGS__))),             \
-                  PTL_IS_TUPLE(PTL_REST(PTL_REST(__VA_ARGS__)))))             \
-  (__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIF_000(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_001(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_010(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_011(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_100(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_101(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_110(...)      PTL_IF(__VA_ARGS__)
-#define PPUTLIF_111(...)      PTL_CAT(PPUTLIF_RES_, PTL_FIRST(__VA_ARGS__))(PTL_REST(__VA_ARGS__))
-#define PPUTLIF_RES_1(...)    PPUTLIF_RES_1_X(__VA_ARGS__)
-#define PPUTLIF_RES_1_X(t, f) PTL_ESC t
-#define PPUTLIF_RES_0(...)    PPUTLIF_RES_0_X(__VA_ARGS__)
-#define PPUTLIF_RES_0_X(t, f) PTL_ESC f
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
   docs << "conditionally expands items based on a boolean."
        << "terminates expansion on invalid args size or types.";

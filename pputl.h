@@ -84,8 +84,9 @@
 //    validity before use.                                                    //
 //                                                                            //
 //    pputl errors  are thrown  by invoking a directly-recursive call with    //
-//    the original arguments. This has the effect of terminating expansion    //
-//    in a way that preserves both the function name and its arguments.       //
+//    the original arguments (after computation expansions in some cases).    //
+//    This has the effect of terminating expansion in a way that preserves    //
+//    and propagates both the function name and the faulty arguments.         //
 //                                                                            //
 //    TESTING                                                                 //
 //    -------                                                                 //
@@ -2985,30 +2986,65 @@
 /// [control.switch]
 /// ----------------
 /// conditionally expands items based on a uint.
+/// the final tuple is the default case.
 ///
-/// PTL_SWITCH(0, (1))              // 1
-/// PTL_SWITCH(1, (1), (2))         // 2
-/// PTL_SWITCH(2, (1), (2), (3, 4)) // 3, 4
+/// throws if no cases, non-uint cs, or any non-tuple cases.
+///
+/// PTL_SWITCH(0, (1))                   // 1
+/// PTL_SWITCH(1, (1))                   // 1
+/// PTL_SWITCH(2, (1))                   // 1
+/// PTL_SWITCH(1, (1), (2))              // 2
+/// PTL_SWITCH(2, (1), (2))              // 2
+/// PTL_SWITCH(2, (1), (2), (3, 4))      // 3, 4
+/// PTL_SWITCH(1023, (1), (2), (3, 4))   // 3, 4
+/// PTL_STR(PTL_SWITCH())                // "PTL_SWITCH()"
+/// PTL_STR(PTL_SWITCH(0))               // "PTL_SWITCH(0)"
+/// PTL_STR(PTL_SWITCH(0, foo))          // "PTL_SWITCH(0, foo)"
+/// PTL_STR(PTL_SWITCH(1, (foo), (bar))) // "bar"
+/// PTL_STR(PTL_SWITCH(1, foo, (bar)))   // "PTL_SWITCH(1, foo, (bar))"
 #define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */ \
-  PTL_X(PTL_FIRST(__VA_ARGS__))(PPUTLSWITCH_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)))(__VA_ARGS__))
+  PTL_IF(PTL_IS_SOME(PTL_REST(__VA_ARGS__)), (PPUTLSWITCH_INIT), (PPUTLSWITCH_THROW))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
+/// verifies uint cs and spawns recursion
+#define PPUTLSWITCH_INIT(i, ...)                                                      \
+  PTL_IF(PTL_IS_UINT(i),                                                              \
+         (PTL_X(i)(PPUTLSWITCH_A(i, __VA_ARGS__)((i, __VA_ARGS__), i, __VA_ARGS__))), \
+         (PPUTLSWITCH_THROW(i, __VA_ARGS__)))
+
 /// mutually recursive branch selector B
-#define PPUTLSWITCH_B(i) PTL_IF(PTL_EQZ(i), (PPUTLSWITCH_B_BREAK), (PPUTLSWITCH_B_CONT))
+#define PPUTLSWITCH_B(i, ...)                                                                  \
+  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_B_BREAK), \
+         (PPUTLSWITCH_B_CONT))
 
 /// B branches
-#define PPUTLSWITCH_B_BREAK(i, _, ...) PTL_ESC _
-#define PPUTLSWITCH_B_CONT(i, _, ...) \
-  PPUTLSWITCH_A PTL_LP() PTL_DEC(i) PTL_RP()(PTL_DEC(i), __VA_ARGS__)
+#define PPUTLSWITCH_B_BREAK(va, i, _, ...) \
+  PTL_IF(PTL_IS_TUPLE(_), (PTL_ESC _), (PPUTLSWITCH_THROW va))
+#define PPUTLSWITCH_B_CONT(va, i, _, ...)                                       \
+  PTL_IF(PTL_IS_TUPLE(_), (PPUTLSWITCH_B_CONT_PASS), (PPUTLSWITCH_B_CONT_FAIL)) \
+  (va, i, _, __VA_ARGS__)
+#define PPUTLSWITCH_B_CONT_FAIL(va, ...) PPUTLSWITCH_THROW va
+#define PPUTLSWITCH_B_CONT_PASS(va, i, _, ...) \
+  PPUTLSWITCH_A PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(va, PTL_DEC(i), __VA_ARGS__)
 
 /// mutually recursive branch selector A
-#define PPUTLSWITCH_A(i) PTL_IF(PTL_EQZ(i), (PPUTLSWITCH_A_BREAK), (PPUTLSWITCH_A_CONT))
+#define PPUTLSWITCH_A(i, ...)                                                                  \
+  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_A_BREAK), \
+         (PPUTLSWITCH_A_CONT))
 
 /// A branches
-#define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ESC _
-#define PPUTLSWITCH_A_CONT(i, _, ...) \
-  PPUTLSWITCH_B PTL_LP() PTL_DEC(i) PTL_RP()(PTL_DEC(i), __VA_ARGS__)
+#define PPUTLSWITCH_A_BREAK(va, i, _, ...) \
+  PTL_IF(PTL_IS_TUPLE(_), (PTL_ESC _), (PPUTLSWITCH_THROW va))
+#define PPUTLSWITCH_A_CONT(va, i, _, ...)                                       \
+  PTL_IF(PTL_IS_TUPLE(_), (PPUTLSWITCH_A_CONT_PASS), (PPUTLSWITCH_A_CONT_FAIL)) \
+  (va, i, _, __VA_ARGS__)
+#define PPUTLSWITCH_A_CONT_FAIL(va, ...) PPUTLSWITCH_THROW va
+#define PPUTLSWITCH_A_CONT_PASS(va, i, _, ...) \
+  PPUTLSWITCH_B PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(va, PTL_DEC(i), __VA_ARGS__)
+
+/// terminates expansion
+#define PPUTLSWITCH_THROW(...) PTL_SWITCH(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
