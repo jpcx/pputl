@@ -222,6 +222,21 @@ ASSERT_PP_EQ((PTL_IS_TUPLE((, a))), (1));
 ASSERT_PP_EQ((PTL_IS_TUPLE((, a, ))), (1));
 ASSERT_PP_EQ((PTL_IS_TUPLE((, , a))), (1));
 
+ASSERT_PP_EQ((PTL_IS_BOOL()), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(0)), (1));
+ASSERT_PP_EQ((PTL_IS_BOOL(1)), (1));
+ASSERT_PP_EQ((PTL_IS_BOOL(0, 1)), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL((0))), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(())), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(, )), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(, , a)), (0));
+
 ASSERT_PP_EQ((PTL_IS_UINT()), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(0)), (1));
@@ -341,6 +356,10 @@ ASSERT_PP_EQ((PTL_IF(1, (t), (f))), (t));
 ASSERT_PP_EQ((PTL_IF(0, (t), (f))), (f));
 ASSERT_PP_EQ((PTL_IF(1, (a), (b, c))), (a));
 ASSERT_PP_EQ((PTL_IF(0, (a), (b, c))), (b, c));
+ASSERT_PP_EQ((PTL_STR(PTL_IF())), ("PTL_IF()"));
+ASSERT_PP_EQ((PTL_STR(PTL_IF(0))), ("PTL_IF(0)"));
+ASSERT_PP_EQ((PTL_STR(PTL_IF(0, ()))), ("PTL_IF(0, ())"));
+ASSERT_PP_EQ((PTL_STR(PTL_IF(a, (), ()))), ("PTL_IF(a, (), ())"));
 
 ASSERT_PP_EQ((PTL_SWITCH(0, (1))), (1));
 ASSERT_PP_EQ((PTL_SWITCH(1, (1), (2))), (2));

@@ -51,7 +51,7 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint(", a, ")            = "0";
   tests << is_uint(", , a")            = "0";
 
-  def chk_uint = def{"chk_" + uint + "(...)"} = [&](va) {
+  def chk_uint = def{uint + "(...)"} = [&](va) {
     return "";
   };
 

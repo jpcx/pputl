@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,31 +25,35 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
-inline codegen::category<"traits"> traits;
+using namespace codegen;
 
-extern codegen::def<"is_none(...) -> bool"> const&         is_none;
-extern codegen::def<"is_some(...) -> bool"> const&         is_some;
-extern codegen::def<"is_tuple(...) -> bool"> const&        is_tuple;
-extern codegen::def<"is_bool(...) -> bool"> const&         is_bool;
-extern codegen::def<"is_uint(...) -> bool"> const&         is_uint;
-extern codegen::def<"items(...: v: tuple) -> ...v"> const& items;
-extern codegen::def<"size(...) -> uint"> const&            size;
+decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
+  docs << "detects if args is a bool.";
 
-NIFTY_DECL(is_none);
-NIFTY_DECL(is_some);
-NIFTY_DECL(is_tuple);
-NIFTY_DECL(is_bool);
-NIFTY_DECL(is_uint);
-NIFTY_DECL(items);
-NIFTY_DECL(size);
+  tests << is_bool()         = "0" >> docs;
+  tests << is_bool(0)        = "1" >> docs;
+  tests << is_bool(1)        = "1" >> docs;
+  tests << is_bool(0, 1)     = "0" >> docs;
+  tests << is_bool("(0)")    = "0" >> docs;
+  tests << is_bool("()")     = "0";
+  tests << is_bool("(), ()") = "0";
+  tests << is_bool(", ")     = "0";
+  tests << is_bool(", , ")   = "0";
+  tests << is_bool("a, ")    = "0";
+  tests << is_bool("a, , ")  = "0";
+  tests << is_bool(", a")    = "0";
+  tests << is_bool(", a, ")  = "0";
+  tests << is_bool(", , a")  = "0";
 
-inline codegen::end_category<"traits"> traits_end;
+  def chk_bool = def{bool_ + "(...)"} = [&](va) {
+    return "";
+  };
+
+  return is_some(cat(utl::slice(chk_bool, -((std::string const&)bool_).size()), bool_(args)));
+});
 
 } // namespace api

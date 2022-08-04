@@ -1513,6 +1513,23 @@
 /// PTL_IS_TUPLE((1, 2)) // 1
 #define PTL_IS_TUPLE(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
 
+/// [traits.is_bool]
+/// ----------------
+/// detects if args is a bool.
+///
+/// PTL_IS_BOOL()     // 0
+/// PTL_IS_BOOL(0)    // 1
+/// PTL_IS_BOOL(1)    // 1
+/// PTL_IS_BOOL(0, 1) // 0
+/// PTL_IS_BOOL((0))  // 0
+#define PTL_IS_BOOL(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_BOOL_, PTL_BOOL(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_BOOL_PTL_BOOL(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_uint]
 /// ----------------
 /// detects if args is a uint.
@@ -1524,11 +1541,11 @@
 /// PTL_IS_UINT((), ()) // 0
 /// PTL_IS_UINT(0, 1)   // 0
 /// PTL_IS_UINT(1023)   // 1
-#define PTL_IS_UINT(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_UINT_CHK_, PTL_UINT(__VA_ARGS__)))
+#define PTL_IS_UINT(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_UINT_, PTL_UINT(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_UINT_CHK_PTL_UINT(...)
+#define PPUTLIS_UINT_PTL_UINT(...)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2900,28 +2917,41 @@
 /// [control.if]
 /// ------------
 /// conditionally expands items based on a boolean.
+/// terminates expansion on invalid args size or types.
 ///
-/// PTL_IF(1, (t), ())     // t
-/// PTL_IF(0, (t), ())     // <nothing>
-/// PTL_IF(1, (t), (f))    // t
-/// PTL_IF(0, (t), (f))    // f
-/// PTL_IF(1, (a), (b, c)) // a
-/// PTL_IF(0, (a), (b, c)) // b, c
+/// PTL_IF(1, (t), ())         // t
+/// PTL_IF(0, (t), ())         // <nothing>
+/// PTL_IF(1, (t), (f))        // t
+/// PTL_IF(0, (t), (f))        // f
+/// PTL_IF(1, (a), (b, c))     // a
+/// PTL_IF(0, (a), (b, c))     // b, c
+/// PTL_STR(PTL_IF())          // "PTL_IF()"
+/// PTL_STR(PTL_IF(0))         // "PTL_IF(0)"
+/// PTL_STR(PTL_IF(0, ()))     // "PTL_IF(0, ())"
+/// PTL_STR(PTL_IF(a, (), ())) // "PTL_IF(a, (), ())"
 #define PTL_IF(/* b: bool, t: tuple, f: tuple */...) /* -> b ? ...t : ...f */ \
-  PPUTLIF_O(__VA_ARGS__)(__VA_ARGS__)
+  PTL_CAT(PTL_CAT(PPUTLIF_, PTL_IS_BOOL(PTL_FIRST(__VA_ARGS__))),             \
+          PTL_CAT(PTL_IS_TUPLE(PTL_FIRST(PTL_REST(__VA_ARGS__))),             \
+                  PTL_IS_TUPLE(PTL_REST(PTL_REST(__VA_ARGS__)))))             \
+  (__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// first parentheses; chooses next function based on b
-#define PPUTLIF_O(b, ...) PTL_CAT(PPUTLIF_OO_, PTL_BOOL(b))
+/// arg validation branches
+#define PPUTLIF_111(...) PTL_CAT(PPUTLIF_RES_, PTL_FIRST(__VA_ARGS__))(PTL_REST(__VA_ARGS__))
+#define PPUTLIF_110(...) PTL_IF(__VA_ARGS__)
+#define PPUTLIF_101(...) PTL_IF(__VA_ARGS__)
+#define PPUTLIF_100(...) PTL_IF(__VA_ARGS__)
+#define PPUTLIF_011(...) PTL_IF(__VA_ARGS__)
+#define PPUTLIF_010(...) PTL_IF(__VA_ARGS__)
+#define PPUTLIF_001(...) PTL_IF(__VA_ARGS__)
+#define PPUTLIF_000(...) PTL_IF(__VA_ARGS__)
 
-/// second parentheses; true result
-#define PPUTLIF_OO_1(b, t, f) PPUTLIF_OO_1_X(PTL_TUPLE(t))
-#define PPUTLIF_OO_1_X(t)     PTL_ESC t
-
-/// second parentheses; false result
-#define PPUTLIF_OO_0(b, t, f) PPUTLIF_OO_0_X(PTL_TUPLE(f))
-#define PPUTLIF_OO_0_X(f)     PTL_ESC f
+/// t/f items return
+#define PPUTLIF_RES_1(...)    PPUTLIF_RES_1_X(__VA_ARGS__)
+#define PPUTLIF_RES_1_X(t, f) PTL_ESC t
+#define PPUTLIF_RES_0(...)    PPUTLIF_RES_0_X(__VA_ARGS__)
+#define PPUTLIF_RES_0_X(t, f) PTL_ESC f
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
