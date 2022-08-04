@@ -25,41 +25,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "detects if args is a bool.";
+decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
+  docs << "executes an invalid preprocessor operation to indicate a failure."
+       << "must provide a string literal message."
+       << ""
+       << "usage: " + fail("something bad happened")
+       << "       " + fail(istr("[myfun] invalid args : __VA_ARGS__"));
 
-  tests << is_bool()         = "0" >> docs;
-  tests << is_bool(0)        = "1" >> docs;
-  tests << is_bool(1)        = "1" >> docs;
-  tests << is_bool(0, 1)     = "0" >> docs;
-  tests << is_bool("(0)")    = "0" >> docs;
-  tests << is_bool("()")     = "0";
-  tests << is_bool("(), ()") = "0";
-  tests << is_bool("0, ")    = "0";
-  tests << is_bool(", ")     = "0";
-  tests << is_bool(", , ")   = "0";
-  tests << is_bool("a, ")    = "0";
-  tests << is_bool("a, , ")  = "0";
-  tests << is_bool(", a")    = "0";
-  tests << is_bool(", a, ")  = "0";
-  tests << is_bool(", , a")  = "0";
-
-  def fail = def{(std::string const&)detail::bool_fail} = [&] {
-    return "0";
-  };
-
-  def{(std::string const&)detail::bool_pass} = [&] {
-    return "1";
-  };
-
-  return cat(utl::slice(fail, -((std::string const&)detail::bool_pass).size()),
-             pp::call(pp::call(detail::bool_o(args + "."), args), args));
+  return pp::cat(fail, args);
 });
 
 } // namespace api

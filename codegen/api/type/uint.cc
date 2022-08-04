@@ -35,24 +35,19 @@ namespace detail {
 decltype(uint_seq)   uint_seq   = NIFTY_DEF(uint_seq);
 decltype(uint_rseq)  uint_rseq  = NIFTY_DEF(uint_rseq);
 decltype(uint_range) uint_range = NIFTY_DEF(uint_range);
+decltype(uint_pass)  uint_pass  = NIFTY_DEF(uint_pass);
+decltype(uint_fail)  uint_fail  = NIFTY_DEF(uint_fail);
+decltype(uint_o)     uint_o     = NIFTY_DEF(uint_o);
 } // namespace detail
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "uint type (0 through " + uint_max_s + ")."
-       << "expands to n if valid. terminates expansion on non-uint.";
+       << "expands to n if valid, else fails.";
 
-  tests << uint(0)                   = "0" >> docs;
-  tests << uint(1)                   = "1" >> docs;
-  tests << uint(2)                   = "2" >> docs;
-  tests << uint(conf::uint_max)      = uint_max_s >> docs;
-  tests << str(uint(conf::uint_max)) = pp::str(conf::uint_max) >> docs;
-  tests << str(uint(conf::uint_max + 1)) =
-      pp::str(uint + "(" + std::to_string(conf::uint_max + 1) + ")") >> docs;
-  tests << str(uint("1, 2"))   = pp::str(uint + "(1, 2)") >> docs;
-  tests << str(uint("1,"))     = pp::str(uint + "(1,)") >> docs;
-  tests << str(uint("foo"))    = pp::str(uint + "(foo)") >> docs;
-  tests << str(uint("()"))     = pp::str(uint + "(())") >> docs;
-  tests << str(uint("(), ()")) = pp::str(uint + "((), ())") >> docs;
+  tests << uint(0)              = "0" >> docs;
+  tests << uint(1)              = "1" >> docs;
+  tests << uint(2)              = "2" >> docs;
+  tests << uint(conf::uint_max) = uint_max_s >> docs;
 
   auto seq  = utl::base10_seq(conf::uint_max + 1);
   auto rseq = seq;
@@ -81,11 +76,11 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return std::to_string(conf::uint_max - 1) + ", 0";
   };
 
-  def<"fail(...)"> fail = [&](va args) {
-    return uint(args);
+  detail::uint_fail = def{"fail(err, ...)"} = [&](arg err, va) {
+    return fail(err);
   };
 
-  def<"pass(...)"> pass = [&](va args) {
+  detail::uint_pass = def{"pass(err, ...)"} = [&](arg, va args) {
     docs << "fourth parentheses; returns";
     return args;
   };
@@ -95,11 +90,11 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     docs << "third parentheses; asserts one of 0 through " + uint_max_s + ".";
 
     ooo_fail = def{"fail(...)"} = [&](va) {
-      return fail;
+      return detail::uint_fail;
     };
 
     def<"no_fail(...)"> ooo_no_fail = [&](va) {
-      return pass;
+      return detail::uint_pass;
     };
 
     return def<"res(...)">{[&](va args) {
@@ -140,7 +135,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     }}(eat + " " + _);
   };
 
-  def<"o(_, ...)"> o = [&](arg, va) {
+  detail::uint_o = def{"o(_, ...)"} = [&](arg, va) {
     docs << "first parentheses; asserts only one arg.";
 
     def<"pass(...)"> pass = [&](va) {
@@ -161,7 +156,8 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
         pass_s));
   };
 
-  return pp::call(pp::call(pp::call(o(args + "."), args), args), args);
+  return pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args),
+                  istr("[" + uint + "] invalid uint : " + args), args);
 });
 
 } // namespace api

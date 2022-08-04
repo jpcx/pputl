@@ -34,20 +34,19 @@ using namespace codegen;
 decltype(str) str = NIFTY_DEF(str, [&](va args) {
   docs << "stringizes args after an expansion.";
 
-  tests << str()           = "\"\"" >> docs;
-  tests << str("foo")      = "\"foo\"";
-  tests << str("foo, bar") = "\"foo, bar\"" >> docs;
-  tests << str(", ")       = "\",\"";
-  tests << str(", , ")     = "\", ,\"";
-  tests << str("a, ")      = "\"a,\"";
-  tests << str("a, , ")    = "\"a, ,\"";
-  tests << str(", a")      = "\", a\"";
-  tests << str(", a, ")    = "\", a,\"";
-  tests << str(", , a")    = "\", , a\"";
+  tests << str()                  = "\"\"" >> docs;
+  tests << str("foo")             = "\"foo\"";
+  tests << str("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << str(cat("foo", "bar")) = pp::str("foobar") >> docs;
+  tests << str(", ")              = "\",\"";
+  tests << str(", , ")            = "\", ,\"";
+  tests << str("a, ")             = "\"a,\"";
+  tests << str("a, , ")           = "\"a, ,\"";
+  tests << str(", a")             = "\", a\"";
+  tests << str(", a, ")           = "\", a,\"";
+  tests << str(", , a")           = "\", , a\"";
 
-  return def<"x(...)">{[&](va args) {
-    return "#" + args;
-  }}(args);
+  return istr(args);
 });
 
 } // namespace api

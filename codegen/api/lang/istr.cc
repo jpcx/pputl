@@ -25,41 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "detects if args is a bool.";
+decltype(istr) istr = NIFTY_DEF(istr, [&](va args) {
+  docs << "immediately stringizes args.";
 
-  tests << is_bool()         = "0" >> docs;
-  tests << is_bool(0)        = "1" >> docs;
-  tests << is_bool(1)        = "1" >> docs;
-  tests << is_bool(0, 1)     = "0" >> docs;
-  tests << is_bool("(0)")    = "0" >> docs;
-  tests << is_bool("()")     = "0";
-  tests << is_bool("(), ()") = "0";
-  tests << is_bool("0, ")    = "0";
-  tests << is_bool(", ")     = "0";
-  tests << is_bool(", , ")   = "0";
-  tests << is_bool("a, ")    = "0";
-  tests << is_bool("a, , ")  = "0";
-  tests << is_bool(", a")    = "0";
-  tests << is_bool(", a, ")  = "0";
-  tests << is_bool(", , a")  = "0";
+  tests << istr()                  = "\"\"" >> docs;
+  tests << istr("foo")             = "\"foo\"";
+  tests << istr("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << istr(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
+  tests << istr(", ")              = "\",\"";
+  tests << istr(", , ")            = "\", ,\"";
+  tests << istr("a, ")             = "\"a,\"";
+  tests << istr("a, , ")           = "\"a, ,\"";
+  tests << istr(", a")             = "\", a\"";
+  tests << istr(", a, ")           = "\", a,\"";
+  tests << istr(", , a")           = "\", , a\"";
 
-  def fail = def{(std::string const&)detail::bool_fail} = [&] {
-    return "0";
-  };
-
-  def{(std::string const&)detail::bool_pass} = [&] {
-    return "1";
-  };
-
-  return cat(utl::slice(fail, -((std::string const&)detail::bool_pass).size()),
-             pp::call(pp::call(detail::bool_o(args + "."), args), args));
+  return "#" + args;
 });
 
 } // namespace api

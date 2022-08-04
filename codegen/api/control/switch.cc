@@ -31,11 +31,35 @@ namespace api {
 
 using namespace codegen;
 
+#define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */ \
+  PTL_X(PTL_FIRST(__VA_ARGS__))                                              \
+  (PPUTLSWITCH_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_REST(__VA_ARGS__))(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// mutually recursive branch selector B
+#define PPUTLSWITCH_B(i, ...)                                                                  \
+  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_B_BREAK), \
+         (PPUTLSWITCH_B_CONT))
+
+/// B branches
+#define PPUTLSWITCH_B_BREAK(i, _, ...) PTL_ITEMS(_)
+#define PPUTLSWITCH_B_CONT(i, _, ...) \
+  PPUTLSWITCH_A PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(PTL_DEC(i), __VA_ARGS__)
+
+/// mutually recursive branch selector A
+#define PPUTLSWITCH_A(i, ...)                                                                  \
+  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_A_BREAK), \
+         (PPUTLSWITCH_A_CONT))
+
+/// A branches
+#define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ITEMS(_)
+#define PPUTLSWITCH_A_CONT(i, _, ...) \
+  PPUTLSWITCH_B PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(PTL_DEC(i), __VA_ARGS__)
+
 decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   docs << "conditionally expands items based on a uint."
-       << "the final tuple is the default case."
-       << ""
-       << "throws if no cases, non-uint cs, or any non-tuple cases.";
+       << "the final tuple is the default case.";
 
   std::vector<std::string> maxcases{};
   for (size_t i = 0; i <= conf::uint_max; ++i)
@@ -55,67 +79,37 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   tests << switch_(0, maxcases_s)                      = "a";
   tests << switch_(1, maxcases_s)                      = "b";
   tests << switch_(conf::uint_max, maxcases_s)         = utl::alpha_base52(conf::uint_max);
-  tests << str(switch_())                              = pp::str(switch_()) >> docs;
-  tests << str(switch_(0))                             = pp::str(switch_(0)) >> docs;
-  tests << str(switch_(0, "foo"))                      = pp::str(switch_(0, "foo")) >> docs;
-  tests << str(switch_(1, "(foo)", "(bar)"))           = pp::str("bar") >> docs;
-  tests << str(switch_(1, "foo", "(bar)")) = pp::str(switch_(1, "foo", "(bar)")) >> docs;
-
-  def<"throw(...)"> throw_ = [&](va args) {
-    docs << "terminates expansion";
-    return switch_(args);
-  };
 
   def<"a(i, ...)"> a;
   def<"b(i, ...)"> b;
 
   a = [&](arg i, va args) {
-    docs << "mutually recursive branch selector A";
-    def<"cont(va, i, _, ...)"> cont = [&](arg va_, arg i, arg _, va args) {
-      def<"pass(va, i, _, ...)"> pass = [&](arg va_, arg i, arg, va args) {
-        return b + " " + lp() + " " + dec(i) + ", " + args + " " + rp() + " "
-             + pp::tup(va_, dec(i), args);
-      };
-      def<"fail(va, ...)"> fail = [&](arg va_, va) {
-        return throw_ + " " + va_;
-      };
-      return pp::call(if_(is_tuple(_), pp::tup(pass), pp::tup(fail)), va_, i, _, args);
+    docs << "recursive side A";
+    def<"cont(i, _, ...)"> cont = [&](arg i, arg _0, va args) {
+      return pp::call(b + " " + lp() + " " + dec(i) + ", " + args + " " + rp() + " ", dec(i),
+                      rest(pp::tup(tuple(_0)), args));
     };
-    def<"break(va, i, _, ...)"> break_ = [&](arg va_, arg, arg _, va) {
-      docs << "A branches";
-      return if_(is_tuple(_), pp::tup(esc + " " + _), pp::tup(throw_ + " " + va_));
+    def<"break(i, _, ...)"> break_ = [&](arg, arg _0, va) {
+      return items(_0);
     };
     return if_(if_(eqz(i), pp::tup(1), pp::tup(is_none(rest(args)))), pp::tup(break_),
                pp::tup(cont));
   };
 
   b = [&](arg i, va args) {
-    docs << "mutually recursive branch selector B";
-    def<"cont(va, i, _, ...)"> cont = [&](arg va_, arg i, arg _, va args) {
-      def<"pass(va, i, _, ...)"> pass = [&](arg va_, arg i, arg, va args) {
-        return a + " " + lp() + " " + dec(i) + ", " + args + " " + rp() + " "
-             + pp::tup(va_, dec(i), args);
-      };
-      def<"fail(va, ...)"> fail = [&](arg va_, va) {
-        return throw_ + " " + va_;
-      };
-      return pp::call(if_(is_tuple(_), pp::tup(pass), pp::tup(fail)), va_, i, _, args);
+    docs << "recursive side B";
+    def<"cont(i, _, ...)"> cont = [&](arg i, arg _0, va args) {
+      return pp::call(a + " " + lp() + " " + dec(i) + ", " + args + " " + rp() + " ", dec(i),
+                      rest(pp::tup(tuple(_0)), args));
     };
-    def<"break(va, i, _, ...)"> break_ = [&](arg va_, arg, arg _, va) {
-      docs << "B branches";
-      return if_(is_tuple(_), pp::tup(esc + " " + _), pp::tup(throw_ + " " + va_));
+    def<"break(i, _, ...)"> break_ = [&](arg, arg _0, va) {
+      return items(_0);
     };
     return if_(if_(eqz(i), pp::tup(1), pp::tup(is_none(rest(args)))), pp::tup(break_),
                pp::tup(cont));
   };
 
-  def<"init(i, ...)"> init = [&](arg i, va args) {
-    docs << "verifies uint cs and spawns recursion";
-    return if_(is_uint(i), pp::tup(pp::call(x(i), pp::call(a(i, args), pp::tup(i, args), i, args))),
-               pp::tup(throw_(i, args)));
-  };
-
-  return pp::call(if_(is_some(rest(args)), pp::tup(init), pp::tup(throw_)), args);
+  return pp::call(x(first(args)), pp::call(a(uint(first(args)), rest(args)), args));
 });
 
 } // namespace api

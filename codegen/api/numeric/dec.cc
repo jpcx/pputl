@@ -32,27 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
-  docs << "uint decrement w/ underflow. terminates expansion on non-uint.";
+  docs << "uint decrement w/ underflow.";
 
-  tests << dec(0)                   = uint_max_s >> docs;
-  tests << dec(1)                   = "0" >> docs;
-  tests << dec(2)                   = "1";
-  tests << dec(conf::uint_max)      = utl::to_string(conf::uint_max - 1) >> docs;
-  tests << dec(conf::uint_max - 1)  = utl::to_string(conf::uint_max - 2);
-  tests << str(dec(conf::uint_max)) = pp::str(utl::to_string(conf::uint_max - 1)) >> docs;
-  tests << str(dec())               = pp::str(dec()) >> docs;
-  tests << str(dec('a'))            = pp::str(dec('a')) >> docs;
-  tests << str(dec("foo"))          = pp::str(dec("foo")) >> docs;
+  tests << dec(0)                  = uint_max_s >> docs;
+  tests << dec(1)                  = "0" >> docs;
+  tests << dec(2)                  = "1";
+  tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1) >> docs;
+  tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
 
-  def<"0(...)"> _0 = [&](va args) {
-    return dec(args);
-  };
-
-  def<"1(n)">{} = [&](arg n) {
-    return first(cat(utl::slice(detail::uint_range[0], -1), n));
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
+  return first(cat(utl::slice(detail::uint_range[0], -1), uint(args)));
 });
 
 } // namespace api

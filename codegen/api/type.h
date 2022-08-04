@@ -39,14 +39,28 @@ extern codegen::def<"bool(...: b: any...) -> bool{b}"> const&   bool_;
 extern codegen::def<"uint(...: n: any...) -> uint{n}"> const&   uint;
 
 NIFTY_DECL(tuple);
+namespace detail {
+extern codegen::def<>& bool_pass;
+extern codegen::def<>& bool_fail;
+extern codegen::def<>& bool_o;
+NIFTY_DECL(bool_pass);
+NIFTY_DECL(bool_fail);
+NIFTY_DECL(bool_o);
+} // namespace detail
 NIFTY_DECL(bool_);
 namespace detail {
 extern codegen::def<>&                                          uint_seq;
 extern codegen::def<>&                                          uint_rseq;
 extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_range;
+extern codegen::def<>&                                          uint_pass;
+extern codegen::def<>&                                          uint_fail;
+extern codegen::def<>&                                          uint_o;
 NIFTY_DECL(uint_seq);
 NIFTY_DECL(uint_rseq);
 NIFTY_DECL(uint_range);
+NIFTY_DECL(uint_pass);
+NIFTY_DECL(uint_fail);
+NIFTY_DECL(uint_o);
 } // namespace detail
 NIFTY_DECL(uint);
 

@@ -43,6 +43,7 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint(conf::uint_max)     = "1" >> docs;
   tests << is_uint("foo, bar")         = "0";
   tests << is_uint(conf::uint_max - 1) = "1";
+  tests << is_uint("0, ")              = "0";
   tests << is_uint(", ")               = "0";
   tests << is_uint(", , ")             = "0";
   tests << is_uint("a, ")              = "0";
@@ -51,11 +52,16 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint(", a, ")            = "0";
   tests << is_uint(", , a")            = "0";
 
-  def chk_uint = def{uint + "(...)"} = [&](va) {
-    return "";
+  def fail = def{(std::string const&)detail::uint_fail} = [&] {
+    return "0";
   };
 
-  return is_some(cat(utl::slice(chk_uint, -((std::string const&)uint).size()), uint(args)));
+  def{(std::string const&)detail::uint_pass} = [&] {
+    return "1";
+  };
+
+  return cat(utl::slice(fail, -((std::string const&)detail::uint_pass).size()),
+             pp::call(pp::call(detail::uint_o(args + "."), args), args));
 });
 
 } // namespace api

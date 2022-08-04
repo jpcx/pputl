@@ -31,18 +31,18 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(bool_pass) bool_pass = NIFTY_DEF(bool_pass);
+decltype(bool_fail) bool_fail = NIFTY_DEF(bool_fail);
+decltype(bool_o)    bool_o    = NIFTY_DEF(bool_o);
+} // namespace detail
+
 decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
   docs << "bool type (0 or 1)."
-       << "expands to b if valid. terminates expansion on non-bool.";
+       << "expands to b if valid, else fails.";
 
-  tests << bool_(0)             = "0" >> docs;
-  tests << bool_(1)             = "1" >> docs;
-  tests << str(bool_(2))        = pp::str(bool_ + "(2)") >> docs;
-  tests << str(bool_("1, 2"))   = pp::str(bool_ + "(1, 2)") >> docs;
-  tests << str(bool_("1,"))     = pp::str(bool_ + "(1,)") >> docs;
-  tests << str(bool_("foo"))    = pp::str(bool_ + "(foo)") >> docs;
-  tests << str(bool_("()"))     = pp::str(bool_ + "(())") >> docs;
-  tests << str(bool_("(), ()")) = pp::str(bool_ + "((), ())") >> docs;
+  tests << bool_(0) = "0" >> docs;
+  tests << bool_(1) = "1" >> docs;
 
   def<"chk_0"> chk_0 = [&] {
     return "";
@@ -53,11 +53,11 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
     return "";
   };
 
-  def<"fail(...)"> fail = [&](va args) {
-    return bool_(args);
+  detail::bool_fail = def{"fail(err, ...)"} = [&](arg err, va) {
+    return fail(err);
   };
 
-  def<"pass(...)"> pass = [&](va args) {
+  detail::bool_pass = def{"pass(err, ...)"} = [&](arg, va args) {
     docs << "fourth parentheses; returns";
     return args;
   };
@@ -67,11 +67,11 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
     docs << "third parentheses; asserts either 0 or 1.";
 
     ooo_no_pass = def{"no_pass(...)"} = [&](va) {
-      return fail;
+      return detail::bool_fail;
     };
 
     def<"pass(...)"> ooo_pass = [&](va) {
-      return pass;
+      return detail::bool_pass;
     };
 
     return def<"res(...)">{[&](va) {
@@ -110,7 +110,7 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
     }}(eat + " " + _);
   };
 
-  def<"o(_, ...)"> o = [&](arg, va) {
+  detail::bool_o = def{"o(_, ...)"} = [&](arg, va) {
     docs << "first parentheses; asserts only one arg.";
 
     def<"pass(...)"> pass = [&](va) {
@@ -131,7 +131,8 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
         pass_s));
   };
 
-  return pp::call(pp::call(pp::call(o(args + "."), args), args), args);
+  return pp::call(pp::call(pp::call(detail::bool_o(args + "."), args), args),
+                  istr("[" + bool_ + "] invalid bool : " + args), args);
 });
 
 } // namespace api

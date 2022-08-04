@@ -32,27 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
-  docs << "detects if uint n is not zero. terminates expansion on non-uint.";
+  docs << "detects if uint n is not zero.";
 
-  tests << nez("0")                 = "0" >> docs;
-  tests << nez("1")                 = "1" >> docs;
-  tests << nez("2")                 = "1" >> docs;
-  tests << nez(uint_max_s)          = "1" >> docs;
-  tests << nez(inc(uint_max_s))     = "0" >> docs;
-  tests << str(nez(conf::uint_max)) = pp::str(1) >> docs;
-  tests << str(nez())               = pp::str(nez()) >> docs;
-  tests << str(nez('a'))            = pp::str(nez('a')) >> docs;
-  tests << str(nez("foo"))          = pp::str(nez("foo")) >> docs;
+  tests << nez("0")             = "0" >> docs;
+  tests << nez("1")             = "1" >> docs;
+  tests << nez("2")             = "1" >> docs;
+  tests << nez(uint_max_s)      = "1" >> docs;
+  tests << nez(inc(uint_max_s)) = "0" >> docs;
 
-  def<"chk_0(...)"> chk_0 = [&](va args) {
-    return nez(args);
-  };
-
-  def<"chk_1(n)">{} = [&](arg n) {
-    return is_some(pp::cat(utl::slice(detail::eqz_0, -1), n));
-  };
-
-  return pp::call(cat(utl::slice(chk_0, -1), is_uint(args)), args);
+  return is_some(cat(utl::slice(detail::eqz_0, -1), uint(args)));
 });
 
 } // namespace api

@@ -32,27 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
-  docs << "uint increment w/ overflow. terminates expansion on non-uint.";
+  docs << "uint increment w/ overflow.";
 
-  tests << inc(0)                   = "1" >> docs;
-  tests << inc(1)                   = "2" >> docs;
-  tests << inc(2)                   = "3";
-  tests << inc(conf::uint_max)      = "0" >> docs;
-  tests << inc(conf::uint_max - 1)  = uint_max_s;
-  tests << str(inc(conf::uint_max)) = pp::str(0) >> docs;
-  tests << str(inc())               = pp::str(inc()) >> docs;
-  tests << str(inc('a'))            = pp::str(inc('a')) >> docs;
-  tests << str(inc("foo"))          = pp::str(inc("foo")) >> docs;
+  tests << inc(0)                  = "1" >> docs;
+  tests << inc(1)                  = "2" >> docs;
+  tests << inc(2)                  = "3";
+  tests << inc(conf::uint_max)     = "0" >> docs;
+  tests << inc(conf::uint_max - 1) = uint_max_s;
 
-  def<"0(...)"> _0 = [&](va args) {
-    return inc(args);
-  };
-
-  def<"1(n)">{} = [&](arg n) {
-    return rest(cat(utl::slice(detail::uint_range[0], -1), n));
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
+  return rest(cat(utl::slice(detail::uint_range[0], -1), uint(args)));
 });
 
 } // namespace api

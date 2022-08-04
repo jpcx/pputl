@@ -37,21 +37,25 @@ extern codegen::def<"lp() -> <left parens>"> const&                             
 extern codegen::def<"rp() -> <left parens>"> const&                                           rp;
 extern codegen::def<"eat(...) -> <nothing>"> const&                                           eat;
 extern codegen::def<"esc(...: v: any...) -> ...v"> const&                                     esc;
-extern codegen::def<"str(...: v: any...) -> #...v"> const&                                    str;
 extern codegen::def<"cat(...: a: any, b: any) -> a##b"> const&                                cat;
+extern codegen::def<"istr(...: v: any...) -> <string literal #...v>"> const&                  istr;
+extern codegen::def<"str(...: v: any...) -> <string literal #...v>"> const&                   str;
 extern codegen::def<"first(...: v: any...) -> v[0]"> const&                                   first;
 extern codegen::def<"rest(...:  v: any...) -> ...v"> const&                                   rest;
 extern codegen::def<"trim(...: v: any...) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
+extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&        fail;
 
 NIFTY_DECL(lp);
 NIFTY_DECL(rp);
 NIFTY_DECL(eat);
 NIFTY_DECL(esc);
-NIFTY_DECL(str);
 NIFTY_DECL(cat);
+NIFTY_DECL(istr);
+NIFTY_DECL(str);
 NIFTY_DECL(first);
 NIFTY_DECL(rest);
 NIFTY_DECL(trim);
+NIFTY_DECL(fail);
 
 inline codegen::end_category<"lang"> lang_end;
 

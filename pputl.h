@@ -37,7 +37,7 @@
 //    type-safe, scoped, and easier to debug. pputl is primarily  intended    //
 //    for  research purposes and for various edge cases that still must be    //
 //    solved using  text replacement,  such as optimizations that minimize    //
-//    template specializations and syntactical boilerplate reduction.         //
+//    template specializations and syntactical boilerplate reductions.        //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
@@ -78,15 +78,15 @@
 //    data ranges both input and output a variadic argument list. Creating    //
 //    a tuple is trivial but extraction costs an expansion.                   //
 //                                                                            //
-//    pputl defines four types: tuple, uint, bool, and xct (a recursively-    //
-//    defined expansion tracer available in meta). All functions that use     //
+//    pputl defines three types: tuple, uint, and bool. Features that use     //
 //    one of these types  in their  parameter documentation  assert their     //
-//    validity before use.                                                    //
+//    validity by type-casting. Type casts expand to their original value     //
+//    if successful, else they trigger a preprocessor error.                  //
 //                                                                            //
-//    pputl errors  are thrown  by invoking a directly-recursive call with    //
-//    the original arguments (after computation expansions in some cases).    //
-//    This has the effect of terminating expansion in a way that preserves    //
-//    and propagates both the function name and the faulty arguments.         //
+//    pputl errors execute an invalid preprocessor operation by using the     //
+//    concatenation operator (incorrectly) on a string error message. All     //
+//    errors  triggered by pputl functions  will include  the macro name,     //
+//    a textual description, and the primary expansion arguments.             //
 //                                                                            //
 //    TESTING                                                                 //
 //    -------                                                                 //
@@ -132,20 +132,6 @@
 /// PTL_ESC (a, b, c) // a, b, c
 #define PTL_ESC(/* v: any... */...) /* -> ...v */ __VA_ARGS__
 
-/// [lang.str]
-/// ----------
-/// stringizes args after an expansion.
-///
-/// PTL_STR()         // ""
-/// PTL_STR(foo, bar) // "foo, bar"
-#define PTL_STR(/* v: any... */...) /* -> #...v */ PPUTLSTR_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLSTR_X(...) #__VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [lang.cat]
 /// ----------
 /// concatenates two args after an expansion.
@@ -160,6 +146,24 @@
 #define PPUTLCAT_X(a, b) a##b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [lang.istr]
+/// -----------
+/// immediately stringizes args.
+///
+/// PTL_ISTR()                  // ""
+/// PTL_ISTR(foo, bar)          // "foo, bar"
+/// PTL_ISTR(PTL_CAT(foo, bar)) // "PTL_CAT(foo, bar)"
+#define PTL_ISTR(/* v: any... */...) /* -> <string literal #...v> */ #__VA_ARGS__
+
+/// [lang.str]
+/// ----------
+/// stringizes args after an expansion.
+///
+/// PTL_STR()                  // ""
+/// PTL_STR(foo, bar)          // "foo, bar"
+/// PTL_STR(PTL_CAT(foo, bar)) // "foobar"
+#define PTL_STR(/* v: any... */...) /* -> <string literal #...v> */ PTL_ISTR(__VA_ARGS__)
 
 /// [lang.first]
 /// ------------
@@ -224,47 +228,46 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [lang.fail]
+/// -----------
+/// executes an invalid preprocessor operation to indicate a failure.
+/// must provide a string literal message.
+///
+/// usage: PTL_FAIL(something bad happened)
+///        PTL_FAIL(PTL_ISTR([myfun] invalid args : __VA_ARGS__))
+#define PTL_FAIL(/* msg: <string literal> */...) /* -> <preprocessor error> */ PTL_FAIL##__VA_ARGS__
+
 /// [type.tuple]
 /// ------------
 /// tuple type (any...).
-/// expands to t if valid. terminates expansion on non-tuple.
+/// expands to t if valid, else fails.
 ///
-/// PTL_TUPLE(())              // ()
-/// PTL_TUPLE((1, 2))          // (1, 2)
-/// PTL_STR(PTL_TUPLE(0))      // "PTL_TUPLE(0)"
-/// PTL_STR(PTL_TUPLE(1, 2))   // "PTL_TUPLE(1, 2)"
-/// PTL_STR(PTL_TUPLE(1,))     // "PTL_TUPLE(1,)"
-/// PTL_STR(PTL_TUPLE(foo))    // "PTL_TUPLE(foo)"
-/// PTL_STR(PTL_TUPLE((), ())) // "PTL_TUPLE((), ())"
+/// PTL_TUPLE(())     // ()
+/// PTL_TUPLE((1, 2)) // (1, 2)
 #define PTL_TUPLE(/* t: any... */...) /* -> tuple{t} */ \
-  PPUTLTUPLE_O(PTL_EAT __VA_ARGS__)(__VA_ARGS__)
+  PPUTLTUPLE_O(PTL_EAT __VA_ARGS__)(PTL_ISTR([PTL_TUPLE] invalid tuple : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 /// first parentheses; detects tuple
 #define PPUTLTUPLE_O(...) PPUTLTUPLE_OO##__VA_OPT__(_NO)##_PASS
 
-/// second parentheses; returns or throws
-#define PPUTLTUPLE_OO_NO_PASS(...) PTL_TUPLE(__VA_ARGS__)
-#define PPUTLTUPLE_OO_PASS(...)    __VA_ARGS__
+/// second parentheses; returns or fails
+#define PPUTLTUPLE_OO_NO_PASS(err, ...) PTL_FAIL(err)
+#define PPUTLTUPLE_OO_PASS(err, ...)    __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.bool]
 /// -----------
 /// bool type (0 or 1).
-/// expands to b if valid. terminates expansion on non-bool.
+/// expands to b if valid, else fails.
 ///
-/// PTL_BOOL(0)               // 0
-/// PTL_BOOL(1)               // 1
-/// PTL_STR(PTL_BOOL(2))      // "PTL_BOOL(2)"
-/// PTL_STR(PTL_BOOL(1, 2))   // "PTL_BOOL(1, 2)"
-/// PTL_STR(PTL_BOOL(1,))     // "PTL_BOOL(1,)"
-/// PTL_STR(PTL_BOOL(foo))    // "PTL_BOOL(foo)"
-/// PTL_STR(PTL_BOOL(()))     // "PTL_BOOL(())"
-/// PTL_STR(PTL_BOOL((), ())) // "PTL_BOOL((), ())"
+/// PTL_BOOL(0) // 0
+/// PTL_BOOL(1) // 1
 #define PTL_BOOL(/* b: any... */...) /* -> bool{b} */ \
-  PPUTLBOOL_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__)
+  PPUTLBOOL_O(__VA_ARGS__.)                           \
+  (__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_BOOL] invalid bool : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -286,8 +289,8 @@
 #define PPUTLBOOL_OOO_NO_PASS(...) PPUTLBOOL_FAIL
 
 /// fourth parentheses; returns
-#define PPUTLBOOL_PASS(...) __VA_ARGS__
-#define PPUTLBOOL_FAIL(...) PTL_BOOL(__VA_ARGS__)
+#define PPUTLBOOL_PASS(err, ...) __VA_ARGS__
+#define PPUTLBOOL_FAIL(err, ...) PTL_FAIL(err)
 
 /// concat existence checks
 #define PPUTLBOOL_CHK_1
@@ -298,21 +301,15 @@
 /// [type.uint]
 /// -----------
 /// uint type (0 through 1023).
-/// expands to n if valid. terminates expansion on non-uint.
+/// expands to n if valid, else fails.
 ///
-/// PTL_UINT(0)               // 0
-/// PTL_UINT(1)               // 1
-/// PTL_UINT(2)               // 2
-/// PTL_UINT(1023)            // 1023
-/// PTL_STR(PTL_UINT(1023))   // "1023"
-/// PTL_STR(PTL_UINT(1024))   // "PTL_UINT(1024)"
-/// PTL_STR(PTL_UINT(1, 2))   // "PTL_UINT(1, 2)"
-/// PTL_STR(PTL_UINT(1,))     // "PTL_UINT(1,)"
-/// PTL_STR(PTL_UINT(foo))    // "PTL_UINT(foo)"
-/// PTL_STR(PTL_UINT(()))     // "PTL_UINT(())"
-/// PTL_STR(PTL_UINT((), ())) // "PTL_UINT((), ())"
+/// PTL_UINT(0)    // 0
+/// PTL_UINT(1)    // 1
+/// PTL_UINT(2)    // 2
+/// PTL_UINT(1023) // 1023
 #define PTL_UINT(/* n: any... */...) /* -> uint{n} */ \
-  PPUTLUINT_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__)
+  PPUTLUINT_O(__VA_ARGS__.)                           \
+  (__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_UINT] invalid uint : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -335,8 +332,8 @@
 #define PPUTLUINT_OOO_FAIL(...)     PPUTLUINT_FAIL
 
 /// fourth parentheses; returns
-#define PPUTLUINT_PASS(...) __VA_ARGS__
-#define PPUTLUINT_FAIL(...) PTL_UINT(__VA_ARGS__)
+#define PPUTLUINT_PASS(err, ...) __VA_ARGS__
+#define PPUTLUINT_FAIL(err, ...) PTL_FAIL(err)
 
 /// int decrement and increment values.
 #define PPUTLUINT_RANGE_1023 1022, 0
@@ -1535,11 +1532,13 @@
 /// PTL_IS_BOOL(1)    // 1
 /// PTL_IS_BOOL(0, 1) // 0
 /// PTL_IS_BOOL((0))  // 0
-#define PTL_IS_BOOL(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_BOOL_, PTL_BOOL(__VA_ARGS__)))
+#define PTL_IS_BOOL(...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_BOOL_, PPUTLBOOL_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_BOOL_PTL_BOOL(...)
+#define PPUTLIS_BOOL_PPUTLBOOL_PASS 1
+#define PPUTLIS_BOOL_PPUTLBOOL_FAIL 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1554,54 +1553,49 @@
 /// PTL_IS_UINT((), ()) // 0
 /// PTL_IS_UINT(0, 1)   // 0
 /// PTL_IS_UINT(1023)   // 1
-#define PTL_IS_UINT(...) /* -> bool */ PTL_IS_SOME(PTL_CAT(PPUTLIS_UINT_, PTL_UINT(__VA_ARGS__)))
+#define PTL_IS_UINT(...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_UINT_, PPUTLUINT_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_UINT_PTL_UINT(...)
+#define PPUTLIS_UINT_PPUTLUINT_PASS 1
+#define PPUTLIS_UINT_PPUTLUINT_FAIL 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [traits.items]
 /// --------------
-/// extracts tuple items. terminates expansion on non-tup.
+/// extracts tuple items.
 ///
-/// PTL_ITEMS(())                  // <nothing>
-/// PTL_ITEMS((a))                 // a
-/// PTL_ITEMS((a, b))              // a, b
-/// PTL_ITEMS((a, b, c))           // a, b, c
-/// PTL_STR(PTL_ITEMS((a, b, c)))  // "a, b, c"
-/// PTL_STR(PTL_ITEMS())           // "PTL_ITEMS()"
-/// PTL_STR(PTL_ITEMS(not, tuple)) // "PTL_ITEMS(not, tuple)"
-#define PTL_ITEMS(/* v: tuple */...) /* -> ...v */ \
-  PTL_CAT(PPUTLITEMS_, PTL_IS_TUPLE(__VA_ARGS__))(__VA_ARGS__)
+/// PTL_ITEMS(())        // <nothing>
+/// PTL_ITEMS((a))       // a
+/// PTL_ITEMS((a, b))    // a, b
+/// PTL_ITEMS((a, b, c)) // a, b, c
+#define PTL_ITEMS(/* v: tuple */...) /* -> ...v */ PPUTLITEMS_X(PTL_TUPLE(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// tuple; extract and return
-#define PPUTLITEMS_1(...) PTL_ESC __VA_ARGS__
-
-/// non-tuple; throw
-#define PPUTLITEMS_0(...) PTL_ITEMS(__VA_ARGS__)
+#define PPUTLITEMS_X(...) PTL_ESC __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [traits.size]
 /// -------------
 /// computes the uint size of args in O(1) time.
-/// terminates expansion if too many args passed.
+/// fails if too many args passed.
 ///
 /// PTL_SIZE()     // 0
 /// PTL_SIZE(a)    // 1
 /// PTL_SIZE(a, b) // 2
 /// PTL_SIZE(, )   // 2
-#define PTL_SIZE(...) /* -> uint */ PPUTLSIZE_X((__VA_ARGS__), PPUTLSIZE, __VA_ARGS__)
+#define PTL_SIZE(...) /* -> uint */ \
+  PPUTLSIZE_X(PTL_ISTR([PTL_SIZE] too many args : __VA_ARGS__), PPUTLSIZE, __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSIZE_X(_va, _, ...)                                                                 \
+#define PPUTLSIZE_X(_err, _, ...)                                                                \
   PPUTLSIZE_READ(                                                                                \
-      _va, __VA_ARGS__ __VA_OPT__(, ) _(1023), _(1022), _(1021), _(1020), _(1019), _(1018),      \
+      _err, __VA_ARGS__ __VA_OPT__(, ) _(1023), _(1022), _(1021), _(1020), _(1019), _(1018),     \
       _(1017), _(1016), _(1015), _(1014), _(1013), _(1012), _(1011), _(1010), _(1009), _(1008),  \
       _(1007), _(1006), _(1005), _(1004), _(1003), _(1002), _(1001), _(1000), _(999), _(998),    \
       _(997), _(996), _(995), _(994), _(993), _(992), _(991), _(990), _(989), _(988), _(987),    \
@@ -1694,54 +1688,55 @@
       _(29), _(28), _(27), _(26), _(25), _(24), _(23), _(22), _(21), _(20), _(19), _(18), _(17), \
       _(16), _(15), _(14), _(13), _(12), _(11), _(10), _(9), _(8), _(7), _(6), _(5), _(4), _(3), \
       _(2), _(1), _(0))
-#define PPUTLSIZE_READ(                                                                            \
-    _va, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, \
-    E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg,  \
-    bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD,    \
-    bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca,    \
-    cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx,    \
-    cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU,    \
-    cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr,    \
-    ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO,    \
-    dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el,    \
-    em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI,    \
-    eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU, eV, eW, eX, eY, eZ, fa, fb, fc, fd, fe, ff,    \
-    fg, fh, fi, fj, fk, fl, fm, fn, fo, fp, fq, fr, fs, ft, fu, fv, fw, fx, fy, fz, fA, fB, fC,    \
-    fD, fE, fF, fG, fH, fI, fJ, fK, fL, fM, fN, fO, fP, fQ, fR, fS, fT, fU, fV, fW, fX, fY, fZ,    \
-    ga, gb, gc, gd, ge, gf, gg, gh, gi, gj, gk, gl, gm, gn, go, gp, gq, gr, gs, gt, gu, gv, gw,    \
-    gx, gy, gz, gA, gB, gC, gD, gE, gF, gG, gH, gI, gJ, gK, gL, gM, gN, gO, gP, gQ, gR, gS, gT,    \
-    gU, gV, gW, gX, gY, gZ, ha, hb, hc, hd, he, hf, hg, hh, hi, hj, hk, hl, hm, hn, ho, hp, hq,    \
-    hr, hs, ht, hu, hv, hw, hx, hy, hz, hA, hB, hC, hD, hE, hF, hG, hH, hI, hJ, hK, hL, hM, hN,    \
-    hO, hP, hQ, hR, hS, hT, hU, hV, hW, hX, hY, hZ, ia, ib, ic, id, ie, if, ig, ih, ii, ij, ik,    \
-    il, im, in, io, ip, iq, ir, is, it, iu, iv, iw, ix, iy, iz, iA, iB, iC, iD, iE, iF, iG, iH,    \
-    iI, iJ, iK, iL, iM, iN, iO, iP, iQ, iR, iS, iT, iU, iV, iW, iX, iY, iZ, ja, jb, jc, jd, je,    \
-    jf, jg, jh, ji, jj, jk, jl, jm, jn, jo, jp, jq, jr, js, jt, ju, jv, jw, jx, jy, jz, jA, jB,    \
-    jC, jD, jE, jF, jG, jH, jI, jJ, jK, jL, jM, jN, jO, jP, jQ, jR, jS, jT, jU, jV, jW, jX, jY,    \
-    jZ, ka, kb, kc, kd, ke, kf, kg, kh, ki, kj, kk, kl, km, kn, ko, kp, kq, kr, ks, kt, ku, kv,    \
-    kw, kx, ky, kz, kA, kB, kC, kD, kE, kF, kG, kH, kI, kJ, kK, kL, kM, kN, kO, kP, kQ, kR, kS,    \
-    kT, kU, kV, kW, kX, kY, kZ, la, lb, lc, ld, le, lf, lg, lh, li, lj, lk, ll, lm, ln, lo, lp,    \
-    lq, lr, ls, lt, lu, lv, lw, lx, ly, lz, lA, lB, lC, lD, lE, lF, lG, lH, lI, lJ, lK, lL, lM,    \
-    lN, lO, lP, lQ, lR, lS, lT, lU, lV, lW, lX, lY, lZ, ma, mb, mc, md, me, mf, mg, mh, mi, mj,    \
-    mk, ml, mm, mn, mo, mp, mq, mr, ms, mt, mu, mv, mw, mx, my, mz, mA, mB, mC, mD, mE, mF, mG,    \
-    mH, mI, mJ, mK, mL, mM, mN, mO, mP, mQ, mR, mS, mT, mU, mV, mW, mX, mY, mZ, na, nb, nc, nd,    \
-    ne, nf, ng, nh, ni, nj, nk, nl, nm, nn, no, np, nq, nr, ns, nt, nu, nv, nw, nx, ny, nz, nA,    \
-    nB, nC, nD, nE, nF, nG, nH, nI, nJ, nK, nL, nM, nN, nO, nP, nQ, nR, nS, nT, nU, nV, nW, nX,    \
-    nY, nZ, oa, ob, oc, od, oe, of, og, oh, oi, oj, ok, ol, om, on, oo, op, oq, _or, os, ot, ou,   \
-    ov, ow, ox, oy, oz, oA, oB, oC, oD, oE, oF, oG, oH, oI, oJ, oK, oL, oM, oN, oO, oP, oQ, oR,    \
-    oS, oT, oU, oV, oW, oX, oY, oZ, pa, pb, pc, pd, pe, pf, pg, ph, pi, pj, pk, pl, pm, pn, po,    \
-    pp, pq, pr, ps, pt, pu, pv, pw, px, py, pz, pA, pB, pC, pD, pE, pF, pG, pH, pI, pJ, pK, pL,    \
-    pM, pN, pO, pP, pQ, pR, pS, pT, pU, pV, pW, pX, pY, pZ, qa, qb, qc, qd, qe, qf, qg, qh, qi,    \
-    qj, qk, ql, qm, qn, qo, qp, qq, qr, qs, qt, qu, qv, qw, qx, qy, qz, qA, qB, qC, qD, qE, qF,    \
-    qG, qH, qI, qJ, qK, qL, qM, qN, qO, qP, qQ, qR, qS, qT, qU, qV, qW, qX, qY, qZ, ra, rb, rc,    \
-    rd, re, rf, rg, rh, ri, rj, rk, rl, rm, rn, ro, rp, rq, rr, rs, rt, ru, rv, rw, rx, ry, rz,    \
-    rA, rB, rC, rD, rE, rF, rG, rH, rI, rJ, rK, rL, rM, rN, rO, rP, rQ, rR, rS, rT, rU, rV, rW,    \
-    rX, rY, rZ, sa, sb, sc, sd, se, sf, sg, sh, si, sj, sk, sl, sm, sn, so, sp, sq, sr, ss, st,    \
-    su, sv, sw, sx, sy, sz, sA, sB, sC, sD, sE, sF, sG, sH, sI, sJ, sK, sL, sM, sN, sO, sP, sQ,    \
-    sR, sS, sT, sU, sV, sW, sX, sY, sZ, ta, tb, tc, td, te, tf, tg, th, ti, tj, tk, tl, tm, tn,    \
-    to, tp, tq, tr, ts, tt, tu, tv, tw, tx, ty, tz, tA, tB, tC, tD, tE, tF, tG, tH, tI, _sz, ...)  \
-  PTL_CAT(PPUTLSIZE_READ_, PTL_IS_NONE(PPUTLSIZE_##_sz))(_va, _sz)
-#define PPUTLSIZE_READ_1(_va, _sz)    PPUTLSIZE_READ_##_sz
-#define PPUTLSIZE_READ_0(_va, _sz)    PTL_SIZE(PTL_ITEMS(_va))
+#define PPUTLSIZE_READ(                                                                          \
+    _err, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, \
+    D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, \
+    bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC,  \
+    bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ,  \
+    ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw,  \
+    cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT,  \
+    cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq,  \
+    dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN,  \
+    dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek,  \
+    el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH,  \
+    eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU, eV, eW, eX, eY, eZ, fa, fb, fc, fd, fe,  \
+    ff, fg, fh, fi, fj, fk, fl, fm, fn, fo, fp, fq, fr, fs, ft, fu, fv, fw, fx, fy, fz, fA, fB,  \
+    fC, fD, fE, fF, fG, fH, fI, fJ, fK, fL, fM, fN, fO, fP, fQ, fR, fS, fT, fU, fV, fW, fX, fY,  \
+    fZ, ga, gb, gc, gd, ge, gf, gg, gh, gi, gj, gk, gl, gm, gn, go, gp, gq, gr, gs, gt, gu, gv,  \
+    gw, gx, gy, gz, gA, gB, gC, gD, gE, gF, gG, gH, gI, gJ, gK, gL, gM, gN, gO, gP, gQ, gR, gS,  \
+    gT, gU, gV, gW, gX, gY, gZ, ha, hb, hc, hd, he, hf, hg, hh, hi, hj, hk, hl, hm, hn, ho, hp,  \
+    hq, hr, hs, ht, hu, hv, hw, hx, hy, hz, hA, hB, hC, hD, hE, hF, hG, hH, hI, hJ, hK, hL, hM,  \
+    hN, hO, hP, hQ, hR, hS, hT, hU, hV, hW, hX, hY, hZ, ia, ib, ic, id, ie, if, ig, ih, ii, ij,  \
+    ik, il, im, in, io, ip, iq, ir, is, it, iu, iv, iw, ix, iy, iz, iA, iB, iC, iD, iE, iF, iG,  \
+    iH, iI, iJ, iK, iL, iM, iN, iO, iP, iQ, iR, iS, iT, iU, iV, iW, iX, iY, iZ, ja, jb, jc, jd,  \
+    je, jf, jg, jh, ji, jj, jk, jl, jm, jn, jo, jp, jq, jr, js, jt, ju, jv, jw, jx, jy, jz, jA,  \
+    jB, jC, jD, jE, jF, jG, jH, jI, jJ, jK, jL, jM, jN, jO, jP, jQ, jR, jS, jT, jU, jV, jW, jX,  \
+    jY, jZ, ka, kb, kc, kd, ke, kf, kg, kh, ki, kj, kk, kl, km, kn, ko, kp, kq, kr, ks, kt, ku,  \
+    kv, kw, kx, ky, kz, kA, kB, kC, kD, kE, kF, kG, kH, kI, kJ, kK, kL, kM, kN, kO, kP, kQ, kR,  \
+    kS, kT, kU, kV, kW, kX, kY, kZ, la, lb, lc, ld, le, lf, lg, lh, li, lj, lk, ll, lm, ln, lo,  \
+    lp, lq, lr, ls, lt, lu, lv, lw, lx, ly, lz, lA, lB, lC, lD, lE, lF, lG, lH, lI, lJ, lK, lL,  \
+    lM, lN, lO, lP, lQ, lR, lS, lT, lU, lV, lW, lX, lY, lZ, ma, mb, mc, md, me, mf, mg, mh, mi,  \
+    mj, mk, ml, mm, mn, mo, mp, mq, mr, ms, mt, mu, mv, mw, mx, my, mz, mA, mB, mC, mD, mE, mF,  \
+    mG, mH, mI, mJ, mK, mL, mM, mN, mO, mP, mQ, mR, mS, mT, mU, mV, mW, mX, mY, mZ, na, nb, nc,  \
+    nd, ne, nf, ng, nh, ni, nj, nk, nl, nm, nn, no, np, nq, nr, ns, nt, nu, nv, nw, nx, ny, nz,  \
+    nA, nB, nC, nD, nE, nF, nG, nH, nI, nJ, nK, nL, nM, nN, nO, nP, nQ, nR, nS, nT, nU, nV, nW,  \
+    nX, nY, nZ, oa, ob, oc, od, oe, of, og, oh, oi, oj, ok, ol, om, on, oo, op, oq, _or, os, ot, \
+    ou, ov, ow, ox, oy, oz, oA, oB, oC, oD, oE, oF, oG, oH, oI, oJ, oK, oL, oM, oN, oO, oP, oQ,  \
+    oR, oS, oT, oU, oV, oW, oX, oY, oZ, pa, pb, pc, pd, pe, pf, pg, ph, pi, pj, pk, pl, pm, pn,  \
+    po, pp, pq, pr, ps, pt, pu, pv, pw, px, py, pz, pA, pB, pC, pD, pE, pF, pG, pH, pI, pJ, pK,  \
+    pL, pM, pN, pO, pP, pQ, pR, pS, pT, pU, pV, pW, pX, pY, pZ, qa, qb, qc, qd, qe, qf, qg, qh,  \
+    qi, qj, qk, ql, qm, qn, qo, qp, qq, qr, qs, qt, qu, qv, qw, qx, qy, qz, qA, qB, qC, qD, qE,  \
+    qF, qG, qH, qI, qJ, qK, qL, qM, qN, qO, qP, qQ, qR, qS, qT, qU, qV, qW, qX, qY, qZ, ra, rb,  \
+    rc, rd, re, rf, rg, rh, ri, rj, rk, rl, rm, rn, ro, rp, rq, rr, rs, rt, ru, rv, rw, rx, ry,  \
+    rz, rA, rB, rC, rD, rE, rF, rG, rH, rI, rJ, rK, rL, rM, rN, rO, rP, rQ, rR, rS, rT, rU, rV,  \
+    rW, rX, rY, rZ, sa, sb, sc, sd, se, sf, sg, sh, si, sj, sk, sl, sm, sn, so, sp, sq, sr, ss,  \
+    st, su, sv, sw, sx, sy, sz, sA, sB, sC, sD, sE, sF, sG, sH, sI, sJ, sK, sL, sM, sN, sO, sP,  \
+    sQ, sR, sS, sT, sU, sV, sW, sX, sY, sZ, ta, tb, tc, td, te, tf, tg, th, ti, tj, tk, tl, tm,  \
+    tn, to, tp, tq, tr, ts, tt, tu, tv, tw, tx, ty, tz, tA, tB, tC, tD, tE, tF, tG, tH, tI, _sz, \
+    ...)                                                                                         \
+  PTL_CAT(PPUTLSIZE_READ_, PTL_IS_NONE(PPUTLSIZE_##_sz))(_err, _sz)
+#define PPUTLSIZE_READ_1(_err, _sz)   PPUTLSIZE_READ_##_sz
+#define PPUTLSIZE_READ_0(_err, _sz)   PTL_FAIL(_err)
 #define PPUTLSIZE_READ_PPUTLSIZE(...) __VA_ARGS__
 #define PPUTLSIZE_PPUTLSIZE(...)
 
@@ -1768,33 +1763,27 @@
 
 /// [meta.xct_size]
 /// ---------------
-/// measures an xct object to determine the number of expansions it experienced.
-/// expansion count must be no greater than 1023.
+/// measures an xct expr to determine the number of expansions it experienced.
+/// ignores the expansion required to read the result.
 ///
-/// ignores the expansion required to read the result;
-/// result ranges from 0 to 1023.
-///
-/// terminates expansion on invalid xct or too large.
+/// fails if xct is not a valid xct expression.
+/// PTL_SIZE will fail if the xct expression is too large.
 ///
 /// PTL_XCT_SIZE(PTL_XCT)                            // 0
 /// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1
 /// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))          // 2
 /// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // 3
-/// PTL_STR(PTL_XCT_SIZE(PTL_XCT))                   // "0"
-/// PTL_STR(PTL_XCT_SIZE(foo))                       // "PTL_XCT_SIZE(foo)"
-#define PTL_XCT_SIZE(/* xct */...) /* -> uint */ \
-  PTL_CAT(PPUTLXCT_SIZE_, PTL_IS_NONE(PTL_CAT(PPUTLXCT_SIZE_DETECT_, __VA_ARGS__)))(__VA_ARGS__)
+#define PTL_XCT_SIZE(/* xct */...) /* -> uint */                                    \
+  PTL_CAT(PPUTLXCT_SIZE_, PTL_IS_NONE(PTL_CAT(PPUTLXCT_SIZE_DETECT_, __VA_ARGS__))) \
+  (PTL_ISTR([PTL_XCT_SIZE] invalid xct expr : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXCT_SIZE_1(...)               PPUTLXCT_SIZE_##__VA_ARGS__
-#define PPUTLXCT_SIZE_0(...)               PTL_XCT_SIZE(__VA_ARGS__)
-#define PPUTLXCT_SIZE_PPUTLXCT_B(__, ...)  PPUTLXCT_SIZE_RES(B, (__VA_ARGS__), __VA_ARGS__ _)
-#define PPUTLXCT_SIZE_PPUTLXCT_A(__, ...)  PPUTLXCT_SIZE_RES(A, (__VA_ARGS__), __VA_ARGS__ _)
-#define PPUTLXCT_SIZE_RES(pre, va, _, ...) PPUTLXCT_SIZE_RES_X(pre, va, PTL_SIZE(__VA_ARGS__))
-#define PPUTLXCT_SIZE_RES_X(pre, va, sz)   PTL_CAT(PPUTLXCT_SIZE_RES_, PTL_IS_UINT(sz))(pre, va, sz)
-#define PPUTLXCT_SIZE_RES_1(pre, va, sz)   sz
-#define PPUTLXCT_SIZE_RES_0(pre, va, sz)   PTL_XCT_SIZE(PPUTLXCT_##pre(PTL_REST(PTL_ITEMS(va))))
+#define PPUTLXCT_SIZE_1(err, ...)         PPUTLXCT_SIZE_##__VA_ARGS__
+#define PPUTLXCT_SIZE_0(err, ...)         PTL_FAIL(err)
+#define PPUTLXCT_SIZE_PPUTLXCT_B(__, ...) PPUTLXCT_SIZE_RES(__VA_ARGS__ _)
+#define PPUTLXCT_SIZE_PPUTLXCT_A(__, ...) PPUTLXCT_SIZE_RES(__VA_ARGS__ _)
+#define PPUTLXCT_SIZE_RES(_, ...)         PTL_SIZE(__VA_ARGS__)
 #define PPUTLXCT_SIZE_DETECT_PPUTLXCT_B(...)
 #define PPUTLXCT_SIZE_DETECT_PPUTLXCT_A(...)
 
@@ -1806,24 +1795,15 @@
 /// args are expressed after n+1 expansions in total.
 /// useful for implementing mutual recursion.
 ///
-///
-///
-/// PTL_X(0)(PTL_XCT)              // PTL_ESC(PTL_XCT)
-/// PTL_X(1)(PTL_XCT)              // PTL_ESC(PTL_ESC(PTL_XCT))
-/// PTL_X(0)(PTL_XCT)              // PPUTLXCT_A ( , )
-/// PTL_X(1)(PTL_XCT)              // PPUTLXCT_B ( ,, )
-/// PTL_STR(PTL_X(0)(expr))        // "expr"
-/// PTL_STR(PTL_X(non-uint)(expr)) // "PTL_X(non-uint)(expr)"
+/// PTL_X(0)(PTL_XCT) // PTL_ESC(PTL_XCT)
+/// PTL_X(1)(PTL_XCT) // PTL_ESC(PTL_ESC(PTL_XCT))
+/// PTL_X(0)(PTL_XCT) // PPUTLXCT_A ( , )
+/// PTL_X(1)(PTL_XCT) // PPUTLXCT_B ( ,, )
 #define PTL_X(/* n: uint */...) /* -> (args: any...) -> ...args */ \
-  PTL_CAT(PPUTLX_CHK_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
+  PTL_CAT(PPUTLX_, PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// uint verifiers
-#define PPUTLX_CHK_1(...) PTL_CAT(PPUTLX_, __VA_ARGS__)
-#define PPUTLX_CHK_0(...) PTL_X(__VA_ARGS__)
-
-/// expansion executors
 #define PPUTLX_1023(...) PPUTLX_254(PPUTLX_255(PPUTLX_255(PPUTLX_255(__VA_ARGS__))))
 #define PPUTLX_1022(...) PPUTLX_254(PPUTLX_254(PPUTLX_255(PPUTLX_255(__VA_ARGS__))))
 #define PPUTLX_1021(...) PPUTLX_254(PPUTLX_254(PPUTLX_254(PPUTLX_255(__VA_ARGS__))))
@@ -2853,49 +2833,27 @@
 
 /// [numeric.inc]
 /// -------------
-/// uint increment w/ overflow. terminates expansion on non-uint.
+/// uint increment w/ overflow.
 ///
-/// PTL_INC(0)             // 1
-/// PTL_INC(1)             // 2
-/// PTL_INC(1023)          // 0
-/// PTL_STR(PTL_INC(1023)) // "0"
-/// PTL_STR(PTL_INC())     // "PTL_INC()"
-/// PTL_STR(PTL_INC(a))    // "PTL_INC(a)"
-/// PTL_STR(PTL_INC(foo))  // "PTL_INC(foo)"
+/// PTL_INC(0)    // 1
+/// PTL_INC(1)    // 2
+/// PTL_INC(1023) // 0
 #define PTL_INC(/* n: uint */...) /* -> uint{n+1} */ \
-  PTL_CAT(PPUTLINC_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLINC_1(n)   PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, n))
-#define PPUTLINC_0(...) PTL_INC(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+  PTL_REST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
 
 /// [numeric.dec]
 /// -------------
-/// uint decrement w/ underflow. terminates expansion on non-uint.
+/// uint decrement w/ underflow.
 ///
-/// PTL_DEC(0)             // 1023
-/// PTL_DEC(1)             // 0
-/// PTL_DEC(1023)          // 1022
-/// PTL_STR(PTL_DEC(1023)) // "1022"
-/// PTL_STR(PTL_DEC())     // "PTL_DEC()"
-/// PTL_STR(PTL_DEC(a))    // "PTL_DEC(a)"
-/// PTL_STR(PTL_DEC(foo))  // "PTL_DEC(foo)"
+/// PTL_DEC(0)    // 1023
+/// PTL_DEC(1)    // 0
+/// PTL_DEC(1023) // 1022
 #define PTL_DEC(/* n: uint */...) /* -> uint{n-1} */ \
-  PTL_CAT(PPUTLDEC_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLDEC_1(n)   PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, n))
-#define PPUTLDEC_0(...) PTL_DEC(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+  PTL_FIRST(PTL_CAT(PPUTLUINT_RANGE_, PTL_UINT(__VA_ARGS__)))
 
 /// [numeric.eqz]
 /// -------------
-/// detects if uint n is zero. terminates expansion on non-uint.
+/// detects if uint n is zero.
 ///
 /// PTL_EQZ(0)             // 1
 /// PTL_EQZ(1)             // 0
@@ -2903,83 +2861,44 @@
 /// PTL_EQZ(1023)          // 0
 /// PTL_EQZ(PTL_INC(1023)) // 1
 /// PTL_STR(PTL_EQZ(1023)) // "0"
-/// PTL_STR(PTL_EQZ())     // "PTL_EQZ()"
-/// PTL_STR(PTL_EQZ(a))    // "PTL_EQZ(a)"
-/// PTL_STR(PTL_EQZ(foo))  // "PTL_EQZ(foo)"
 #define PTL_EQZ(/* n: uint */...) /* -> uint{n==0} */ \
-  PTL_CAT(PPUTLEQZ_CHK_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
+  PTL_IS_NONE(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLEQZ_CHK_1(n)   PTL_IS_NONE(PPUTLEQZ_##n)
-#define PPUTLEQZ_CHK_0(...) PTL_EQZ(__VA_ARGS__)
-
-/// validator for literal 0
 #define PPUTLEQZ_0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [numeric.nez]
 /// -------------
-/// detects if uint n is not zero. terminates expansion on non-uint.
+/// detects if uint n is not zero.
 ///
 /// PTL_NEZ(0)             // 0
 /// PTL_NEZ(1)             // 1
 /// PTL_NEZ(2)             // 1
 /// PTL_NEZ(1023)          // 1
 /// PTL_NEZ(PTL_INC(1023)) // 0
-/// PTL_STR(PTL_NEZ(1023)) // "1"
-/// PTL_STR(PTL_NEZ())     // "PTL_NEZ()"
-/// PTL_STR(PTL_NEZ(a))    // "PTL_NEZ(a)"
-/// PTL_STR(PTL_NEZ(foo))  // "PTL_NEZ(foo)"
 #define PTL_NEZ(/* n: uint */...) /* -> uint{n!=0} */ \
-  PTL_CAT(PPUTLNEZ_CHK_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLNEZ_CHK_1(n)   PTL_IS_SOME(PPUTLEQZ_##n)
-#define PPUTLNEZ_CHK_0(...) PTL_NEZ(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+  PTL_IS_SOME(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
 
 /// [control.if]
 /// ------------
 /// conditionally expands items based on a boolean.
-/// terminates expansion on invalid args size or types.
 ///
-/// PTL_IF(1, (t), ())         // t
-/// PTL_IF(0, (t), ())         // <nothing>
-/// PTL_IF(1, (t), (f))        // t
-/// PTL_IF(0, (t), (f))        // f
-/// PTL_IF(1, (a), (b, c))     // a
-/// PTL_IF(0, (a), (b, c))     // b, c
-/// PTL_STR(PTL_IF())          // "PTL_IF()"
-/// PTL_STR(PTL_IF(0))         // "PTL_IF(0)"
-/// PTL_STR(PTL_IF(0, ()))     // "PTL_IF(0, ())"
-/// PTL_STR(PTL_IF(a, (), ())) // "PTL_IF(a, (), ())"
+/// PTL_IF(1, (t), ())     // t
+/// PTL_IF(0, (t), ())     // <nothing>
+/// PTL_IF(1, (t), (f))    // t
+/// PTL_IF(0, (t), (f))    // f
+/// PTL_IF(1, (a), (b, c)) // a
+/// PTL_IF(0, (a), (b, c)) // b, c
 #define PTL_IF(/* b: bool, t: tuple, f: tuple */...) /* -> b ? ...t : ...f */ \
-  PTL_CAT(PTL_CAT(PPUTLIF_, PTL_IS_BOOL(PTL_FIRST(__VA_ARGS__))),             \
-          PTL_CAT(PTL_IS_TUPLE(PTL_FIRST(PTL_REST(__VA_ARGS__))),             \
-                  PTL_IS_TUPLE(PTL_REST(PTL_REST(__VA_ARGS__)))))             \
-  (__VA_ARGS__)
+  PTL_CAT(PPUTLIF_, PTL_BOOL(PTL_FIRST(__VA_ARGS__)))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// arg validation branches
-#define PPUTLIF_111(...) PTL_CAT(PPUTLIF_RES_, PTL_FIRST(__VA_ARGS__))(PTL_REST(__VA_ARGS__))
-#define PPUTLIF_110(...) PTL_IF(__VA_ARGS__)
-#define PPUTLIF_101(...) PTL_IF(__VA_ARGS__)
-#define PPUTLIF_100(...) PTL_IF(__VA_ARGS__)
-#define PPUTLIF_011(...) PTL_IF(__VA_ARGS__)
-#define PPUTLIF_010(...) PTL_IF(__VA_ARGS__)
-#define PPUTLIF_001(...) PTL_IF(__VA_ARGS__)
-#define PPUTLIF_000(...) PTL_IF(__VA_ARGS__)
-
-/// t/f items return
-#define PPUTLIF_RES_1(...)    PPUTLIF_RES_1_X(__VA_ARGS__)
-#define PPUTLIF_RES_1_X(t, f) PTL_ESC t
-#define PPUTLIF_RES_0(...)    PPUTLIF_RES_0_X(__VA_ARGS__)
-#define PPUTLIF_RES_0_X(t, f) PTL_ESC f
+#define PPUTLIF_1(_, t, f) PTL_REST((PTL_TUPLE(f)), PTL_ITEMS(t))
+#define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2988,63 +2907,36 @@
 /// conditionally expands items based on a uint.
 /// the final tuple is the default case.
 ///
-/// throws if no cases, non-uint cs, or any non-tuple cases.
-///
-/// PTL_SWITCH(0, (1))                   // 1
-/// PTL_SWITCH(1, (1))                   // 1
-/// PTL_SWITCH(2, (1))                   // 1
-/// PTL_SWITCH(1, (1), (2))              // 2
-/// PTL_SWITCH(2, (1), (2))              // 2
-/// PTL_SWITCH(2, (1), (2), (3, 4))      // 3, 4
-/// PTL_SWITCH(1023, (1), (2), (3, 4))   // 3, 4
-/// PTL_STR(PTL_SWITCH())                // "PTL_SWITCH()"
-/// PTL_STR(PTL_SWITCH(0))               // "PTL_SWITCH(0)"
-/// PTL_STR(PTL_SWITCH(0, foo))          // "PTL_SWITCH(0, foo)"
-/// PTL_STR(PTL_SWITCH(1, (foo), (bar))) // "bar"
-/// PTL_STR(PTL_SWITCH(1, foo, (bar)))   // "PTL_SWITCH(1, foo, (bar))"
+/// PTL_SWITCH(0, (1))                 // 1
+/// PTL_SWITCH(1, (1))                 // 1
+/// PTL_SWITCH(2, (1))                 // 1
+/// PTL_SWITCH(1, (1), (2))            // 2
+/// PTL_SWITCH(2, (1), (2))            // 2
+/// PTL_SWITCH(2, (1), (2), (3, 4))    // 3, 4
+/// PTL_SWITCH(1023, (1), (2), (3, 4)) // 3, 4
 #define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */ \
-  PTL_IF(PTL_IS_SOME(PTL_REST(__VA_ARGS__)), (PPUTLSWITCH_INIT), (PPUTLSWITCH_THROW))(__VA_ARGS__)
+  PTL_X(PTL_FIRST(__VA_ARGS__))                                              \
+  (PPUTLSWITCH_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_REST(__VA_ARGS__))(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// verifies uint cs and spawns recursion
-#define PPUTLSWITCH_INIT(i, ...)                                                      \
-  PTL_IF(PTL_IS_UINT(i),                                                              \
-         (PTL_X(i)(PPUTLSWITCH_A(i, __VA_ARGS__)((i, __VA_ARGS__), i, __VA_ARGS__))), \
-         (PPUTLSWITCH_THROW(i, __VA_ARGS__)))
-
-/// mutually recursive branch selector B
+/// recursive side B
 #define PPUTLSWITCH_B(i, ...)                                                                  \
   PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_B_BREAK), \
          (PPUTLSWITCH_B_CONT))
+#define PPUTLSWITCH_B_BREAK(i, _, ...) PTL_ITEMS(_)
+#define PPUTLSWITCH_B_CONT(i, _, ...)  \
+  PPUTLSWITCH_A   PTL_LP() PTL_DEC(i), \
+      __VA_ARGS__ PTL_RP()(PTL_DEC(i), PTL_REST((PTL_TUPLE(_)), __VA_ARGS__))
 
-/// B branches
-#define PPUTLSWITCH_B_BREAK(va, i, _, ...) \
-  PTL_IF(PTL_IS_TUPLE(_), (PTL_ESC _), (PPUTLSWITCH_THROW va))
-#define PPUTLSWITCH_B_CONT(va, i, _, ...)                                       \
-  PTL_IF(PTL_IS_TUPLE(_), (PPUTLSWITCH_B_CONT_PASS), (PPUTLSWITCH_B_CONT_FAIL)) \
-  (va, i, _, __VA_ARGS__)
-#define PPUTLSWITCH_B_CONT_FAIL(va, ...) PPUTLSWITCH_THROW va
-#define PPUTLSWITCH_B_CONT_PASS(va, i, _, ...) \
-  PPUTLSWITCH_A PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(va, PTL_DEC(i), __VA_ARGS__)
-
-/// mutually recursive branch selector A
+/// recursive side A
 #define PPUTLSWITCH_A(i, ...)                                                                  \
   PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_A_BREAK), \
          (PPUTLSWITCH_A_CONT))
-
-/// A branches
-#define PPUTLSWITCH_A_BREAK(va, i, _, ...) \
-  PTL_IF(PTL_IS_TUPLE(_), (PTL_ESC _), (PPUTLSWITCH_THROW va))
-#define PPUTLSWITCH_A_CONT(va, i, _, ...)                                       \
-  PTL_IF(PTL_IS_TUPLE(_), (PPUTLSWITCH_A_CONT_PASS), (PPUTLSWITCH_A_CONT_FAIL)) \
-  (va, i, _, __VA_ARGS__)
-#define PPUTLSWITCH_A_CONT_FAIL(va, ...) PPUTLSWITCH_THROW va
-#define PPUTLSWITCH_A_CONT_PASS(va, i, _, ...) \
-  PPUTLSWITCH_B PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(va, PTL_DEC(i), __VA_ARGS__)
-
-/// terminates expansion
-#define PPUTLSWITCH_THROW(...) PTL_SWITCH(__VA_ARGS__)
+#define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ITEMS(_)
+#define PPUTLSWITCH_A_CONT(i, _, ...)  \
+  PPUTLSWITCH_B   PTL_LP() PTL_DEC(i), \
+      __VA_ARGS__ PTL_RP()(PTL_DEC(i), PTL_REST((PTL_TUPLE(_)), __VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

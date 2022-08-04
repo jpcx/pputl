@@ -32,15 +32,12 @@ namespace api {
 using namespace codegen;
 
 decltype(items) items = NIFTY_DEF(items, [&](va args) {
-  docs << "extracts tuple items. terminates expansion on non-tup.";
+  docs << "extracts tuple items.";
 
   tests << items("()")              = "" >> docs;
   tests << items("(a)")             = "a" >> docs;
   tests << items("(a, b)")          = "a, b" >> docs;
   tests << items("(a, b, c)")       = "a, b, c" >> docs;
-  tests << str(items("(a, b, c)"))  = pp::str("a, b, c") >> docs;
-  tests << str(items())             = pp::str(items()) >> docs;
-  tests << str(items("not, tuple")) = pp::str(items("not, tuple")) >> docs;
   tests << items("((a), (b), (c))") = "(a), (b), (c)";
   tests << items("(, )")            = ",";
   tests << items("(, , )")          = ", ,";
@@ -50,17 +47,9 @@ decltype(items) items = NIFTY_DEF(items, [&](va args) {
   tests << items("(, a, )")         = ", a,";
   tests << items("(, , a)")         = ", , a";
 
-  def<"0(...)"> _0 = [&](va args) {
-    docs << "non-tuple; throw";
-    return items(args);
-  };
-
-  def<"1(...)">{} = [&](va args) {
-    docs << "tuple; extract and return";
+  return def<"x(...)">{[&](va args) {
     return esc + " " + args;
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_tuple(args)), args);
+  }}(tuple(args));
 });
 
 } // namespace api

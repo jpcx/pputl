@@ -36,7 +36,7 @@ decltype(eqz_0) eqz_0 = NIFTY_DEF(eqz_0);
 }
 
 decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
-  docs << "detects if uint n is zero. terminates expansion on non-uint.";
+  docs << "detects if uint n is zero.";
 
   tests << eqz("0")                 = "1" >> docs;
   tests << eqz("1")                 = "0" >> docs;
@@ -44,24 +44,12 @@ decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
   tests << eqz(uint_max_s)          = "0" >> docs;
   tests << eqz(inc(uint_max_s))     = "1" >> docs;
   tests << str(eqz(conf::uint_max)) = pp::str(0) >> docs;
-  tests << str(eqz())               = pp::str(eqz()) >> docs;
-  tests << str(eqz('a'))            = pp::str(eqz('a')) >> docs;
-  tests << str(eqz("foo"))          = pp::str(eqz("foo")) >> docs;
 
   detail::eqz_0 = def{"0"} = [&] {
-    docs << "validator for literal 0";
     return "";
   };
 
-  def<"chk_0(...)"> chk_0 = [&](va args) {
-    return eqz(args);
-  };
-
-  def<"chk_1(n)">{} = [&](arg n) {
-    return is_none(pp::cat(utl::slice(detail::eqz_0, -1), n));
-  };
-
-  return pp::call(cat(utl::slice(chk_0, -1), is_uint(args)), args);
+  return is_none(cat(utl::slice(detail::eqz_0, -1), uint(args)));
 });
 
 } // namespace api

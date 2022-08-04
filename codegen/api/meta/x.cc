@@ -34,9 +34,7 @@ using namespace codegen;
 decltype(x) x = NIFTY_DEF(x, [&](va args) {
   docs << "performs uint n secondary expansions (n=0 -> identity)."
        << "args are expressed after n+1 expansions in total."
-       << "useful for implementing mutual recursion."
-       << ""
-       << "";
+       << "useful for implementing mutual recursion.";
 
   tests << pp::call(x(0), xct)                            = esc(xct) >> docs;
   tests << pp::call(x(1), xct)                            = esc(esc(xct)) >> docs;
@@ -47,8 +45,6 @@ decltype(x) x = NIFTY_DEF(x, [&](va args) {
   tests << pp::call(x(4), xct)                            = xct_expected(4);
   tests << pp::call(x(conf::uint_max), xct)               = xct_expected(conf::uint_max);
   tests << xct_size(pp::call(x(conf::uint_max - 1), xct)) = uint_max_s;
-  tests << str(pp::call(x(0), "expr"))                    = pp::str("expr") >> docs;
-  tests << str(pp::call(x("non-uint"), "expr")) = pp::str(pp::call(x("non-uint"), "expr")) >> docs;
 
   std::array<def<>, conf::uint_max + 1> _{};
 
@@ -77,22 +73,12 @@ decltype(x) x = NIFTY_DEF(x, [&](va args) {
       };
     }
     _[i] = def{std::to_string(i) + "(...)"} = [&](va args) {
-      docs << "expansion executors";
       return _[((i - 4) + 0) / 4](
           _[((i - 4) + 1) / 4](_[((i - 4) + 2) / 4](_[((i - 4) + 3) / 4](args))));
     };
   }
 
-  def<"chk_0(...)"> chk_0 = [&](va args) {
-    return x(args);
-  };
-
-  def<"chk_1(...)">{} = [&](va args) {
-    docs << "uint verifiers";
-    return cat(utl::slice(_[0], -1), args);
-  };
-
-  return pp::call(cat(utl::slice(chk_0, -1), is_uint(args)), args);
+  return cat(utl::slice(_[0], -1), uint(args));
 });
 
 } // namespace api

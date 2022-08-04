@@ -32,69 +32,24 @@ namespace api {
 using namespace codegen;
 
 decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
-  docs << "conditionally expands items based on a boolean."
-       << "terminates expansion on invalid args size or types.";
+  docs << "conditionally expands items based on a boolean.";
 
-  tests << if_(1, "(t), ()")         = "t" >> docs;
-  tests << if_(0, "(t), ()")         = "" >> docs;
-  tests << if_(1, "(t), (f)")        = "t" >> docs;
-  tests << if_(0, "(t), (f)")        = "f" >> docs;
-  tests << if_(1, "(a), (b, c)")     = "a" >> docs;
-  tests << if_(0, "(a), (b, c)")     = "b, c" >> docs;
-  tests << str(if_())                = pp::str(if_()) >> docs;
-  tests << str(if_(0))               = pp::str(if_(0)) >> docs;
-  tests << str(if_(0, "()"))         = pp::str(if_(0, "()")) >> docs;
-  tests << str(if_('a', "()", "()")) = pp::str(if_('a', "()", "()")) >> docs;
+  tests << if_(1, "(t), ()")     = "t" >> docs;
+  tests << if_(0, "(t), ()")     = "" >> docs;
+  tests << if_(1, "(t), (f)")    = "t" >> docs;
+  tests << if_(0, "(t), (f)")    = "f" >> docs;
+  tests << if_(1, "(a), (b, c)") = "a" >> docs;
+  tests << if_(0, "(a), (b, c)") = "b, c" >> docs;
 
-  def<"res_0(...)"> res_0 = [&](va args) {
-    return def<"x(t, f)">{[&](arg, arg f) {
-      return esc + " " + f;
-    }}(args);
+  def<"0(_, t, f)"> _0 = [&](arg, arg t, arg f) {
+    return rest(pp::tup(tuple(t)), items(f));
   };
 
-  def<"res_1(...)">{} = [&](va args) {
-    docs << "t/f items return";
-    return def<"x(t, f)">{[&](arg t, arg) {
-      return esc + " " + t;
-    }}(args);
+  def<"1(_, t, f)">{} = [&](arg, arg t, arg f) {
+    return rest(pp::tup(tuple(f)), items(t));
   };
 
-  def<"000(...)"> _000 = [&](va args) {
-    return if_(args);
-  };
-
-  def<"001(...)">{} = [&](va args) {
-    return if_(args);
-  };
-
-  def<"010(...)">{} = [&](va args) {
-    return if_(args);
-  };
-
-  def<"011(...)">{} = [&](va args) {
-    return if_(args);
-  };
-
-  def<"100(...)">{} = [&](va args) {
-    return if_(args);
-  };
-
-  def<"101(...)">{} = [&](va args) {
-    return if_(args);
-  };
-
-  def<"110(...)">{} = [&](va args) {
-    return if_(args);
-  };
-
-  def<"111(...)">{} = [&](va args) {
-    docs << "arg validation branches";
-    return pp::call(cat(utl::slice(res_0, -1), first(args)), rest(args));
-  };
-
-  return pp::call(cat(cat(utl::slice(_000, -3), is_bool(first(args))),
-                      cat(is_tuple(first(rest(args))), is_tuple(rest(rest(args))))),
-                  args);
+  return pp::call(cat(utl::slice(_0, -1), bool_(first(args))), args);
 });
 
 } // namespace api

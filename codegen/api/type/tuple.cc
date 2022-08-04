@@ -33,23 +33,18 @@ using namespace codegen;
 
 decltype(tuple) tuple = NIFTY_DEF(tuple, [&](va args) {
   docs << "tuple type (any...)."
-       << "expands to t if valid. terminates expansion on non-tuple.";
+       << "expands to t if valid, else fails.";
 
   tests << tuple(pp::tup())     = "()" >> docs;
   tests << tuple(pp::tup(1, 2)) = "(1, 2)" >> docs;
-  tests << str(tuple(0))        = pp::str(tuple + "(0)") >> docs;
-  tests << str(tuple("1, 2"))   = pp::str(tuple + "(1, 2)") >> docs;
-  tests << str(tuple("1,"))     = pp::str(tuple + "(1,)") >> docs;
-  tests << str(tuple("foo"))    = pp::str(tuple + "(foo)") >> docs;
-  tests << str(tuple("(), ()")) = pp::str(tuple + "((), ())") >> docs;
 
-  def<"oo_pass(...)"> oo_pass = [&](va args) {
+  def<"oo_pass(err, ...)"> oo_pass = [&](arg, va args) {
     return args;
   };
 
-  def<"oo_no_pass(...)"> oo_no_pass = [&](va args) {
-    docs << "second parentheses; returns or throws";
-    return tuple(args);
+  def<"oo_no_pass(err, ...)"> oo_no_pass = [&](arg err, va) {
+    docs << "second parentheses; returns or fails";
+    return fail(err);
   };
 
   return pp::call(def<"o(...)">{[&](va) {
@@ -63,7 +58,7 @@ decltype(tuple) tuple = NIFTY_DEF(tuple, [&](va args) {
 
                     return pp::cat(prefix, pp::va_opt(no_s), pass_s);
                   }}(eat + " " + args),
-                  args);
+                  istr("[" + tuple + "] invalid tuple : " + args), args);
 });
 
 } // namespace api
