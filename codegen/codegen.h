@@ -932,6 +932,9 @@ class def_base {
   template<detail::string_literal Name>
     requires(not Name.empty())
   friend class category;
+  template<detail::string_literal Name>
+    requires(not Name.empty())
+  friend class end_category;
   friend class arg;
   friend class va;
   friend class pack;
@@ -1028,8 +1031,24 @@ template<detail::string_literal Name>
 class category {
  public:
   category() {
+    if (not def_base::_cur_category.empty())
+      throw std::runtime_error{"cannot start a new category before ending category "
+                               + def_base::_cur_category};
     def_base::_cur_category = Name.c_str();
     def_base::_defined_categories.push_back(def_base::_cur_category);
+  }
+};
+
+/// sets the category for all newly constructed defs.
+template<detail::string_literal Name>
+  requires(not Name.empty())
+class end_category {
+ public:
+  end_category() {
+    if (def_base::_cur_category != Name.c_str())
+      throw std::runtime_error{std::string{"end_category <"} + Name.c_str()
+                               + ">not preceeded by same category: " + def_base::_cur_category};
+    def_base::_cur_category = "";
   }
 };
 

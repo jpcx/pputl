@@ -36,7 +36,9 @@ decltype(xct_size) xct_size = NIFTY_DEF(xct_size, [&](va args) {
        << "expansion count must be no greater than " + uint_max_s + "."
        << ""
        << "ignores the expansion required to read the result;"
-       << "result ranges from 0 to " + uint_max_s + ".";
+       << "result ranges from 0 to " + uint_max_s + "."
+       << ""
+       << "terminates expansion on invalid xct or too large.";
 
   tests << xct_size(xct)                                   = "0" >> docs;
   tests << xct_size(esc(xct))                              = "1" >> docs;

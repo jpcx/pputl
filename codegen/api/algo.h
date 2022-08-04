@@ -43,4 +43,6 @@ extern codegen::def<"paste(...: v: any...) -> v[0] v[1] ..."> const& paste;
 
 NIFTY_DECL(paste);
 
+inline codegen::end_category<"algo"> algo_end;
+
 } // namespace api

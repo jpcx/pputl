@@ -36,10 +36,10 @@ namespace api {
 
 inline codegen::category<"meta"> meta;
 
-std::string                                                                    xct_expected(unsigned n);
-extern codegen::def<"xct -> xct"> const&                                       xct;
-extern codegen::def<"xct_size(...: xct) -> uint"> const&                       xct_size;
-extern codegen::def<"x(...: n: uint) -> (args: any...) -<n>-> ...args"> const& x;
+std::string                                                                xct_expected(unsigned n);
+extern codegen::def<"xct -> xct"> const&                                   xct;
+extern codegen::def<"xct_size(...: xct) -> uint"> const&                   xct_size;
+extern codegen::def<"x(...: n: uint) -> (args: any...) -> ...args"> const& x;
 
 namespace detail {
 extern codegen::def<>& xct_a;
@@ -50,5 +50,7 @@ NIFTY_DECL(xct_b);
 NIFTY_DECL(xct);
 NIFTY_DECL(xct_size);
 NIFTY_DECL(x);
+
+inline codegen::end_category<"meta"> meta_end;
 
 } // namespace api

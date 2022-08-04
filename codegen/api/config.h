@@ -40,4 +40,6 @@ extern codegen::def<"uint_max -> uint"> const&   uint_max;
 NIFTY_DECL(build);
 NIFTY_DECL(uint_max);
 
+inline codegen::end_category<"config"> config_end;
+
 } // namespace api

@@ -54,4 +54,6 @@ NIFTY_DECL(nor_);
 NIFTY_DECL(xor_);
 NIFTY_DECL(xnor_);
 
+inline codegen::end_category<"logic"> logic_end;
+
 } // namespace api

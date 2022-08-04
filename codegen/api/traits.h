@@ -49,4 +49,6 @@ NIFTY_DECL(is_uint);
 NIFTY_DECL(items);
 NIFTY_DECL(size);
 
+inline codegen::end_category<"traits"> traits_end;
+
 } // namespace api

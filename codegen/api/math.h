@@ -46,4 +46,6 @@ NIFTY_DECL(add);
 NIFTY_DECL(sub);
 /* NIFTY_DECL(mul); */
 
+inline codegen::end_category<"math"> math_end;
+
 } // namespace api

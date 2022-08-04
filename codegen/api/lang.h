@@ -53,4 +53,6 @@ NIFTY_DECL(first);
 NIFTY_DECL(rest);
 NIFTY_DECL(trim);
 
+inline codegen::end_category<"lang"> lang_end;
+
 } // namespace api

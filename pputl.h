@@ -94,13 +94,13 @@
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
-/// [lang.build]
-/// ------------
+/// [config.build]
+/// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220803
+#define PTL_BUILD /* -> <c++ int> */ 20220804
 
-/// [lang.uint_max]
-/// ---------------
+/// [config.uint_max]
+/// -----------------
 /// the maximum value of a pputl unsigned int.
 /// upper bound on the number of args for many pputl functions.
 /// see the readme code generation section to configure.
@@ -222,8 +222,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.tuple]
-/// ---------------
+/// [type.tuple]
+/// ------------
 /// tuple type (any...).
 /// expands to t if valid. terminates expansion on non-tuple.
 ///
@@ -247,8 +247,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.bool]
-/// --------------
+/// [type.bool]
+/// -----------
 /// bool type (0 or 1).
 /// expands to b if valid. terminates expansion on non-bool.
 ///
@@ -292,8 +292,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.uint]
-/// --------------
+/// [type.uint]
+/// -----------
 /// uint type (0 through 1023).
 /// expands to n if valid. terminates expansion on non-uint.
 ///
@@ -1469,8 +1469,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.is_none]
-/// -----------------
+/// [traits.is_none]
+/// ----------------
 /// detects if args is nothing.
 ///
 /// PTL_IS_NONE()          // 1
@@ -1486,8 +1486,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.is_some]
-/// -----------------
+/// [traits.is_some]
+/// ----------------
 /// detects if args is something.
 ///
 /// PTL_IS_SOME()          // 0
@@ -1503,8 +1503,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.is_tuple]
-/// ------------------
+/// [traits.is_tuple]
+/// -----------------
 /// detects if args is a tuple.
 ///
 /// PTL_IS_TUPLE()       // 0
@@ -1513,8 +1513,8 @@
 /// PTL_IS_TUPLE((1, 2)) // 1
 #define PTL_IS_TUPLE(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
 
-/// [control.is_uint]
-/// -----------------
+/// [traits.is_uint]
+/// ----------------
 /// detects if args is a uint.
 ///
 /// PTL_IS_UINT()       // 0
@@ -1532,8 +1532,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.items]
-/// ---------------
+/// [traits.items]
+/// --------------
 /// extracts tuple items. terminates expansion on non-tup.
 ///
 /// PTL_ITEMS(())                  // <nothing>
@@ -1556,8 +1556,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.size]
-/// --------------
+/// [traits.size]
+/// -------------
 /// computes the uint size of args in O(1) time.
 /// terminates expansion if too many args passed.
 ///
@@ -1704,8 +1704,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.xct]
-/// -------------
+/// [meta.xct]
+/// ----------
 /// counts the number of expansions undergone after expression.
 /// uses recursion; can track any number of expansions.
 /// the number of commas indicates the number of expansions.
@@ -1723,13 +1723,15 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.xct_size]
-/// ------------------
+/// [meta.xct_size]
+/// ---------------
 /// measures an xct object to determine the number of expansions it experienced.
 /// expansion count must be no greater than 1023.
 ///
 /// ignores the expansion required to read the result;
 /// result ranges from 0 to 1023.
+///
+/// terminates expansion on invalid xct or too large.
 ///
 /// PTL_XCT_SIZE(PTL_XCT)                            // 0
 /// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1
@@ -1755,8 +1757,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.x]
-/// -----------
+/// [meta.x]
+/// --------
 /// performs uint n secondary expansions (n=0 -> identity).
 /// args are expressed after n+1 expansions in total.
 /// useful for implementing mutual recursion.
@@ -1765,7 +1767,7 @@
 /// PTL_X(1)(PTL_XCT) // PTL_ESC(PTL_ESC(PTL_XCT))
 /// PTL_X(0)(PTL_XCT) // PPUTLXCT_A ( , )
 /// PTL_X(1)(PTL_XCT) // PPUTLXCT_B ( ,, )
-#define PTL_X(/* n: uint */...) /* -> (args: any...) -<n>-> ...args */ PTL_CAT(PPUTLX_, PTL_UINT(__VA_ARGS__))
+#define PTL_X(/* n: uint */...) /* -> (args: any...) -> ...args */ PTL_CAT(PPUTLX_, PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2796,7 +2798,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.inc]
+/// [numeric.inc]
 /// -------------
 /// uint increment w/ overflow. terminates expansion on non-uint.
 ///
@@ -2822,7 +2824,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.dec]
+/// [numeric.dec]
 /// -------------
 /// uint decrement w/ underflow. terminates expansion on non-uint.
 ///
@@ -2848,7 +2850,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.eqz]
+/// [numeric.eqz]
 /// -------------
 /// detects if uint n is zero. terminates expansion on non-uint.
 ///
@@ -2885,7 +2887,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [control.nez]
+/// [numeric.nez]
 /// -------------
 /// detects if uint n is not zero. terminates expansion on non-uint.
 ///

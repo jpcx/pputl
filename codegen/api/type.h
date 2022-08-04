@@ -50,4 +50,6 @@ NIFTY_DECL(uint_range);
 } // namespace detail
 NIFTY_DECL(uint);
 
+inline codegen::end_category<"type"> type_end;
+
 } // namespace api

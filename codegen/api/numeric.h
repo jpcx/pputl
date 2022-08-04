@@ -49,4 +49,6 @@ NIFTY_DECL(eqz_0);
 NIFTY_DECL(eqz);
 NIFTY_DECL(nez);
 
+inline codegen::end_category<"numeric"> numeric_end;
+
 } // namespace api

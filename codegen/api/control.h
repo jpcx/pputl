@@ -43,4 +43,6 @@ extern codegen::def<"switch(...: cs: uint, cases: tuple...) -> ...cases[cs]"> co
 NIFTY_DECL(if_);
 NIFTY_DECL(switch_);
 
+inline codegen::end_category<"control"> control_end;
+
 } // namespace api
