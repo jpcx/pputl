@@ -287,6 +287,8 @@ ASSERT_PP_EQ((PTL_X(0)(PTL_XCT)), (PTL_ESC(PTL_XCT)));
 ASSERT_PP_EQ((PTL_X(1)(PTL_XCT)), (PTL_ESC(PTL_ESC(PTL_XCT))));
 ASSERT_PP_EQ((PTL_X(0)(PTL_XCT)), (PPUTLXCT_A ( , )));
 ASSERT_PP_EQ((PTL_X(1)(PTL_XCT)), (PPUTLXCT_B ( ,, )));
+ASSERT_PP_EQ((PTL_STR(PTL_X(0)(expr))), ("expr"));
+ASSERT_PP_EQ((PTL_STR(PTL_X(non-uint)(expr))), ("PTL_X(non-uint)(expr)"));
 ASSERT_PP_EQ((PTL_X(2)(PTL_XCT)), (PPUTLXCT_A ( ,,, )));
 ASSERT_PP_EQ((PTL_X(3)(PTL_XCT)), (PPUTLXCT_B ( ,,,, )));
 ASSERT_PP_EQ((PTL_X(4)(PTL_XCT)), (PPUTLXCT_A ( ,,,,, )));

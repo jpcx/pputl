@@ -1763,14 +1763,24 @@
 /// args are expressed after n+1 expansions in total.
 /// useful for implementing mutual recursion.
 ///
-/// PTL_X(0)(PTL_XCT) // PTL_ESC(PTL_XCT)
-/// PTL_X(1)(PTL_XCT) // PTL_ESC(PTL_ESC(PTL_XCT))
-/// PTL_X(0)(PTL_XCT) // PPUTLXCT_A ( , )
-/// PTL_X(1)(PTL_XCT) // PPUTLXCT_B ( ,, )
-#define PTL_X(/* n: uint */...) /* -> (args: any...) -> ...args */ PTL_CAT(PPUTLX_, PTL_UINT(__VA_ARGS__))
+///
+///
+/// PTL_X(0)(PTL_XCT)              // PTL_ESC(PTL_XCT)
+/// PTL_X(1)(PTL_XCT)              // PTL_ESC(PTL_ESC(PTL_XCT))
+/// PTL_X(0)(PTL_XCT)              // PPUTLXCT_A ( , )
+/// PTL_X(1)(PTL_XCT)              // PPUTLXCT_B ( ,, )
+/// PTL_STR(PTL_X(0)(expr))        // "expr"
+/// PTL_STR(PTL_X(non-uint)(expr)) // "PTL_X(non-uint)(expr)"
+#define PTL_X(/* n: uint */...) /* -> (args: any...) -> ...args */ \
+  PTL_CAT(PPUTLX_CHK_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
+/// uint verifiers
+#define PPUTLX_CHK_1(...) PTL_CAT(PPUTLX_, __VA_ARGS__)
+#define PPUTLX_CHK_0(...) PTL_X(__VA_ARGS__)
+
+/// expansion executors
 #define PPUTLX_1023(...) PPUTLX_254(PPUTLX_255(PPUTLX_255(PPUTLX_255(__VA_ARGS__))))
 #define PPUTLX_1022(...) PPUTLX_254(PPUTLX_254(PPUTLX_255(PPUTLX_255(__VA_ARGS__))))
 #define PPUTLX_1021(...) PPUTLX_254(PPUTLX_254(PPUTLX_254(PPUTLX_255(__VA_ARGS__))))
