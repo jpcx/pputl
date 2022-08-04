@@ -1,2 +1,4 @@
+.build
+.depend
 .cache
 compile_commands.json

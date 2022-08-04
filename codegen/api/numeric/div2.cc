@@ -25,54 +25,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "math.h"
+#include "numeric.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
-  docs << "uint subtraction with underflow.";
+decltype(div2) div2 = NIFTY_DEF(div2, [&](va args) {
+  docs << "O(1) uint division by 2.";
 
-  constexpr auto max = conf::uint_max;
+  tests << div2(0)              = "0" >> docs;
+  tests << div2(1)              = "0" >> docs;
+  tests << div2(2)              = "1" >> docs;
+  tests << div2(7)              = "3" >> docs;
+  tests << div2(conf::uint_max) = std::to_string(conf::uint_max / 2) >> docs;
 
-  tests << sub("0, 0") = "0" >> docs;
-  tests << sub("0, 1") = uint_max_s >> docs;
-  tests << sub("1, 0") = "1" >> docs;
-  tests << sub("1, 1") = "0" >> docs;
-  tests << sub("3, 1") = "2" >> docs;
-  tests << sub("1, 3") = std::to_string(max - 1) >> docs;
-  tests << sub(max, 0) = uint_max_s;
-  tests << sub(max, 1) = std::to_string(max - 1);
-  tests << sub(0, max) = "1" >> docs;
-
-  def<"a(a, b)"> a;
-  def<"b(a, b)"> b;
-
-  def<"return(a, b)"> return_ = [&](arg a_, arg) {
-    docs << "returns result";
-    return a_;
-  };
-
-  a = [&](arg a_, arg b_) {
-    docs << "recursive side A";
-    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
-      return b + " " + lp() + " " + dec(a_) + ", " + dec(b_) + " " + rp();
-    };
-
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
-  };
-
-  b = [&](arg a_, arg b_) {
-    docs << "recursive side B";
-    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
-      return a + " " + lp() + " " + dec(a_) + ", " + dec(b_) + " " + rp();
-    };
-
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
-  };
-
-  return pp::call(x(rest(args)), a(uint(first(args)), uint(rest(args))));
+  return first(rest(rest(cat(utl::slice(detail::uint_traits[0], -1), uint(args)))));
 });
 
 } // namespace api

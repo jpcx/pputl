@@ -32,12 +32,12 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(uint_seq)   uint_seq   = NIFTY_DEF(uint_seq);
-decltype(uint_rseq)  uint_rseq  = NIFTY_DEF(uint_rseq);
-decltype(uint_range) uint_range = NIFTY_DEF(uint_range);
-decltype(uint_pass)  uint_pass  = NIFTY_DEF(uint_pass);
-decltype(uint_fail)  uint_fail  = NIFTY_DEF(uint_fail);
-decltype(uint_o)     uint_o     = NIFTY_DEF(uint_o);
+decltype(uint_seq)    uint_seq    = NIFTY_DEF(uint_seq);
+decltype(uint_rseq)   uint_rseq   = NIFTY_DEF(uint_rseq);
+decltype(uint_traits) uint_traits = NIFTY_DEF(uint_traits);
+decltype(uint_pass)   uint_pass   = NIFTY_DEF(uint_pass);
+decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
+decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
@@ -62,19 +62,25 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return utl::cat(seq, ", ");
   };
 
-  // set up next/prev
-  detail::uint_range[0] = def{"range_0"} = [&] {
-    return uint_max_s + ", 1";
-  };
-  for (std::size_t i = 1; i < detail::uint_range.size() - 1; ++i) {
-    detail::uint_range[i] = def{"range_" + std::to_string(i)} = [&] {
-      return std::to_string(i - 1) + ", " + std::to_string(i + 1);
+  // set up traits
+  {
+    static constexpr auto m = conf::uint_max + 1;
+    using std::to_string;
+    std::size_t i = 0;
+    for (; i < detail::uint_traits.size() - 1; ++i) {
+      detail::uint_traits[i] = def{"traits_" + to_string(i)} = [&] {
+        return to_string((m + (i - 1)) % m) + ", " + to_string((m + (i + 1)) % m) + ", "
+             + to_string((m + (i / 2)) % m) + ", " + to_string((m + (i * 2)) % m) + ", "
+             + to_string((m + (i % 2)) % m);
+      };
+    }
+    detail::uint_traits[i] = def{"traits_" + to_string(i)} = [&] {
+      docs << "-1,  +1,  /2,  *2,  %2";
+      return to_string((m + (i - 1)) % m) + ", " + to_string((m + (i + 1)) % m) + ", "
+           + to_string((m + (i / 2)) % m) + ", " + to_string((m + (i * 2)) % m) + ", "
+           + to_string((m + (i % 2)) % m);
     };
   }
-  detail::uint_range.back() = def{"range_" + uint_max_s} = [&] {
-    docs << "int decrement and increment values.";
-    return std::to_string(conf::uint_max - 1) + ", 0";
-  };
 
   detail::uint_fail = def{"fail(err, ...)"} = [&](arg err, va) {
     return fail(err);
@@ -108,7 +114,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
             pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
             fail_s));
       }}(args);
-    }}(pp::cat(utl::slice(detail::uint_range[0], -1), args));
+    }}(pp::cat(utl::slice(detail::uint_traits[0], -1), args));
   };
 
   def<>             oo_fail{};

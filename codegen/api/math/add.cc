@@ -49,7 +49,7 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
   };
 
   a = [&](arg a_, arg b_) {
-    docs << "mutually recursive side A";
+    docs << "recursive side A";
     def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
       return b + " " + lp() + " " + inc(a_) + ", " + dec(b_) + " " + rp();
     };
@@ -58,7 +58,7 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
   };
 
   b = [&](arg a_, arg b_) {
-    docs << "mutually recursive side B";
+    docs << "recursive side B";
     def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
       return a + " " + lp() + " " + inc(a_) + ", " + dec(b_) + " " + rp();
     };

@@ -40,7 +40,7 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
   tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1) >> docs;
   tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
 
-  return first(cat(utl::slice(detail::uint_range[0], -1), uint(args)));
+  return first(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 
 } // namespace api

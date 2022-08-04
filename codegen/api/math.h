@@ -40,11 +40,11 @@ inline codegen::category<"math"> math;
 
 extern codegen::def<"add(...: a: uint, b: uint) -> uint{a + b}"> const& add;
 extern codegen::def<"sub(...: a: uint, b: uint) -> uint{a - b}"> const& sub;
-/* extern codegen::def<"mul(...: a: uint, b: uint) -> uint{a * b}"> const& mul; */
+extern codegen::def<"mul(...: a: uint, b: uint) -> uint{a * b}"> const& mul;
 
 NIFTY_DECL(add);
 NIFTY_DECL(sub);
-/* NIFTY_DECL(mul); */
+NIFTY_DECL(mul);
 
 inline codegen::end_category<"math"> math_end;
 

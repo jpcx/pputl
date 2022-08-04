@@ -82,46 +82,48 @@ main() {
       }
     }
 
-    std::ifstream lin{conf::lib_output, std::ios::in | std::ios::binary};
-    auto          sz = fs::file_size(conf::lib_output);
-    std::string   lib(sz, '\0');
-    lin.read(lib.data(), sz);
-    lin.close();
-    std::string formatted{};
-    enum {
-      find,
-      skip,
-    } mode{find};
-    bool prev_line_was_comment{false};
-    for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
-      if (line[0] == '/' and line[1] == '/') {
-        prev_line_was_comment = true;
-      } else {
-        auto last_char = last_nonspace_char(formatted);
-        if (mode == find) {
-          if ((last_char != '\\' and last_char != ',') and line.size() > col_lim) {
-            if (not prev_line_was_comment)
-              formatted += '\n';
-            mode = skip;
-          }
+    { // fix bad alignment with newlines
+      std::ifstream lin{conf::lib_output, std::ios::in | std::ios::binary};
+      auto          sz = fs::file_size(conf::lib_output);
+      std::string   lib(sz, '\0');
+      lin.read(lib.data(), sz);
+      lin.close();
+      std::string formatted{};
+      enum {
+        find,
+        skip,
+      } mode{find};
+      bool prev_line_was_comment{false};
+      for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+        if (line[0] == '/' and line[1] == '/') {
+          prev_line_was_comment = true;
         } else {
-          if (line.size() <= col_lim) {
-            if (last_char != '\\' and last_char != ',')
+          auto last_char = last_nonspace_char(formatted);
+          if (mode == find) {
+            if ((last_char != '\\' and last_char != ',') and line.size() > col_lim) {
               if (not prev_line_was_comment)
                 formatted += '\n';
-            mode = find;
+              mode = skip;
+            }
+          } else {
+            if (line.size() <= col_lim) {
+              if (last_char != '\\' and last_char != ',')
+                if (not prev_line_was_comment)
+                  formatted += '\n';
+              mode = find;
+            }
           }
+          prev_line_was_comment = false;
         }
-        prev_line_was_comment = false;
+        formatted += line + '\n';
       }
-      formatted += line + '\n';
-    }
 
-    {
-      std::ofstream lout{conf::lib_output};
-      lout << formatted;
+      {
+        std::ofstream lout{conf::lib_output};
+        lout << formatted;
+      }
+      system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
     }
-    system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
   }
 
   system(std::string{"clang-format -i " + std::string{conf::tests_output}}.c_str());

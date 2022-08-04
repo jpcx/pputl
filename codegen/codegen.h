@@ -45,16 +45,16 @@ namespace codegen {
 namespace conf {
 
 // output file for all preprocessor definitions.
-constexpr char const lib_output[]{"../pputl.h"};
+constexpr char const lib_output[]{"./pputl.h"};
 
 // header guard for the lib output.
 constexpr char const header_guard[]{"PPUTL_H_INCLUDED"};
 
 // output file for all tests.
-constexpr char const tests_output[]{"../tests.cc"};
+constexpr char const tests_output[]{"./tests.cc"};
 
 // clang format style file (for final formatting).
-constexpr char const clang_format_input[]{"../.clang-format"};
+constexpr char const clang_format_input[]{"./.clang-format"};
 
 // prefix for feature macros.
 constexpr char const api_prefix[]{"PTL_"};

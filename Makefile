@@ -25,26 +25,51 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.   # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-CP        ?= cp
 CXX       ?= g++
-CXXFLAGS  += -std=c++20 -Wall -Wextra -pedantic -Wno-gnu-zero-variadic-macro-arguments
+WARNINGS   = -Wall -Wextra -Werror -pedantic -Wno-gnu-zero-variadic-macro-arguments
+CXXFLAGS  += -std=c++20 -Icodegen -Icodegen/api $(WARNINGS)
+RM        ?= rm -f
+MKDIR     ?= mkdir
+BIN       ?= .build/bin
+SRCS      += $(shell find codegen -type f -name "*.cc")
 TEST_SRC   = tests.cc
-MAKEFLAGS += --no-print-directory
+OBJS       = $(patsubst codegen/%.cc, .build/%.o, $(SRCS))
+DEPS       = $(patsubst %.o, %.d, $(OBJS))
 
-all:
-	$(MAKE) -C codegen
-	$(MAKE) run -C codegen
-	$(MAKE) test
+all: $(TEST_SRC)
 
-dev:
-	$(MAKE) clean
-	bear -- $(MAKE)
-	@$(CP) compile_commands.json codegen
+$(TEST_SRC): $(BIN) pputl.h
+	./$(BIN)
+
+run: $(BIN) $(CGEN_OUT)
+	./$(BIN)
+
+clean:
+	$(RM) $(BIN)
+	$(RM) $(CGEN_OUT)
+	$(RM) $(TEST_SRC)
+	$(RM) .depend
+	$(RM) -r .build
 
 test: $(TEST_SRC)
 	$(CXX) -c $(CXXFLAGS) -o /dev/null $<
 
-clean:
-	$(MAKE) clean -C codegen
+.build:
+	@$(MKDIR) .build
 
-.PHONY: all dev test clean
+.build/%.o: codegen/%.cc
+	@$(MKDIR) -p $(shell dirname $@)
+	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
+
+%.d: %.o
+	@find .build/ -type f -name "*.d" -exec cat > .depend {} +
+
+$(BIN): $(OBJS) | $(DEPS)
+	$(CXX) $(CXXFLAGS) -o $(BIN) $^
+
+.depend:
+	@touch .depend
+
+include .depend
+
+.PHONY: all run clean test

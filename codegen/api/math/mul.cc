@@ -31,48 +31,46 @@ namespace api {
 
 using namespace codegen;
 
-decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
-  docs << "uint subtraction with underflow.";
+decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
+  docs << "uint multiplication with overflow.";
 
-  constexpr auto max = conf::uint_max;
+  /* constexpr auto max = conf::uint_max; */
 
-  tests << sub("0, 0") = "0" >> docs;
-  tests << sub("0, 1") = uint_max_s >> docs;
-  tests << sub("1, 0") = "1" >> docs;
-  tests << sub("1, 1") = "0" >> docs;
-  tests << sub("3, 1") = "2" >> docs;
-  tests << sub("1, 3") = std::to_string(max - 1) >> docs;
-  tests << sub(max, 0) = uint_max_s;
-  tests << sub(max, 1) = std::to_string(max - 1);
-  tests << sub(0, max) = "1" >> docs;
+  /* tests << mul("0, 0")   = "0" >> docs; */
+  /* tests << mul("0, 1")   = "0" >> docs; */
+  /* tests << mul("1, 1")   = "1" >> docs; */
+  /* tests << mul("1, 2")   = "2" >> docs; */
+  /* tests << mul("2, 2")   = std::to_string((2 * 2) % (max + 1)) >> docs; */
+  /* tests << mul(max, 1)   = uint_max_s >> docs; */
+  /* tests << mul(max, max) = std::to_string((max * max) % (max + 1)) >> docs; */
 
-  def<"a(a, b)"> a;
-  def<"b(a, b)"> b;
+  def<"a(s, a, b)"> a;
+  def<"b(s, a, b)"> b;
 
-  def<"return(a, b)"> return_ = [&](arg a_, arg) {
+  def<"return(s, a, b)"> return_ = [&](arg s_, arg, arg) {
     docs << "returns result";
-    return a_;
+    return s_;
   };
 
-  a = [&](arg a_, arg b_) {
+  a = [&](arg s_, arg a_, arg b_) {
     docs << "recursive side A";
-    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
-      return b + " " + lp() + " " + dec(a_) + ", " + dec(b_) + " " + rp();
+    def<"continue(s, a, b)"> continue_ = [&](arg s_, arg a_, arg b_) {
+      return b + " " + lp() + " " + add(s_, a_) + ", " + a_ + ", " + dec(b_) + " " + rp();
     };
 
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
+    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), s_, a_, b_);
   };
 
-  b = [&](arg a_, arg b_) {
+  b = [&](arg s_, arg a_, arg b_) {
     docs << "recursive side B";
-    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
-      return a + " " + lp() + " " + dec(a_) + ", " + dec(b_) + " " + rp();
+    def<"continue(s, a, b)"> continue_ = [&](arg s_, arg a_, arg b_) {
+      return a + " " + lp() + " " + add(s_, a_) + ", " + a_ + ", " + dec(b_) + " " + rp();
     };
 
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
+    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), s_, a_, b_);
   };
 
-  return pp::call(x(rest(args)), a(uint(first(args)), uint(rest(args))));
+  return pp::call(x(rest(args)), a(0, uint(first(args)), uint(rest(args))));
 });
 
 } // namespace api

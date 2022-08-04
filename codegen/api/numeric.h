@@ -36,10 +36,13 @@ namespace api {
 
 inline codegen::category<"numeric"> numeric;
 
-extern codegen::def<"inc(...: n: uint) -> uint{n+1}"> const&  inc;
-extern codegen::def<"dec(...: n: uint) -> uint{n-1}"> const&  dec;
-extern codegen::def<"eqz(...: n: uint) -> uint{n==0}"> const& eqz;
-extern codegen::def<"nez(...: n: uint) -> uint{n!=0}"> const& nez;
+extern codegen::def<"inc(...: n: uint) -> uint{n + 1}"> const&  inc;
+extern codegen::def<"dec(...: n: uint) -> uint{n - 1}"> const&  dec;
+extern codegen::def<"eqz(...: n: uint) -> uint{n == 0}"> const& eqz;
+extern codegen::def<"nez(...: n: uint) -> uint{n != 0}"> const& nez;
+extern codegen::def<"mul2(...: n: uint) -> uint{n * 2}"> const& mul2;
+extern codegen::def<"div2(...: n: uint) -> uint{n / 2}"> const& div2;
+extern codegen::def<"mod2(...: n: uint) -> uint{n % 2}"> const& mod2;
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);
@@ -49,6 +52,9 @@ NIFTY_DECL(eqz_0);
 } // namespace detail
 NIFTY_DECL(eqz);
 NIFTY_DECL(nez);
+NIFTY_DECL(mul2);
+NIFTY_DECL(div2);
+NIFTY_DECL(mod2);
 
 inline codegen::end_category<"numeric"> numeric_end;
 
