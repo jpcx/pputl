@@ -52,8 +52,8 @@ main() {
          << conf::project_header << "\n\n"
          << def_base::definitions() << "\n\n// vim: fdm=marker:fmr={{{,}}}\n\n#endif\n";
     tout << conf::project_header << "\n\n"
-         << "#include " << fs::relative(conf::lib_output, fs::path(conf::tests_output).remove_filename())
-         << "\n\n"
+         << "#include "
+         << fs::relative(conf::lib_output, fs::path(conf::tests_output).remove_filename()) << "\n\n"
          << def_base::assertions() << '\n';
   } // namespace std::filesystem;
 
@@ -61,8 +61,9 @@ main() {
 
   system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
 
-  // clang-format AlignConsecutiveMacros breaks ColumnLimit; add newlines around sections where this happens
-  // make sure that we are not splitting lines that necessarily need to be long (e.g. PTL_CAT)
+  // clang-format AlignConsecutiveMacros breaks ColumnLimit; add newlines around sections where this
+  // happens make sure that we are not splitting lines that necessarily need to be long (e.g.
+  // PTL_CAT)
   {
     unsigned col_lim{0};
     {
@@ -71,8 +72,8 @@ main() {
       std::string   clang(sz, '\0');
       clang_in.read(clang.data(), sz);
       std::smatch m;
-      if (std::regex_search(clang, m,
-                            std::regex{"ColumnLimit\\s*:\\s*(\\d+)", std::regex_constants::optimize})) {
+      if (std::regex_search(
+              clang, m, std::regex{"ColumnLimit\\s*:\\s*(\\d+)", std::regex_constants::optimize})) {
         std::istringstream iss{m[1]};
         iss >> col_lim;
       } else {

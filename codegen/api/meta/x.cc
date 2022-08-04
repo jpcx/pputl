@@ -48,7 +48,7 @@ decltype(x) x = NIFTY_DEF(x, [&](va args) {
   tests << pp::call(x(conf::uint_max), xct)               = xct_expected(conf::uint_max);
   tests << xct_size(pp::call(x(conf::uint_max - 1), xct)) = uint_max_s;
   tests << str(pp::call(x(0), "expr"))                    = pp::str("expr") >> docs;
-  tests << str(pp::call(x("non-uint"), "expr"))           = pp::str(pp::call(x("non-uint"), "expr")) >> docs;
+  tests << str(pp::call(x("non-uint"), "expr")) = pp::str(pp::call(x("non-uint"), "expr")) >> docs;
 
   std::array<def<>, conf::uint_max + 1> _{};
 
@@ -72,12 +72,14 @@ decltype(x) x = NIFTY_DEF(x, [&](va args) {
     std::size_t i;
     for (i = 4; i < _.size() - 1; ++i) {
       _[i] = def{std::to_string(i) + "(...)"} = [&](va args) {
-        return _[((i - 4) + 0) / 4](_[((i - 4) + 1) / 4](_[((i - 4) + 2) / 4](_[((i - 4) + 3) / 4](args))));
+        return _[((i - 4) + 0) / 4](
+            _[((i - 4) + 1) / 4](_[((i - 4) + 2) / 4](_[((i - 4) + 3) / 4](args))));
       };
     }
     _[i] = def{std::to_string(i) + "(...)"} = [&](va args) {
       docs << "expansion executors";
-      return _[((i - 4) + 0) / 4](_[((i - 4) + 1) / 4](_[((i - 4) + 2) / 4](_[((i - 4) + 3) / 4](args))));
+      return _[((i - 4) + 0) / 4](
+          _[((i - 4) + 1) / 4](_[((i - 4) + 2) / 4](_[((i - 4) + 3) / 4](args))));
     };
   }
 

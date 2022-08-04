@@ -53,7 +53,8 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
   tests << size(", , a")     = "3";
   tests << str(size(bigseq)) = pp::str(size(bigseq));
 
-  def read = def{"read(_va, " + utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ") + ", _sz, ...)"};
+  def read =
+      def{"read(_va, " + utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ") + ", _sz, ...)"};
 
   std::string prefix = utl::slice(read, -4);
   if (prefix.back() == '_')
@@ -77,8 +78,9 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
     };
 
     auto sz = args[args.size() - 2];
-    return pp::call(cat(utl::slice(_0, -1), is_none(pp::cat(utl::slice(verifier, -prefix.size()), sz))),
-                    args.front(), sz);
+    return pp::call(
+        cat(utl::slice(_0, -1), is_none(pp::cat(utl::slice(verifier, -prefix.size()), sz))),
+        args.front(), sz);
   };
 
   return def<"x(_va, _, ...)">{[&](arg _va, arg _, va args) {

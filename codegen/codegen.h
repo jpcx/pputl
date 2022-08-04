@@ -83,8 +83,10 @@ constexpr char const project_header[]{
     "//                          __    ___                                         //\n"
     "//                         /\\ \\__/\\_ \\                                        //\n"
     "//   _____   _____   __  __\\ \\ ,_\\//\\ \\                                       //\n"
-    "//  /\\ '__`\\/\\ '__`\\/\\ \\/\\ \\\\ \\ \\/ \\ \\ \\                                      //\n"
-    "//  \\ \\ \\_\\ \\ \\ \\_\\ \\ \\ \\_\\ \\\\ \\ \\_ \\_\\ \\_                                    //\n"
+    "//  /\\ '__`\\/\\ '__`\\/\\ \\/\\ \\\\ \\ \\/ \\ \\ \\                                      "
+    "//\n"
+    "//  \\ \\ \\_\\ \\ \\ \\_\\ \\ \\ \\_\\ \\\\ \\ \\_ \\_\\ \\_                                 "
+    "   //\n"
     "//   \\ \\ ,__/\\ \\ ,__/\\ \\____/ \\ \\__\\/\\____\\                                   //\n"
     "//    \\ \\ \\   \\ \\ \\   \\/___/   \\/__/\\/____/                                   //\n"
     "//     \\/_/    \\/_/                                                           //\n"
@@ -242,17 +244,19 @@ template<string_representable T>
 [[nodiscard]] std::vector<std::string> split(std::string const& target, std::regex const& delim);
 template<detail::forward_iterable_for<std::string const> Strs>
 [[nodiscard]] std::string              cat(Strs&& strs, std::string const& delim = "");
-[[nodiscard]] std::string              alpha_base52(std::size_t num);                               // a-zA-Z
-[[nodiscard]] std::vector<std::string> base10_seq(std::size_t size, std::string begin = "0");       // 0-9
-[[nodiscard]] std::vector<std::string> alpha_base52_seq(std::size_t size, std::string begin = "a"); // a-zA-Z
-[[nodiscard]] std::string              prefix_lines(std::string const& prefix, std::string const& multiline);
+[[nodiscard]] std::string              alpha_base52(std::size_t num); // a-zA-Z
+[[nodiscard]] std::vector<std::string> base10_seq(std::size_t size, std::string begin = "0"); // 0-9
+[[nodiscard]] std::vector<std::string> alpha_base52_seq(std::size_t size,
+                                                        std::string begin = "a"); // a-zA-Z
+[[nodiscard]] std::string prefix_lines(std::string const& prefix, std::string const& multiline);
 template<std::unsigned_integral Int>
 [[nodiscard]] std::vector<Int> prime_factors(Int n);
 template<std::unsigned_integral Int>
 [[nodiscard]] inline Int largest_pow2_up_to(Int n);
 
 template<class T>
-using storage = std::aligned_storage_t<sizeof(std::remove_cvref_t<T>), alignof(std::remove_cvref_t<T>)>;
+using storage =
+    std::aligned_storage_t<sizeof(std::remove_cvref_t<T>), alignof(std::remove_cvref_t<T>)>;
 
 template<class T>
 class nifty {
@@ -358,11 +362,13 @@ struct functor_traits<std::function<Ret(Args...)>> {
 
 /// a tuple of the params of a functor.
 template<functor F>
-using functor_params_type = typename functor_traits<decltype(std::function{std::declval<F>()})>::params_type;
+using functor_params_type =
+    typename functor_traits<decltype(std::function{std::declval<F>()})>::params_type;
 
 /// the return type of a functor.
 template<functor F>
-using functor_return_type = typename functor_traits<decltype(std::function{std::declval<F>()})>::return_type;
+using functor_return_type =
+    typename functor_traits<decltype(std::function{std::declval<F>()})>::return_type;
 
 template<class T, class FirstAllowed, class... RestAllowed> // enforce at least one comparison
 concept same_as_any_of = std::same_as<T, FirstAllowed> or(std::same_as<T, RestAllowed> || ...);
@@ -383,7 +389,8 @@ concept elements_same_as_any_of = ([] {
   }
 })();
 
-/// describes a functor that returns string and takes any number of string parameters or a vector<string>.
+/// describes a functor that returns string and takes any number of string parameters or a
+/// vector<string>.
 template<class T>
 concept body_functor = functor<T>                                                       //
     and std::convertible_to<detail::functor_return_type<T>, std::string>                //
@@ -485,7 +492,8 @@ struct span_literal {
 
   template<std::ranges::contiguous_range Rng>
     requires(std::same_as<std::ranges::range_value_t<Rng>, T>)
-  constexpr span_literal(Rng&& rng) : _begin{&*std::ranges::begin(rng)}, _end{&*std::ranges::end(rng)} {
+  constexpr span_literal(Rng&& rng)
+      : _begin{&*std::ranges::begin(rng)}, _end{&*std::ranges::end(rng)} {
   }
 
   [[nodiscard]] constexpr T*
@@ -720,7 +728,8 @@ struct signature_literal {
         return {};
 
       // returns sizey range
-      return span_literal{begin, detail::trim_end(begin, end)}; // -> end is last nonspace before closing '>'
+      return span_literal{
+          begin, detail::trim_end(begin, end)}; // -> end is last nonspace before closing '>'
     } else if (*(begin + 1) == '>') {
       // return empty if no xout but valid docreturn arrow;
       // set begin to arrow body
@@ -791,23 +800,24 @@ struct runtime_signature : private signature_literal {
       throw std::runtime_error{"invalid signature " + sig};
   }
 
-  std::string const data{signature_literal::data
-                             ? std::string{signature_literal::data->begin(), signature_literal::data->end()}
-                             : ""};
-  std::string const name{signature_literal::name
-                             ? std::string{signature_literal::name->begin(), signature_literal::name->end()}
-                             : ""};
-  bool const        is_fn{signature_literal::params_decl and not signature_literal::params_decl->empty()};
+  std::string const data{signature_literal::data ? std::string{signature_literal::data->begin(),
+                                                               signature_literal::data->end()}
+                                                 : ""};
+  std::string const name{signature_literal::name ? std::string{signature_literal::name->begin(),
+                                                               signature_literal::name->end()}
+                                                 : ""};
+  bool const is_fn{signature_literal::params_decl and not signature_literal::params_decl->empty()};
   std::string const params = utl::ii << [&] {
-    std::string params = signature_literal::params
-                           ? std::string{signature_literal::params->begin(), signature_literal::params->end()}
-                           : "";
+    std::string params = signature_literal::params ? std::string{signature_literal::params->begin(),
+                                                                 signature_literal::params->end()}
+                                                   : "";
 
     if (params.empty())
       return params;
     // replace any keywords in parameters
-    static std::unordered_set<std::string> const reserved{
-        "and", "and_eq", "bitand", "bitor", "compl", "not", "not_eq", "or", "or_eq", "xor", "xor_eq"};
+    static std::unordered_set<std::string> const reserved{"and",   "and_eq", "bitand", "bitor",
+                                                          "compl", "not",    "not_eq", "or",
+                                                          "or_eq", "xor",    "xor_eq"};
 
     std::vector<std::string> clean_params{};
     for (auto&& v : utl::split(params, std::regex{", ?"})) {
@@ -824,9 +834,9 @@ struct runtime_signature : private signature_literal {
       signature_literal::docparams
           ? std::string{signature_literal::docparams->begin(), signature_literal::docparams->end()}
           : ""};
-  std::string const xout{signature_literal::xout
-                             ? std::string{signature_literal::xout->begin(), signature_literal::xout->end()}
-                             : ""};
+  std::string const xout{signature_literal::xout ? std::string{signature_literal::xout->begin(),
+                                                               signature_literal::xout->end()}
+                                                 : ""};
   std::string const docreturn{
       signature_literal::docreturn
           ? std::string{signature_literal::docreturn->begin(), signature_literal::docreturn->end()}
@@ -915,7 +925,8 @@ class def_base {
   struct instance* _instance;
 
   [[nodiscard]] static instance* get_instance();
-  [[nodiscard]] static instance* get_instance(std::string const& name, detail::source_location const& loc);
+  [[nodiscard]] static instance* get_instance(std::string const&             name,
+                                              detail::source_location const& loc);
 
   /// computes the definition of the macro (preprocessor-ready string).
   /// executes body. body may define additional macros or documentation/tests.
@@ -1023,7 +1034,8 @@ inline class tests {
 /// ex:
 ///   tests << "actual" = "expected";         // tested, but not documented
 ///   tests << "actual" = "expected" >> docs; // both tested and documented
-[[nodiscard]] tests::example_tag operator>>(std::string const& expected, class docs const&) noexcept;
+[[nodiscard]] tests::example_tag operator>>(std::string const& expected,
+                                            class docs const&) noexcept;
 
 /// sets the category for all newly constructed defs.
 template<detail::string_literal Name>

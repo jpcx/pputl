@@ -80,7 +80,8 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
       std::string const no_pass_s = utl::slice(ooo_no_pass, prefix.size(), 0);
 
       return pp::call(pp::cat(
-          prefix, pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
+          prefix,
+          pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
           pass_s));
     }}(pp::cat(utl::slice(chk_0, -1), args));
   };
@@ -103,7 +104,8 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
       std::string const no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
 
       return pp::call(pp::cat(
-          prefix, pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
+          prefix,
+          pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
           fail_s));
     }}(eat + " " + _);
   };
@@ -123,9 +125,10 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
     std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
     std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);
 
-    return pp::call(
-        pp::cat(prefix, pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-                pass_s));
+    return pp::call(pp::cat(
+        prefix,
+        pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
+        pass_s));
   };
 
   return pp::call(pp::call(pp::call(o(args + "."), args), args), args);

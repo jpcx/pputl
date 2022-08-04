@@ -56,8 +56,8 @@ split(std::string const& target, std::regex const& delim) {
   std::vector<std::string> res{};
   std::string              cur{};
   auto                     begin = target.begin();
-  for (auto it = std::sregex_iterator{target.begin(), target.end(), delim}; it != std::sregex_iterator{};
-       ++it) {
+  for (auto it = std::sregex_iterator{target.begin(), target.end(), delim};
+       it != std::sregex_iterator{}; ++it) {
     if (it->size() > 1)
       throw std::runtime_error{"split regex cannot use match groups"};
     std::copy(begin, it->begin()->first, std::back_inserter(cur));
@@ -274,8 +274,9 @@ pascal_case(std::string const& input) {
 
 inline std::string
 set_case(std::string const& input) {
-  static_assert(conf::name_case == conf::name_case::screaming or conf::name_case == conf::name_case::snake
-                or conf::name_case == conf::name_case::camel or conf::name_case == conf::name_case::pascal);
+  static_assert(
+      conf::name_case == conf::name_case::screaming or conf::name_case == conf::name_case::snake
+      or conf::name_case == conf::name_case::camel or conf::name_case == conf::name_case::pascal);
   if constexpr (conf::name_case == conf::name_case::screaming) {
     return screaming_case(input);
   } else if constexpr (conf::name_case == conf::name_case::snake) {
@@ -289,7 +290,8 @@ set_case(std::string const& input) {
 
 inline std::string
 libname(std::string const& short_name, std::string const& prefix) {
-  if constexpr (conf::name_case == conf::name_case::camel or conf::name_case == conf::name_case::pascal) {
+  if constexpr (conf::name_case == conf::name_case::camel
+                or conf::name_case == conf::name_case::pascal) {
     if (not prefix.empty() and prefix.back() != '_') {
       return set_case(prefix + "_" + short_name); // enforce caps
     } else
@@ -314,8 +316,9 @@ namespace impl {
 namespace tests {
 
 template<std::ranges::forward_range L, std::ranges::forward_range R>
-  requires(std::ranges::sized_range<L>and std::ranges::sized_range<R>and std::equality_comparable_with<
-           std::ranges::range_reference_t<L>, std::ranges::range_reference_t<R>>)
+  requires(
+      std::ranges::sized_range<L>and std::ranges::sized_range<R>and std::equality_comparable_with<
+          std::ranges::range_reference_t<L>, std::ranges::range_reference_t<R>>)
 [[nodiscard]] inline constexpr bool
 range_eq(L&& l, R&& r) noexcept {
   using namespace std::ranges;
@@ -344,9 +347,10 @@ range_eq(L&& l, R&& r) noexcept {
     static_assert(__VA_ARGS__);     \
   } else
 
-template<detail::string_literal Sig, detail::string_literal Name, detail::string_literal ParamsDecl = "",
-         detail::string_literal Params = "", detail::string_literal DocParams = "",
-         detail::string_literal XOut = "", detail::string_literal DocReturn = "", bool Valid = true>
+template<detail::string_literal Sig, detail::string_literal Name,
+         detail::string_literal ParamsDecl = "", detail::string_literal Params = "",
+         detail::string_literal DocParams = "", detail::string_literal XOut = "",
+         detail::string_literal DocReturn = "", bool Valid = true>
 inline constexpr bool test_signature = ([] {
   constexpr auto sig = signature_literal{Sig};
 
@@ -370,8 +374,8 @@ inline constexpr bool test_signature = ([] {
     ASSERT(sig.valid == Valid);
   } else {
     if constexpr (not sig.data) {
-      ASSERT(not sig.name and not sig.params_decl and not sig.params and not sig.docparams and not sig.xout
-             and not sig.docreturn);
+      ASSERT(not sig.name and not sig.params_decl and not sig.params and not sig.docparams
+             and not sig.xout and not sig.docreturn);
     } else if constexpr (not sig.name) {
       ASSERT(not sig.params_decl and not sig.params and not sig.docparams and not sig.xout
              and not sig.docreturn);
@@ -772,7 +776,8 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
       return &v;
     });
     if (ins_it == _instances.end())
-      throw std::logic_error{"cannot find instance " + _exec_stack.back()->id + " in the instances list"};
+      throw std::logic_error{"cannot find instance " + _exec_stack.back()->id
+                             + " in the instances list"};
     ins_it = std::next(ins_it);
   } else {
     ins_it = _instances.end();
@@ -796,13 +801,13 @@ def_base::update_instance(runtime_signature const& sig) {
   if (_instance->name.empty())
     throw std::logic_error{"attempted to update instance before assigning a name"};
 
-  static auto e = std::runtime_error{"attempting to add more signature details to an already defined macro "
-                                     + _instance->id};
+  static auto e = std::runtime_error{
+      "attempting to add more signature details to an already defined macro " + _instance->id};
 
   if (not sig.params.empty()) {
     if (_instance->params and sig.params != *_instance->params)
-      throw std::runtime_error{"params mismatch in signature update for " + _instance->id + ". " + sig.params
-                               + " != " + *_instance->params + "."};
+      throw std::runtime_error{"params mismatch in signature update for " + _instance->id + ". "
+                               + sig.params + " != " + *_instance->params + "."};
     if (_instance->definition)
       throw e;
     _instance->params = sig.params;
@@ -826,8 +831,8 @@ def_base::update_instance(runtime_signature const& sig) {
 
   if (not sig.xout.empty()) {
     if (_instance->xout and sig.xout != *_instance->xout)
-      throw std::runtime_error{"xout mismatch in signature update for " + _instance->id + ". " + sig.xout
-                               + " != " + *_instance->xout + "."};
+      throw std::runtime_error{"xout mismatch in signature update for " + _instance->id + ". "
+                               + sig.xout + " != " + *_instance->xout + "."};
     if (_instance->definition)
       throw e;
     _instance->xout = sig.xout;
@@ -1030,7 +1035,8 @@ arg::validate_context() const {
 }
 
 arg::arg(std::string const& value)
-    : _value{value}, _parent{def_base::_exec_stack.empty() ? nullptr : def_base::_exec_stack.back()} {
+    : _value{value}, _parent{def_base::_exec_stack.empty() ? nullptr
+                                                           : def_base::_exec_stack.back()} {
   if (value == "__VA_ARGS__")
     throw std::runtime_error{"cannot use codegen::arg for variadic arguments"};
   if (def_base::_exec_stack.empty())
@@ -1089,11 +1095,13 @@ operator+(std::string const& l, va const& r) {
 void
 pack::validate_context() const {
   if (def_base::_exec_stack.empty() or _parent != def_base::_exec_stack.back())
-    throw std::runtime_error{"preprocessor pack args used outside of its defining function: " + _parent->id};
+    throw std::runtime_error{"preprocessor pack args used outside of its defining function: "
+                             + _parent->id};
 }
 
 pack::pack(std::vector<std::string> const& value)
-    : _value{value}, _parent{def_base::_exec_stack.empty() ? nullptr : def_base::_exec_stack.back()} {
+    : _value{value}, _parent{def_base::_exec_stack.empty() ? nullptr
+                                                           : def_base::_exec_stack.back()} {
   if (def_base::_exec_stack.empty())
     throw std::runtime_error{"cannot use codegen::pack outside of a macro body"};
 }

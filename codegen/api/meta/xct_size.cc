@@ -47,7 +47,8 @@ decltype(xct_size) xct_size = NIFTY_DEF(xct_size, [&](va args) {
   tests << str(xct_size(xct))                              = pp::str(0) >> docs;
   tests << str(xct_size("foo"))                            = pp::str(xct_size("foo")) >> docs;
   tests << str(xct_size(xct_expected(conf::uint_max - 1))) = pp::str(conf::uint_max);
-  tests << str(xct_size(xct_expected(conf::uint_max)))     = pp::str(xct_size(xct_expected(conf::uint_max)));
+  tests << str(xct_size(xct_expected(conf::uint_max))) =
+      pp::str(xct_size(xct_expected(conf::uint_max)));
 
   def detect_a = def{"detect_" + detail::xct_a + "(...)"} = [&] {
     return "";
@@ -87,9 +88,10 @@ decltype(xct_size) xct_size = NIFTY_DEF(xct_size, [&](va args) {
     return pp::cat(utl::slice(a, -((std::string const&)detail::xct_a).size()), args);
   };
 
-  return pp::call(cat(utl::slice(_0, -1),
-                      is_none(cat(utl::slice(detect_a, -((std::string const&)detail::xct_a).size()), args))),
-                  args);
+  return pp::call(
+      cat(utl::slice(_0, -1),
+          is_none(cat(utl::slice(detect_a, -((std::string const&)detail::xct_a).size()), args))),
+      args);
 });
 
 } // namespace api

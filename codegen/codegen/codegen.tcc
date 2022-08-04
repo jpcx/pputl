@@ -246,7 +246,8 @@ def_base::define(Body&& body) {
     _exec_stack.push_back(_instance);
     body_s = body();
     _exec_stack.pop_back();
-  } else if constexpr (detail::elements_same_as_any_of<detail::functor_params_type<Body>, arg, va>) {
+  } else if constexpr (detail::elements_same_as_any_of<detail::functor_params_type<Body>, arg,
+                                                       va>) {
     // must be a function that accept individual arg|va arguments
 
     if (not args)
@@ -256,14 +257,15 @@ def_base::define(Body&& body) {
     try {
       body_s = detail::iter_invoke(std::forward<Body>(body), *args);
     } catch (std::runtime_error const& e) {
-      throw std::runtime_error{"found invalid parameter/body configuration while executing " + _instance->id
-                               + ": " + e.what()};
+      throw std::runtime_error{"found invalid parameter/body configuration while executing "
+                               + _instance->id + ": " + e.what()};
     }
     _exec_stack.pop_back();
   } else {
     // must be a function that accepts pack arguments
-    static_assert(std::tuple_size_v<detail::functor_params_type<Body>> == 1
-                  and std::same_as<std::tuple_element_t<0, detail::functor_params_type<Body>>, pack>);
+    static_assert(
+        std::tuple_size_v<detail::functor_params_type<Body>> == 1
+        and std::same_as<std::tuple_element_t<0, detail::functor_params_type<Body>>, pack>);
 
     if (not args)
       throw std::runtime_error{"missing params for " + _instance->id};
@@ -399,7 +401,8 @@ template<detail::string_literal Sig>
   requires(Sig.empty() or signature_literal{Sig}.valid)
 template<class>
   requires(Sig.empty())
-def<Sig>::def(runtime_signature const& sig, detail::source_location const& loc) : def_base{sig, loc} {
+def<Sig>::def(runtime_signature const& sig, detail::source_location const& loc)
+    : def_base{sig, loc} {
 }
 
 template<detail::string_literal Sig>
