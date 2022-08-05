@@ -50,7 +50,7 @@ decltype(ropen) ropen = NIFTY_DEF(ropen, [&](va args) {
        << ""
        << "example:"
        << "  madd(a, b) = add(a, b), b"
-       << "  mul(a, b)  = first(id(ropen(a, madd) (0, 0) rclose(a)))"
+       << "  mul(a, b)  = first(id(ropen(a, madd) 0, 0 rclose(a)))"
        << "  mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))"
        << "            -> first(madd(madd(0, 4)))"
        << "            -> first(madd(4, 4))"
@@ -65,76 +65,72 @@ decltype(ropen) ropen = NIFTY_DEF(ropen, [&](va args) {
        << "number of expansions by using two identity functions."
        << "this is necessary to implement mutual recursion.";
 
-  std::array<def<>, conf::uint_max + 1> n{};
+  std::array<def<>, (conf::uint_max + 1) / 4> n{};
 
   n[0] = def{"0(f)"} = [&](arg) {
     return "";
   };
 
-  n[1] = def{"1(f)"} = [&](arg f) {
-    return f + " " + lp() + " " + f + " " + lp();
-  };
+  if constexpr (conf::uint_max / 4 > 1)
+    n[1] = def{"1(f)"} = [&](arg f) {
+      return f + " " + lp() + " " + f + " " + lp() + " " + f + " " + lp() + " " + f + " " + lp();
+    };
 
-  n[2] = def{"2(f)"} = [&](arg f) {
-    return n[1](f) + " " + n[1](f);
-  };
+  if constexpr (conf::uint_max / 4 > 2)
+    n[2] = def{"2(f)"} = [&](arg f) {
+      return n[1](f) + " " + n[1](f);
+    };
 
-  n[3] = def{"3(f)"} = [&](arg f) {
-    return n[1](f) + " " + n[1](f) + " " + n[1](f);
-  };
+  if constexpr (conf::uint_max / 4 > 3)
+    n[3] = def{"3(f)"} = [&](arg f) {
+      return n[1](f) + " " + n[1](f) + " " + n[1](f);
+    };
 
-  for (std::size_t i = 4; i < n.size() / 2; ++i) {
+  for (std::size_t i = 4; i < n.size(); ++i) {
     n[i] = def{std::to_string(i) + "(f)"} = [&](arg f) {
       return n[(i + 0) / 4](f) + " " + n[(i + 1) / 4](f) + " " + n[(i + 2) / 4](f) + " "
            + n[(i + 3) / 4](f);
     };
   }
 
-  // WIP:
-
-  def<"o00(n, f)"> o00 = [&](arg n_, arg f) {
-    return pp::call(cat(utl::slice(n[0], -1), div2(n_)), f);
-  };
-
-  def<"o01(n, f)">{} = [&](arg n_, arg f) {
-    return pp::call(cat(utl::slice(n[0], -1), div2(n_)), f);
-  };
-
-  def<"o10(n, f)">{} = [&](arg n_, arg f) {
-    return f + " " + lp() + " " + pp::call(cat(utl::slice(n[0], -1), div2(n_)), f);
-  };
-
-  def<"o11(...)">{} = [&](va) {
-    return fail("[" + ropen + "] invalid state");
-  };
-
-  // clang-format off
-  // TODO:
-  //
   // o0: ""
-  // o1: f(f f(f f(f f(f
+  // o1: f( f( f( f(
   // o2: o1 o1
   // ...
   // c0: ""
   // c1: ) ) ) )
   // c2: c1 c1
   // ...
-  // 
-  // 0: id () <-- special case 0
-  // 1: f ()  <-- special case 1
-  // ----------------------| "f(f "*(n%4-1) o((n-1)/4) () c((n-1)/4) " )"*(n%4-1) |----------------------
-  // 2: f(f () )                                           2/4=0 2%4=2 -> f(f o0 () c0 )
-  // 3: f(f f(f () ) )                                     3/4=0 3%4=3 -> f(f f(f o0 () c0 ) )
-  // 4: f(f f(f f(f () ) ) )                               4/4=1 8%4=0 -> f(f f(f f(f o0 () c0 ) ) ) 
-  // 5: f(f f(f f(f f(f () ) ) ) )                         5/4=1 5%4=1 -> o1 () c1
-  // 6: f(f f(f f(f f(f f(f () ) ) ) ) )                   6/4=1 6%4=2 -> f(f o1 () c1 )
-  // 7: f(f f(f f(f f(f f(f f(f () ) ) ) ) ) )             7/4=1 7%4=3 -> f(f f(f o1 () c1 ) )
-  // 8: f(f f(f f(f f(f f(f f(f f(f () ) ) ) ) ) ) )       8/4=2 8%4=0 -> f(f f(f f(f o1 () c1 ) ) )
-  // 9: f(f f(f f(f f(f f(f f(f f(f f(f () ) ) ) ) ) ) ) ) 9/4=2 9%4=1 -> o2 () c2
-  // clang-format on
+  //
+  // -------------------| "f( "*(n%4) o[n/4] ... c[n/4] " )"*(n%4) |-------------------
+  //
+  // 0:                                              0/4=0 0%4=0 ->
+  // 1: f( )                                         1/4=0 1%4=1 -> f( o0 c0 )
+  // 2: f( f( ) )                                    2/4=0 2%4=2 -> f( f( o0 c0 ) )
+  // 3: f( f( f( ) ) )                               3/4=0 3%4=3 -> f( f( f( o0 c0 ) ) )
+  // 4: f( f( f( f( ) ) ) )                          4/4=1 8%4=0 -> o1 c1
+  // 5: f( f( f( f( f( ) ) ) ) )                     5/4=1 5%4=1 -> f( o1 c1 )
+  // 6: f( f( f( f( f( f( ) ) ) ) ) )                6/4=1 6%4=2 -> f( f( o1 c1 ) )
+  // 7: f( f( f( f( f( f( f( ) ) ) ) ) ) )           7/4=1 7%4=3 -> f( f( f( o1 c1 ) ) )
+  // 8: f( f( f( f( f( f( f( f( ) ) ) ) ) ) ) )      8/4=2 8%4=0 -> o2 c2
+  // 9: f( f( f( f( f( f( f( f( f( ) ) ) ) ) ) ) ) ) 9/4=2 9%4=1 -> f( o2 c2 )
 
   return def<"x(n, f)">{[&](arg n_, arg f) {
-    return pp::call(cat(utl::slice(o00, -2), cat(mod2(n_), eqz(n_))), n_, f);
+    def<"0(n, f)"> _0 = [&](arg n_, arg f) {
+      return pp::call(cat(utl::slice(n[0], -1), div2(div2(n_))), f);
+    };
+    def<"1(n, f)">{} = [&](arg n_, arg f) {
+      return f + " " + lp() + " " + pp::call(cat(utl::slice(n[0], -1), div2(div2(dec(n_)))), f);
+    };
+    def<"2(n, f)">{} = [&](arg n_, arg f) {
+      return f + " " + lp() + " " + f + " " + lp() + " "
+           + pp::call(cat(utl::slice(n[0], -1), div2(div2(n_))), f);
+    };
+    def<"3(n, f)">{} = [&](arg n_, arg f) {
+      return f + " " + lp() + " " + f + " " + lp() + " " + f + " " + lp() + " "
+           + pp::call(cat(utl::slice(n[0], -1), div2(div2(n_))), f);
+    };
+    return pp::call(cat(utl::slice(_0, -1), mod4(n_)), n_, f);
   }}(args);
 });
 

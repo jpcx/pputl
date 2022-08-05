@@ -95,14 +95,49 @@
 
 #include "pputl.h"
 
+namespace {
+// streq that trims spacing around outer ASSERT_PP_EQ
+// parens to account for preprocessor discrepancies
+// / *( *\(.*\) */
 static constexpr bool
-streq(char const* l, char const* r) {
-  for (; *l and *r and *l == *r; ++l, ++r)
+pp_streq(char const* l, char const* r) {
+  for (; *l and *l != '('; ++l)
     ;
-  return *l == *r;
+  for (; *l and *r != '('; ++r)
+    ;
+  if (not *l)
+    return not *r;
+  if (not *r)
+    return not *l;
+  ++l;
+  ++r;
+  for (; *l == ' '; ++l)
+    ;
+  for (; *r == ' '; ++r)
+    ;
+  char const* le = l;
+  char const* re = r;
+  for (; *le; ++le)
+    ;
+  for (; *re; ++re)
+    ;
+  for (; le > l and *(le - 1) != ')'; --le)
+    ;
+  for (; re > r and *(re - 1) != ')'; --re)
+    ;
+  --le;
+  --re;
+  for (; le > l and *(le - 1) == ' '; --le)
+    ;
+  for (; re > r and *(re - 1) == ' '; --re)
+    ;
+  for (; l != le and r != re and *l == *r; ++l, ++r)
+    ;
+  return l == le and r == re;
 }
+} // namespace
 
-#define ASSERT_PP_EQ_X(a, b) static_assert(streq(#a, #b), #a " != " #b)
+#define ASSERT_PP_EQ_X(a, b) static_assert(pp_streq(#a, #b), #a " != " #b)
 #define ASSERT_PP_EQ(a, b)   ASSERT_PP_EQ_X(a, b)
 
 // clang-format off
@@ -363,10 +398,10 @@ ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(0, PTL_ESC) PTL_XCT PTL_RCLOSE(0))))
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(1, PTL_ESC) PTL_XCT PTL_RCLOSE(1)))), (2));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(2, PTL_ESC) PTL_XCT PTL_RCLOSE(2)))), (3));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(3, PTL_ESC) PTL_XCT PTL_RCLOSE(3)))), (4));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(1022, PTL_ESC) PTL_XCT PTL_RCLOSE(1022)))), (1023));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(4, PTL_ESC) PTL_XCT PTL_RCLOSE(4)))), (5));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(5, PTL_ESC) PTL_XCT PTL_RCLOSE(5)))), (6));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(6, PTL_ESC) PTL_XCT PTL_RCLOSE(6)))), (7));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(1022, PTL_ESC) PTL_XCT PTL_RCLOSE(1022)))), (1023));
 
 ASSERT_PP_EQ((PTL_IF(1, (t), ())), (t));
 ASSERT_PP_EQ((PTL_IF(0, (t), ())), ());
