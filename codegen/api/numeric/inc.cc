@@ -34,13 +34,17 @@ using namespace codegen;
 decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   docs << "uint increment w/ overflow.";
 
-  tests << inc(0)                  = "1" >> docs;
-  tests << inc(1)                  = "2" >> docs;
+  tests << inc(0)                  = "1";
+  tests << inc(1)                  = "2";
   tests << inc(2)                  = "3";
   tests << inc(conf::uint_max)     = "0" >> docs;
   tests << inc(conf::uint_max - 1) = uint_max_s;
 
-  return first(rest(cat(utl::slice(detail::uint_traits[0], -1), uint(args))));
+  return def<"x(...)">{[&](va args) {
+    return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
+      return args[1];
+    }}(args);
+  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 
 } // namespace api

@@ -31,18 +31,26 @@ namespace api {
 
 using namespace codegen;
 
-decltype(mul2) mul2 = NIFTY_DEF(mul2, [&](va args) {
-  docs << "O(1) uint multiplication by 2 with overflow.";
+decltype(factor) factor = NIFTY_DEF(factor, [&](va args) {
+  docs << "O(1) uint prime factorization.";
 
-  tests << mul2(0)                  = "0" >> docs;
-  tests << mul2(1)                  = "2";
-  tests << mul2(2)                  = "4";
-  tests << mul2(conf::uint_max / 2) = std::to_string(((unsigned)(conf::uint_max / 2)) * 2) >> docs;
-  tests << mul2(conf::uint_max)     = std::to_string(conf::uint_max - 1);
+  auto                     facts0 = utl::prime_factors(conf::uint_max / 3);
+  auto                     facts1 = utl::prime_factors(conf::uint_max);
+  std::vector<std::string> sfacts0(facts0.size());
+  std::vector<std::string> sfacts1(facts1.size());
+  std::ranges::transform(facts0, std::begin(sfacts0), [](auto&& v) {
+    return std::to_string(v);
+  });
+  std::ranges::transform(facts1, std::begin(sfacts1), [](auto&& v) {
+    return std::to_string(v);
+  });
+
+  tests << factor(conf::uint_max / 3) = utl::cat(sfacts0, ", ") >> docs;
+  tests << factor(conf::uint_max)     = utl::cat(sfacts1, ", ") >> docs;
 
   return def<"x(...)">{[&](va args) {
     return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[3];
+      return args.back();
     }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });

@@ -40,6 +40,78 @@ decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
 decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
 
+static constexpr auto mod = conf::uint_max + 1;
+
+static std::string
+dec(unsigned n) {
+  return std::to_string((mod + (n - 1)) % mod);
+}
+
+static std::string
+inc(unsigned n) {
+  return std::to_string((n + 1) % mod);
+}
+
+static std::string
+div2(unsigned n) {
+  return std::to_string(n / 2);
+}
+
+static std::string
+mul2(unsigned n) {
+  return std::to_string((n * 2) % mod);
+}
+
+static std::string
+sqrt(unsigned n) {
+  return std::to_string(static_cast<unsigned>(std::sqrt(n)));
+}
+
+static std::string
+pow2(unsigned n) {
+  return std::to_string((n * n) % mod);
+}
+
+static std::string
+mod2(unsigned n) {
+  return std::to_string(n % 2);
+}
+
+static std::string
+mod4(unsigned n) {
+  return std::to_string(n % 4);
+}
+
+static std::string
+mod8(unsigned n) {
+  return std::to_string(n % 8);
+}
+
+static std::string
+mod16(unsigned n) {
+  return std::to_string(n % 16);
+}
+
+static std::string
+mod32(unsigned n) {
+  return std::to_string(n % 32);
+}
+
+static std::string
+mod64(unsigned n) {
+  return std::to_string(n % 64);
+}
+
+static std::string
+factor(unsigned n) {
+  auto                     facts = utl::prime_factors(n);
+  std::vector<std::string> sfacts(facts.size());
+  std::ranges::transform(facts, std::begin(sfacts), [](auto&& v) {
+    return std::to_string(v);
+  });
+  return utl::cat(sfacts, ", ");
+}
+
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "uint type (0 through " + uint_max_s + ")."
        << "expands to n if valid, else fails.";
@@ -64,21 +136,19 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
 
   // set up traits
   {
-    static constexpr auto m = conf::uint_max + 1;
-    using std::to_string;
     std::size_t i = 0;
     for (; i < detail::uint_traits.size() - 1; ++i) {
-      detail::uint_traits[i] = def{"traits_" + to_string(i)} = [&] {
-        return to_string((m + (i - 1)) % m) + ", " + to_string((m + (i + 1)) % m) + ", "
-             + to_string((m + (i / 2)) % m) + ", " + to_string((m + (i * 2)) % m) + ", "
-             + to_string((m + (i % 2)) % m);
+      detail::uint_traits[i] = def{"traits_" + std::to_string(i)} = [&] {
+        return utl::cat(std::array{dec(i), inc(i), div2(i), mul2(i), sqrt(i), pow2(i), mod2(i),
+                                   mod4(i), mod8(i), mod16(i), mod32(i), mod64(i), factor(i)},
+                        ", ");
       };
     }
-    detail::uint_traits[i] = def{"traits_" + to_string(i)} = [&] {
-      docs << "-1,  +1,  /2,  *2,  %2";
-      return to_string((m + (i - 1)) % m) + ", " + to_string((m + (i + 1)) % m) + ", "
-           + to_string((m + (i / 2)) % m) + ", " + to_string((m + (i * 2)) % m) + ", "
-           + to_string((m + (i % 2)) % m);
+    detail::uint_traits[i] = def{"traits_" + std::to_string(i)} = [&] {
+      docs << "dec, inc, div2, mul2, sqrt, pow2, mod2, mod4, mod8, mod16, mod32, mod64, factor";
+      return utl::cat(std::array{dec(i), inc(i), div2(i), mul2(i), sqrt(i), pow2(i), mod2(i),
+                                 mod4(i), mod8(i), mod16(i), mod32(i), mod64(i), factor(i)},
+                      ", ");
     };
   }
 

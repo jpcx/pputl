@@ -35,12 +35,16 @@ decltype(div2) div2 = NIFTY_DEF(div2, [&](va args) {
   docs << "O(1) uint division by 2.";
 
   tests << div2(0)              = "0" >> docs;
-  tests << div2(1)              = "0" >> docs;
-  tests << div2(2)              = "1" >> docs;
-  tests << div2(7)              = "3" >> docs;
+  tests << div2(1)              = "0";
+  tests << div2(2)              = "1";
+  tests << div2(7)              = "3";
   tests << div2(conf::uint_max) = std::to_string(conf::uint_max / 2) >> docs;
 
-  return first(rest(rest(cat(utl::slice(detail::uint_traits[0], -1), uint(args)))));
+  return def<"x(...)">{[&](va args) {
+    return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
+      return args[2];
+    }}(args);
+  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 
 } // namespace api

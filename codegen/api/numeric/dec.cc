@@ -35,12 +35,16 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
   docs << "uint decrement w/ underflow.";
 
   tests << dec(0)                  = uint_max_s >> docs;
-  tests << dec(1)                  = "0" >> docs;
+  tests << dec(1)                  = "0";
   tests << dec(2)                  = "1";
-  tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1) >> docs;
+  tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1);
   tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
 
-  return first(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+  return def<"x(...)">{[&](va args) {
+    return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
+      return args[0];
+    }}(args);
+  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 
 } // namespace api

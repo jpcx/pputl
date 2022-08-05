@@ -31,18 +31,17 @@ namespace api {
 
 using namespace codegen;
 
-decltype(mul2) mul2 = NIFTY_DEF(mul2, [&](va args) {
-  docs << "O(1) uint multiplication by 2 with overflow.";
+decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
+  docs << "O(1) uint sqrt.";
 
-  tests << mul2(0)                  = "0" >> docs;
-  tests << mul2(1)                  = "2";
-  tests << mul2(2)                  = "4";
-  tests << mul2(conf::uint_max / 2) = std::to_string(((unsigned)(conf::uint_max / 2)) * 2) >> docs;
-  tests << mul2(conf::uint_max)     = std::to_string(conf::uint_max - 1);
+  tests << sqrt(0)                  = "0";
+  tests << sqrt(4)                  = "2" >> docs;
+  tests << sqrt(conf::uint_max / 2) = std::to_string((unsigned)std::sqrt(conf::uint_max / 2));
+  tests << sqrt(conf::uint_max)     = std::to_string((unsigned)std::sqrt(conf::uint_max)) >> docs;
 
   return def<"x(...)">{[&](va args) {
     return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[3];
+      return args[4];
     }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });

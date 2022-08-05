@@ -38,12 +38,12 @@ decltype(eqz_0) eqz_0 = NIFTY_DEF(eqz_0);
 decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
   docs << "detects if uint n is zero.";
 
-  tests << eqz("0")                 = "1" >> docs;
-  tests << eqz("1")                 = "0" >> docs;
-  tests << eqz("2")                 = "0" >> docs;
-  tests << eqz(uint_max_s)          = "0" >> docs;
-  tests << eqz(inc(uint_max_s))     = "1" >> docs;
-  tests << str(eqz(conf::uint_max)) = pp::str(0) >> docs;
+  tests << eqz("0")             = "1" >> docs;
+  tests << eqz("1")             = "0";
+  tests << eqz("2")             = "0";
+  tests << eqz(uint_max_s)      = "0";
+  tests << eqz(inc(uint_max_s)) = "1";
+  tests << eqz(conf::uint_max)  = "0" >> docs;
 
   detail::eqz_0 = def{"0"} = [&] {
     return "";
