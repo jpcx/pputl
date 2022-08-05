@@ -50,27 +50,27 @@ PASTE(...) = PASTE(args/2) PASTE(args/2)
 
 */
 
-decltype(paste) paste = NIFTY_DEF(paste, [&](va args) {
-  docs << "pastes an expression by separating arguments with spaces.";
-
-  auto max                      = utl::alpha_base52_seq(conf::uint_max);
-  tests << paste()              = "" >> docs;
-  tests << paste('a')           = "a" >> docs;
-  tests << paste('a', 'b')      = "a b" >> docs;
-  tests << paste('a', 'b', 'c') = "a b c" >> docs;
-  tests << paste(max)           = utl::cat(max, " ");
-
-  def<"a(_, ...)"> a;
-  def<"b(_, ...)"> b;
-
-  a = [&](arg _0, va args) {
-    return _0 + " " + pp::va_opt(b + " " + lp() + " " + args + " " + rp());
-  };
-  b = [&](arg _0, va args) {
-    return _0 + " " + pp::va_opt(a + " " + lp() + " " + args + " " + rp());
-  };
-
-  return pp::va_opt(items(pp::tup(pp::call(x(size(args)), a(args)))));
-});
+//decltype(paste) paste = NIFTY_DEF(paste, [&](va args) {
+//  docs << "pastes an expression by separating arguments with spaces.";
+//
+//  auto max                      = utl::alpha_base52_seq(conf::uint_max);
+//  tests << paste()              = "" >> docs;
+//  tests << paste('a')           = "a" >> docs;
+//  tests << paste('a', 'b')      = "a b" >> docs;
+//  tests << paste('a', 'b', 'c') = "a b c" >> docs;
+//  tests << paste(max)           = utl::cat(max, " ");
+//
+//  def<"a(_, ...)"> a;
+//  def<"b(_, ...)"> b;
+//
+//  a = [&](arg _0, va args) {
+//    return _0 + " " + pp::va_opt(b + " " + lp() + " " + args + " " + rp());
+//  };
+//  b = [&](arg _0, va args) {
+//    return _0 + " " + pp::va_opt(a + " " + lp() + " " + args + " " + rp());
+//  };
+//
+//  return pp::va_opt(items(pp::tup(pp::call(x(size(args)), a(args)))));
+//});
 
 } // namespace api

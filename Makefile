@@ -38,8 +38,8 @@ DEPS       = $(patsubst %.o, %.d, $(OBJS))
 
 all: $(TEST_SRC)
 
-$(TEST_SRC): $(BIN) pputl.h
-	./$(BIN)
+$(TEST_SRC): $(BIN)
+	./$<
 
 run: $(BIN) $(CGEN_OUT)
 	./$(BIN)

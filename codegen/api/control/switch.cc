@@ -31,32 +31,6 @@ namespace api {
 
 using namespace codegen;
 
-#define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */ \
-  PTL_X(PTL_FIRST(__VA_ARGS__))                                              \
-  (PPUTLSWITCH_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_REST(__VA_ARGS__))(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// mutually recursive branch selector B
-#define PPUTLSWITCH_B(i, ...)                                                                  \
-  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_B_BREAK), \
-         (PPUTLSWITCH_B_CONT))
-
-/// B branches
-#define PPUTLSWITCH_B_BREAK(i, _, ...) PTL_ITEMS(_)
-#define PPUTLSWITCH_B_CONT(i, _, ...) \
-  PPUTLSWITCH_A PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(PTL_DEC(i), __VA_ARGS__)
-
-/// mutually recursive branch selector A
-#define PPUTLSWITCH_A(i, ...)                                                                  \
-  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_A_BREAK), \
-         (PPUTLSWITCH_A_CONT))
-
-/// A branches
-#define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ITEMS(_)
-#define PPUTLSWITCH_A_CONT(i, _, ...) \
-  PPUTLSWITCH_B PTL_LP() PTL_DEC(i), __VA_ARGS__ PTL_RP()(PTL_DEC(i), __VA_ARGS__)
-
 decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   docs << "conditionally expands items based on a uint."
        << "the final tuple is the default case.";
@@ -109,7 +83,16 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
                pp::tup(cont));
   };
 
-  return pp::call(x(first(args)), pp::call(a(uint(first(args)), rest(args)), args));
+  def<"x0(...)"> x0 = [&](va args) {
+    return args;
+  };
+
+  def<"x1(...)"> x1 = [&](va args) {
+    return args;
+  };
+
+  return x1(ropen(first(args), x0) + " " + pp::call(a(uint(first(args)), rest(args)), args) + " "
+            + rclose(first(args)));
 });
 
 } // namespace api

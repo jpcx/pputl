@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,23 +25,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "math.h"
 #include "meta.h"
-#include "numeric.h"
-#include "traits.h"
-#include "type.h"
 
 namespace api {
 
-/* inline codegen::category<"algo"> algo; */
+using namespace codegen;
 
-/* extern codegen::def<"paste(...: v: any...) -> v[0] v[1] ..."> const& paste; */
+decltype(id) id = NIFTY_DEF(id, [&](va args) {
+  docs << "identity function. performs one expansion.";
 
-/* NIFTY_DECL(paste); */
+  tests << id()          = "" >> docs;
+  tests << id("foo")     = "foo" >> docs;
+  tests << id("a, b, c") = "a, b, c" >> docs;
 
-/* inline codegen::end_category<"algo"> algo_end; */
+  return args;
+});
 
 } // namespace api

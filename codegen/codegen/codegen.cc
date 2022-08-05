@@ -308,7 +308,20 @@ apiname(std::string const& short_name) {
 }
 
 std::string
-implname(std::string const& short_name) {
+implname(std::string short_name) {
+  static std::array<std::pair<std::regex, std::string>,
+                    (sizeof conf::impl_shortnames) / (sizeof(std::array<char const*, 2>))>
+      repls = utl::ii << [&]() -> decltype(repls) {
+    decltype(repls) res{};
+    for (std::size_t i = 0; i < res.size(); ++i)
+      res[i] = {std::regex{conf::impl_shortnames[i][0], std::regex_constants::optimize},
+                conf::impl_shortnames[i][1]};
+    return res;
+  };
+
+  for (auto&& [r, s] : repls)
+    short_name = std::regex_replace(short_name, r, s);
+
   return impl::libname(short_name, conf::impl_prefix);
 }
 
@@ -801,7 +814,7 @@ def_base::update_instance(runtime_signature const& sig) {
   if (_instance->name.empty())
     throw std::logic_error{"attempted to update instance before assigning a name"};
 
-  static auto e = std::runtime_error{
+  auto e = std::runtime_error{
       "attempting to add more signature details to an already defined macro " + _instance->id};
 
   if (not sig.params.empty()) {

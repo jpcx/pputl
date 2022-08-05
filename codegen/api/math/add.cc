@@ -66,7 +66,15 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
     return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
   };
 
-  return pp::call(x(rest(args)), a(uint(first(args)), uint(rest(args))));
+  def<"x0(...)"> x0 = [&](va args) {
+    return args;
+  };
+  def<"x1(...)"> x1 = [&](va args) {
+    return args;
+  };
+
+  return x1(ropen(rest(args), x0) + " " + a(uint(first(args)), uint(rest(args))) + " "
+            + rclose(rest(args)));
 });
 
 } // namespace api

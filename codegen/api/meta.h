@@ -29,6 +29,7 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "numeric.h"
 #include "traits.h"
 #include "type.h"
 
@@ -36,11 +37,16 @@ namespace api {
 
 inline codegen::category<"meta"> meta;
 
-std::string                                                                xct_expected(unsigned n);
-extern codegen::def<"xct -> xct"> const&                                   xct;
-extern codegen::def<"xct_size(...: xct) -> uint"> const&                   xct_size;
-extern codegen::def<"x(...: n: uint) -> (args: any...) -> ...args"> const& x;
+// TODO: lp and rp can be moved back here and should not be functions
+//
+extern codegen::def<"id(...: v: any...) -> ...v"> const&                id;
+std::string                                                             xct_expected(unsigned n);
+extern codegen::def<"xct -> xct"> const&                                xct;
+extern codegen::def<"xct_size(...: xct) -> uint"> const&                xct_size;
+extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
+extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
 
+NIFTY_DECL(id);
 namespace detail {
 extern codegen::def<>& xct_a;
 extern codegen::def<>& xct_b;
@@ -49,7 +55,8 @@ NIFTY_DECL(xct_b);
 } // namespace detail
 NIFTY_DECL(xct);
 NIFTY_DECL(xct_size);
-NIFTY_DECL(x);
+NIFTY_DECL(ropen);
+NIFTY_DECL(rclose);
 
 inline codegen::end_category<"meta"> meta_end;
 

@@ -70,7 +70,16 @@ decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
     return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), s_, a_, b_);
   };
 
-  return pp::call(x(rest(args)), a(0, uint(first(args)), uint(rest(args))));
+  def<"x0(...)"> x0 = [&](va args) {
+    return args;
+  };
+
+  def<"x1(...)"> x1 = [&](va args) {
+    return args;
+  };
+
+  return x1(ropen(rest(args), x0) + " " + a(0, uint(first(args)), uint(rest(args))) + " "
+            + rclose(rest(args)));
 });
 
 } // namespace api

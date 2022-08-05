@@ -63,6 +63,12 @@ constexpr char const api_prefix[]{"PTL_"};
 // no trailing underscore by default to improve code completion.
 constexpr char const impl_prefix[]{"PPUTL"};
 
+// replacements for implementation names that are too long.
+constexpr std::array<char const*, 2> impl_shortnames[]{
+    {"ropen", "ro"},
+    {"rclose", "rc"},
+};
+
 // maximum value of a pputl unsigned integer.
 // acts as an upper bound for the number of arguments to many functions.
 constexpr unsigned uint_max = 1023;
@@ -313,8 +319,8 @@ class nifty {
 
 } // namespace utl
 
-[[nodiscard]] std::string apiname(std::string const& short_name);  // uses conf::api_prefix
-[[nodiscard]] std::string implname(std::string const& short_name); // uses conf::impl_prefix
+[[nodiscard]] std::string apiname(std::string const& short_name); // uses conf::api_prefix
+[[nodiscard]] std::string implname(std::string short_name);       // uses conf::impl_prefix
 
 namespace pp {
 template<detail::forward_iterable_for<std::string const> Args>

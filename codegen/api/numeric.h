@@ -36,6 +36,8 @@ namespace api {
 
 inline codegen::category<"numeric"> numeric;
 
+// TODO SQRT LOG2 POW2 MOD4 MOD8 MOD16 MOD32 MOD64
+
 extern codegen::def<"inc(...: n: uint) -> uint{n + 1}"> const&  inc;
 extern codegen::def<"dec(...: n: uint) -> uint{n - 1}"> const&  dec;
 extern codegen::def<"eqz(...: n: uint) -> uint{n == 0}"> const& eqz;
