@@ -46,6 +46,14 @@ extern codegen::def<"xct_size(...: xct) -> uint"> const&                xct_size
 extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
 extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
 
+template<std::convertible_to<std::string>... Args>
+inline std::string
+meta_recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
+  return x + "(" + ropen(n, f) + " "
+       + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ") + " "
+       + rclose(n) + ")";
+}
+
 NIFTY_DECL(id);
 namespace detail {
 extern codegen::def<>& xct_a;

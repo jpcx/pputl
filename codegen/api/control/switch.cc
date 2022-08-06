@@ -54,45 +54,24 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   tests << switch_(1, maxcases_s)                      = "b";
   tests << switch_(conf::uint_max, maxcases_s)         = utl::alpha_base52(conf::uint_max);
 
-  def<"a(i, ...)"> a;
-  def<"b(i, ...)"> b;
-
-  a = [&](arg i, va args) {
-    docs << "recursive side A";
-    def<"cont(i, _, ...)"> cont = [&](arg i, arg _0, va args) {
-      return pp::call(b + " " + lp() + " " + dec(i) + ", " + args + " " + rp() + " ", dec(i),
-                      rest(pp::tup(tuple(_0)), args));
-    };
-    def<"break(i, _, ...)"> break_ = [&](arg, arg _0, va) {
-      return items(_0);
-    };
-    return if_(if_(eqz(i), pp::tup(1), pp::tup(is_none(rest(args)))), pp::tup(break_),
-               pp::tup(cont));
+  def<"recur(...)"> recur = [&](va args) {
+    return def<"x(i, _, ...)">{[&](arg i, arg _0, va args) {
+      return if_(if_(eqz(i), pp::tup(1), pp::tup(is_none(args))), pp::tup(0, _0),
+                 pp::tup(dec(i), args));
+    }}(args);
   };
 
-  b = [&](arg i, va args) {
-    docs << "recursive side B";
-    def<"cont(i, _, ...)"> cont = [&](arg i, arg _0, va args) {
-      return pp::call(a + " " + lp() + " " + dec(i) + ", " + args + " " + rp() + " ", dec(i),
-                      rest(pp::tup(tuple(_0)), args));
-    };
-    def<"break(i, _, ...)"> break_ = [&](arg, arg _0, va) {
-      return items(_0);
-    };
-    return if_(if_(eqz(i), pp::tup(1), pp::tup(is_none(rest(args)))), pp::tup(break_),
-               pp::tup(cont));
-  };
-
-  def<"x0(...)"> x0 = [&](va args) {
+  def<"x(...)"> x = [&](va args) {
     return args;
   };
 
-  def<"x1(...)"> x1 = [&](va args) {
-    return args;
+  def<"res(...)"> res = [&](va args) {
+    return def<"x(i, _, ...)">{[&](arg, arg _0, va) {
+      return items(_0);
+    }}(args);
   };
 
-  return x1(ropen(first(args), x0) + " " + pp::call(a(uint(first(args)), rest(args)), args) + " "
-            + rclose(first(args)));
+  return res(meta_recur(x, first(args), recur, args));
 });
 
 } // namespace api

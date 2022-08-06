@@ -50,7 +50,7 @@ decltype(rclose) rclose = NIFTY_DEF(rclose, [&](va args) {
        << ""
        << "example:"
        << "  madd(a, b) = add(a, b), b"
-       << "  mul(a, b)  = first(id(ropen(a, madd) 0, 0 rclose(a)))"
+       << "  mul(a, b)  = first(id(ropen(a, madd) 0, 4 rclose(a)))"
        << "  mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))"
        << "            -> first(madd(madd(0, 4)))"
        << "            -> first(madd(4, 4))"

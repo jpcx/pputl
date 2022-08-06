@@ -40,41 +40,11 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
   tests << add(conf::uint_max, 1) = "0" >> docs;
   tests << add(conf::uint_max, 2) = "1" >> docs;
 
-  def<"a(a, b)"> a;
-  def<"b(a, b)"> b;
-
-  def<"return(a, b)"> return_ = [&](arg a_, arg) {
-    docs << "returns result";
-    return a_;
-  };
-
-  a = [&](arg a_, arg b_) {
-    docs << "recursive side A";
-    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
-      return b + " " + lp() + " " + inc(a_) + ", " + dec(b_) + " " + rp();
-    };
-
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
-  };
-
-  b = [&](arg a_, arg b_) {
-    docs << "recursive side B";
-    def<"continue(a, b)"> continue_ = [&](arg a_, arg b_) {
-      return a + " " + lp() + " " + inc(a_) + ", " + dec(b_) + " " + rp();
-    };
-
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), a_, b_);
-  };
-
-  def<"x0(...)"> x0 = [&](va args) {
-    return args;
-  };
-  def<"x1(...)"> x1 = [&](va args) {
+  def<"x(...)"> x = [&](va args) {
     return args;
   };
 
-  return x1(ropen(rest(args), x0) + " " + a(uint(first(args)), uint(rest(args))) + " "
-            + rclose(rest(args)));
+  return meta_recur(x, first(args), inc, rest(args));
 });
 
 } // namespace api

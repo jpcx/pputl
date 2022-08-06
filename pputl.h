@@ -2052,7 +2052,7 @@
 ///
 /// example:
 ///   madd(a, b) = add(a, b), b
-///   mul(a, b)  = first(id(ropen(a, madd) 0, 0 rclose(a)))
+///   mul(a, b)  = first(id(ropen(a, madd) 0, b rclose(a)))
 ///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
 ///             -> first(madd(madd(0, 4)))
 ///             -> first(madd(4, 4))
@@ -2355,7 +2355,7 @@
 ///
 /// example:
 ///   madd(a, b) = add(a, b), b
-///   mul(a, b)  = first(id(ropen(a, madd) 0, 0 rclose(a)))
+///   mul(a, b)  = first(id(ropen(a, madd) 0, 4 rclose(a)))
 ///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
 ///             -> first(madd(madd(0, 4)))
 ///             -> first(madd(4, 4))
@@ -2675,33 +2675,18 @@
 /// PTL_SWITCH(2, (1), (2))            // 2
 /// PTL_SWITCH(2, (1), (2), (3, 4))    // 3, 4
 /// PTL_SWITCH(1023, (1), (2), (3, 4)) // 3, 4
-#define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */      \
-  PPUTLSWITCH_X1(PTL_ROPEN(PTL_FIRST(__VA_ARGS__), PPUTLSWITCH_X0) PPUTLSWITCH_A( \
-      PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_REST(__VA_ARGS__))(__VA_ARGS__)       \
-                     PTL_RCLOSE(PTL_FIRST(__VA_ARGS__)))
+#define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */         \
+  PPUTLSWITCH_RES(PPUTLSWITCH_X(PTL_ROPEN(PTL_FIRST(__VA_ARGS__), PPUTLSWITCH_RECUR) \
+                                    __VA_ARGS__ PTL_RCLOSE(PTL_FIRST(__VA_ARGS__))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSWITCH_X1(...) __VA_ARGS__
-#define PPUTLSWITCH_X0(...) __VA_ARGS__
-
-/// recursive side B
-#define PPUTLSWITCH_B(i, ...)                                                                  \
-  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_B_BREAK), \
-         (PPUTLSWITCH_B_CONT))
-#define PPUTLSWITCH_B_BREAK(i, _, ...) PTL_ITEMS(_)
-#define PPUTLSWITCH_B_CONT(i, _, ...)  \
-  PPUTLSWITCH_A   PTL_LP() PTL_DEC(i), \
-      __VA_ARGS__ PTL_RP()(PTL_DEC(i), PTL_REST((PTL_TUPLE(_)), __VA_ARGS__))
-
-/// recursive side A
-#define PPUTLSWITCH_A(i, ...)                                                                  \
-  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(PTL_REST(__VA_ARGS__)))), (PPUTLSWITCH_A_BREAK), \
-         (PPUTLSWITCH_A_CONT))
-#define PPUTLSWITCH_A_BREAK(i, _, ...) PTL_ITEMS(_)
-#define PPUTLSWITCH_A_CONT(i, _, ...)  \
-  PPUTLSWITCH_B   PTL_LP() PTL_DEC(i), \
-      __VA_ARGS__ PTL_RP()(PTL_DEC(i), PTL_REST((PTL_TUPLE(_)), __VA_ARGS__))
+#define PPUTLSWITCH_RES(...)         PPUTLSWITCH_RES_X(__VA_ARGS__)
+#define PPUTLSWITCH_RES_X(i, _, ...) PTL_ITEMS(_)
+#define PPUTLSWITCH_X(...)           __VA_ARGS__
+#define PPUTLSWITCH_RECUR(...)       PPUTLSWITCH_RECUR_X(__VA_ARGS__)
+#define PPUTLSWITCH_RECUR_X(i, _, ...) \
+  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(__VA_ARGS__))), (0, _), (PTL_DEC(i), __VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2790,26 +2775,13 @@
 /// PTL_ADD(1, 2)    // 3
 /// PTL_ADD(1023, 1) // 0
 /// PTL_ADD(1023, 2) // 1
-#define PTL_ADD(/* a: uint, b: uint */...) /* -> uint{a + b} */                                 \
-  PPUTLADD_X1(PTL_ROPEN(PTL_REST(__VA_ARGS__), PPUTLADD_X0)                                     \
-                  PPUTLADD_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_UINT(PTL_REST(__VA_ARGS__))) \
-                      PTL_RCLOSE(PTL_REST(__VA_ARGS__)))
+#define PTL_ADD(/* a: uint, b: uint */...) /* -> uint{a + b} */               \
+  PPUTLADD_X(PTL_ROPEN(PTL_FIRST(__VA_ARGS__), PTL_INC) PTL_REST(__VA_ARGS__) \
+                 PTL_RCLOSE(PTL_FIRST(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLADD_X1(...) __VA_ARGS__
-#define PPUTLADD_X0(...) __VA_ARGS__
-
-/// recursive side B
-#define PPUTLADD_B(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLADD_RETURN), (PPUTLADD_B_CONTINUE))(a, b)
-#define PPUTLADD_B_CONTINUE(a, b) PPUTLADD_A PTL_LP() PTL_INC(a), PTL_DEC(b) PTL_RP()
-
-/// recursive side A
-#define PPUTLADD_A(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLADD_RETURN), (PPUTLADD_A_CONTINUE))(a, b)
-#define PPUTLADD_A_CONTINUE(a, b) PPUTLADD_B PTL_LP() PTL_INC(a), PTL_DEC(b) PTL_RP()
-
-/// returns result
-#define PPUTLADD_RETURN(a, b) a
+#define PPUTLADD_X(...) __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2824,54 +2796,36 @@
 /// PTL_SUB(3, 1)    // 2
 /// PTL_SUB(1, 3)    // 1022
 /// PTL_SUB(0, 1023) // 1
-#define PTL_SUB(/* a: uint, b: uint */...) /* -> uint{a - b} */                                 \
-  PPUTLSUB_X1(PTL_ROPEN(PTL_REST(__VA_ARGS__), PPUTLSUB_X0)                                     \
-                  PPUTLSUB_A(PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_UINT(PTL_REST(__VA_ARGS__))) \
-                      PTL_RCLOSE(PTL_REST(__VA_ARGS__)))
+#define PTL_SUB(/* a: uint, b: uint */...) /* -> uint{a - b} */               \
+  PPUTLSUB_X(PTL_ROPEN(PTL_REST(__VA_ARGS__), PTL_DEC) PTL_FIRST(__VA_ARGS__) \
+                 PTL_RCLOSE(PTL_REST(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSUB_X1(...) __VA_ARGS__
-#define PPUTLSUB_X0(...) __VA_ARGS__
-
-/// recursive side B
-#define PPUTLSUB_B(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLSUB_RETURN), (PPUTLSUB_B_CONTINUE))(a, b)
-#define PPUTLSUB_B_CONTINUE(a, b) PPUTLSUB_A PTL_LP() PTL_DEC(a), PTL_DEC(b) PTL_RP()
-
-/// recursive side A
-#define PPUTLSUB_A(a, b)          PTL_IF(PTL_EQZ(b), (PPUTLSUB_RETURN), (PPUTLSUB_A_CONTINUE))(a, b)
-#define PPUTLSUB_A_CONTINUE(a, b) PPUTLSUB_B PTL_LP() PTL_DEC(a), PTL_DEC(b) PTL_RP()
-
-/// returns result
-#define PPUTLSUB_RETURN(a, b) a
+#define PPUTLSUB_X(...) __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [math.mul]
 /// ----------
 /// uint multiplication with overflow.
-#define PTL_MUL(/* a: uint, b: uint */...) /* -> uint{a * b} */                                    \
-  PPUTLMUL_X1(PTL_ROPEN(PTL_REST(__VA_ARGS__), PPUTLMUL_X0)                                        \
-                  PPUTLMUL_A(0, PTL_UINT(PTL_FIRST(__VA_ARGS__)), PTL_UINT(PTL_REST(__VA_ARGS__))) \
-                      PTL_RCLOSE(PTL_REST(__VA_ARGS__)))
+///
+/// PTL_MUL(0, 0)       // 0
+/// PTL_MUL(0, 1)       // 0
+/// PTL_MUL(1, 1)       // 1
+/// PTL_MUL(1, 2)       // 2
+/// PTL_MUL(2, 2)       // 4
+/// PTL_MUL(1023, 1)    // 1023
+/// PTL_MUL(1023, 1023) // 1
+#define PTL_MUL(/* a: uint, b: uint */...) /* -> uint{a * b} */             \
+  PTL_FIRST(PPUTLMUL_X(PTL_ROPEN(PTL_FIRST(__VA_ARGS__), PPUTLMUL_RECUR) 0, \
+                       PTL_REST(__VA_ARGS__) PTL_RCLOSE(PTL_FIRST(__VA_ARGS__))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLMUL_X1(...) __VA_ARGS__
-#define PPUTLMUL_X0(...) __VA_ARGS__
-
-/// recursive side B
-#define PPUTLMUL_B(s, a, b) PTL_IF(PTL_EQZ(b), (PPUTLMUL_RETURN), (PPUTLMUL_B_CONTINUE))(s, a, b)
-
-#define PPUTLMUL_B_CONTINUE(s, a, b) PPUTLMUL_A PTL_LP() PTL_ADD(s, a), a, PTL_DEC(b) PTL_RP()
-
-/// recursive side A
-#define PPUTLMUL_A(s, a, b) PTL_IF(PTL_EQZ(b), (PPUTLMUL_RETURN), (PPUTLMUL_A_CONTINUE))(s, a, b)
-
-#define PPUTLMUL_A_CONTINUE(s, a, b) PPUTLMUL_B PTL_LP() PTL_ADD(s, a), a, PTL_DEC(b) PTL_RP()
-
-/// returns result
-#define PPUTLMUL_RETURN(s, a, b) s
+#define PPUTLMUL_X(...)        __VA_ARGS__
+#define PPUTLMUL_RECUR(...)    PPUTLMUL_RECUR_X(__VA_ARGS__)
+#define PPUTLMUL_RECUR_X(a, b) PTL_ADD(a, b), b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

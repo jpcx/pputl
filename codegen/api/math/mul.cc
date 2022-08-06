@@ -34,52 +34,27 @@ using namespace codegen;
 decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
   docs << "uint multiplication with overflow.";
 
-  /* constexpr auto max = conf::uint_max; */
+  constexpr auto max = conf::uint_max;
 
-  /* tests << mul("0, 0")   = "0" >> docs; */
-  /* tests << mul("0, 1")   = "0" >> docs; */
-  /* tests << mul("1, 1")   = "1" >> docs; */
-  /* tests << mul("1, 2")   = "2" >> docs; */
-  /* tests << mul("2, 2")   = std::to_string((2 * 2) % (max + 1)) >> docs; */
-  /* tests << mul(max, 1)   = uint_max_s >> docs; */
-  /* tests << mul(max, max) = std::to_string((max * max) % (max + 1)) >> docs; */
+  tests << mul("0, 0")   = "0" >> docs;
+  tests << mul("0, 1")   = "0" >> docs;
+  tests << mul("1, 1")   = "1" >> docs;
+  tests << mul("1, 2")   = "2" >> docs;
+  tests << mul("2, 2")   = "4" >> docs;
+  tests << mul(max, 1)   = uint_max_s >> docs;
+  tests << mul(max, max) = std::to_string((max * max) % (max + 1)) >> docs;
 
-  def<"a(s, a, b)"> a;
-  def<"b(s, a, b)"> b;
-
-  def<"return(s, a, b)"> return_ = [&](arg s_, arg, arg) {
-    docs << "returns result";
-    return s_;
+  def<"recur(...)"> recur = [&](va args) {
+    return def<"x(a, b)">{[&](arg a, arg b) {
+      return add(a, b) + ", " + b;
+    }}(args);
   };
 
-  a = [&](arg s_, arg a_, arg b_) {
-    docs << "recursive side A";
-    def<"continue(s, a, b)"> continue_ = [&](arg s_, arg a_, arg b_) {
-      return b + " " + lp() + " " + add(s_, a_) + ", " + a_ + ", " + dec(b_) + " " + rp();
-    };
-
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), s_, a_, b_);
-  };
-
-  b = [&](arg s_, arg a_, arg b_) {
-    docs << "recursive side B";
-    def<"continue(s, a, b)"> continue_ = [&](arg s_, arg a_, arg b_) {
-      return a + " " + lp() + " " + add(s_, a_) + ", " + a_ + ", " + dec(b_) + " " + rp();
-    };
-
-    return pp::call(if_(eqz(b_), pp::tup(return_), pp::tup(continue_)), s_, a_, b_);
-  };
-
-  def<"x0(...)"> x0 = [&](va args) {
+  def<"x(...)"> x = [&](va args) {
     return args;
   };
 
-  def<"x1(...)"> x1 = [&](va args) {
-    return args;
-  };
-
-  return x1(ropen(rest(args), x0) + " " + a(0, uint(first(args)), uint(rest(args))) + " "
-            + rclose(rest(args)));
+  return first(meta_recur(x, first(args), recur, "0", rest(args)));
 });
 
 } // namespace api
