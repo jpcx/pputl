@@ -2854,6 +2854,112 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [compare.lt]
+/// ------------
+/// O(logn) uint less-than comparison.
+///
+/// PTL_LT(0, 0) // 0
+/// PTL_LT(0, 1) // 1
+/// PTL_LT(1, 0) // 0
+/// PTL_LT(1, 1) // 0
+#define PTL_LT(/* l: uint, r: uint */...) /* -> uint{l < r} */ \
+  PTL_IF(PTL_EQZ(PTL_FIRST(__VA_ARGS__)), (PPUTLLT_ZERO_L), (PPUTLLT_POS_L))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLLT_POS_L(l, r)                                                      \
+  PPUTLLT_RES(PPUTLLT_X(PTL_ROPEN(PTL_LOG2(l), PPUTLLT_RECUR) l, r, PTL_MOD2(l), \
+                        PTL_MOD2(r) PTL_RCLOSE(PTL_LOG2(l))))
+#define PPUTLLT_ZERO_L(l, r) PTL_NEZ(r)
+#define PPUTLLT_RES(...)     PPUTLLT_RES_X(__VA_ARGS__)
+#define PPUTLLT_RES_X(l, r, ml, mr)                \
+  PTL_OR(PTL_AND(PTL_NEZ(r), PTL_NEZ(PTL_DEC(r))), \
+         PTL_AND(PTL_EQZ(PTL_DEC(r)), PTL_AND(PTL_NOT(ml), mr)))
+#define PPUTLLT_RECUR(...)            PPUTLLT_RECUR_X(__VA_ARGS__)
+#define PPUTLLT_RECUR_X(l, r, ml, mr) PTL_DIV2(l), PTL_DIV2(r), ml, mr
+#define PPUTLLT_X(...)                __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.gt]
+/// ------------
+/// O(logn) uint greater-than comparison.
+///
+/// PTL_GT(0, 0) // 0
+/// PTL_GT(0, 1) // 0
+/// PTL_GT(1, 0) // 1
+/// PTL_GT(1, 1) // 0
+#define PTL_GT(/* l: uint, r: uint */...) /* -> uint{l > r} */ PPUTLGT_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLGT_X(l, r) PTL_LT(r, l)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.le]
+/// ------------
+/// O(logn) uint less-than-or-equal-to comparison.
+///
+/// PTL_LE(0, 0) // 1
+/// PTL_LE(0, 1) // 1
+/// PTL_LE(1, 0) // 0
+/// PTL_LE(1, 1) // 1
+#define PTL_LE(/* l: uint, r: uint */...) /* -> uint{l <= r} */ PTL_NOT(PTL_GT(__VA_ARGS__))
+
+/// [compare.ge]
+/// ------------
+/// O(logn) uint greater-than-or-equal-to comparison.
+///
+/// PTL_GE(0, 0) // 1
+/// PTL_GE(0, 1) // 0
+/// PTL_GE(1, 0) // 1
+/// PTL_GE(1, 1) // 1
+#define PTL_GE(/* l: uint, r: uint */...) /* -> uint{l >= r} */ PTL_NOT(PTL_LT(__VA_ARGS__))
+
+/// [compare.eq]
+/// ------------
+/// O(logn) uint equal-to comparison.
+///
+/// PTL_EQ(0, 0) // 1
+/// PTL_EQ(0, 1) // 0
+/// PTL_EQ(1, 0) // 0
+/// PTL_EQ(1, 1) // 1
+#define PTL_EQ(/* l: uint, r: uint */...) /* -> uint{l == r} */ \
+  PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
+
+/// [compare.ne]
+/// ------------
+/// O(logn) uint not-equal-to comparison.
+///
+/// PTL_EQ(0, 0) // 1
+/// PTL_EQ(0, 1) // 0
+/// PTL_EQ(1, 0) // 0
+/// PTL_EQ(1, 1) // 1
+#define PTL_NE(/* l: uint, r: uint */...) /* -> uint{l != r} */ PTL_NOT(PTL_EQ(__VA_ARGS__))
+
+/// [compare.min]
+/// -------------
+/// O(logn) uint minimum operation.
+///
+/// PTL_MIN(0, 0) // 0
+/// PTL_MIN(0, 1) // 0
+/// PTL_MIN(1, 0) // 0
+/// PTL_MIN(1, 1) // 1
+#define PTL_MIN(/* l: uint, r: uint */...) /* -> uint{l < r ? l : r} */ \
+  PTL_IF(PTL_LT(__VA_ARGS__), (PTL_FIRST(__VA_ARGS__)), (PTL_REST(__VA_ARGS__)))
+
+/// [compare.max]
+/// -------------
+/// O(logn) uint maximum operation.
+///
+/// PTL_MAX(0, 0) // 0
+/// PTL_MAX(0, 1) // 1
+/// PTL_MAX(1, 0) // 1
+/// PTL_MAX(1, 1) // 1
+#define PTL_MAX(/* l: uint, r: uint */...) /* -> uint{l > r ? r : l} */ \
+  PTL_IF(PTL_GT(__VA_ARGS__), (PTL_FIRST(__VA_ARGS__)), (PTL_REST(__VA_ARGS__)))
+
 // vim: fdm=marker:fmr={{{,}}}
 
 #endif
