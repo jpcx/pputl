@@ -67,6 +67,7 @@ constexpr char const impl_prefix[]{"PPUTL"};
 constexpr std::array<char const*, 2> impl_shortnames[]{
     {"ropen", "ro"},
     {"rclose", "rc"},
+    {"uint_traits", "utraits"},
 };
 
 // maximum value of a pputl unsigned integer.

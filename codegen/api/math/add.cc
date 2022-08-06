@@ -39,6 +39,8 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
   tests << add("1, 2")            = "3" >> docs;
   tests << add(conf::uint_max, 1) = "0" >> docs;
   tests << add(conf::uint_max, 2) = "1" >> docs;
+  tests << add(1, conf::uint_max) = "0";
+  tests << add(2, conf::uint_max) = "1";
 
   def<"x(...)"> x = [&](va args) {
     return args;

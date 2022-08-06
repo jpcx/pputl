@@ -53,6 +53,13 @@ inc(unsigned n) {
 }
 
 static std::string
+log2(unsigned n) {
+  if (n == 0)
+    return "";
+  return std::to_string(static_cast<unsigned>(std::log2(n)));
+}
+
+static std::string
 div2(unsigned n) {
   return std::to_string(n / 2);
 }
@@ -139,15 +146,18 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     std::size_t i = 0;
     for (; i < detail::uint_traits.size() - 1; ++i) {
       detail::uint_traits[i] = def{"traits_" + std::to_string(i)} = [&] {
-        return utl::cat(std::array{dec(i), inc(i), div2(i), mul2(i), sqrt(i), pow2(i), mod2(i),
-                                   mod4(i), mod8(i), mod16(i), mod32(i), mod64(i), factor(i)},
+        return utl::cat(std::array{dec(i), inc(i), log2(i), div2(i), mul2(i), sqrt(i), pow2(i),
+                                   mod2(i), mod4(i), mod8(i), mod16(i), mod32(i), mod64(i),
+                                   factor(i)},
                         ", ");
       };
     }
     detail::uint_traits[i] = def{"traits_" + std::to_string(i)} = [&] {
-      docs << "dec, inc, div2, mul2, sqrt, pow2, mod2, mod4, mod8, mod16, mod32, mod64, factor";
-      return utl::cat(std::array{dec(i), inc(i), div2(i), mul2(i), sqrt(i), pow2(i), mod2(i),
-                                 mod4(i), mod8(i), mod16(i), mod32(i), mod64(i), factor(i)},
+      docs << "dec, inc, log2, div2, mul2, sqrt, pow2, mod2, mod4, mod8, mod16, mod32, mod64, "
+              "factor";
+      return utl::cat(std::array{dec(i), inc(i), log2(i), div2(i), mul2(i), sqrt(i), pow2(i),
+                                 mod2(i), mod4(i), mod8(i), mod16(i), mod32(i), mod64(i),
+                                 factor(i)},
                       ", ");
     };
   }

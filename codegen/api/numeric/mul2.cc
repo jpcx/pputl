@@ -41,8 +41,8 @@ decltype(mul2) mul2 = NIFTY_DEF(mul2, [&](va args) {
   tests << mul2(conf::uint_max)     = std::to_string(conf::uint_max - 1);
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[3];
+    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
+      return args[4];
     }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });

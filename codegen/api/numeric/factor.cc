@@ -49,7 +49,7 @@ decltype(factor) factor = NIFTY_DEF(factor, [&](va args) {
   tests << factor(conf::uint_max)     = utl::cat(sfacts1, ", ") >> docs;
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
+    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
       return args.back();
     }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));

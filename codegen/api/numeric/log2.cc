@@ -31,20 +31,25 @@ namespace api {
 
 using namespace codegen;
 
-decltype(pow2) pow2 = NIFTY_DEF(pow2, [&](va args) {
-  docs << "O(1) uint pow2.";
+decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
+  docs << "O(1) positive uint logarithm base 2.";
 
-  tests << pow2((unsigned)std::sqrt(conf::uint_max)) =
-      std::to_string(((unsigned)std::sqrt(conf::uint_max)) * ((unsigned)std::sqrt(conf::uint_max)))
-      >> docs;
-  tests << pow2(conf::uint_max / 4) =
-      std::to_string(((conf::uint_max / 4) * (conf::uint_max / 4)) % (conf::uint_max + 1)) >> docs;
+  tests << log2(1) = "0" >> docs;
+  tests << log2(conf::uint_max) =
+      std::to_string(((unsigned)std::log2(conf::uint_max)) % conf::uint_max) >> docs;
 
-  return def<"x(...)">{[&](va args) {
+  def<"nez1(...)">{} = [&](va args) {
     return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[6];
+      return args[2];
     }}(args);
-  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+  };
+
+  def<"nez0(...)"> nez0 = [&](va) {
+    return fail(pp::str("[" + log2 + "] log2 of zero not supported"));
+  };
+
+  return pp::call(cat(utl::slice(nez0, -1), nez(args)),
+                  cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 
 } // namespace api

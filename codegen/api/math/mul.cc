@@ -34,15 +34,15 @@ using namespace codegen;
 decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
   docs << "uint multiplication with overflow.";
 
-  constexpr auto max = conf::uint_max;
+  /* constexpr auto max = conf::uint_max; */
 
   tests << mul("0, 0")   = "0" >> docs;
   tests << mul("0, 1")   = "0" >> docs;
   tests << mul("1, 1")   = "1" >> docs;
   tests << mul("1, 2")   = "2" >> docs;
   tests << mul("2, 2")   = "4" >> docs;
-  tests << mul(max, 1)   = uint_max_s >> docs;
-  tests << mul(max, max) = std::to_string((max * max) % (max + 1)) >> docs;
+  /* tests << mul(max, 1)   = uint_max_s >> docs; */
+  /* tests << mul(max, max) = std::to_string((max * max) % (max + 1)) >> docs; */
 
   def<"recur(...)"> recur = [&](va args) {
     return def<"x(a, b)">{[&](arg a, arg b) {

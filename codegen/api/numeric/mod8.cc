@@ -38,8 +38,8 @@ decltype(mod8) mod8 = NIFTY_DEF(mod8, [&](va args) {
   tests << mod8(conf::uint_max)     = std::to_string(conf::uint_max % 8) >> docs;
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(d, i, dv, ml, sq, p, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[8];
+    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
+      return args[9];
     }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
