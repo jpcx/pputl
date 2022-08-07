@@ -32,13 +32,12 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(uint_seq)       uint_seq       = NIFTY_DEF(uint_seq);
-decltype(uint_rseq)      uint_rseq      = NIFTY_DEF(uint_rseq);
-decltype(uint_bintraits) uint_bintraits = NIFTY_DEF(uint_bintraits);
-decltype(uint_dectraits) uint_dectraits = NIFTY_DEF(uint_dectraits);
-decltype(uint_pass)      uint_pass      = NIFTY_DEF(uint_pass);
-decltype(uint_fail)      uint_fail      = NIFTY_DEF(uint_fail);
-decltype(uint_o)         uint_o         = NIFTY_DEF(uint_o);
+decltype(uint_seq)    uint_seq    = NIFTY_DEF(uint_seq);
+decltype(uint_rseq)   uint_rseq   = NIFTY_DEF(uint_rseq);
+decltype(uint_traits) uint_traits = NIFTY_DEF(uint_traits);
+decltype(uint_pass)   uint_pass   = NIFTY_DEF(uint_pass);
+decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
+decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
 
 static std::string
@@ -120,38 +119,40 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
 
   // set up traits
   {
-    std::size_t i = 0;
-    for (; i < detail::uint_bintraits.size() - 1; ++i) {
-      auto bin                  = binary(i);
-      detail::uint_bintraits[i] = def{"traits_\\" + binary_str(bin)} = [&] {
+    std::size_t _ = 0;
+    std::size_t n = 0;
+    for (; _ < (detail::uint_traits.size() / 2) - 1; ++_, ++n) {
+      auto bin               = binary(n);
+      detail::uint_traits[_] = def{"traits_" + std::to_string(n)} = [&] {
         return utl::cat(
-            std::array{std::to_string(i), pp::tup(utl::cat(bin, ", ")), binary_str(bitnot(bin))},
-            ",");
+            std::array{std::string{"DEC"}, binary_str(bin), log2(n), sqrt(n), factors(n)}, ",");
       };
     }
     {
-      auto bin                    = binary(i);
-      detail::uint_bintraits[i++] = def{"traits_\\" + binary_str(bin)} = [&] {
-        docs << "decimal, bits, bitnot";
+      auto bin                 = binary(n);
+      detail::uint_traits[_++] = def{"traits_" + std::to_string(n)} = [&] {
+        docs << "type, binary, log2, sqrt, factors";
         return utl::cat(
-            std::array{std::to_string(i), pp::tup(utl::cat(bin, ", ")), binary_str(bitnot(bin))},
-            ",");
+            std::array{std::string{"DEC"}, binary_str(bin), log2(n), sqrt(n), factors(n)}, ",");
       };
     }
-  }
-  {
-    std::size_t i = 0;
-    for (; i < detail::uint_dectraits.size() - 1; ++i) {
-      auto bin                  = binary(i);
-      detail::uint_dectraits[i] = def{"traits_" + std::to_string(i)} = [&] {
-        return utl::cat(std::array{binary_str(bin), log2(i), sqrt(i), factors(i)}, ",");
+
+    n = 0;
+    for (; _ < detail::uint_traits.size() - 1; ++_, ++n) {
+      auto bin               = binary(n);
+      detail::uint_traits[_] = def{"traits_\\" + binary_str(bin)} = [&] {
+        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
+                                   pp::tup(utl::cat(bin, ", ")), binary_str(bitnot(bin))},
+                        ",");
       };
     }
     {
-      auto bin                  = binary(i);
-      detail::uint_dectraits[i] = def{"traits_" + std::to_string(i)} = [&] {
-        docs << "binary, log2, sqrt, factors";
-        return utl::cat(std::array{binary_str(bin), log2(i), sqrt(i), factors(i)}, ",");
+      auto bin               = binary(n);
+      detail::uint_traits[_] = def{"traits_\\" + binary_str(bin)} = [&] {
+        docs << "type, decimal, bits, bitnot";
+        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
+                                   pp::tup(utl::cat(bin, ", ")), binary_str(bitnot(bin))},
+                        ",");
       };
     }
   }
@@ -188,7 +189,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
             pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
             fail_s));
       }}(args);
-    }}(pp::cat(utl::slice(detail::uint_dectraits[0], -1), args));
+    }}(pp::cat(utl::slice(detail::uint_traits[0], -1), args));
   };
 
   def<>             oo_fail{};

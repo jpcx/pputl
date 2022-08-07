@@ -31,18 +31,18 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_binary) is_binary = NIFTY_DEF(is_binary, [&](va args) {
-  docs << "detects if args is a uint represented as binary.";
+decltype(is_decimal) is_decimal = NIFTY_DEF(is_decimal, [&](va args) {
+  docs << "detects if args is a uint represented as decimal.";
 
   auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
   auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
 
-  tests << is_binary()               = "0" >> docs;
-  tests << is_binary(48)             = "0" >> docs;
-  tests << is_binary(conf::uint_max) = "0" >> docs;
-  tests << is_binary("foo")          = "0" >> docs;
-  tests << is_binary(binmin)         = "1" >> docs;
-  tests << is_binary(binmax)         = "1" >> docs;
+  tests << is_decimal()               = "0" >> docs;
+  tests << is_decimal(48)             = "1" >> docs;
+  tests << is_decimal(conf::uint_max) = "1" >> docs;
+  tests << is_decimal("foo")          = "0" >> docs;
+  tests << is_decimal(binmin)         = "0" >> docs;
+  tests << is_decimal(binmax)         = "0" >> docs;
 
   return pp::call(def<"o(b)">{[&](arg b) {
                     def<"o_0(...)"> o_0 = [&](va) {
@@ -50,10 +50,10 @@ decltype(is_binary) is_binary = NIFTY_DEF(is_binary, [&](va args) {
                     };
                     def<"o_1(u)">{} = [&](arg u) {
                       def<"\\DEC"> _dec = [&] {
-                        return "0";
+                        return "1";
                       };
                       def<"\\BIN">{} = [&] {
-                        return "1";
+                        return "0";
                       };
                       return cat(utl::slice(_dec, -3),
                                  first(cat(utl::slice(detail::uint_traits[0], -1), u)));

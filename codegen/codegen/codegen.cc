@@ -766,15 +766,17 @@ struct def_base::instance*
 def_base::get_instance(std::string const& name, detail::source_location const& loc) {
   // construct id
   std::string id{};
-  for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it) {
-    // simplify expansion layering
-    static std::regex xx{"[xX]+", std::regex_constants::optimize};
-    if (std::regex_match((*it)->name, xx) and std::regex_match(name, xx))
-      id += (*it)->name;
-    else
-      id += (*it)->name + "_";
-  }
+  for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it)
+    id += (*it)->name + "_";
+
   id += name;
+
+  // better nesting names
+ 
+  static std::regex xx{"_([xX])_([xX])(_?)", std::regex_constants::optimize};
+  static std::regex oo{"_([oO])_([oO])(_?)", std::regex_constants::optimize};
+  id = std::regex_replace(id, xx, "_$1$2$3");
+  id = std::regex_replace(id, oo, "_$1$2$3");
 
   // apply naming scheme
   if (not _exec_stack.empty()) {

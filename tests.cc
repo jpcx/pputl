@@ -145,13 +145,6 @@ ASSERT_PP_EQ((PTL_ESC (a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
 ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
 
-ASSERT_PP_EQ((PTL_TRYCAT(foo, bar)), (foobar));
-ASSERT_PP_EQ((PTL_TRYCAT(foo, PTL_EAT(bar))), (foo));
-ASSERT_PP_EQ((PTL_TRYCAT(foo, (bar))), ());
-ASSERT_PP_EQ((PTL_TRYCAT(foo, (bar), err)), (err));
-ASSERT_PP_EQ((PTL_TRYCAT((foo), bar, err)), (err));
-ASSERT_PP_EQ((PTL_TRYCAT((foo), (bar), err)), (err));
-
 ASSERT_PP_EQ((PTL_ISTR()), (""));
 ASSERT_PP_EQ((PTL_ISTR(foo, bar)), ("foo, bar"));
 ASSERT_PP_EQ((PTL_ISTR(PTL_CAT(foo, bar))), ("PTL_CAT(foo, bar)"));
@@ -323,6 +316,20 @@ ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
 ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
 ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
 ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
+
+ASSERT_PP_EQ((PTL_IS_BINARY()), (0));
+ASSERT_PP_EQ((PTL_IS_BINARY(48)), (0));
+ASSERT_PP_EQ((PTL_IS_BINARY(1023)), (0));
+ASSERT_PP_EQ((PTL_IS_BINARY(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_BINARY(0b0000000000u)), (1));
+ASSERT_PP_EQ((PTL_IS_BINARY(0b1111111111u)), (1));
+
+ASSERT_PP_EQ((PTL_IS_DECIMAL()), (0));
+ASSERT_PP_EQ((PTL_IS_DECIMAL(48)), (1));
+ASSERT_PP_EQ((PTL_IS_DECIMAL(1023)), (1));
+ASSERT_PP_EQ((PTL_IS_DECIMAL(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_DECIMAL(0b0000000000u)), (0));
+ASSERT_PP_EQ((PTL_IS_DECIMAL(0b1111111111u)), (0));
 
 ASSERT_PP_EQ((PTL_ID()), ());
 ASSERT_PP_EQ((PTL_ID(foo)), (foo));
