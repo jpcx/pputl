@@ -25,40 +25,41 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_binary) is_binary = NIFTY_DEF(is_binary, [&](va args) {
-  docs << "detects if args is a uint represented as binary.";
+decltype(decimal) decimal = NIFTY_DEF(decimal, [&](va args) {
+  docs << "casts a uint to its decimal subtype.";
 
   auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
+  auto binone = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "0")) + "1u";
   auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
 
-  tests << is_binary()               = "0" >> docs;
-  tests << is_binary(48)             = "0" >> docs;
-  tests << is_binary(conf::uint_max) = "0" >> docs;
-  tests << is_binary("foo")          = "0" >> docs;
-  tests << is_binary(binmin)         = "1" >> docs;
-  tests << is_binary(binmax)         = "1" >> docs;
+  tests << decimal(0)          = "0" >> docs;
+  tests << decimal(1)          = "1" >> docs;
+  tests << decimal(uint_max_s) = uint_max_s >> docs;
+  tests << decimal(binmin)     = "0" >> docs;
+  tests << decimal(binone)     = "1" >> docs;
+  tests << decimal(binmax)     = uint_max_s >> docs;
 
-  def<"o_0(...)"> o_0 = [&](va) {
-    return "0";
+  def<"\\DEC(n, dec, ...)"> dec = [&](arg n, arg, va) {
+    return n;
   };
 
-  def<"o_1(u)">{} = [&](arg u) {
-    def<"\\DEC"> _dec = [&] {
-      return "0";
-    };
-    def<"\\BIN">{} = [&] {
-      return "1";
-    };
-    return cat(utl::slice(_dec, -3), first(cat(utl::slice(detail::uint_traits[0], -1), u)));
+  def<"\\BIN(n, dec, ...)">{} = [&](arg, arg dec, va) {
+    return dec;
   };
 
-  return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);
+  return def<"o(n)">{[&](arg n) {
+    return def<"o(...)">{[&](va args) {
+      return def<"x(n, t, ...)">{[&](arg n, arg t, va args) {
+        return pp::call(cat(utl::slice(dec, -3), t), n, args);
+      }}(args);
+    }}(n, cat(utl::slice(detail::uint_traits[0], -1), n));
+  }}(uint(args));
 });
 
 } // namespace api

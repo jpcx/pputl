@@ -26,24 +26,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "control.h"
-#include "lang.h"
-#include "logic.h"
-#include "meta.h"
-#include "numeric.h"
-#include "traits.h"
-#include "type.h"
-
-namespace api {
-
-inline codegen::category<"bitwise"> bitwise;
-
-extern codegen::def<"bitnot(...: v: binary) -> ~v"> const& bitnot_;
-
-NIFTY_DECL(bitnot_);
-
-inline codegen::end_category<"bitwise"> bitwise_end;
-
-} // namespace api
+// #include "codegen.h"
+// #include "config.h"
+// #include "lang.h"
+// #include "traits.h"
+// #include "type.h"
+// 
+// namespace api {
+// 
+// inline codegen::category<"bitwise"> bitwise;
+// 
+// extern codegen::def<"bitnot(...: v: binary) -> ~v"> const& bitnot_;
+// 
+// NIFTY_DECL(bitnot_);
+// 
+// inline codegen::end_category<"bitwise"> bitwise_end;
+// 
+// } // namespace api

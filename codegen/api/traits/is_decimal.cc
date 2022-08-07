@@ -44,23 +44,21 @@ decltype(is_decimal) is_decimal = NIFTY_DEF(is_decimal, [&](va args) {
   tests << is_decimal(binmin)         = "0" >> docs;
   tests << is_decimal(binmax)         = "0" >> docs;
 
-  return pp::call(def<"o(b)">{[&](arg b) {
-                    def<"o_0(...)"> o_0 = [&](va) {
-                      return "0";
-                    };
-                    def<"o_1(u)">{} = [&](arg u) {
-                      def<"\\DEC"> _dec = [&] {
-                        return "1";
-                      };
-                      def<"\\BIN">{} = [&] {
-                        return "0";
-                      };
-                      return cat(utl::slice(_dec, -3),
-                                 first(cat(utl::slice(detail::uint_traits[0], -1), u)));
-                    };
-                    return cat(utl::slice(o_0, -1), b);
-                  }}(is_uint(args)),
-                  args);
+  def<"o_0(...)"> o_0 = [&](va) {
+    return "0";
+  };
+
+  def<"o_1(u)">{} = [&](arg u) {
+    def<"\\DEC"> _dec = [&] {
+      return "1";
+    };
+    def<"\\BIN">{} = [&] {
+      return "0";
+    };
+    return cat(utl::slice(_dec, -3), first(cat(utl::slice(detail::uint_traits[0], -1), u)));
+  };
+
+  return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);
 });
 
 } // namespace api

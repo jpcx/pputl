@@ -34,9 +34,11 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tuple(...: t: tuple) -> t"> const& tuple;
-extern codegen::def<"bool(...: b: bool) -> b"> const&   bool_;
-extern codegen::def<"uint(...: n: uint) -> n"> const&   uint;
+extern codegen::def<"tuple(...: t: tuple) -> t"> const&        tuple;
+extern codegen::def<"bool(...: b: bool) -> b"> const&          bool_;
+extern codegen::def<"uint(...: n: uint) -> n"> const&          uint;
+extern codegen::def<"binary(...: n: uint) -> binary"> const&   binary;
+extern codegen::def<"decimal(...: n: uint) -> decimal"> const& decimal;
 
 NIFTY_DECL(tuple);
 namespace detail {
@@ -64,6 +66,8 @@ NIFTY_DECL(uint_fail);
 NIFTY_DECL(uint_o);
 } // namespace detail
 NIFTY_DECL(uint);
+NIFTY_DECL(binary);
+NIFTY_DECL(decimal);
 
 inline codegen::end_category<"type"> type_end;
 

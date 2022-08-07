@@ -25,19 +25,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
-  docs << "bitwise NOT.";
-
-  /* tests << not_("0") = "1" >> docs; */
-  /* tests << not_("1") = "0" >> docs; */
-
-  return if_(args, "(0)", "(1)");
-});
-
-} // namespace api
+// #include "bitwise.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
+//   docs << "bitwise NOT.";
+// 
+//   /* tests << not_("0") = "1" >> docs; */
+//   /* tests << not_("1") = "0" >> docs; */
+// 
+//   return def<"o(...)">{[&](va args) {
+//     return "";
+//   }}(binary(args));
+// });
+// 
+// } // namespace api

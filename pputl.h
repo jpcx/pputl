@@ -2514,6 +2514,50 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [type.binary]
+/// -------------
+/// casts a uint to its binary subtype.
+///
+/// PTL_BINARY(0)             // 0b0000000000u
+/// PTL_BINARY(1)             // 0b0000000001u
+/// PTL_BINARY(1023)          // 0b1111111111u
+/// PTL_BINARY(0b0000000000u) // 0b0000000000u
+/// PTL_BINARY(0b0000000001u) // 0b0000000001u
+/// PTL_BINARY(0b1111111111u) // 0b1111111111u
+#define PTL_BINARY(/* n: uint */...) /* -> binary */ PPUTLBINARY_O(PTL_UINT(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBINARY_O(n)             PPUTLBINARY_OO(n, PTL_CAT(PPUTLUTRAITS_, n))
+#define PPUTLBINARY_OO(...)          PPUTLBINARY_OO_X(__VA_ARGS__)
+#define PPUTLBINARY_OO_X(n, t, ...)  PTL_CAT(PPUTLBINARY_, t)(n, __VA_ARGS__)
+#define PPUTLBINARY_BIN(n, dec, ...) n
+#define PPUTLBINARY_DEC(n, bin, ...) bin
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.decimal]
+/// --------------
+/// casts a uint to its decimal subtype.
+///
+/// PTL_DECIMAL(0)             // 0
+/// PTL_DECIMAL(1)             // 1
+/// PTL_DECIMAL(1023)          // 1023
+/// PTL_DECIMAL(0b0000000000u) // 0
+/// PTL_DECIMAL(0b0000000001u) // 1
+/// PTL_DECIMAL(0b1111111111u) // 1023
+#define PTL_DECIMAL(/* n: uint */...) /* -> decimal */ PPUTLDECIMAL_O(PTL_UINT(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLDECIMAL_O(n)             PPUTLDECIMAL_OO(n, PTL_CAT(PPUTLUTRAITS_, n))
+#define PPUTLDECIMAL_OO(...)          PPUTLDECIMAL_OO_X(__VA_ARGS__)
+#define PPUTLDECIMAL_OO_X(n, t, ...)  PTL_CAT(PPUTLDECIMAL_, t)(n, __VA_ARGS__)
+#define PPUTLDECIMAL_BIN(n, dec, ...) dec
+#define PPUTLDECIMAL_DEC(n, dec, ...) n
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.
@@ -2792,15 +2836,15 @@
 /// PTL_IS_BINARY(foo)           // 0
 /// PTL_IS_BINARY(0b0000000000u) // 1
 /// PTL_IS_BINARY(0b1111111111u) // 1
-#define PTL_IS_BINARY(...) /* -> bool */ PPUTLIS_BINARY_O(PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_BINARY(...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_BINARY_O_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_BINARY_O(b)      PTL_CAT(PPUTLIS_BINARY_OO_, b)
-#define PPUTLIS_BINARY_OO_1(u)   PTL_CAT(PPUTLIS_BINARY_OO_1_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, u)))
-#define PPUTLIS_BINARY_OO_1_BIN  1
-#define PPUTLIS_BINARY_OO_1_DEC  0
-#define PPUTLIS_BINARY_OO_0(...) 0
+#define PPUTLIS_BINARY_O_1(u)   PTL_CAT(PPUTLIS_BINARY_O_1_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, u)))
+#define PPUTLIS_BINARY_O_1_BIN  1
+#define PPUTLIS_BINARY_O_1_DEC  0
+#define PPUTLIS_BINARY_O_0(...) 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2814,15 +2858,15 @@
 /// PTL_IS_DECIMAL(foo)           // 0
 /// PTL_IS_DECIMAL(0b0000000000u) // 0
 /// PTL_IS_DECIMAL(0b1111111111u) // 0
-#define PTL_IS_DECIMAL(...) /* -> bool */ PPUTLIS_DECIMAL_O(PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_DECIMAL(...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_DECIMAL_O_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_DECIMAL_O(b)      PTL_CAT(PPUTLIS_DECIMAL_OO_, b)
-#define PPUTLIS_DECIMAL_OO_1(u)   PTL_CAT(PPUTLIS_DECIMAL_OO_1_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, u)))
-#define PPUTLIS_DECIMAL_OO_1_BIN  0
-#define PPUTLIS_DECIMAL_OO_1_DEC  1
-#define PPUTLIS_DECIMAL_OO_0(...) 0
+#define PPUTLIS_DECIMAL_O_1(u)   PTL_CAT(PPUTLIS_DECIMAL_O_1_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, u)))
+#define PPUTLIS_DECIMAL_O_1_BIN  0
+#define PPUTLIS_DECIMAL_O_1_DEC  1
+#define PPUTLIS_DECIMAL_O_0(...) 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2977,11 +3021,6 @@
 #define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ \
   PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))),   \
          (PTL_NOT(PTL_REST(__VA_ARGS__))))
-
-/// [bitwise.bitnot]
-/// ----------------
-/// bitwise NOT.
-#define PTL_BITNOT(/* v: binary */...) /* -> ~v */ PTL_IF(__VA_ARGS__, (0), (1))
 
 // vim: fdm=marker:fmr={{{,}}}
 

@@ -40,6 +40,7 @@ decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
 decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
 
+namespace impl {
 static std::string
 log2(unsigned n) {
   if (n == 0)
@@ -85,6 +86,7 @@ static std::string
 binary_str(std::array<std::string, conf::uint_bits> const& n) {
   return "0b" + utl::cat(n) + "u";
 }
+} // namespace impl
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "uint type (0 through " + uint_max_s + ")."
@@ -122,36 +124,40 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     std::size_t _ = 0;
     std::size_t n = 0;
     for (; _ < (detail::uint_traits.size() / 2) - 1; ++_, ++n) {
-      auto bin               = binary(n);
+      auto bin               = impl::binary(n);
       detail::uint_traits[_] = def{"traits_" + std::to_string(n)} = [&] {
-        return utl::cat(
-            std::array{std::string{"DEC"}, binary_str(bin), log2(n), sqrt(n), factors(n)}, ",");
+        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin), impl::log2(n),
+                                   impl::sqrt(n), impl::factors(n)},
+                        ",");
       };
     }
     {
-      auto bin                 = binary(n);
+      auto bin                 = impl::binary(n);
       detail::uint_traits[_++] = def{"traits_" + std::to_string(n)} = [&] {
         docs << "type, binary, log2, sqrt, factors";
-        return utl::cat(
-            std::array{std::string{"DEC"}, binary_str(bin), log2(n), sqrt(n), factors(n)}, ",");
+        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin), impl::log2(n),
+                                   impl::sqrt(n), impl::factors(n)},
+                        ",");
       };
     }
 
     n = 0;
     for (; _ < detail::uint_traits.size() - 1; ++_, ++n) {
-      auto bin               = binary(n);
-      detail::uint_traits[_] = def{"traits_\\" + binary_str(bin)} = [&] {
+      auto bin               = impl::binary(n);
+      detail::uint_traits[_] = def{"traits_\\" + impl::binary_str(bin)} = [&] {
         return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
-                                   pp::tup(utl::cat(bin, ", ")), binary_str(bitnot(bin))},
+                                   pp::tup(utl::cat(bin, ", ")),
+                                   impl::binary_str(impl::bitnot(bin))},
                         ",");
       };
     }
     {
-      auto bin               = binary(n);
-      detail::uint_traits[_] = def{"traits_\\" + binary_str(bin)} = [&] {
+      auto bin               = impl::binary(n);
+      detail::uint_traits[_] = def{"traits_\\" + impl::binary_str(bin)} = [&] {
         docs << "type, decimal, bits, bitnot";
         return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
-                                   pp::tup(utl::cat(bin, ", ")), binary_str(bitnot(bin))},
+                                   pp::tup(utl::cat(bin, ", ")),
+                                   impl::binary_str(impl::bitnot(bin))},
                         ",");
       };
     }

@@ -26,16 +26,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "codegen.h"
-// #include "config.h"
-// #include "lang.h"
-// #include "traits.h"
-// #include "type.h"
-// 
-// namespace api {
-// 
+#include "bitwise.h"
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+#include "traits.h"
+#include "type.h"
+
+namespace api {
+
 // inline codegen::category<"numeric"> numeric;
-// 
+
 // extern codegen::def<"inc(...: n: uint) -> uint{n + 1}"> const&            inc;
 // extern codegen::def<"dec(...: n: uint) -> uint{n - 1}"> const&            dec;
 // extern codegen::def<"eqz(...: n: uint) -> uint{n == 0}"> const&           eqz;
@@ -52,9 +53,7 @@
 // extern codegen::def<"mod32(...: n: uint) -> uint{n % 32}"> const&         mod32;
 // extern codegen::def<"mod64(...: n: uint) -> uint{n % 64}"> const&         mod64;
 // extern codegen::def<"factor(...: n: uint) -> ...prime_factors(n)"> const& factor;
-// extern codegen::def<"binary(...: n: uint) -> binary"> const&              binary;
-// extern codegen::def<"decimal(...: n: binary) -> uint"> const&             decimal;
-// 
+
 // NIFTY_DECL(inc);
 // NIFTY_DECL(dec);
 // namespace detail {
@@ -75,9 +74,7 @@
 // NIFTY_DECL(mod32);
 // NIFTY_DECL(mod64);
 // NIFTY_DECL(factor);
-// NIFTY_DECL(binary);
-// NIFTY_DECL(decimal);
-// 
+
 // inline codegen::end_category<"numeric"> numeric_end;
-// 
-// } // namespace api
+
+} // namespace api
