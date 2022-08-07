@@ -67,15 +67,19 @@ constexpr char const impl_prefix[]{"PPUTL"};
 constexpr std::array<char const*, 2> impl_shortnames[]{
     {"ropen", "ro"},
     {"rclose", "rc"},
-    {"uint_traits", "utraits"},
+    {"uint_traits", "u"},
 };
 
-// maximum value of a pputl unsigned integer.
-// acts as an upper bound for the number of arguments to many functions.
-constexpr unsigned uint_max = 1023;
-
+// the number of bits in a pputl uint.
+constexpr std::uint8_t uint_bits = 10;
+constexpr unsigned     uint_max  = ([] {
+  unsigned res{1};
+  for (unsigned i = 0; i < uint_bits; ++i)
+    res *= 2;
+  return res - 1;
+})();
 // needed for documentation and tests
-static_assert(uint_max >= 7);
+static_assert(uint_bits >= 4);
 
 // set the case of pputl names.
 constexpr enum class name_case {
@@ -131,17 +135,10 @@ constexpr char const project_header[]{
     "//    -----                                                                   //\n"
     "//                                                                            //\n"
     "//    pputl is a powerful C++ preprocessor utilities library that provides    //\n"
-    "//    many high-level programming constructs including unsigned arithmetic    //\n"
-    "//    and comparisons,  logic,  control flow,  generation, transformation,    //\n"
-    "//    reduction, function binding, overloading, and range selection. pputl    //\n"
-    "//    is  completely  generated  by a  custom  framework  that  transforms    //\n"
-    "//    shorthand signatures and library invocations into macros, tests, and    //\n"
-    "//    documentation.                                                          //\n"
-    "//                                                                            //\n"
-    "//    pputl makes use of recursion to the maximum extent possible to limit    //\n"
-    "//    the number of macro definitions for the configured unsigned maximum.    //\n"
-    "//    See range.split and algo.reduce for useful examples of the two types    //\n"
-    "//    of recursive calls supported by this library.                           //\n"
+    "//    many high-level programming constructs and a 10-bit unsigned integer    //\n"
+    "//    space. Algorithms are built using a preprocessor syntax manipulation    //\n"
+    "//    technique that constructs in-place recursive call stacks and execute    //\n"
+    "//    much faster than mutually-recursive methods.                            //\n"
     "//                                                                            //\n"
     "//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //\n"
     "//    support (which are guaranteed by C++20)  but has no dependencies and    //\n"
@@ -149,11 +146,15 @@ constexpr char const project_header[]{
     "//                                                                            //\n"
     "//    USAGE                                                                   //\n"
     "//    -----                                                                   //\n"
-    "//    Copy pputl.h and include. The default build defines a 10bit unsigned    //\n"
-    "//    type  that  underflows and overflows  according to standard unsigned    //\n"
-    "//    rules.  Variadic argument sizes are usually  capped by the uint max.    //\n"
-    "//    Modify the head of codegen/codegen.h  and make  to set a custom uint    //\n"
-    "//    maximum or change the symbol naming rules.                              //\n"
+    "//    Copy pputl.h and include.                                               //\n"
+    "//                                                                            //\n"
+    "//    pputl is generated and tested by a custom C++ framework that defines    //\n"
+    "//    a shorthand syntax  to assign scoped names to macro definitions. The    //\n"
+    "//    head of  codegen/codegen.h  contains various configurable properties    //\n"
+    "//    including the unsigned maximum and macro naming rules and prefixes.     //\n"
+    "//                                                                            //\n"
+    "//    See  codegen/api  for examples of how to use the framework to create    //\n"
+    "//    custom features. Run `make` to regenerate the library.                  //\n"
     "//                                                                            //\n"
     "//    GUIDELINES                                                              //\n"
     "//    ----------                                                              //\n"
@@ -873,6 +874,9 @@ class def_base {
   /// the current feature category. set by a codegen::category definition.
   static inline std::string _cur_category{};
 
+  /// the current clang_format preference.
+  static inline bool _cur_clang_format{true};
+
   struct instance {
     /// a copy of the exec_stack at the time of creation.
     /// ensures that no two macros defined in different places have the same ID.
@@ -892,6 +896,10 @@ class def_base {
 
     /// the line number of the definition used for documentation and errors.
     detail::source_location const source_loc;
+
+    /// whether or not the macro should be formatted.
+    /// modified by clang_format = false in macro body;
+    bool const clang_format;
 
     /// a vector of child instances. assigned by children.
     std::vector<instance*> children{};
@@ -948,6 +956,7 @@ class def_base {
  public:
   friend class tests;
   friend class docs;
+  friend class clang_format;
   template<detail::string_literal Name>
     requires(not Name.empty())
   friend class category;
@@ -1037,6 +1046,15 @@ inline class tests {
  public:
   expected operator<<(std::string const& actual) const;
 } tests{};
+
+inline class clang_format {
+ public:
+  // set clang_format for all macros defined after a clang_format= statement.
+  // default is true. set true again after setting false within the same body.
+  //
+  // must be used within macro body (only disable formatting for impl macros)
+  void operator=(bool on) const;
+} clang_format{};
 
 /// create an example.
 /// ex:

@@ -743,7 +743,7 @@ struct def_base::instance*
 def_base::get_instance() {
   /// the empty instance to be returned on macro default constructions.
   static struct instance default_instance {
-    .context = {}, .id = {}, .category = {}, .name = {}, .source_loc = {},
+    .context = {}, .id = {}, .category = {}, .name = {}, .source_loc = {}, .clang_format = {},
   };
   return &default_instance;
 }
@@ -798,11 +798,12 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
 
   // insert after parent (if any), and return
   auto res = &*_instances.insert(ins_it, instance{
-                                             .context    = _exec_stack,
-                                             .id         = id,
-                                             .category   = _cur_category,
-                                             .name       = name,
-                                             .source_loc = loc,
+                                             .context      = _exec_stack,
+                                             .id           = id,
+                                             .category     = _cur_category,
+                                             .name         = name,
+                                             .source_loc   = loc,
+                                             .clang_format = _cur_clang_format,
                                          });
   return res;
 }
@@ -874,7 +875,8 @@ skip_spaces(char const* s) {
 
 std::string
 def_base::synopsis() {
-  std::string                                                    res{};
+  std::string                                                    summary{"# Synopsis\n\n"};
+  std::string                                                    details{};
   std::unordered_map<std::string, std::vector<struct instance*>> by_category{};
   for (auto&& v : _instances) {
     if (v.category.empty())
@@ -892,36 +894,59 @@ def_base::synopsis() {
     seen_categories.insert(v);
     if (not by_category.contains(v))
       throw std::logic_error{"mismatch between defined categories and instance-derived categories"};
-    res += "[" + v + "]\n\n";
+    summary += "## [" + v + "](#" + v + ")\n\n";
+    details += "[" + v + "]\n\n";
     for (auto&& inst : by_category[v]) {
-      if (not inst->description.empty())
-        res += utl::prefix_lines("/// ", inst->description) + "\n";
-      res += inst->id;
+      if (inst->description.empty())
+        throw std::logic_error{"must provide a description for macro " + inst->id};
+      std::string desc_firstln{};
+      for (auto&& v : inst->description) {
+        if (v == '\n')
+          break;
+        desc_firstln += v;
+      }
+      if (desc_firstln.back() != '.')
+        desc_firstln.push_back('.');
+      summary += "- [" + inst->name + "](#" + inst->name + "): " + desc_firstln + "\n";
+      details += utl::prefix_lines("/// ", inst->description) + "\n";
+      details += inst->id;
       if (inst->params) {
         if (inst->docparams) {
-          res += "(" + *inst->docparams + *inst->params + ")";
+          details += "(" + *inst->docparams + ")";
         } else {
-          res += "(" + *inst->params + ")";
+          details += "(" + *inst->params + ")";
         }
       }
-      res += "\n\n";
+      details += "\n\n";
     }
+    summary += "\n";
   }
-  if (not res.empty())
-    res.pop_back();
-  if (not res.empty())
-    res.pop_back();
-  return res;
+  if (not details.empty())
+    details.pop_back();
+  if (not details.empty())
+    details.pop_back();
+  return summary + "\n" + details;
 }
 
 std::string
 def_base::definitions() {
   std::string res{};
   instance*   fdm_end{nullptr};
+  bool        last_clang_format = true;
   for (auto&& v : _instances) {
     if (not v.definition)
       throw std::runtime_error{"macro " + v.id + " missing definition"};
-    res += *v.definition + "\n";
+
+    {
+      if (last_clang_format and not v.clang_format)
+        res += "\n// clang-format off\n";
+      else if (not last_clang_format and v.clang_format)
+        res += "\n// clang-format on\n";
+      last_clang_format = v.clang_format;
+
+      res += *v.definition + "\n";
+    }
+
     static auto buf = utl::ii << [&] {
       std::array<std::string, 73> dashes;
       for (std::size_t i = 0; i < 73; ++i) {
@@ -1073,6 +1098,30 @@ tests::expected::operator=(example_tag const& expected) const {
 tests::expected
 tests::operator<<(std::string const& actual) const {
   return expected{actual};
+}
+
+void
+clang_format::operator=(bool on) const {
+  if (def_base::_exec_stack.empty())
+    throw std::runtime_error{"cannot use clang_format outside of a macro body"};
+  static def_base::instance* off_setter{nullptr};
+  if (def_base::_cur_clang_format == on)
+    throw std::runtime_error{"clang_format must only be toggled. redundant setting: "
+                             + std::to_string(on)};
+
+  if (on) {
+    if (off_setter == nullptr)
+      throw std::runtime_error{"cannot set clang_format on without setting off first"};
+    if (def_base::_exec_stack.back() != off_setter)
+      throw std::runtime_error{
+          "setting clang_format on from a different macro than the off setter: "
+          + def_base::_exec_stack.back()->id + " != " + off_setter->id};
+    def_base::_cur_clang_format = true;
+    off_setter                  = nullptr;
+  } else {
+    def_base::_cur_clang_format = false;
+    off_setter                  = def_base::_exec_stack.back();
+  }
 }
 
 void

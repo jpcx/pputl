@@ -35,9 +35,11 @@ inline codegen::category<"config"> config;
 inline std::string const uint_max_s{std::to_string(codegen::conf::uint_max)};
 
 extern codegen::def<"build -> <c++ int>"> const& build;
+extern codegen::def<"uint_bits -> uint"> const&  uint_bits;
 extern codegen::def<"uint_max -> uint"> const&   uint_max;
 
 NIFTY_DECL(build);
+NIFTY_DECL(uint_bits);
 NIFTY_DECL(uint_max);
 
 inline codegen::end_category<"config"> config_end;

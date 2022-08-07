@@ -57,7 +57,7 @@ main() {
          << def_base::assertions() << '\n';
   } // namespace std::filesystem;
 
-  /* printf("%s\n", macro::synopsis().c_str()); */
+  printf("%s\n", def_base::synopsis().c_str());
 
   system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
 
@@ -94,23 +94,31 @@ main() {
         skip,
       } mode{find};
       bool prev_line_was_comment{false};
+      bool clang_format{true};
       for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+        if (line == "// clang-format off") {
+          clang_format = false;
+        } else if (line == "// clang-format on") {
+          clang_format = true;
+        }
         if (line[0] == '/' and line[1] == '/') {
           prev_line_was_comment = true;
         } else {
-          auto last_char = last_nonspace_char(formatted);
-          if (mode == find) {
-            if ((last_char != '\\' and last_char != ',') and line.size() > col_lim) {
-              if (not prev_line_was_comment)
-                formatted += '\n';
-              mode = skip;
-            }
-          } else {
-            if (line.size() <= col_lim) {
-              if (last_char != '\\' and last_char != ',')
+          if (clang_format) {
+            auto last_char = last_nonspace_char(formatted);
+            if (mode == find) {
+              if ((last_char != '\\' and last_char != ',') and line.size() > col_lim) {
                 if (not prev_line_was_comment)
                   formatted += '\n';
-              mode = find;
+                mode = skip;
+              }
+            } else {
+              if (line.size() <= col_lim) {
+                if (last_char != '\\' and last_char != ',')
+                  if (not prev_line_was_comment)
+                    formatted += '\n';
+                mode = find;
+              }
             }
           }
           prev_line_was_comment = false;
@@ -122,6 +130,7 @@ main() {
         std::ofstream lout{conf::lib_output};
         lout << formatted;
       }
+
       system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
     }
   }

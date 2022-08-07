@@ -31,6 +31,7 @@
 #include "control.h"
 #include "lang.h"
 #include "logic.h"
+#include "math.h"
 #include "meta.h"
 #include "numeric.h"
 #include "traits.h"
@@ -40,14 +41,14 @@ namespace api {
 
 inline codegen::category<"compare"> compare;
 
-extern codegen::def<"lt(...: l: uint, r: uint) -> uint{l < r}"> const&   lt;
-extern codegen::def<"gt(...: l: uint, r: uint) -> uint{l > r}"> const&   gt;
-extern codegen::def<"le(...: l: uint, r: uint) -> uint{l <= r}"> const&  le;
-extern codegen::def<"ge(...: l: uint, r: uint) -> uint{l >= r}"> const&  ge;
-extern codegen::def<"eq(...: l: uint, r: uint) -> uint{l == r}"> const&  eq;
-extern codegen::def<"ne(...: l: uint, r: uint) -> uint{l != r}"> const&  ne;
+extern codegen::def<"lt(...: l: uint, r: uint) -> uint{l < r}"> const&          lt;
+extern codegen::def<"gt(...: l: uint, r: uint) -> uint{l > r}"> const&          gt;
+extern codegen::def<"le(...: l: uint, r: uint) -> uint{l <= r}"> const&         le;
+extern codegen::def<"ge(...: l: uint, r: uint) -> uint{l >= r}"> const&         ge;
+extern codegen::def<"eq(...: l: uint, r: uint) -> uint{l == r}"> const&         eq;
+extern codegen::def<"ne(...: l: uint, r: uint) -> uint{l != r}"> const&         ne;
 extern codegen::def<"min(...: l: uint, r: uint) -> uint{l < r ? l : r}"> const& min;
-extern codegen::def<"max(...: l: uint, r: uint) -> uint{l > r ? r : l}"> const& max;
+extern codegen::def<"max(...: l: uint, r: uint) -> uint{l > r ? l : r}"> const& max;
 
 NIFTY_DECL(lt);
 NIFTY_DECL(gt);

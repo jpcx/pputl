@@ -41,17 +41,10 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many high-level programming constructs including unsigned arithmetic    //
-//    and comparisons,  logic,  control flow,  generation, transformation,    //
-//    reduction, function binding, overloading, and range selection. pputl    //
-//    is  completely  generated  by a  custom  framework  that  transforms    //
-//    shorthand signatures and library invocations into macros, tests, and    //
-//    documentation.                                                          //
-//                                                                            //
-//    pputl makes use of recursion to the maximum extent possible to limit    //
-//    the number of macro definitions for the configured unsigned maximum.    //
-//    See range.split and algo.reduce for useful examples of the two types    //
-//    of recursive calls supported by this library.                           //
+//    many high-level programming constructs and a 10-bit unsigned integer    //
+//    space. Algorithms are built using a preprocessor syntax manipulation    //
+//    technique that constructs in-place recursive call stacks and execute    //
+//    much faster than mutually-recursive methods.                            //
 //                                                                            //
 //    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //
 //    support (which are guaranteed by C++20)  but has no dependencies and    //
@@ -59,11 +52,15 @@
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
-//    Copy pputl.h and include. The default build defines a 10bit unsigned    //
-//    type  that  underflows and overflows  according to standard unsigned    //
-//    rules.  Variadic argument sizes are usually  capped by the uint max.    //
-//    Modify the head of codegen/codegen.h  and make  to set a custom uint    //
-//    maximum or change the symbol naming rules.                              //
+//    Copy pputl.h and include.                                               //
+//                                                                            //
+//    pputl is generated and tested by a custom C++ framework that defines    //
+//    a shorthand syntax  to assign scoped names to macro definitions. The    //
+//    head of  codegen/codegen.h  contains various configurable properties    //
+//    including the unsigned maximum and macro naming rules and prefixes.     //
+//                                                                            //
+//    See  codegen/api  for examples of how to use the framework to create    //
+//    custom features. Run `make` to regenerate the library.                  //
 //                                                                            //
 //    GUIDELINES                                                              //
 //    ----------                                                              //
@@ -231,6 +228,19 @@ ASSERT_PP_EQ((PTL_IS_SOME(, a)), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, a, )), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, , a)), (1));
 
+ASSERT_PP_EQ((PTL_SIZE()), (0));
+ASSERT_PP_EQ((PTL_SIZE(a)), (1));
+ASSERT_PP_EQ((PTL_SIZE(a, b)), (2));
+ASSERT_PP_EQ((PTL_SIZE(, )), (2));
+ASSERT_PP_EQ((PTL_SIZE(a, b, c)), (3));
+ASSERT_PP_EQ((PTL_SIZE(, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , )), (1023));
+ASSERT_PP_EQ((PTL_SIZE(, , )), (3));
+ASSERT_PP_EQ((PTL_SIZE(a, )), (2));
+ASSERT_PP_EQ((PTL_SIZE(a, , )), (3));
+ASSERT_PP_EQ((PTL_SIZE(, a)), (2));
+ASSERT_PP_EQ((PTL_SIZE(, a, )), (3));
+ASSERT_PP_EQ((PTL_SIZE(, , a)), (3));
+
 ASSERT_PP_EQ((PTL_IS_TUPLE()), (0));
 ASSERT_PP_EQ((PTL_IS_TUPLE(1, 2)), (0));
 ASSERT_PP_EQ((PTL_IS_TUPLE(())), (1));
@@ -300,19 +310,6 @@ ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
 ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
 ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
 
-ASSERT_PP_EQ((PTL_SIZE()), (0));
-ASSERT_PP_EQ((PTL_SIZE(a)), (1));
-ASSERT_PP_EQ((PTL_SIZE(a, b)), (2));
-ASSERT_PP_EQ((PTL_SIZE(, )), (2));
-ASSERT_PP_EQ((PTL_SIZE(a, b, c)), (3));
-ASSERT_PP_EQ((PTL_SIZE(, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , )), (1023));
-ASSERT_PP_EQ((PTL_SIZE(, , )), (3));
-ASSERT_PP_EQ((PTL_SIZE(a, )), (2));
-ASSERT_PP_EQ((PTL_SIZE(a, , )), (3));
-ASSERT_PP_EQ((PTL_SIZE(, a)), (2));
-ASSERT_PP_EQ((PTL_SIZE(, a, )), (3));
-ASSERT_PP_EQ((PTL_SIZE(, , a)), (3));
-
 ASSERT_PP_EQ((PTL_INC(1023)), (0));
 ASSERT_PP_EQ((PTL_INC(0)), (1));
 ASSERT_PP_EQ((PTL_INC(1)), (2));
@@ -330,13 +327,11 @@ ASSERT_PP_EQ((PTL_EQZ(1023)), (0));
 ASSERT_PP_EQ((PTL_EQZ(1)), (0));
 ASSERT_PP_EQ((PTL_EQZ(2)), (0));
 ASSERT_PP_EQ((PTL_EQZ(1023)), (0));
-ASSERT_PP_EQ((PTL_EQZ(PTL_INC(1023))), (1));
 
 ASSERT_PP_EQ((PTL_NEZ(0)), (0));
 ASSERT_PP_EQ((PTL_NEZ(1023)), (1));
 ASSERT_PP_EQ((PTL_NEZ(1)), (1));
 ASSERT_PP_EQ((PTL_NEZ(2)), (1));
-ASSERT_PP_EQ((PTL_NEZ(PTL_INC(1023))), (0));
 
 ASSERT_PP_EQ((PTL_MUL2(0)), (0));
 ASSERT_PP_EQ((PTL_MUL2(511)), (1022));
@@ -382,6 +377,26 @@ ASSERT_PP_EQ((PTL_MOD64(1023)), (63));
 ASSERT_PP_EQ((PTL_FACTOR(341)), (11, 31));
 ASSERT_PP_EQ((PTL_FACTOR(1023)), (3, 11, 31));
 
+ASSERT_PP_EQ((PTL_BINARY(5)), ((0, 0, 0, 0, 0, 0, 0, 1, 0, 1)));
+ASSERT_PP_EQ((PTL_BINARY(1023)), ((1, 1, 1, 1, 1, 1, 1, 1, 1, 1)));
+ASSERT_PP_EQ((PTL_BINARY(0)), ((0, 0, 0, 0, 0, 0, 0, 0, 0, 0)));
+ASSERT_PP_EQ((PTL_BINARY(1)), ((0, 0, 0, 0, 0, 0, 0, 0, 0, 1)));
+ASSERT_PP_EQ((PTL_BINARY(2)), ((0, 0, 0, 0, 0, 0, 0, 0, 1, 0)));
+ASSERT_PP_EQ((PTL_BINARY(3)), ((0, 0, 0, 0, 0, 0, 0, 0, 1, 1)));
+ASSERT_PP_EQ((PTL_BINARY(4)), ((0, 0, 0, 0, 0, 0, 0, 1, 0, 0)));
+ASSERT_PP_EQ((PTL_BINARY(6)), ((0, 0, 0, 0, 0, 0, 0, 1, 1, 0)));
+ASSERT_PP_EQ((PTL_BINARY(7)), ((0, 0, 0, 0, 0, 0, 0, 1, 1, 1)));
+
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 1, 0, 1))), (5));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 0, 0, 0))), (0));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 0, 0, 1))), (1));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 0, 1, 0))), (2));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 0, 1, 1))), (3));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 1, 0, 0))), (4));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 1, 1, 0))), (6));
+ASSERT_PP_EQ((PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 1, 1, 1))), (7));
+ASSERT_PP_EQ((PTL_DECIMAL((1, 1, 1, 1, 1, 1, 1, 1, 1, 1))), (1023));
+
 ASSERT_PP_EQ((PTL_ID()), ());
 ASSERT_PP_EQ((PTL_ID(foo)), (foo));
 ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
@@ -397,14 +412,19 @@ ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))), (2));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), (3));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, ))), (1023));
 
+ASSERT_PP_EQ((PTL_STR(PTL_ROPEN(0, PTL_INC) 0 PTL_RCLOSE(0))), ("0"));
+ASSERT_PP_EQ((PTL_STR(PTL_ROPEN(1, PTL_INC) 0 PTL_RCLOSE(1))), ("PTL_INC ( 0 )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ROPEN(2, PTL_INC) 0 PTL_RCLOSE(2))), ("PTL_INC ( PTL_INC ( 0 ) )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ROPEN(3, PTL_INC) 0 PTL_RCLOSE(3))), ("PTL_INC ( PTL_INC ( PTL_INC ( 0 ) ) )"));
+ASSERT_PP_EQ((PTL_ID(PTL_ROPEN(3, PTL_INC) 0 PTL_RCLOSE(3))), (3));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(0, PTL_ESC) PTL_XCT PTL_RCLOSE(0)))), (1));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(1, PTL_ESC) PTL_XCT PTL_RCLOSE(1)))), (2));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(2, PTL_ESC) PTL_XCT PTL_RCLOSE(2)))), (3));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(3, PTL_ESC) PTL_XCT PTL_RCLOSE(3)))), (4));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(1022, PTL_ESC) PTL_XCT PTL_RCLOSE(1022)))), (1023));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(4, PTL_ESC) PTL_XCT PTL_RCLOSE(4)))), (5));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(5, PTL_ESC) PTL_XCT PTL_RCLOSE(5)))), (6));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(6, PTL_ESC) PTL_XCT PTL_RCLOSE(6)))), (7));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ID(PTL_ROPEN(1022, PTL_ESC) PTL_XCT PTL_RCLOSE(1022)))), (1023));
 
 ASSERT_PP_EQ((PTL_IF(1, (t), ())), (t));
 ASSERT_PP_EQ((PTL_IF(0, (t), ())), ());
@@ -477,12 +497,27 @@ ASSERT_PP_EQ((PTL_SUB(1, 3)), (1022));
 ASSERT_PP_EQ((PTL_SUB(0, 1023)), (1));
 ASSERT_PP_EQ((PTL_SUB(1023, 0)), (1023));
 ASSERT_PP_EQ((PTL_SUB(1023, 1)), (1022));
+ASSERT_PP_EQ((PTL_SUB(359, 966)), (417));
+ASSERT_PP_EQ((PTL_SUB(105, 115)), (1014));
+ASSERT_PP_EQ((PTL_SUB(81, 255)), (850));
+ASSERT_PP_EQ((PTL_SUB(74, 236)), (862));
+ASSERT_PP_EQ((PTL_SUB(809, 205)), (604));
 
 ASSERT_PP_EQ((PTL_MUL(0, 0)), (0));
 ASSERT_PP_EQ((PTL_MUL(0, 1)), (0));
 ASSERT_PP_EQ((PTL_MUL(1, 1)), (1));
 ASSERT_PP_EQ((PTL_MUL(1, 2)), (2));
 ASSERT_PP_EQ((PTL_MUL(2, 2)), (4));
+ASSERT_PP_EQ((PTL_MUL(1023, 1)), (1023));
+ASSERT_PP_EQ((PTL_MUL(1023, 1023)), (1));
+ASSERT_PP_EQ((PTL_MUL(186, 939)), (574));
+ASSERT_PP_EQ((PTL_MUL(498, 763)), (70));
+ASSERT_PP_EQ((PTL_MUL(483, 326)), (786));
+ASSERT_PP_EQ((PTL_MUL(124, 706)), (504));
+ASSERT_PP_EQ((PTL_MUL(84, 1016)), (352));
+
+ASSERT_PP_EQ((PTL_FULLDIV(6, 3)), (2, 0));
+ASSERT_PP_EQ((PTL_FULLDIV(7, 4)), (1, 3));
 
 ASSERT_PP_EQ((PTL_LT(0, 0)), (0));
 ASSERT_PP_EQ((PTL_LT(0, 1)), (1));
@@ -516,6 +551,11 @@ ASSERT_PP_EQ((PTL_LT(1023, 1023)), (0));
 ASSERT_PP_EQ((PTL_LT(1023, 1022)), (0));
 ASSERT_PP_EQ((PTL_LT(1022, 1023)), (1));
 ASSERT_PP_EQ((PTL_LT(1022, 1022)), (0));
+ASSERT_PP_EQ((PTL_LT(795, 488)), (0));
+ASSERT_PP_EQ((PTL_LT(487, 909)), (1));
+ASSERT_PP_EQ((PTL_LT(886, 346)), (0));
+ASSERT_PP_EQ((PTL_LT(302, 611)), (1));
+ASSERT_PP_EQ((PTL_LT(563, 927)), (1));
 
 ASSERT_PP_EQ((PTL_GT(0, 0)), (0));
 ASSERT_PP_EQ((PTL_GT(0, 1)), (0));

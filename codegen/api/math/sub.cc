@@ -31,6 +31,10 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(sub_impl) sub_impl = NIFTY_DEF(sub_impl);
+}
+
 decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
   docs << "uint subtraction with underflow.";
 
@@ -45,12 +49,27 @@ decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
   tests << sub(max, 0) = uint_max_s;
   tests << sub(max, 1) = std::to_string(max - 1);
   tests << sub(0, max) = "1" >> docs;
+  for (int _ = 0; _ < 5; ++_) {
+    int a              = std::rand() % (max + 1);
+    int b              = std::rand() % (max + 1);
+    tests << sub(a, b) = std::to_string(((max + 1) + (a - b)) % (max + 1));
+  }
 
   def<"x(...)"> x = [&](va args) {
     return args;
   };
 
-  return meta_recur(x, rest(args), dec, first(args));
+  def<"recur(...)"> recur = [&](va args) {
+    return def<"recur(v, uflow)">{[&](arg v, arg uflow) {
+      return dec(v) + ", " + or_(uflow, eqz(v));
+    }}(args);
+  };
+
+  detail::sub_impl = def{"impl(l, r) -> uint, bool"} = [&](arg l, arg r) {
+    return meta_recur(x, r, recur, l, "0");
+  };
+
+  return first(detail::sub_impl(args));
 });
 
 } // namespace api

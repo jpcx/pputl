@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
-  docs << "uint decrement w/ underflow.";
+  docs << "uint decrement lookup w/ underflow.";
 
   tests << dec(0)                  = uint_max_s >> docs;
   tests << dec(1)                  = "0";
@@ -41,9 +41,10 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
   tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[0];
-    }}(args);
+    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
+        [&](pack args) {
+          return args[0];
+        }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 

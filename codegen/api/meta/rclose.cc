@@ -65,15 +65,21 @@ decltype(rclose) rclose = NIFTY_DEF(rclose, [&](va args) {
        << "number of expansions by using two identity functions."
        << "this is necessary to implement mutual recursion.";
 
-  tests << xct_size(id(ropen(0, esc) + " " + xct + " " + rclose(0))) = "1" >> docs;
-  tests << xct_size(id(ropen(1, esc) + " " + xct + " " + rclose(1))) = "2" >> docs;
-  tests << xct_size(id(ropen(2, esc) + " " + xct + " " + rclose(2))) = "3" >> docs;
-  tests << xct_size(id(ropen(3, esc) + " " + xct + " " + rclose(3))) = "4" >> docs;
+  tests << str(ropen(0, inc) + " 0 " + rclose(0)) = pp::str("0") >> docs;
+  tests << str(ropen(1, inc) + " 0 " + rclose(1)) = pp::str(inc + " ( 0 )") >> docs;
+  tests << str(ropen(2, inc) + " 0 " + rclose(2)) = pp::str(inc + " ( " + inc + " ( 0 ) )") >> docs;
+  tests << str(ropen(3, inc) + " 0 " + rclose(3)) =
+      pp::str(inc + " ( " + inc + " ( " + inc + " ( 0 ) ) )") >> docs;
+  tests << id(ropen(3, inc) + " 0 " + rclose(3))                     = "3" >> docs;
+  tests << xct_size(id(ropen(0, esc) + " " + xct + " " + rclose(0))) = "1";
+  tests << xct_size(id(ropen(1, esc) + " " + xct + " " + rclose(1))) = "2";
+  tests << xct_size(id(ropen(2, esc) + " " + xct + " " + rclose(2))) = "3";
+  tests << xct_size(id(ropen(3, esc) + " " + xct + " " + rclose(3))) = "4";
   tests << xct_size(id(ropen(4, esc) + " " + xct + " " + rclose(4))) = "5";
   tests << xct_size(id(ropen(5, esc) + " " + xct + " " + rclose(5))) = "6";
   tests << xct_size(id(ropen(6, esc) + " " + xct + " " + rclose(6))) = "7";
   tests << xct_size(id(ropen(conf::uint_max - 1, esc) + " " + xct + " "
-                       + rclose(conf::uint_max - 1)))                = uint_max_s >> docs;
+                       + rclose(conf::uint_max - 1)))                = uint_max_s;
 
   std::array<def<>, (conf::uint_max + 1) / 4> n{};
 

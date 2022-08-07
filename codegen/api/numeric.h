@@ -52,6 +52,8 @@ extern codegen::def<"mod16(...: n: uint) -> uint{n % 16}"> const&         mod16;
 extern codegen::def<"mod32(...: n: uint) -> uint{n % 32}"> const&         mod32;
 extern codegen::def<"mod64(...: n: uint) -> uint{n % 64}"> const&         mod64;
 extern codegen::def<"factor(...: n: uint) -> ...prime_factors(n)"> const& factor;
+extern codegen::def<"binary(...: n: uint) -> tuple{bool...}"> const&      binary;
+extern codegen::def<"decimal(...: n: tuple{bool...}) -> uint"> const&     decimal;
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);
@@ -73,6 +75,8 @@ NIFTY_DECL(mod16);
 NIFTY_DECL(mod32);
 NIFTY_DECL(mod64);
 NIFTY_DECL(factor);
+NIFTY_DECL(binary);
+NIFTY_DECL(decimal);
 
 inline codegen::end_category<"numeric"> numeric_end;
 

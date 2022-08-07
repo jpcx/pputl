@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(max) max = NIFTY_DEF(max, [&](va args) {
-  docs << "O(logn) uint maximum operation.";
+  docs << "uint maximum operation.";
 
   auto lessmax = std::to_string(conf::uint_max - 1);
 

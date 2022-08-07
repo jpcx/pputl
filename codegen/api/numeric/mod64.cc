@@ -32,15 +32,16 @@ namespace api {
 using namespace codegen;
 
 decltype(mod64) mod64 = NIFTY_DEF(mod64, [&](va args) {
-  docs << "O(1) uint modulo by 64.";
+  docs << "uint modulo by 64 lookup.";
 
   tests << mod64(conf::uint_max / 65) = std::to_string((conf::uint_max / 65) % 64) >> docs;
   tests << mod64(conf::uint_max)      = std::to_string(conf::uint_max % 64) >> docs;
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[12];
-    }}(args);
+    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
+        [&](pack args) {
+          return args[14];
+        }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 

@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(min) min = NIFTY_DEF(min, [&](va args) {
-  docs << "O(logn) uint minimum operation.";
+  docs << "uint minimum operation.";
 
   tests << min("0, 0")                                 = "0" >> docs;
   tests << min("0, 1")                                 = "0" >> docs;

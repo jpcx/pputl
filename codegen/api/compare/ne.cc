@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(ne) ne = NIFTY_DEF(ne, [&](va args) {
-  docs << "O(logn) uint not-equal-to comparison.";
+  docs << "uint not-equal-to comparison.";
 
   tests << eq("0, 0")                                 = "1" >> docs;
   tests << eq("0, 1")                                 = "0" >> docs;

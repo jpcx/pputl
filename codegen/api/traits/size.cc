@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(size) size = NIFTY_DEF(size, [&](va args) {
-  docs << "computes the uint size of args in O(1) time."
+  docs << "O(1) variadic argument size computation."
        << "fails if too many args passed.";
 
   tests << size()                                          = "0" >> docs;

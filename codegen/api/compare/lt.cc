@@ -32,66 +32,49 @@ namespace api {
 using namespace codegen;
 
 decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
-  docs << "O(logn) uint less-than comparison.";
+  docs << "uint less-than comparison.";
 
-  tests << lt("0, 0")                                 = "0" >> docs;
-  tests << lt("0, 1")                                 = "1" >> docs;
-  tests << lt("0, 2")                                 = "1";
-  tests << lt("0, 3")                                 = "1";
-  tests << lt("1, 0")                                 = "0" >> docs;
-  tests << lt("1, 1")                                 = "0" >> docs;
-  tests << lt("1, 2")                                 = "1";
-  tests << lt("1, 3")                                 = "1";
-  tests << lt("2, 0")                                 = "0";
-  tests << lt("2, 1")                                 = "0";
-  tests << lt("2, 2")                                 = "0";
-  tests << lt("2, 3")                                 = "1";
-  tests << lt("3, 0")                                 = "0";
-  tests << lt("3, 1")                                 = "0";
-  tests << lt("3, 2")                                 = "0";
-  tests << lt("3, 3")                                 = "0";
-  tests << lt(0, conf::uint_max)                      = "1";
-  tests << lt(0, conf::uint_max - 1)                  = "1";
-  tests << lt(1, conf::uint_max)                      = "1";
-  tests << lt(1, conf::uint_max - 1)                  = "1";
-  tests << lt(conf::uint_max, 0)                      = "0";
-  tests << lt(conf::uint_max, 0)                      = "0";
-  tests << lt(conf::uint_max - 1, 0)                  = "0";
-  tests << lt(conf::uint_max - 1, 0)                  = "0";
-  tests << lt(conf::uint_max, 1)                      = "0";
-  tests << lt(conf::uint_max, 1)                      = "0";
-  tests << lt(conf::uint_max - 1, 1)                  = "0";
-  tests << lt(conf::uint_max - 1, 1)                  = "0";
-  tests << lt(conf::uint_max, conf::uint_max)         = "0";
-  tests << lt(conf::uint_max, conf::uint_max - 1)     = "0";
-  tests << lt(conf::uint_max - 1, conf::uint_max)     = "1";
-  tests << lt(conf::uint_max - 1, conf::uint_max - 1) = "0";
+  constexpr auto max = conf::uint_max;
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
+  tests << lt("0, 0")           = "0" >> docs;
+  tests << lt("0, 1")           = "1" >> docs;
+  tests << lt("0, 2")           = "1";
+  tests << lt("0, 3")           = "1";
+  tests << lt("1, 0")           = "0" >> docs;
+  tests << lt("1, 1")           = "0" >> docs;
+  tests << lt("1, 2")           = "1";
+  tests << lt("1, 3")           = "1";
+  tests << lt("2, 0")           = "0";
+  tests << lt("2, 1")           = "0";
+  tests << lt("2, 2")           = "0";
+  tests << lt("2, 3")           = "1";
+  tests << lt("3, 0")           = "0";
+  tests << lt("3, 1")           = "0";
+  tests << lt("3, 2")           = "0";
+  tests << lt("3, 3")           = "0";
+  tests << lt(0, max)           = "1";
+  tests << lt(0, max - 1)       = "1";
+  tests << lt(1, max)           = "1";
+  tests << lt(1, max - 1)       = "1";
+  tests << lt(max, 0)           = "0";
+  tests << lt(max, 0)           = "0";
+  tests << lt(max - 1, 0)       = "0";
+  tests << lt(max - 1, 0)       = "0";
+  tests << lt(max, 1)           = "0";
+  tests << lt(max, 1)           = "0";
+  tests << lt(max - 1, 1)       = "0";
+  tests << lt(max - 1, 1)       = "0";
+  tests << lt(max, max)         = "0";
+  tests << lt(max, max - 1)     = "0";
+  tests << lt(max - 1, max)     = "1";
+  tests << lt(max - 1, max - 1) = "0";
+  for (int _ = 0; _ < 5; ++_) {
+    int a             = std::rand() % (max + 1);
+    int b             = std::rand() % (max + 1);
+    tests << lt(a, b) = std::to_string(a < b);
+  }
 
-  def<"recur(...)"> recur = [&](va args) {
-    return def<"x(l, r, ml, mr)">{[&](arg l, arg r, arg ml, arg mr) {
-      return div2(l) + ", " + div2(r) + ", " + ml + ", " + mr;
-    }}(args);
-  };
-
-  def<"res(...)"> res = [&](va args) {
-    return def<"x(l, r, ml, mr)">{[&](arg, arg r, arg ml, arg mr) {
-      return or_(and_(nez(r), nez(dec(r))), and_(eqz(dec(r)), and_(not_(ml), mr)));
-    }}(args);
-  };
-
-  def<"zero_l(l, r)"> zero_l = [&](arg, arg r) {
-    return nez(r);
-  };
-
-  def<"pos_l(l, r)"> pos_l = [&](arg l, arg r) {
-    return res(meta_recur(x, log2(l), recur, l, r, mod2(l), mod2(r)));
-  };
-
-  return pp::call(if_(eqz(first(args)), pp::tup(zero_l), pp::tup(pos_l)), args);
+  return rest(detail::sub_impl(args));
 });
 
 } // namespace api

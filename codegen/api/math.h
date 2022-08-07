@@ -30,21 +30,29 @@
 #include "config.h"
 #include "control.h"
 #include "lang.h"
+#include "logic.h"
 #include "meta.h"
 #include "numeric.h"
+#include "traits.h"
 #include "type.h"
 
 namespace api {
 
 inline codegen::category<"math"> math;
 
-extern codegen::def<"add(...: a: uint, b: uint) -> uint{a + b}"> const& add;
-extern codegen::def<"sub(...: a: uint, b: uint) -> uint{a - b}"> const& sub;
-extern codegen::def<"mul(...: a: uint, b: uint) -> uint{a * b}"> const& mul;
+extern codegen::def<"add(...: l: uint, r: uint) -> uint{l + r}"> const&                  add;
+extern codegen::def<"sub(...: l: uint, r: uint) -> uint{l - r}"> const&                  sub;
+extern codegen::def<"mul(...: l: uint, r: uint) -> uint{l * r}"> const&                  mul;
+extern codegen::def<"fulldiv(...: l: uint, r: uint) -> uint{l / r}, uint{l % r}"> const& fulldiv;
 
 NIFTY_DECL(add);
+namespace detail {
+extern codegen::def<>& sub_impl;
+NIFTY_DECL(sub_impl);
+} // namespace detail
 NIFTY_DECL(sub);
 NIFTY_DECL(mul);
+NIFTY_DECL(fulldiv);
 
 inline codegen::end_category<"math"> math_end;
 

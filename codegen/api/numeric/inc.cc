@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
-  docs << "uint increment w/ overflow.";
+  docs << "uint increment lookup w/ overflow.";
 
   tests << inc(0)                  = "1";
   tests << inc(1)                  = "2";
@@ -41,9 +41,10 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   tests << inc(conf::uint_max - 1) = uint_max_s;
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[1];
-    }}(args);
+    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
+        [&](pack args) {
+          return args[1];
+        }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 

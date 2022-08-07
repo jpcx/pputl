@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(div2) div2 = NIFTY_DEF(div2, [&](va args) {
-  docs << "O(1) uint division by 2.";
+  docs << "uint division by 2 lookup.";
 
   tests << div2(0)              = "0" >> docs;
   tests << div2(1)              = "0";
@@ -41,9 +41,10 @@ decltype(div2) div2 = NIFTY_DEF(div2, [&](va args) {
   tests << div2(conf::uint_max) = std::to_string(conf::uint_max / 2) >> docs;
 
   return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[3];
-    }}(args);
+    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
+        [&](pack args) {
+          return args[3];
+        }}(args);
   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 

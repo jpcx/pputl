@@ -25,35 +25,50 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "math.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(factor) factor = NIFTY_DEF(factor, [&](va args) {
-  docs << "uint prime factorization lookup.";
+// TODO: optimization
 
-  auto                     facts0 = utl::prime_factors(conf::uint_max / 3);
-  auto                     facts1 = utl::prime_factors(conf::uint_max);
-  std::vector<std::string> sfacts0(facts0.size());
-  std::vector<std::string> sfacts1(facts1.size());
-  std::ranges::transform(facts0, std::begin(sfacts0), [](auto&& v) {
-    return std::to_string(v);
-  });
-  std::ranges::transform(facts1, std::begin(sfacts1), [](auto&& v) {
-    return std::to_string(v);
-  });
+decltype(fulldiv) fulldiv = NIFTY_DEF(fulldiv, [&](va args) {
+  docs << "uint division that returns both the quotient and remainder."
+       << "throws an error on division by zero.";
 
-  tests << factor(conf::uint_max / 3) = utl::cat(sfacts0, ", ") >> docs;
-  tests << factor(conf::uint_max)     = utl::cat(sfacts1, ", ") >> docs;
+  tests << fulldiv("6, 3") = "2, 0" >> docs;
+  tests << fulldiv("7, 4") = "1, 3" >> docs;
+  /* tests << fulldiv(conf::uint_max, 7) = */
+  /*     (std::to_string(conf::uint_max / 7) + ", " + std::to_string(conf::uint_max % 7)) >> docs;
+   */
 
-  return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, fact, ...)">{
-        [&](pack args) {
-          return esc + " " + args[15];
-        }}(args);
-  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+  def<"res(...)"> res = [&](va args) {
+    return def<"x(q, r, b)">{[&](arg q, arg r, arg) {
+      return q + ", " + r;
+    }}(args);
+  };
+
+  def<"recur(...)"> recur = [&](va args) {
+    return def<"x(q, r, b)">{[&](arg q, arg r, arg b) {
+      return if_(rest(detail::sub_impl(r, b)), pp::tup(q, r, b), pp::tup(inc(q), sub(r, b), b));
+    }}(args);
+  };
+
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
+
+  def<"zero_b(err, a, b)"> zero_b = [&](arg err, arg, arg) {
+    return fail(err);
+  };
+
+  def<"pos_b(err, a, b)"> pos_b = [&](arg, arg a, arg b) {
+    return res(meta_recur(x, a, recur, "0", a, b));
+  };
+
+  return pp::call(if_(eqz(rest(args)), pp::tup(zero_b), pp::tup(pos_b)),
+                  istr("[" + fulldiv + "] division by zero error : " + args), args);
 });
 
 } // namespace api

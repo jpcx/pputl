@@ -32,23 +32,26 @@ namespace api {
 using namespace codegen;
 
 decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
-  docs << "O(1) positive uint logarithm base 2.";
+  docs << "positive uint logarithm base 2 lookup."
+       << "fails on n=0.";
 
   tests << log2(1) = "0" >> docs;
   tests << log2(conf::uint_max) =
       std::to_string(((unsigned)std::log2(conf::uint_max)) % conf::uint_max) >> docs;
 
-  def<"nez1(...)">{} = [&](va args) {
-    return def<"x(de, in, lg, dv, ml, sq, pw, m2, m4, m8, m16, m32, m64, ...)">{[&](pack args) {
-      return args[2];
-    }}(args);
+  def<"nez1(err, ...)">{} = [&](arg, va args) {
+    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
+        [&](pack args) {
+          return args[2];
+        }}(args);
   };
 
-  def<"nez0(...)"> nez0 = [&](va) {
-    return fail(pp::str("[" + log2 + "] log2 of zero not supported"));
+  def<"nez0(err, ...)"> nez0 = [&](arg err, va) {
+    return fail(err);
   };
 
   return pp::call(cat(utl::slice(nez0, -1), nez(args)),
+                  istr("[" + log2 + "] log2 of zero not supported : " + args),
                   cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
 });
 
