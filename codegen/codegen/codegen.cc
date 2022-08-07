@@ -302,13 +302,27 @@ libname(std::string const& short_name, std::string const& prefix) {
 }
 } // namespace impl
 
+// auto dunder = std::ranges::find(short_name, '_');
+// while (dunder != short_name.end() and *(dunder + 1) != '_')
+//   dunder = std::ranges::find(dunder + 1, short_name.end(), '_');
+// std::string pre_esc{short_name.begin(), dunder};
+// std::string post_esc{dunder + (pre_esc.size() < short_name.size()), short_name.end()};
+
 std::string
 apiname(std::string const& short_name) {
-  return impl::libname(short_name, conf::api_prefix);
+  std::string pre_esc{short_name.begin(), std::ranges::find(short_name, '\\')};
+  std::string post_esc{
+      std::next(short_name.begin(), pre_esc.size() + (pre_esc.size() < short_name.size())),
+      short_name.end()};
+  return impl::libname(pre_esc, conf::api_prefix) + post_esc;
 }
 
 std::string
 implname(std::string short_name) {
+  std::string pre_esc{short_name.begin(), std::ranges::find(short_name, '\\')};
+  std::string post_esc{
+      std::next(short_name.begin(), pre_esc.size() + (pre_esc.size() < short_name.size())),
+      short_name.end()};
   static std::array<std::pair<std::regex, std::string>,
                     (sizeof conf::impl_shortnames) / (sizeof(std::array<char const*, 2>))>
       repls = utl::ii << [&]() -> decltype(repls) {
@@ -320,9 +334,9 @@ implname(std::string short_name) {
   };
 
   for (auto&& [r, s] : repls)
-    short_name = std::regex_replace(short_name, r, s);
+    pre_esc = std::regex_replace(pre_esc, r, s);
 
-  return impl::libname(short_name, conf::impl_prefix);
+  return impl::libname(pre_esc, conf::impl_prefix) + post_esc;
 }
 
 namespace impl {

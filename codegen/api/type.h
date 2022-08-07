@@ -51,16 +51,15 @@ NIFTY_DECL(bool_);
 namespace detail {
 extern codegen::def<>&                                          uint_seq;
 extern codegen::def<>&                                          uint_rseq;
-extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_decimal;
-extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_traits;
-/* extern std::array<codegen::def<>, (codegen::conf::uint_max + 1) * 2>& uint_traits; */
+extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_bintraits;
+extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_dectraits;
 extern codegen::def<>&                                          uint_pass;
 extern codegen::def<>&                                          uint_fail;
 extern codegen::def<>&                                          uint_o;
 NIFTY_DECL(uint_seq);
 NIFTY_DECL(uint_rseq);
-NIFTY_DECL(uint_decimal);
-NIFTY_DECL(uint_traits);
+NIFTY_DECL(uint_bintraits);
+NIFTY_DECL(uint_dectraits);
 NIFTY_DECL(uint_pass);
 NIFTY_DECL(uint_fail);
 NIFTY_DECL(uint_o);

@@ -32,7 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "detects if args is a uint.";
+  docs << "detects if args is a uint."
+       << "binary bit length is fixed at " + uint_bits + " (" + std::to_string(conf::uint_bits)
+              + ").";
+
+  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
+  auto binmax    = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto binwrong0 = binmax;
+  binwrong0.pop_back();
+  auto binwrong1 = "0b110u";
 
   tests << is_uint()                   = "0" >> docs;
   tests << is_uint("foo")              = "0" >> docs;
@@ -41,6 +49,10 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint("(), ()")           = "0" >> docs;
   tests << is_uint(0, 1)               = "0" >> docs;
   tests << is_uint(conf::uint_max)     = "1" >> docs;
+  tests << is_uint(binmin)             = "1" >> docs;
+  tests << is_uint(binmax)             = "1" >> docs;
+  tests << is_uint(binwrong0)          = "0" >> docs;
+  tests << is_uint(binwrong1)          = "0" >> docs;
   tests << is_uint("foo, bar")         = "0";
   tests << is_uint(conf::uint_max - 1) = "1";
   tests << is_uint("0, ")              = "0";

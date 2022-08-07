@@ -81,7 +81,8 @@
 //                                                                            //
 //    uint values are one of two subtypes: decimal or binary.  uint may be    //
 //    constructed from either of these representations.  Binary values are    //
-//    represented using a 0b prefix and are always fixed-size.                //
+//    represented using an '0b' prefix and 'u' suffix and their bit length    //
+//    is always fixed to the configured uint bits.                            //
 //                                                                            //
 //    pputl errors execute  an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
@@ -210,6 +211,8 @@ ASSERT_PP_EQ((PTL_UINT(0)), (0));
 ASSERT_PP_EQ((PTL_UINT(1)), (1));
 ASSERT_PP_EQ((PTL_UINT(2)), (2));
 ASSERT_PP_EQ((PTL_UINT(1023)), (1023));
+ASSERT_PP_EQ((PTL_UINT(0b0000000000u)), (0b0000000000u));
+ASSERT_PP_EQ((PTL_UINT(0b1111111111u)), (0b1111111111u));
 
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
@@ -293,6 +296,10 @@ ASSERT_PP_EQ((PTL_IS_UINT(())), (0));
 ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(0, 1)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(1023)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0b0000000000u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0b1111111111u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0b1111111111)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(foo, bar)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(1022)), (1));
 ASSERT_PP_EQ((PTL_IS_UINT(0, )), (0));

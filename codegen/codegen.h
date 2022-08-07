@@ -67,7 +67,7 @@ constexpr char const impl_prefix[]{"PPUTL"};
 constexpr std::array<char const*, 2> impl_shortnames[]{
     {"ropen", "ro"},
     {"rclose", "rc"},
-    {"uint_traits", "u"},
+    {"uint_traits", "utraits"},
 };
 
 // the number of bits in a pputl uint.
@@ -82,6 +82,7 @@ constexpr unsigned     uint_max  = ([] {
 static_assert(uint_bits >= 4);
 
 // set the case of pputl names.
+// ignores any chars after a backslash.
 constexpr enum class name_case {
   screaming, // SCREAMING_CASE
   snake,     // snake_case
@@ -175,7 +176,8 @@ constexpr char const project_header[]{
     "//                                                                            //\n"
     "//    uint values are one of two subtypes: decimal or binary.  uint may be    //\n"
     "//    constructed from either of these representations.  Binary values are    //\n"
-    "//    represented using a 0b prefix and are always fixed-size.                //\n"
+    "//    represented using an '0b' prefix and 'u' suffix and their bit length    //\n"
+    "//    is always fixed to the configured uint bits.                            //\n"
     "//                                                                            //\n"
     "//    pputl errors execute  an invalid preprocessor operation by using the    //\n"
     "//    concatenation operator (incorrectly) on a string error message.  All    //\n"
@@ -611,7 +613,7 @@ struct signature_literal {
       return {};
 
     return {span_literal{data->begin(), std::ranges::find_if_not(*data, [](char ch) {
-                           return detail::is_alphanum(ch) or ch == '_' or ch == '$';
+                           return detail::is_alphanum(ch) or ch == '_' or ch == '$' or ch == '\\';
                          })}};
   };
 
