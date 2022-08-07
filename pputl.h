@@ -44,51 +44,51 @@
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
 //    many high-level programming constructs and a 10-bit unsigned integer    //
-//    space. Algorithms are built using a preprocessor syntax manipulation    //
-//    technique that constructs in-place recursive call stacks and execute    //
+//    space with binary arithmetic capabilities.                              //
+//                                                                            //
+//    pputl algorithms  are built using a preprocessor syntax manipulation    //
+//    technique for constructing inline recursive call stacks that execute    //
 //    much faster than mutually-recursive methods.                            //
 //                                                                            //
 //    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //
-//    support (which are guaranteed by C++20)  but has no dependencies and    //
-//    is single-header.                                                       //
+//    support (which are guaranteed by C++20) but has no dependencies.        //
+//                                                                            //
+//    pputl  is completely generated and tested by a custom C++ framework.    //
+//    See the codegen/ folder for the full source.                            //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
-//    Copy pputl.h and include.                                               //
+//    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    pputl is generated and tested by a custom C++ framework that defines    //
-//    a shorthand syntax  to assign scoped names to macro definitions. The    //
-//    head of  codegen/codegen.h  contains various configurable properties    //
-//    including the unsigned maximum and macro naming rules and prefixes.     //
+//    Modify the head of codegen/codegen.h  to configure the  unsigned bit    //
+//    size or naming preferences and run `make` to regenerate.                //
 //                                                                            //
-//    See  codegen/api  for examples of how to use the framework to create    //
-//    custom features. Run `make` to regenerate the library.                  //
+//    Run `make test` to validate the library on your system.                 //
 //                                                                            //
-//    GUIDELINES                                                              //
-//    ----------                                                              //
+//    FUNDAMENTALS                                                            //
+//    ------------                                                            //
 //                                                                            //
 //    Non-nullary API functions are fully variadic and chainable such that    //
 //    the outputs of one may be used as inputs to another. Parameters must    //
 //    be fully expanded and distinguishable after the primary expansion.      //
 //                                                                            //
-//    Tuples are used only when necessary;  most functions that operate on    //
-//    data ranges both input and output a variadic argument list. Creating    //
-//    a tuple is trivial but extraction costs an expansion.                   //
+//    Tuples are used only when necessary.  Most functions that operate on    //
+//    generic data ranges  both input and output a variadic argument list.    //
+//    Creating a tuple is trivial but extraction costs an expansion.          //
 //                                                                            //
-//    pputl defines three types: tuple, uint, and bool. Features that use     //
-//    one of these types  in their  parameter documentation  assert their     //
-//    validity by type-casting. Type casts expand to their original value     //
+//    pputl defines three types: tuple, bool, and uint.  Features that use    //
+//    one of  these types  in their  parameter documentation  assert their    //
+//    validity by type-casting.  Type casts expand to their original value    //
 //    if successful, else they trigger a preprocessor error.                  //
 //                                                                            //
-//    pputl errors execute an invalid preprocessor operation by using the     //
-//    concatenation operator (incorrectly) on a string error message. All     //
-//    errors  triggered by pputl functions  will include  the macro name,     //
-//    a textual description, and the primary expansion arguments.             //
+//    uint values are one of two subtypes: decimal or binary.  uint may be    //
+//    constructed from either of these representations.  Binary values are    //
+//    represented using a 0b prefix and are always fixed-size.                //
 //                                                                            //
-//    TESTING                                                                 //
-//    -------                                                                 //
-//    pputl  is statically tested by the build system.  Run `make test` to   ///
-//    validate the library or open tests.cc in an LSP-enabled editor.       ////
+//    pputl errors execute  an invalid preprocessor operation by using the    //
+//    concatenation operator (incorrectly) on a string error message.  All    //
+//    errors  triggered by  pputl functions  will include  the macro name,   ///
+//    a textual description, and the primary expansion arguments.           ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -142,11 +142,40 @@
 ///
 /// PTL_CAT(foo, bar)          // foobar
 /// PTL_CAT(foo, PTL_EAT(bar)) // foo
-#define PTL_CAT(/* a: any, b: any */...) /* -> a##b */ __VA_OPT__(PPUTLCAT_X(__VA_ARGS__))
+#define PTL_CAT(/* [a]: any, [b]: any */...) /* -> a##b */ __VA_OPT__(PPUTLCAT_X(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLCAT_X(a, b) a##b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [lang.trycat]
+/// -------------
+/// concatenates two args after an expansion.
+/// returns default if either arg is a tuple.
+///
+/// args must either be compatible with the ## operator
+/// or be tuples. several tokens are incompatible with
+/// the ## operator that cannot be detected; tuples are
+/// the only detectible fail condition.
+///
+/// PTL_TRYCAT(foo, bar)          // foobar
+/// PTL_TRYCAT(foo, PTL_EAT(bar)) // foo
+/// PTL_TRYCAT(foo, (bar))        // <nothing>
+/// PTL_TRYCAT(foo, (bar), err)   // err
+#define PTL_TRYCAT(/* [a]: any, [b]: any, [default=]: any... */...) /* -> a##b | default */ \
+  __VA_OPT__(PPUTLTRYCAT_O(__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLTRYCAT_O(a, b, ...)           PPUTLTRYCAT_OO_CHK(PTL_EAT a)
+#define PPUTLTRYCAT_OO_CHK(...)            PPUTLTRYCAT_OO##__VA_OPT__(_NO)##_FAIL
+#define PPUTLTRYCAT_OO_NO_FAIL(a, b, ...)  PPUTLTRYCAT_OOO_CHK(PTL_EAT b)
+#define PPUTLTRYCAT_OO_FAIL(a, b, ...)     PPUTLTRYCAT_OOO_FAIL
+#define PPUTLTRYCAT_OOO_CHK(...)           PPUTLTRYCAT_OOO##__VA_OPT__(_NO)##_FAIL
+#define PPUTLTRYCAT_OOO_NO_FAIL(a, b, ...) a##b
+#define PPUTLTRYCAT_OOO_FAIL(a, b, ...)    __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -247,7 +276,7 @@
 ///
 /// PTL_TUPLE(())     // ()
 /// PTL_TUPLE((1, 2)) // (1, 2)
-#define PTL_TUPLE(/* t: any... */...) /* -> tuple{t} */ \
+#define PTL_TUPLE(/* t: tuple */...) /* -> t */ \
   PPUTLTUPLE_O(PTL_EAT __VA_ARGS__)(PTL_ISTR([PTL_TUPLE] invalid tuple : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -268,8 +297,8 @@
 ///
 /// PTL_BOOL(0) // 0
 /// PTL_BOOL(1) // 1
-#define PTL_BOOL(/* b: any... */...) /* -> bool{b} */ \
-  PPUTLBOOL_O(__VA_ARGS__.)                           \
+#define PTL_BOOL(/* b: bool */...) /* -> b */ \
+  PPUTLBOOL_O(__VA_ARGS__.)                   \
   (__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_BOOL] invalid bool : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -306,12 +335,14 @@
 /// uint type (0 through 1023).
 /// expands to n if valid, else fails.
 ///
+/// constructible from binary or decimal.
+///
 /// PTL_UINT(0)    // 0
 /// PTL_UINT(1)    // 1
 /// PTL_UINT(2)    // 2
 /// PTL_UINT(1023) // 1023
-#define PTL_UINT(/* n: any... */...) /* -> uint{n} */ \
-  PPUTLUINT_O(__VA_ARGS__.)                           \
+#define PTL_UINT(/* n: uint */...) /* -> n */ \
+  PPUTLUINT_O(__VA_ARGS__.)                   \
   (__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_UINT] invalid uint : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -2773,305 +2804,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [numeric.inc]
-/// -------------
-/// uint increment lookup w/ overflow.
-///
-/// PTL_INC(1023) // 0
-#define PTL_INC(/* n: uint */...) /* -> uint{n + 1} */ \
-  PPUTLINC_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLINC_X(...) PPUTLINC_XX(__VA_ARGS__)
-
-#define PPUTLINC_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) in
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.dec]
-/// -------------
-/// uint decrement lookup w/ underflow.
-///
-/// PTL_DEC(0) // 1023
-#define PTL_DEC(/* n: uint */...) /* -> uint{n - 1} */ \
-  PPUTLDEC_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLDEC_X(...) PPUTLDEC_XX(__VA_ARGS__)
-
-#define PPUTLDEC_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) de
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.eqz]
-/// -------------
-/// uint zero detection.
-///
-/// PTL_EQZ(0)    // 1
-/// PTL_EQZ(1023) // 0
-#define PTL_EQZ(/* n: uint */...) /* -> uint{n == 0} */ \
-  PTL_IS_NONE(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLEQZ_0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.nez]
-/// -------------
-/// uint non-zero detection.
-///
-/// PTL_NEZ(0)    // 0
-/// PTL_NEZ(1023) // 1
-#define PTL_NEZ(/* n: uint */...) /* -> uint{n != 0} */ \
-  PTL_IS_SOME(PTL_CAT(PPUTLEQZ_, PTL_UINT(__VA_ARGS__)))
-
-/// [numeric.mul2]
-/// --------------
-/// uint multiplication by 2 lookup with overflow.
-///
-/// PTL_MUL2(0)   // 0
-/// PTL_MUL2(511) // 1022
-#define PTL_MUL2(/* n: uint */...) /* -> uint{n * 2} */ \
-  PPUTLMUL2_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMUL2_X(...) PPUTLMUL2_XX(__VA_ARGS__)
-
-#define PPUTLMUL2_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) ml
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.sqrt]
-/// --------------
-/// uint sqrt lookup.
-///
-/// PTL_SQRT(4)    // 2
-/// PTL_SQRT(1023) // 31
-#define PTL_SQRT(/* n: uint */...) /* -> uint{sqrt(n)} */ \
-  PPUTLSQRT_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLSQRT_X(...) PPUTLSQRT_XX(__VA_ARGS__)
-
-#define PPUTLSQRT_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) sq
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.pow2]
-/// --------------
-/// uint pow2 lookup with overflow.
-///
-/// PTL_POW2(31)  // 961
-/// PTL_POW2(255) // 513
-#define PTL_POW2(/* n: uint */...) /* -> uint{n * n} */ \
-  PPUTLPOW2_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLPOW2_X(...) PPUTLPOW2_XX(__VA_ARGS__)
-
-#define PPUTLPOW2_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) pw
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.div2]
-/// --------------
-/// uint division by 2 lookup.
-///
-/// PTL_DIV2(0)    // 0
-/// PTL_DIV2(1023) // 511
-#define PTL_DIV2(/* n: uint */...) /* -> uint{n / 2} */ \
-  PPUTLDIV2_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLDIV2_X(...) PPUTLDIV2_XX(__VA_ARGS__)
-
-#define PPUTLDIV2_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) dv
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.log2]
-/// --------------
-/// positive uint logarithm base 2 lookup.
-/// fails on n=0.
-///
-/// PTL_LOG2(1)    // 0
-/// PTL_LOG2(1023) // 9
-#define PTL_LOG2(/* n: uint */...) /* -> uint{log2 n} */ \
-  PTL_CAT(PPUTLLOG2_NEZ, PTL_NEZ(__VA_ARGS__))           \
-  (PTL_ISTR([PTL_LOG2] log2 of zero not supported        \
-            : __VA_ARGS__),                              \
-   PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLLOG2_NEZ0(err, ...) PTL_FAIL(err)
-#define PPUTLLOG2_NEZ1(err, ...) PPUTLLOG2_NEZ1_X(__VA_ARGS__)
-
-#define PPUTLLOG2_NEZ1_X(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) lg
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.mod2]
-/// --------------
-/// uint modulo by 2 lookup.
-///
-/// PTL_MOD2(341)  // 1
-/// PTL_MOD2(1023) // 1
-#define PTL_MOD2(/* n: uint */...) /* -> uint{n % 2} */ \
-  PPUTLMOD2_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMOD2_X(...) PPUTLMOD2_XX(__VA_ARGS__)
-
-#define PPUTLMOD2_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) m2
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.mod4]
-/// --------------
-/// uint modulo by 4 lookup.
-///
-/// PTL_MOD4(204)  // 0
-/// PTL_MOD4(1023) // 3
-#define PTL_MOD4(/* n: uint */...) /* -> uint{n % 4} */ \
-  PPUTLMOD4_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMOD4_X(...) PPUTLMOD4_XX(__VA_ARGS__)
-
-#define PPUTLMOD4_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) m4
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.mod8]
-/// --------------
-/// uint modulo by 8 lookup.
-///
-/// PTL_MOD8(113)  // 1
-/// PTL_MOD8(1023) // 7
-#define PTL_MOD8(/* n: uint */...) /* -> uint{n % 8} */ \
-  PPUTLMOD8_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMOD8_X(...) PPUTLMOD8_XX(__VA_ARGS__)
-
-#define PPUTLMOD8_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) m8
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.mod16]
-/// ---------------
-/// uint modulo by 16 lookup.
-///
-/// PTL_MOD16(60)   // 12
-/// PTL_MOD16(1023) // 15
-#define PTL_MOD16(/* n: uint */...) /* -> uint{n % 16} */ \
-  PPUTLMOD16_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMOD16_X(...) PPUTLMOD16_XX(__VA_ARGS__)
-
-#define PPUTLMOD16_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) m16
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.mod32]
-/// ---------------
-/// uint modulo by 32 lookup.
-///
-/// PTL_MOD32(60)   // 28
-/// PTL_MOD32(1023) // 31
-#define PTL_MOD32(/* n: uint */...) /* -> uint{n % 32} */ \
-  PPUTLMOD32_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMOD32_X(...) PPUTLMOD32_XX(__VA_ARGS__)
-
-#define PPUTLMOD32_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) m32
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.mod64]
-/// ---------------
-/// uint modulo by 64 lookup.
-///
-/// PTL_MOD64(15)   // 15
-/// PTL_MOD64(1023) // 63
-#define PTL_MOD64(/* n: uint */...) /* -> uint{n % 64} */ \
-  PPUTLMOD64_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMOD64_X(...) PPUTLMOD64_XX(__VA_ARGS__)
-
-#define PPUTLMOD64_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...) m64
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.factor]
-/// ----------------
-/// uint prime factorization lookup.
-///
-/// PTL_FACTOR(341)  // 11, 31
-/// PTL_FACTOR(1023) // 3, 11, 31
-#define PTL_FACTOR(/* n: uint */...) /* -> ...prime_factors(n) */ \
-  PPUTLFACTOR_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLFACTOR_X(...) PPUTLFACTOR_XX(__VA_ARGS__)
-#define PPUTLFACTOR_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, fact, ...) \
-  PTL_ESC fact
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.binary]
-/// ----------------
-/// uint binary lookup.
-///
-/// PTL_BINARY(5)    // (0, 0, 0, 0, 0, 0, 0, 1, 0, 1)
-/// PTL_BINARY(1023) // (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-#define PTL_BINARY(/* n: uint */...) /* -> tuple{bool...} */ \
-  PPUTLBINARY_X(PTL_CAT(PPUTLU_, PTL_UINT(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBINARY_X(...) PPUTLBINARY_XX(__VA_ARGS__)
-#define PPUTLBINARY_XX(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, fact, bin) \
-  PPUTLBINARY_RES bin
-#define PPUTLBINARY_RES(a, b, c, d, e, f, g, h, i, j) (a, b, c, d, e, f, g, h, i, j)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [numeric.decimal]
-/// -----------------
-/// uint decimal from binary lookup.
-/// number of bits must equal PTL_UINT_BITS (10).
-///
-/// PTL_DECIMAL((0, 0, 0, 0, 0, 0, 0, 1, 0, 1)) // 5
-#define PTL_DECIMAL(/* n: tuple{bool...} */...) /* -> uint */ PPUTLDECIMAL_X(PTL_TUPLE(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLDECIMAL_X(...) PPUTLDECIMAL_RES __VA_ARGS__
-#define PPUTLDECIMAL_RES(a, b, c, d, e, f, g, h, i, j) \
-  PPUTLUINT_DECIMAL_##a##b##c##d##e##f##g##h##i##j
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [meta.id]
 /// ---------
 /// identity function. performs one expansion.
@@ -3128,617 +2860,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.ropen]
-/// ------------
-/// constructs an in-place recursive expression.
-/// the result must be expanded once to execute.
-///
-/// must be followed by an rclose expression with
-/// the same value of n.
-///
-/// ropen repeats the function and open parens;
-/// rclose repeats the close parens.
-///
-/// it is necessary to split the syntax of this
-/// operation into two separate function calls, as
-/// neither call can expand the target args without
-/// risking expansion termination. this structure
-/// allows recursive operations to process data
-/// obtained from other recursive operations.
-///
-/// example:
-///   madd(a, b) = add(a, b), b
-///   mul(a, b)  = first(id(ropen(a, madd) 0, b rclose(a)))
-///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
-///             -> first(madd(madd(0, 4)))
-///             -> first(madd(4, 4))
-///             -> first(8, 4)
-///             -> 8
-///
-/// neither f nor the final expansion function may be
-/// invoked anywhere within the recursive operation
-/// (and both functions must be distinct).
-///
-/// this operation can be used to perform an arbitrary
-/// number of expansions by using two identity functions.
-/// this is necessary to implement mutual recursion.
-#define PTL_ROPEN(/* n: uint, f: <fn> */...) /* -> 'f lp'{n} */ PPUTLRO_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLRO_X(n, f) PTL_CAT(PPUTLRO_X_, PTL_MOD4(n))(n, f)
-#define PPUTLRO_X_3(n, f) \
-  f PTL_LP() f PTL_LP() f PTL_LP() PTL_CAT(PPUTLRO_, PTL_DIV2(PTL_DIV2(n)))(f)
-#define PPUTLRO_X_2(n, f) f PTL_LP() f PTL_LP() PTL_CAT(PPUTLRO_, PTL_DIV2(PTL_DIV2(n)))(f)
-#define PPUTLRO_X_1(n, f) f PTL_LP() PTL_CAT(PPUTLRO_, PTL_DIV2(PTL_DIV2(PTL_DEC(n))))(f)
-#define PPUTLRO_X_0(n, f) PTL_CAT(PPUTLRO_, PTL_DIV2(PTL_DIV2(n)))(f)
-#define PPUTLRO_255(f)    PPUTLRO_63(f) PPUTLRO_64(f) PPUTLRO_64(f) PPUTLRO_64(f)
-#define PPUTLRO_254(f)    PPUTLRO_63(f) PPUTLRO_63(f) PPUTLRO_64(f) PPUTLRO_64(f)
-#define PPUTLRO_253(f)    PPUTLRO_63(f) PPUTLRO_63(f) PPUTLRO_63(f) PPUTLRO_64(f)
-#define PPUTLRO_252(f)    PPUTLRO_63(f) PPUTLRO_63(f) PPUTLRO_63(f) PPUTLRO_63(f)
-#define PPUTLRO_251(f)    PPUTLRO_62(f) PPUTLRO_63(f) PPUTLRO_63(f) PPUTLRO_63(f)
-#define PPUTLRO_250(f)    PPUTLRO_62(f) PPUTLRO_62(f) PPUTLRO_63(f) PPUTLRO_63(f)
-#define PPUTLRO_249(f)    PPUTLRO_62(f) PPUTLRO_62(f) PPUTLRO_62(f) PPUTLRO_63(f)
-#define PPUTLRO_248(f)    PPUTLRO_62(f) PPUTLRO_62(f) PPUTLRO_62(f) PPUTLRO_62(f)
-#define PPUTLRO_247(f)    PPUTLRO_61(f) PPUTLRO_62(f) PPUTLRO_62(f) PPUTLRO_62(f)
-#define PPUTLRO_246(f)    PPUTLRO_61(f) PPUTLRO_61(f) PPUTLRO_62(f) PPUTLRO_62(f)
-#define PPUTLRO_245(f)    PPUTLRO_61(f) PPUTLRO_61(f) PPUTLRO_61(f) PPUTLRO_62(f)
-#define PPUTLRO_244(f)    PPUTLRO_61(f) PPUTLRO_61(f) PPUTLRO_61(f) PPUTLRO_61(f)
-#define PPUTLRO_243(f)    PPUTLRO_60(f) PPUTLRO_61(f) PPUTLRO_61(f) PPUTLRO_61(f)
-#define PPUTLRO_242(f)    PPUTLRO_60(f) PPUTLRO_60(f) PPUTLRO_61(f) PPUTLRO_61(f)
-#define PPUTLRO_241(f)    PPUTLRO_60(f) PPUTLRO_60(f) PPUTLRO_60(f) PPUTLRO_61(f)
-#define PPUTLRO_240(f)    PPUTLRO_60(f) PPUTLRO_60(f) PPUTLRO_60(f) PPUTLRO_60(f)
-#define PPUTLRO_239(f)    PPUTLRO_59(f) PPUTLRO_60(f) PPUTLRO_60(f) PPUTLRO_60(f)
-#define PPUTLRO_238(f)    PPUTLRO_59(f) PPUTLRO_59(f) PPUTLRO_60(f) PPUTLRO_60(f)
-#define PPUTLRO_237(f)    PPUTLRO_59(f) PPUTLRO_59(f) PPUTLRO_59(f) PPUTLRO_60(f)
-#define PPUTLRO_236(f)    PPUTLRO_59(f) PPUTLRO_59(f) PPUTLRO_59(f) PPUTLRO_59(f)
-#define PPUTLRO_235(f)    PPUTLRO_58(f) PPUTLRO_59(f) PPUTLRO_59(f) PPUTLRO_59(f)
-#define PPUTLRO_234(f)    PPUTLRO_58(f) PPUTLRO_58(f) PPUTLRO_59(f) PPUTLRO_59(f)
-#define PPUTLRO_233(f)    PPUTLRO_58(f) PPUTLRO_58(f) PPUTLRO_58(f) PPUTLRO_59(f)
-#define PPUTLRO_232(f)    PPUTLRO_58(f) PPUTLRO_58(f) PPUTLRO_58(f) PPUTLRO_58(f)
-#define PPUTLRO_231(f)    PPUTLRO_57(f) PPUTLRO_58(f) PPUTLRO_58(f) PPUTLRO_58(f)
-#define PPUTLRO_230(f)    PPUTLRO_57(f) PPUTLRO_57(f) PPUTLRO_58(f) PPUTLRO_58(f)
-#define PPUTLRO_229(f)    PPUTLRO_57(f) PPUTLRO_57(f) PPUTLRO_57(f) PPUTLRO_58(f)
-#define PPUTLRO_228(f)    PPUTLRO_57(f) PPUTLRO_57(f) PPUTLRO_57(f) PPUTLRO_57(f)
-#define PPUTLRO_227(f)    PPUTLRO_56(f) PPUTLRO_57(f) PPUTLRO_57(f) PPUTLRO_57(f)
-#define PPUTLRO_226(f)    PPUTLRO_56(f) PPUTLRO_56(f) PPUTLRO_57(f) PPUTLRO_57(f)
-#define PPUTLRO_225(f)    PPUTLRO_56(f) PPUTLRO_56(f) PPUTLRO_56(f) PPUTLRO_57(f)
-#define PPUTLRO_224(f)    PPUTLRO_56(f) PPUTLRO_56(f) PPUTLRO_56(f) PPUTLRO_56(f)
-#define PPUTLRO_223(f)    PPUTLRO_55(f) PPUTLRO_56(f) PPUTLRO_56(f) PPUTLRO_56(f)
-#define PPUTLRO_222(f)    PPUTLRO_55(f) PPUTLRO_55(f) PPUTLRO_56(f) PPUTLRO_56(f)
-#define PPUTLRO_221(f)    PPUTLRO_55(f) PPUTLRO_55(f) PPUTLRO_55(f) PPUTLRO_56(f)
-#define PPUTLRO_220(f)    PPUTLRO_55(f) PPUTLRO_55(f) PPUTLRO_55(f) PPUTLRO_55(f)
-#define PPUTLRO_219(f)    PPUTLRO_54(f) PPUTLRO_55(f) PPUTLRO_55(f) PPUTLRO_55(f)
-#define PPUTLRO_218(f)    PPUTLRO_54(f) PPUTLRO_54(f) PPUTLRO_55(f) PPUTLRO_55(f)
-#define PPUTLRO_217(f)    PPUTLRO_54(f) PPUTLRO_54(f) PPUTLRO_54(f) PPUTLRO_55(f)
-#define PPUTLRO_216(f)    PPUTLRO_54(f) PPUTLRO_54(f) PPUTLRO_54(f) PPUTLRO_54(f)
-#define PPUTLRO_215(f)    PPUTLRO_53(f) PPUTLRO_54(f) PPUTLRO_54(f) PPUTLRO_54(f)
-#define PPUTLRO_214(f)    PPUTLRO_53(f) PPUTLRO_53(f) PPUTLRO_54(f) PPUTLRO_54(f)
-#define PPUTLRO_213(f)    PPUTLRO_53(f) PPUTLRO_53(f) PPUTLRO_53(f) PPUTLRO_54(f)
-#define PPUTLRO_212(f)    PPUTLRO_53(f) PPUTLRO_53(f) PPUTLRO_53(f) PPUTLRO_53(f)
-#define PPUTLRO_211(f)    PPUTLRO_52(f) PPUTLRO_53(f) PPUTLRO_53(f) PPUTLRO_53(f)
-#define PPUTLRO_210(f)    PPUTLRO_52(f) PPUTLRO_52(f) PPUTLRO_53(f) PPUTLRO_53(f)
-#define PPUTLRO_209(f)    PPUTLRO_52(f) PPUTLRO_52(f) PPUTLRO_52(f) PPUTLRO_53(f)
-#define PPUTLRO_208(f)    PPUTLRO_52(f) PPUTLRO_52(f) PPUTLRO_52(f) PPUTLRO_52(f)
-#define PPUTLRO_207(f)    PPUTLRO_51(f) PPUTLRO_52(f) PPUTLRO_52(f) PPUTLRO_52(f)
-#define PPUTLRO_206(f)    PPUTLRO_51(f) PPUTLRO_51(f) PPUTLRO_52(f) PPUTLRO_52(f)
-#define PPUTLRO_205(f)    PPUTLRO_51(f) PPUTLRO_51(f) PPUTLRO_51(f) PPUTLRO_52(f)
-#define PPUTLRO_204(f)    PPUTLRO_51(f) PPUTLRO_51(f) PPUTLRO_51(f) PPUTLRO_51(f)
-#define PPUTLRO_203(f)    PPUTLRO_50(f) PPUTLRO_51(f) PPUTLRO_51(f) PPUTLRO_51(f)
-#define PPUTLRO_202(f)    PPUTLRO_50(f) PPUTLRO_50(f) PPUTLRO_51(f) PPUTLRO_51(f)
-#define PPUTLRO_201(f)    PPUTLRO_50(f) PPUTLRO_50(f) PPUTLRO_50(f) PPUTLRO_51(f)
-#define PPUTLRO_200(f)    PPUTLRO_50(f) PPUTLRO_50(f) PPUTLRO_50(f) PPUTLRO_50(f)
-#define PPUTLRO_199(f)    PPUTLRO_49(f) PPUTLRO_50(f) PPUTLRO_50(f) PPUTLRO_50(f)
-#define PPUTLRO_198(f)    PPUTLRO_49(f) PPUTLRO_49(f) PPUTLRO_50(f) PPUTLRO_50(f)
-#define PPUTLRO_197(f)    PPUTLRO_49(f) PPUTLRO_49(f) PPUTLRO_49(f) PPUTLRO_50(f)
-#define PPUTLRO_196(f)    PPUTLRO_49(f) PPUTLRO_49(f) PPUTLRO_49(f) PPUTLRO_49(f)
-#define PPUTLRO_195(f)    PPUTLRO_48(f) PPUTLRO_49(f) PPUTLRO_49(f) PPUTLRO_49(f)
-#define PPUTLRO_194(f)    PPUTLRO_48(f) PPUTLRO_48(f) PPUTLRO_49(f) PPUTLRO_49(f)
-#define PPUTLRO_193(f)    PPUTLRO_48(f) PPUTLRO_48(f) PPUTLRO_48(f) PPUTLRO_49(f)
-#define PPUTLRO_192(f)    PPUTLRO_48(f) PPUTLRO_48(f) PPUTLRO_48(f) PPUTLRO_48(f)
-#define PPUTLRO_191(f)    PPUTLRO_47(f) PPUTLRO_48(f) PPUTLRO_48(f) PPUTLRO_48(f)
-#define PPUTLRO_190(f)    PPUTLRO_47(f) PPUTLRO_47(f) PPUTLRO_48(f) PPUTLRO_48(f)
-#define PPUTLRO_189(f)    PPUTLRO_47(f) PPUTLRO_47(f) PPUTLRO_47(f) PPUTLRO_48(f)
-#define PPUTLRO_188(f)    PPUTLRO_47(f) PPUTLRO_47(f) PPUTLRO_47(f) PPUTLRO_47(f)
-#define PPUTLRO_187(f)    PPUTLRO_46(f) PPUTLRO_47(f) PPUTLRO_47(f) PPUTLRO_47(f)
-#define PPUTLRO_186(f)    PPUTLRO_46(f) PPUTLRO_46(f) PPUTLRO_47(f) PPUTLRO_47(f)
-#define PPUTLRO_185(f)    PPUTLRO_46(f) PPUTLRO_46(f) PPUTLRO_46(f) PPUTLRO_47(f)
-#define PPUTLRO_184(f)    PPUTLRO_46(f) PPUTLRO_46(f) PPUTLRO_46(f) PPUTLRO_46(f)
-#define PPUTLRO_183(f)    PPUTLRO_45(f) PPUTLRO_46(f) PPUTLRO_46(f) PPUTLRO_46(f)
-#define PPUTLRO_182(f)    PPUTLRO_45(f) PPUTLRO_45(f) PPUTLRO_46(f) PPUTLRO_46(f)
-#define PPUTLRO_181(f)    PPUTLRO_45(f) PPUTLRO_45(f) PPUTLRO_45(f) PPUTLRO_46(f)
-#define PPUTLRO_180(f)    PPUTLRO_45(f) PPUTLRO_45(f) PPUTLRO_45(f) PPUTLRO_45(f)
-#define PPUTLRO_179(f)    PPUTLRO_44(f) PPUTLRO_45(f) PPUTLRO_45(f) PPUTLRO_45(f)
-#define PPUTLRO_178(f)    PPUTLRO_44(f) PPUTLRO_44(f) PPUTLRO_45(f) PPUTLRO_45(f)
-#define PPUTLRO_177(f)    PPUTLRO_44(f) PPUTLRO_44(f) PPUTLRO_44(f) PPUTLRO_45(f)
-#define PPUTLRO_176(f)    PPUTLRO_44(f) PPUTLRO_44(f) PPUTLRO_44(f) PPUTLRO_44(f)
-#define PPUTLRO_175(f)    PPUTLRO_43(f) PPUTLRO_44(f) PPUTLRO_44(f) PPUTLRO_44(f)
-#define PPUTLRO_174(f)    PPUTLRO_43(f) PPUTLRO_43(f) PPUTLRO_44(f) PPUTLRO_44(f)
-#define PPUTLRO_173(f)    PPUTLRO_43(f) PPUTLRO_43(f) PPUTLRO_43(f) PPUTLRO_44(f)
-#define PPUTLRO_172(f)    PPUTLRO_43(f) PPUTLRO_43(f) PPUTLRO_43(f) PPUTLRO_43(f)
-#define PPUTLRO_171(f)    PPUTLRO_42(f) PPUTLRO_43(f) PPUTLRO_43(f) PPUTLRO_43(f)
-#define PPUTLRO_170(f)    PPUTLRO_42(f) PPUTLRO_42(f) PPUTLRO_43(f) PPUTLRO_43(f)
-#define PPUTLRO_169(f)    PPUTLRO_42(f) PPUTLRO_42(f) PPUTLRO_42(f) PPUTLRO_43(f)
-#define PPUTLRO_168(f)    PPUTLRO_42(f) PPUTLRO_42(f) PPUTLRO_42(f) PPUTLRO_42(f)
-#define PPUTLRO_167(f)    PPUTLRO_41(f) PPUTLRO_42(f) PPUTLRO_42(f) PPUTLRO_42(f)
-#define PPUTLRO_166(f)    PPUTLRO_41(f) PPUTLRO_41(f) PPUTLRO_42(f) PPUTLRO_42(f)
-#define PPUTLRO_165(f)    PPUTLRO_41(f) PPUTLRO_41(f) PPUTLRO_41(f) PPUTLRO_42(f)
-#define PPUTLRO_164(f)    PPUTLRO_41(f) PPUTLRO_41(f) PPUTLRO_41(f) PPUTLRO_41(f)
-#define PPUTLRO_163(f)    PPUTLRO_40(f) PPUTLRO_41(f) PPUTLRO_41(f) PPUTLRO_41(f)
-#define PPUTLRO_162(f)    PPUTLRO_40(f) PPUTLRO_40(f) PPUTLRO_41(f) PPUTLRO_41(f)
-#define PPUTLRO_161(f)    PPUTLRO_40(f) PPUTLRO_40(f) PPUTLRO_40(f) PPUTLRO_41(f)
-#define PPUTLRO_160(f)    PPUTLRO_40(f) PPUTLRO_40(f) PPUTLRO_40(f) PPUTLRO_40(f)
-#define PPUTLRO_159(f)    PPUTLRO_39(f) PPUTLRO_40(f) PPUTLRO_40(f) PPUTLRO_40(f)
-#define PPUTLRO_158(f)    PPUTLRO_39(f) PPUTLRO_39(f) PPUTLRO_40(f) PPUTLRO_40(f)
-#define PPUTLRO_157(f)    PPUTLRO_39(f) PPUTLRO_39(f) PPUTLRO_39(f) PPUTLRO_40(f)
-#define PPUTLRO_156(f)    PPUTLRO_39(f) PPUTLRO_39(f) PPUTLRO_39(f) PPUTLRO_39(f)
-#define PPUTLRO_155(f)    PPUTLRO_38(f) PPUTLRO_39(f) PPUTLRO_39(f) PPUTLRO_39(f)
-#define PPUTLRO_154(f)    PPUTLRO_38(f) PPUTLRO_38(f) PPUTLRO_39(f) PPUTLRO_39(f)
-#define PPUTLRO_153(f)    PPUTLRO_38(f) PPUTLRO_38(f) PPUTLRO_38(f) PPUTLRO_39(f)
-#define PPUTLRO_152(f)    PPUTLRO_38(f) PPUTLRO_38(f) PPUTLRO_38(f) PPUTLRO_38(f)
-#define PPUTLRO_151(f)    PPUTLRO_37(f) PPUTLRO_38(f) PPUTLRO_38(f) PPUTLRO_38(f)
-#define PPUTLRO_150(f)    PPUTLRO_37(f) PPUTLRO_37(f) PPUTLRO_38(f) PPUTLRO_38(f)
-#define PPUTLRO_149(f)    PPUTLRO_37(f) PPUTLRO_37(f) PPUTLRO_37(f) PPUTLRO_38(f)
-#define PPUTLRO_148(f)    PPUTLRO_37(f) PPUTLRO_37(f) PPUTLRO_37(f) PPUTLRO_37(f)
-#define PPUTLRO_147(f)    PPUTLRO_36(f) PPUTLRO_37(f) PPUTLRO_37(f) PPUTLRO_37(f)
-#define PPUTLRO_146(f)    PPUTLRO_36(f) PPUTLRO_36(f) PPUTLRO_37(f) PPUTLRO_37(f)
-#define PPUTLRO_145(f)    PPUTLRO_36(f) PPUTLRO_36(f) PPUTLRO_36(f) PPUTLRO_37(f)
-#define PPUTLRO_144(f)    PPUTLRO_36(f) PPUTLRO_36(f) PPUTLRO_36(f) PPUTLRO_36(f)
-#define PPUTLRO_143(f)    PPUTLRO_35(f) PPUTLRO_36(f) PPUTLRO_36(f) PPUTLRO_36(f)
-#define PPUTLRO_142(f)    PPUTLRO_35(f) PPUTLRO_35(f) PPUTLRO_36(f) PPUTLRO_36(f)
-#define PPUTLRO_141(f)    PPUTLRO_35(f) PPUTLRO_35(f) PPUTLRO_35(f) PPUTLRO_36(f)
-#define PPUTLRO_140(f)    PPUTLRO_35(f) PPUTLRO_35(f) PPUTLRO_35(f) PPUTLRO_35(f)
-#define PPUTLRO_139(f)    PPUTLRO_34(f) PPUTLRO_35(f) PPUTLRO_35(f) PPUTLRO_35(f)
-#define PPUTLRO_138(f)    PPUTLRO_34(f) PPUTLRO_34(f) PPUTLRO_35(f) PPUTLRO_35(f)
-#define PPUTLRO_137(f)    PPUTLRO_34(f) PPUTLRO_34(f) PPUTLRO_34(f) PPUTLRO_35(f)
-#define PPUTLRO_136(f)    PPUTLRO_34(f) PPUTLRO_34(f) PPUTLRO_34(f) PPUTLRO_34(f)
-#define PPUTLRO_135(f)    PPUTLRO_33(f) PPUTLRO_34(f) PPUTLRO_34(f) PPUTLRO_34(f)
-#define PPUTLRO_134(f)    PPUTLRO_33(f) PPUTLRO_33(f) PPUTLRO_34(f) PPUTLRO_34(f)
-#define PPUTLRO_133(f)    PPUTLRO_33(f) PPUTLRO_33(f) PPUTLRO_33(f) PPUTLRO_34(f)
-#define PPUTLRO_132(f)    PPUTLRO_33(f) PPUTLRO_33(f) PPUTLRO_33(f) PPUTLRO_33(f)
-#define PPUTLRO_131(f)    PPUTLRO_32(f) PPUTLRO_33(f) PPUTLRO_33(f) PPUTLRO_33(f)
-#define PPUTLRO_130(f)    PPUTLRO_32(f) PPUTLRO_32(f) PPUTLRO_33(f) PPUTLRO_33(f)
-#define PPUTLRO_129(f)    PPUTLRO_32(f) PPUTLRO_32(f) PPUTLRO_32(f) PPUTLRO_33(f)
-#define PPUTLRO_128(f)    PPUTLRO_32(f) PPUTLRO_32(f) PPUTLRO_32(f) PPUTLRO_32(f)
-#define PPUTLRO_127(f)    PPUTLRO_31(f) PPUTLRO_32(f) PPUTLRO_32(f) PPUTLRO_32(f)
-#define PPUTLRO_126(f)    PPUTLRO_31(f) PPUTLRO_31(f) PPUTLRO_32(f) PPUTLRO_32(f)
-#define PPUTLRO_125(f)    PPUTLRO_31(f) PPUTLRO_31(f) PPUTLRO_31(f) PPUTLRO_32(f)
-#define PPUTLRO_124(f)    PPUTLRO_31(f) PPUTLRO_31(f) PPUTLRO_31(f) PPUTLRO_31(f)
-#define PPUTLRO_123(f)    PPUTLRO_30(f) PPUTLRO_31(f) PPUTLRO_31(f) PPUTLRO_31(f)
-#define PPUTLRO_122(f)    PPUTLRO_30(f) PPUTLRO_30(f) PPUTLRO_31(f) PPUTLRO_31(f)
-#define PPUTLRO_121(f)    PPUTLRO_30(f) PPUTLRO_30(f) PPUTLRO_30(f) PPUTLRO_31(f)
-#define PPUTLRO_120(f)    PPUTLRO_30(f) PPUTLRO_30(f) PPUTLRO_30(f) PPUTLRO_30(f)
-#define PPUTLRO_119(f)    PPUTLRO_29(f) PPUTLRO_30(f) PPUTLRO_30(f) PPUTLRO_30(f)
-#define PPUTLRO_118(f)    PPUTLRO_29(f) PPUTLRO_29(f) PPUTLRO_30(f) PPUTLRO_30(f)
-#define PPUTLRO_117(f)    PPUTLRO_29(f) PPUTLRO_29(f) PPUTLRO_29(f) PPUTLRO_30(f)
-#define PPUTLRO_116(f)    PPUTLRO_29(f) PPUTLRO_29(f) PPUTLRO_29(f) PPUTLRO_29(f)
-#define PPUTLRO_115(f)    PPUTLRO_28(f) PPUTLRO_29(f) PPUTLRO_29(f) PPUTLRO_29(f)
-#define PPUTLRO_114(f)    PPUTLRO_28(f) PPUTLRO_28(f) PPUTLRO_29(f) PPUTLRO_29(f)
-#define PPUTLRO_113(f)    PPUTLRO_28(f) PPUTLRO_28(f) PPUTLRO_28(f) PPUTLRO_29(f)
-#define PPUTLRO_112(f)    PPUTLRO_28(f) PPUTLRO_28(f) PPUTLRO_28(f) PPUTLRO_28(f)
-#define PPUTLRO_111(f)    PPUTLRO_27(f) PPUTLRO_28(f) PPUTLRO_28(f) PPUTLRO_28(f)
-#define PPUTLRO_110(f)    PPUTLRO_27(f) PPUTLRO_27(f) PPUTLRO_28(f) PPUTLRO_28(f)
-#define PPUTLRO_109(f)    PPUTLRO_27(f) PPUTLRO_27(f) PPUTLRO_27(f) PPUTLRO_28(f)
-#define PPUTLRO_108(f)    PPUTLRO_27(f) PPUTLRO_27(f) PPUTLRO_27(f) PPUTLRO_27(f)
-#define PPUTLRO_107(f)    PPUTLRO_26(f) PPUTLRO_27(f) PPUTLRO_27(f) PPUTLRO_27(f)
-#define PPUTLRO_106(f)    PPUTLRO_26(f) PPUTLRO_26(f) PPUTLRO_27(f) PPUTLRO_27(f)
-#define PPUTLRO_105(f)    PPUTLRO_26(f) PPUTLRO_26(f) PPUTLRO_26(f) PPUTLRO_27(f)
-#define PPUTLRO_104(f)    PPUTLRO_26(f) PPUTLRO_26(f) PPUTLRO_26(f) PPUTLRO_26(f)
-#define PPUTLRO_103(f)    PPUTLRO_25(f) PPUTLRO_26(f) PPUTLRO_26(f) PPUTLRO_26(f)
-#define PPUTLRO_102(f)    PPUTLRO_25(f) PPUTLRO_25(f) PPUTLRO_26(f) PPUTLRO_26(f)
-#define PPUTLRO_101(f)    PPUTLRO_25(f) PPUTLRO_25(f) PPUTLRO_25(f) PPUTLRO_26(f)
-#define PPUTLRO_100(f)    PPUTLRO_25(f) PPUTLRO_25(f) PPUTLRO_25(f) PPUTLRO_25(f)
-#define PPUTLRO_99(f)     PPUTLRO_24(f) PPUTLRO_25(f) PPUTLRO_25(f) PPUTLRO_25(f)
-#define PPUTLRO_98(f)     PPUTLRO_24(f) PPUTLRO_24(f) PPUTLRO_25(f) PPUTLRO_25(f)
-#define PPUTLRO_97(f)     PPUTLRO_24(f) PPUTLRO_24(f) PPUTLRO_24(f) PPUTLRO_25(f)
-#define PPUTLRO_96(f)     PPUTLRO_24(f) PPUTLRO_24(f) PPUTLRO_24(f) PPUTLRO_24(f)
-#define PPUTLRO_95(f)     PPUTLRO_23(f) PPUTLRO_24(f) PPUTLRO_24(f) PPUTLRO_24(f)
-#define PPUTLRO_94(f)     PPUTLRO_23(f) PPUTLRO_23(f) PPUTLRO_24(f) PPUTLRO_24(f)
-#define PPUTLRO_93(f)     PPUTLRO_23(f) PPUTLRO_23(f) PPUTLRO_23(f) PPUTLRO_24(f)
-#define PPUTLRO_92(f)     PPUTLRO_23(f) PPUTLRO_23(f) PPUTLRO_23(f) PPUTLRO_23(f)
-#define PPUTLRO_91(f)     PPUTLRO_22(f) PPUTLRO_23(f) PPUTLRO_23(f) PPUTLRO_23(f)
-#define PPUTLRO_90(f)     PPUTLRO_22(f) PPUTLRO_22(f) PPUTLRO_23(f) PPUTLRO_23(f)
-#define PPUTLRO_89(f)     PPUTLRO_22(f) PPUTLRO_22(f) PPUTLRO_22(f) PPUTLRO_23(f)
-#define PPUTLRO_88(f)     PPUTLRO_22(f) PPUTLRO_22(f) PPUTLRO_22(f) PPUTLRO_22(f)
-#define PPUTLRO_87(f)     PPUTLRO_21(f) PPUTLRO_22(f) PPUTLRO_22(f) PPUTLRO_22(f)
-#define PPUTLRO_86(f)     PPUTLRO_21(f) PPUTLRO_21(f) PPUTLRO_22(f) PPUTLRO_22(f)
-#define PPUTLRO_85(f)     PPUTLRO_21(f) PPUTLRO_21(f) PPUTLRO_21(f) PPUTLRO_22(f)
-#define PPUTLRO_84(f)     PPUTLRO_21(f) PPUTLRO_21(f) PPUTLRO_21(f) PPUTLRO_21(f)
-#define PPUTLRO_83(f)     PPUTLRO_20(f) PPUTLRO_21(f) PPUTLRO_21(f) PPUTLRO_21(f)
-#define PPUTLRO_82(f)     PPUTLRO_20(f) PPUTLRO_20(f) PPUTLRO_21(f) PPUTLRO_21(f)
-#define PPUTLRO_81(f)     PPUTLRO_20(f) PPUTLRO_20(f) PPUTLRO_20(f) PPUTLRO_21(f)
-#define PPUTLRO_80(f)     PPUTLRO_20(f) PPUTLRO_20(f) PPUTLRO_20(f) PPUTLRO_20(f)
-#define PPUTLRO_79(f)     PPUTLRO_19(f) PPUTLRO_20(f) PPUTLRO_20(f) PPUTLRO_20(f)
-#define PPUTLRO_78(f)     PPUTLRO_19(f) PPUTLRO_19(f) PPUTLRO_20(f) PPUTLRO_20(f)
-#define PPUTLRO_77(f)     PPUTLRO_19(f) PPUTLRO_19(f) PPUTLRO_19(f) PPUTLRO_20(f)
-#define PPUTLRO_76(f)     PPUTLRO_19(f) PPUTLRO_19(f) PPUTLRO_19(f) PPUTLRO_19(f)
-#define PPUTLRO_75(f)     PPUTLRO_18(f) PPUTLRO_19(f) PPUTLRO_19(f) PPUTLRO_19(f)
-#define PPUTLRO_74(f)     PPUTLRO_18(f) PPUTLRO_18(f) PPUTLRO_19(f) PPUTLRO_19(f)
-#define PPUTLRO_73(f)     PPUTLRO_18(f) PPUTLRO_18(f) PPUTLRO_18(f) PPUTLRO_19(f)
-#define PPUTLRO_72(f)     PPUTLRO_18(f) PPUTLRO_18(f) PPUTLRO_18(f) PPUTLRO_18(f)
-#define PPUTLRO_71(f)     PPUTLRO_17(f) PPUTLRO_18(f) PPUTLRO_18(f) PPUTLRO_18(f)
-#define PPUTLRO_70(f)     PPUTLRO_17(f) PPUTLRO_17(f) PPUTLRO_18(f) PPUTLRO_18(f)
-#define PPUTLRO_69(f)     PPUTLRO_17(f) PPUTLRO_17(f) PPUTLRO_17(f) PPUTLRO_18(f)
-#define PPUTLRO_68(f)     PPUTLRO_17(f) PPUTLRO_17(f) PPUTLRO_17(f) PPUTLRO_17(f)
-#define PPUTLRO_67(f)     PPUTLRO_16(f) PPUTLRO_17(f) PPUTLRO_17(f) PPUTLRO_17(f)
-#define PPUTLRO_66(f)     PPUTLRO_16(f) PPUTLRO_16(f) PPUTLRO_17(f) PPUTLRO_17(f)
-#define PPUTLRO_65(f)     PPUTLRO_16(f) PPUTLRO_16(f) PPUTLRO_16(f) PPUTLRO_17(f)
-#define PPUTLRO_64(f)     PPUTLRO_16(f) PPUTLRO_16(f) PPUTLRO_16(f) PPUTLRO_16(f)
-#define PPUTLRO_63(f)     PPUTLRO_15(f) PPUTLRO_16(f) PPUTLRO_16(f) PPUTLRO_16(f)
-#define PPUTLRO_62(f)     PPUTLRO_15(f) PPUTLRO_15(f) PPUTLRO_16(f) PPUTLRO_16(f)
-#define PPUTLRO_61(f)     PPUTLRO_15(f) PPUTLRO_15(f) PPUTLRO_15(f) PPUTLRO_16(f)
-#define PPUTLRO_60(f)     PPUTLRO_15(f) PPUTLRO_15(f) PPUTLRO_15(f) PPUTLRO_15(f)
-#define PPUTLRO_59(f)     PPUTLRO_14(f) PPUTLRO_15(f) PPUTLRO_15(f) PPUTLRO_15(f)
-#define PPUTLRO_58(f)     PPUTLRO_14(f) PPUTLRO_14(f) PPUTLRO_15(f) PPUTLRO_15(f)
-#define PPUTLRO_57(f)     PPUTLRO_14(f) PPUTLRO_14(f) PPUTLRO_14(f) PPUTLRO_15(f)
-#define PPUTLRO_56(f)     PPUTLRO_14(f) PPUTLRO_14(f) PPUTLRO_14(f) PPUTLRO_14(f)
-#define PPUTLRO_55(f)     PPUTLRO_13(f) PPUTLRO_14(f) PPUTLRO_14(f) PPUTLRO_14(f)
-#define PPUTLRO_54(f)     PPUTLRO_13(f) PPUTLRO_13(f) PPUTLRO_14(f) PPUTLRO_14(f)
-#define PPUTLRO_53(f)     PPUTLRO_13(f) PPUTLRO_13(f) PPUTLRO_13(f) PPUTLRO_14(f)
-#define PPUTLRO_52(f)     PPUTLRO_13(f) PPUTLRO_13(f) PPUTLRO_13(f) PPUTLRO_13(f)
-#define PPUTLRO_51(f)     PPUTLRO_12(f) PPUTLRO_13(f) PPUTLRO_13(f) PPUTLRO_13(f)
-#define PPUTLRO_50(f)     PPUTLRO_12(f) PPUTLRO_12(f) PPUTLRO_13(f) PPUTLRO_13(f)
-#define PPUTLRO_49(f)     PPUTLRO_12(f) PPUTLRO_12(f) PPUTLRO_12(f) PPUTLRO_13(f)
-#define PPUTLRO_48(f)     PPUTLRO_12(f) PPUTLRO_12(f) PPUTLRO_12(f) PPUTLRO_12(f)
-#define PPUTLRO_47(f)     PPUTLRO_11(f) PPUTLRO_12(f) PPUTLRO_12(f) PPUTLRO_12(f)
-#define PPUTLRO_46(f)     PPUTLRO_11(f) PPUTLRO_11(f) PPUTLRO_12(f) PPUTLRO_12(f)
-#define PPUTLRO_45(f)     PPUTLRO_11(f) PPUTLRO_11(f) PPUTLRO_11(f) PPUTLRO_12(f)
-#define PPUTLRO_44(f)     PPUTLRO_11(f) PPUTLRO_11(f) PPUTLRO_11(f) PPUTLRO_11(f)
-#define PPUTLRO_43(f)     PPUTLRO_10(f) PPUTLRO_11(f) PPUTLRO_11(f) PPUTLRO_11(f)
-#define PPUTLRO_42(f)     PPUTLRO_10(f) PPUTLRO_10(f) PPUTLRO_11(f) PPUTLRO_11(f)
-#define PPUTLRO_41(f)     PPUTLRO_10(f) PPUTLRO_10(f) PPUTLRO_10(f) PPUTLRO_11(f)
-#define PPUTLRO_40(f)     PPUTLRO_10(f) PPUTLRO_10(f) PPUTLRO_10(f) PPUTLRO_10(f)
-#define PPUTLRO_39(f)     PPUTLRO_9(f) PPUTLRO_10(f) PPUTLRO_10(f) PPUTLRO_10(f)
-#define PPUTLRO_38(f)     PPUTLRO_9(f) PPUTLRO_9(f) PPUTLRO_10(f) PPUTLRO_10(f)
-#define PPUTLRO_37(f)     PPUTLRO_9(f) PPUTLRO_9(f) PPUTLRO_9(f) PPUTLRO_10(f)
-#define PPUTLRO_36(f)     PPUTLRO_9(f) PPUTLRO_9(f) PPUTLRO_9(f) PPUTLRO_9(f)
-#define PPUTLRO_35(f)     PPUTLRO_8(f) PPUTLRO_9(f) PPUTLRO_9(f) PPUTLRO_9(f)
-#define PPUTLRO_34(f)     PPUTLRO_8(f) PPUTLRO_8(f) PPUTLRO_9(f) PPUTLRO_9(f)
-#define PPUTLRO_33(f)     PPUTLRO_8(f) PPUTLRO_8(f) PPUTLRO_8(f) PPUTLRO_9(f)
-#define PPUTLRO_32(f)     PPUTLRO_8(f) PPUTLRO_8(f) PPUTLRO_8(f) PPUTLRO_8(f)
-#define PPUTLRO_31(f)     PPUTLRO_7(f) PPUTLRO_8(f) PPUTLRO_8(f) PPUTLRO_8(f)
-#define PPUTLRO_30(f)     PPUTLRO_7(f) PPUTLRO_7(f) PPUTLRO_8(f) PPUTLRO_8(f)
-#define PPUTLRO_29(f)     PPUTLRO_7(f) PPUTLRO_7(f) PPUTLRO_7(f) PPUTLRO_8(f)
-#define PPUTLRO_28(f)     PPUTLRO_7(f) PPUTLRO_7(f) PPUTLRO_7(f) PPUTLRO_7(f)
-#define PPUTLRO_27(f)     PPUTLRO_6(f) PPUTLRO_7(f) PPUTLRO_7(f) PPUTLRO_7(f)
-#define PPUTLRO_26(f)     PPUTLRO_6(f) PPUTLRO_6(f) PPUTLRO_7(f) PPUTLRO_7(f)
-#define PPUTLRO_25(f)     PPUTLRO_6(f) PPUTLRO_6(f) PPUTLRO_6(f) PPUTLRO_7(f)
-#define PPUTLRO_24(f)     PPUTLRO_6(f) PPUTLRO_6(f) PPUTLRO_6(f) PPUTLRO_6(f)
-#define PPUTLRO_23(f)     PPUTLRO_5(f) PPUTLRO_6(f) PPUTLRO_6(f) PPUTLRO_6(f)
-#define PPUTLRO_22(f)     PPUTLRO_5(f) PPUTLRO_5(f) PPUTLRO_6(f) PPUTLRO_6(f)
-#define PPUTLRO_21(f)     PPUTLRO_5(f) PPUTLRO_5(f) PPUTLRO_5(f) PPUTLRO_6(f)
-#define PPUTLRO_20(f)     PPUTLRO_5(f) PPUTLRO_5(f) PPUTLRO_5(f) PPUTLRO_5(f)
-#define PPUTLRO_19(f)     PPUTLRO_4(f) PPUTLRO_5(f) PPUTLRO_5(f) PPUTLRO_5(f)
-#define PPUTLRO_18(f)     PPUTLRO_4(f) PPUTLRO_4(f) PPUTLRO_5(f) PPUTLRO_5(f)
-#define PPUTLRO_17(f)     PPUTLRO_4(f) PPUTLRO_4(f) PPUTLRO_4(f) PPUTLRO_5(f)
-#define PPUTLRO_16(f)     PPUTLRO_4(f) PPUTLRO_4(f) PPUTLRO_4(f) PPUTLRO_4(f)
-#define PPUTLRO_15(f)     PPUTLRO_3(f) PPUTLRO_4(f) PPUTLRO_4(f) PPUTLRO_4(f)
-#define PPUTLRO_14(f)     PPUTLRO_3(f) PPUTLRO_3(f) PPUTLRO_4(f) PPUTLRO_4(f)
-#define PPUTLRO_13(f)     PPUTLRO_3(f) PPUTLRO_3(f) PPUTLRO_3(f) PPUTLRO_4(f)
-#define PPUTLRO_12(f)     PPUTLRO_3(f) PPUTLRO_3(f) PPUTLRO_3(f) PPUTLRO_3(f)
-#define PPUTLRO_11(f)     PPUTLRO_2(f) PPUTLRO_3(f) PPUTLRO_3(f) PPUTLRO_3(f)
-#define PPUTLRO_10(f)     PPUTLRO_2(f) PPUTLRO_2(f) PPUTLRO_3(f) PPUTLRO_3(f)
-#define PPUTLRO_9(f)      PPUTLRO_2(f) PPUTLRO_2(f) PPUTLRO_2(f) PPUTLRO_3(f)
-#define PPUTLRO_8(f)      PPUTLRO_2(f) PPUTLRO_2(f) PPUTLRO_2(f) PPUTLRO_2(f)
-#define PPUTLRO_7(f)      PPUTLRO_1(f) PPUTLRO_2(f) PPUTLRO_2(f) PPUTLRO_2(f)
-#define PPUTLRO_6(f)      PPUTLRO_1(f) PPUTLRO_1(f) PPUTLRO_2(f) PPUTLRO_2(f)
-#define PPUTLRO_5(f)      PPUTLRO_1(f) PPUTLRO_1(f) PPUTLRO_1(f) PPUTLRO_2(f)
-#define PPUTLRO_4(f)      PPUTLRO_1(f) PPUTLRO_1(f) PPUTLRO_1(f) PPUTLRO_1(f)
-#define PPUTLRO_3(f)      PPUTLRO_1(f) PPUTLRO_1(f) PPUTLRO_1(f)
-#define PPUTLRO_2(f)      PPUTLRO_1(f) PPUTLRO_1(f)
-#define PPUTLRO_1(f)      f PTL_LP() f PTL_LP() f PTL_LP() f PTL_LP()
-#define PPUTLRO_0(f)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [meta.rclose]
-/// -------------
-/// constructs an in-place recursive expression.
-/// the result must be expanded once to execute.
-///
-/// must be preceeded by an ropen expression with
-/// the same value of n.
-///
-/// ropen repeats the function and open parens;
-/// rclose repeats the close parens.
-///
-/// it is necessary to split the syntax of this
-/// operation into two separate function calls, as
-/// neither call can expand the target args without
-/// risking expansion termination. this structure
-/// allows recursive operations to process data
-/// obtained from other recursive operations.
-///
-/// example:
-///   madd(a, b) = add(a, b), b
-///   mul(a, b)  = first(id(ropen(a, madd) 0, 4 rclose(a)))
-///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
-///             -> first(madd(madd(0, 4)))
-///             -> first(madd(4, 4))
-///             -> first(8, 4)
-///             -> 8
-///
-/// neither f nor the final expansion function may be
-/// invoked anywhere within the recursive operation
-/// (and both functions must be distinct).
-///
-/// this operation can be used to perform an arbitrary
-/// number of expansions by using two identity functions.
-/// this is necessary to implement mutual recursion.
-///
-/// PTL_STR(PTL_ROPEN(0, PTL_INC) 0 PTL_RCLOSE(0)) // "0"
-/// PTL_STR(PTL_ROPEN(1, PTL_INC) 0 PTL_RCLOSE(1)) // "PTL_INC ( 0 )"
-/// PTL_STR(PTL_ROPEN(2, PTL_INC) 0 PTL_RCLOSE(2)) // "PTL_INC ( PTL_INC ( 0 ) )"
-/// PTL_STR(PTL_ROPEN(3, PTL_INC) 0 PTL_RCLOSE(3)) // "PTL_INC ( PTL_INC ( PTL_INC ( 0 ) ) )"
-/// PTL_ID(PTL_ROPEN(3, PTL_INC) 0 PTL_RCLOSE(3))  // 3
-#define PTL_RCLOSE(/* n: uint */...) /* -> 'rp'{n} */ PPUTLRC_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLRC_X(n)   PTL_CAT(PPUTLRC_X_, PTL_MOD4(n))(n)
-#define PPUTLRC_X_3(n) PTL_CAT(PPUTLRC_, PTL_DIV2(PTL_DIV2(n))) PTL_RP() PTL_RP() PTL_RP()
-#define PPUTLRC_X_2(n) PTL_CAT(PPUTLRC_, PTL_DIV2(PTL_DIV2(n))) PTL_RP() PTL_RP()
-#define PPUTLRC_X_1(n) PTL_CAT(PPUTLRC_, PTL_DIV2(PTL_DIV2(n))) PTL_RP()
-#define PPUTLRC_X_0(n) PTL_CAT(PPUTLRC_, PTL_DIV2(PTL_DIV2(n)))
-#define PPUTLRC_255    PPUTLRC_63 PPUTLRC_64 PPUTLRC_64 PPUTLRC_64
-#define PPUTLRC_254    PPUTLRC_63 PPUTLRC_63 PPUTLRC_64 PPUTLRC_64
-#define PPUTLRC_253    PPUTLRC_63 PPUTLRC_63 PPUTLRC_63 PPUTLRC_64
-#define PPUTLRC_252    PPUTLRC_63 PPUTLRC_63 PPUTLRC_63 PPUTLRC_63
-#define PPUTLRC_251    PPUTLRC_62 PPUTLRC_63 PPUTLRC_63 PPUTLRC_63
-#define PPUTLRC_250    PPUTLRC_62 PPUTLRC_62 PPUTLRC_63 PPUTLRC_63
-#define PPUTLRC_249    PPUTLRC_62 PPUTLRC_62 PPUTLRC_62 PPUTLRC_63
-#define PPUTLRC_248    PPUTLRC_62 PPUTLRC_62 PPUTLRC_62 PPUTLRC_62
-#define PPUTLRC_247    PPUTLRC_61 PPUTLRC_62 PPUTLRC_62 PPUTLRC_62
-#define PPUTLRC_246    PPUTLRC_61 PPUTLRC_61 PPUTLRC_62 PPUTLRC_62
-#define PPUTLRC_245    PPUTLRC_61 PPUTLRC_61 PPUTLRC_61 PPUTLRC_62
-#define PPUTLRC_244    PPUTLRC_61 PPUTLRC_61 PPUTLRC_61 PPUTLRC_61
-#define PPUTLRC_243    PPUTLRC_60 PPUTLRC_61 PPUTLRC_61 PPUTLRC_61
-#define PPUTLRC_242    PPUTLRC_60 PPUTLRC_60 PPUTLRC_61 PPUTLRC_61
-#define PPUTLRC_241    PPUTLRC_60 PPUTLRC_60 PPUTLRC_60 PPUTLRC_61
-#define PPUTLRC_240    PPUTLRC_60 PPUTLRC_60 PPUTLRC_60 PPUTLRC_60
-#define PPUTLRC_239    PPUTLRC_59 PPUTLRC_60 PPUTLRC_60 PPUTLRC_60
-#define PPUTLRC_238    PPUTLRC_59 PPUTLRC_59 PPUTLRC_60 PPUTLRC_60
-#define PPUTLRC_237    PPUTLRC_59 PPUTLRC_59 PPUTLRC_59 PPUTLRC_60
-#define PPUTLRC_236    PPUTLRC_59 PPUTLRC_59 PPUTLRC_59 PPUTLRC_59
-#define PPUTLRC_235    PPUTLRC_58 PPUTLRC_59 PPUTLRC_59 PPUTLRC_59
-#define PPUTLRC_234    PPUTLRC_58 PPUTLRC_58 PPUTLRC_59 PPUTLRC_59
-#define PPUTLRC_233    PPUTLRC_58 PPUTLRC_58 PPUTLRC_58 PPUTLRC_59
-#define PPUTLRC_232    PPUTLRC_58 PPUTLRC_58 PPUTLRC_58 PPUTLRC_58
-#define PPUTLRC_231    PPUTLRC_57 PPUTLRC_58 PPUTLRC_58 PPUTLRC_58
-#define PPUTLRC_230    PPUTLRC_57 PPUTLRC_57 PPUTLRC_58 PPUTLRC_58
-#define PPUTLRC_229    PPUTLRC_57 PPUTLRC_57 PPUTLRC_57 PPUTLRC_58
-#define PPUTLRC_228    PPUTLRC_57 PPUTLRC_57 PPUTLRC_57 PPUTLRC_57
-#define PPUTLRC_227    PPUTLRC_56 PPUTLRC_57 PPUTLRC_57 PPUTLRC_57
-#define PPUTLRC_226    PPUTLRC_56 PPUTLRC_56 PPUTLRC_57 PPUTLRC_57
-#define PPUTLRC_225    PPUTLRC_56 PPUTLRC_56 PPUTLRC_56 PPUTLRC_57
-#define PPUTLRC_224    PPUTLRC_56 PPUTLRC_56 PPUTLRC_56 PPUTLRC_56
-#define PPUTLRC_223    PPUTLRC_55 PPUTLRC_56 PPUTLRC_56 PPUTLRC_56
-#define PPUTLRC_222    PPUTLRC_55 PPUTLRC_55 PPUTLRC_56 PPUTLRC_56
-#define PPUTLRC_221    PPUTLRC_55 PPUTLRC_55 PPUTLRC_55 PPUTLRC_56
-#define PPUTLRC_220    PPUTLRC_55 PPUTLRC_55 PPUTLRC_55 PPUTLRC_55
-#define PPUTLRC_219    PPUTLRC_54 PPUTLRC_55 PPUTLRC_55 PPUTLRC_55
-#define PPUTLRC_218    PPUTLRC_54 PPUTLRC_54 PPUTLRC_55 PPUTLRC_55
-#define PPUTLRC_217    PPUTLRC_54 PPUTLRC_54 PPUTLRC_54 PPUTLRC_55
-#define PPUTLRC_216    PPUTLRC_54 PPUTLRC_54 PPUTLRC_54 PPUTLRC_54
-#define PPUTLRC_215    PPUTLRC_53 PPUTLRC_54 PPUTLRC_54 PPUTLRC_54
-#define PPUTLRC_214    PPUTLRC_53 PPUTLRC_53 PPUTLRC_54 PPUTLRC_54
-#define PPUTLRC_213    PPUTLRC_53 PPUTLRC_53 PPUTLRC_53 PPUTLRC_54
-#define PPUTLRC_212    PPUTLRC_53 PPUTLRC_53 PPUTLRC_53 PPUTLRC_53
-#define PPUTLRC_211    PPUTLRC_52 PPUTLRC_53 PPUTLRC_53 PPUTLRC_53
-#define PPUTLRC_210    PPUTLRC_52 PPUTLRC_52 PPUTLRC_53 PPUTLRC_53
-#define PPUTLRC_209    PPUTLRC_52 PPUTLRC_52 PPUTLRC_52 PPUTLRC_53
-#define PPUTLRC_208    PPUTLRC_52 PPUTLRC_52 PPUTLRC_52 PPUTLRC_52
-#define PPUTLRC_207    PPUTLRC_51 PPUTLRC_52 PPUTLRC_52 PPUTLRC_52
-#define PPUTLRC_206    PPUTLRC_51 PPUTLRC_51 PPUTLRC_52 PPUTLRC_52
-#define PPUTLRC_205    PPUTLRC_51 PPUTLRC_51 PPUTLRC_51 PPUTLRC_52
-#define PPUTLRC_204    PPUTLRC_51 PPUTLRC_51 PPUTLRC_51 PPUTLRC_51
-#define PPUTLRC_203    PPUTLRC_50 PPUTLRC_51 PPUTLRC_51 PPUTLRC_51
-#define PPUTLRC_202    PPUTLRC_50 PPUTLRC_50 PPUTLRC_51 PPUTLRC_51
-#define PPUTLRC_201    PPUTLRC_50 PPUTLRC_50 PPUTLRC_50 PPUTLRC_51
-#define PPUTLRC_200    PPUTLRC_50 PPUTLRC_50 PPUTLRC_50 PPUTLRC_50
-#define PPUTLRC_199    PPUTLRC_49 PPUTLRC_50 PPUTLRC_50 PPUTLRC_50
-#define PPUTLRC_198    PPUTLRC_49 PPUTLRC_49 PPUTLRC_50 PPUTLRC_50
-#define PPUTLRC_197    PPUTLRC_49 PPUTLRC_49 PPUTLRC_49 PPUTLRC_50
-#define PPUTLRC_196    PPUTLRC_49 PPUTLRC_49 PPUTLRC_49 PPUTLRC_49
-#define PPUTLRC_195    PPUTLRC_48 PPUTLRC_49 PPUTLRC_49 PPUTLRC_49
-#define PPUTLRC_194    PPUTLRC_48 PPUTLRC_48 PPUTLRC_49 PPUTLRC_49
-#define PPUTLRC_193    PPUTLRC_48 PPUTLRC_48 PPUTLRC_48 PPUTLRC_49
-#define PPUTLRC_192    PPUTLRC_48 PPUTLRC_48 PPUTLRC_48 PPUTLRC_48
-#define PPUTLRC_191    PPUTLRC_47 PPUTLRC_48 PPUTLRC_48 PPUTLRC_48
-#define PPUTLRC_190    PPUTLRC_47 PPUTLRC_47 PPUTLRC_48 PPUTLRC_48
-#define PPUTLRC_189    PPUTLRC_47 PPUTLRC_47 PPUTLRC_47 PPUTLRC_48
-#define PPUTLRC_188    PPUTLRC_47 PPUTLRC_47 PPUTLRC_47 PPUTLRC_47
-#define PPUTLRC_187    PPUTLRC_46 PPUTLRC_47 PPUTLRC_47 PPUTLRC_47
-#define PPUTLRC_186    PPUTLRC_46 PPUTLRC_46 PPUTLRC_47 PPUTLRC_47
-#define PPUTLRC_185    PPUTLRC_46 PPUTLRC_46 PPUTLRC_46 PPUTLRC_47
-#define PPUTLRC_184    PPUTLRC_46 PPUTLRC_46 PPUTLRC_46 PPUTLRC_46
-#define PPUTLRC_183    PPUTLRC_45 PPUTLRC_46 PPUTLRC_46 PPUTLRC_46
-#define PPUTLRC_182    PPUTLRC_45 PPUTLRC_45 PPUTLRC_46 PPUTLRC_46
-#define PPUTLRC_181    PPUTLRC_45 PPUTLRC_45 PPUTLRC_45 PPUTLRC_46
-#define PPUTLRC_180    PPUTLRC_45 PPUTLRC_45 PPUTLRC_45 PPUTLRC_45
-#define PPUTLRC_179    PPUTLRC_44 PPUTLRC_45 PPUTLRC_45 PPUTLRC_45
-#define PPUTLRC_178    PPUTLRC_44 PPUTLRC_44 PPUTLRC_45 PPUTLRC_45
-#define PPUTLRC_177    PPUTLRC_44 PPUTLRC_44 PPUTLRC_44 PPUTLRC_45
-#define PPUTLRC_176    PPUTLRC_44 PPUTLRC_44 PPUTLRC_44 PPUTLRC_44
-#define PPUTLRC_175    PPUTLRC_43 PPUTLRC_44 PPUTLRC_44 PPUTLRC_44
-#define PPUTLRC_174    PPUTLRC_43 PPUTLRC_43 PPUTLRC_44 PPUTLRC_44
-#define PPUTLRC_173    PPUTLRC_43 PPUTLRC_43 PPUTLRC_43 PPUTLRC_44
-#define PPUTLRC_172    PPUTLRC_43 PPUTLRC_43 PPUTLRC_43 PPUTLRC_43
-#define PPUTLRC_171    PPUTLRC_42 PPUTLRC_43 PPUTLRC_43 PPUTLRC_43
-#define PPUTLRC_170    PPUTLRC_42 PPUTLRC_42 PPUTLRC_43 PPUTLRC_43
-#define PPUTLRC_169    PPUTLRC_42 PPUTLRC_42 PPUTLRC_42 PPUTLRC_43
-#define PPUTLRC_168    PPUTLRC_42 PPUTLRC_42 PPUTLRC_42 PPUTLRC_42
-#define PPUTLRC_167    PPUTLRC_41 PPUTLRC_42 PPUTLRC_42 PPUTLRC_42
-#define PPUTLRC_166    PPUTLRC_41 PPUTLRC_41 PPUTLRC_42 PPUTLRC_42
-#define PPUTLRC_165    PPUTLRC_41 PPUTLRC_41 PPUTLRC_41 PPUTLRC_42
-#define PPUTLRC_164    PPUTLRC_41 PPUTLRC_41 PPUTLRC_41 PPUTLRC_41
-#define PPUTLRC_163    PPUTLRC_40 PPUTLRC_41 PPUTLRC_41 PPUTLRC_41
-#define PPUTLRC_162    PPUTLRC_40 PPUTLRC_40 PPUTLRC_41 PPUTLRC_41
-#define PPUTLRC_161    PPUTLRC_40 PPUTLRC_40 PPUTLRC_40 PPUTLRC_41
-#define PPUTLRC_160    PPUTLRC_40 PPUTLRC_40 PPUTLRC_40 PPUTLRC_40
-#define PPUTLRC_159    PPUTLRC_39 PPUTLRC_40 PPUTLRC_40 PPUTLRC_40
-#define PPUTLRC_158    PPUTLRC_39 PPUTLRC_39 PPUTLRC_40 PPUTLRC_40
-#define PPUTLRC_157    PPUTLRC_39 PPUTLRC_39 PPUTLRC_39 PPUTLRC_40
-#define PPUTLRC_156    PPUTLRC_39 PPUTLRC_39 PPUTLRC_39 PPUTLRC_39
-#define PPUTLRC_155    PPUTLRC_38 PPUTLRC_39 PPUTLRC_39 PPUTLRC_39
-#define PPUTLRC_154    PPUTLRC_38 PPUTLRC_38 PPUTLRC_39 PPUTLRC_39
-#define PPUTLRC_153    PPUTLRC_38 PPUTLRC_38 PPUTLRC_38 PPUTLRC_39
-#define PPUTLRC_152    PPUTLRC_38 PPUTLRC_38 PPUTLRC_38 PPUTLRC_38
-#define PPUTLRC_151    PPUTLRC_37 PPUTLRC_38 PPUTLRC_38 PPUTLRC_38
-#define PPUTLRC_150    PPUTLRC_37 PPUTLRC_37 PPUTLRC_38 PPUTLRC_38
-#define PPUTLRC_149    PPUTLRC_37 PPUTLRC_37 PPUTLRC_37 PPUTLRC_38
-#define PPUTLRC_148    PPUTLRC_37 PPUTLRC_37 PPUTLRC_37 PPUTLRC_37
-#define PPUTLRC_147    PPUTLRC_36 PPUTLRC_37 PPUTLRC_37 PPUTLRC_37
-#define PPUTLRC_146    PPUTLRC_36 PPUTLRC_36 PPUTLRC_37 PPUTLRC_37
-#define PPUTLRC_145    PPUTLRC_36 PPUTLRC_36 PPUTLRC_36 PPUTLRC_37
-#define PPUTLRC_144    PPUTLRC_36 PPUTLRC_36 PPUTLRC_36 PPUTLRC_36
-#define PPUTLRC_143    PPUTLRC_35 PPUTLRC_36 PPUTLRC_36 PPUTLRC_36
-#define PPUTLRC_142    PPUTLRC_35 PPUTLRC_35 PPUTLRC_36 PPUTLRC_36
-#define PPUTLRC_141    PPUTLRC_35 PPUTLRC_35 PPUTLRC_35 PPUTLRC_36
-#define PPUTLRC_140    PPUTLRC_35 PPUTLRC_35 PPUTLRC_35 PPUTLRC_35
-#define PPUTLRC_139    PPUTLRC_34 PPUTLRC_35 PPUTLRC_35 PPUTLRC_35
-#define PPUTLRC_138    PPUTLRC_34 PPUTLRC_34 PPUTLRC_35 PPUTLRC_35
-#define PPUTLRC_137    PPUTLRC_34 PPUTLRC_34 PPUTLRC_34 PPUTLRC_35
-#define PPUTLRC_136    PPUTLRC_34 PPUTLRC_34 PPUTLRC_34 PPUTLRC_34
-#define PPUTLRC_135    PPUTLRC_33 PPUTLRC_34 PPUTLRC_34 PPUTLRC_34
-#define PPUTLRC_134    PPUTLRC_33 PPUTLRC_33 PPUTLRC_34 PPUTLRC_34
-#define PPUTLRC_133    PPUTLRC_33 PPUTLRC_33 PPUTLRC_33 PPUTLRC_34
-#define PPUTLRC_132    PPUTLRC_33 PPUTLRC_33 PPUTLRC_33 PPUTLRC_33
-#define PPUTLRC_131    PPUTLRC_32 PPUTLRC_33 PPUTLRC_33 PPUTLRC_33
-#define PPUTLRC_130    PPUTLRC_32 PPUTLRC_32 PPUTLRC_33 PPUTLRC_33
-#define PPUTLRC_129    PPUTLRC_32 PPUTLRC_32 PPUTLRC_32 PPUTLRC_33
-#define PPUTLRC_128    PPUTLRC_32 PPUTLRC_32 PPUTLRC_32 PPUTLRC_32
-#define PPUTLRC_127    PPUTLRC_31 PPUTLRC_32 PPUTLRC_32 PPUTLRC_32
-#define PPUTLRC_126    PPUTLRC_31 PPUTLRC_31 PPUTLRC_32 PPUTLRC_32
-#define PPUTLRC_125    PPUTLRC_31 PPUTLRC_31 PPUTLRC_31 PPUTLRC_32
-#define PPUTLRC_124    PPUTLRC_31 PPUTLRC_31 PPUTLRC_31 PPUTLRC_31
-#define PPUTLRC_123    PPUTLRC_30 PPUTLRC_31 PPUTLRC_31 PPUTLRC_31
-#define PPUTLRC_122    PPUTLRC_30 PPUTLRC_30 PPUTLRC_31 PPUTLRC_31
-#define PPUTLRC_121    PPUTLRC_30 PPUTLRC_30 PPUTLRC_30 PPUTLRC_31
-#define PPUTLRC_120    PPUTLRC_30 PPUTLRC_30 PPUTLRC_30 PPUTLRC_30
-#define PPUTLRC_119    PPUTLRC_29 PPUTLRC_30 PPUTLRC_30 PPUTLRC_30
-#define PPUTLRC_118    PPUTLRC_29 PPUTLRC_29 PPUTLRC_30 PPUTLRC_30
-#define PPUTLRC_117    PPUTLRC_29 PPUTLRC_29 PPUTLRC_29 PPUTLRC_30
-#define PPUTLRC_116    PPUTLRC_29 PPUTLRC_29 PPUTLRC_29 PPUTLRC_29
-#define PPUTLRC_115    PPUTLRC_28 PPUTLRC_29 PPUTLRC_29 PPUTLRC_29
-#define PPUTLRC_114    PPUTLRC_28 PPUTLRC_28 PPUTLRC_29 PPUTLRC_29
-#define PPUTLRC_113    PPUTLRC_28 PPUTLRC_28 PPUTLRC_28 PPUTLRC_29
-#define PPUTLRC_112    PPUTLRC_28 PPUTLRC_28 PPUTLRC_28 PPUTLRC_28
-#define PPUTLRC_111    PPUTLRC_27 PPUTLRC_28 PPUTLRC_28 PPUTLRC_28
-#define PPUTLRC_110    PPUTLRC_27 PPUTLRC_27 PPUTLRC_28 PPUTLRC_28
-#define PPUTLRC_109    PPUTLRC_27 PPUTLRC_27 PPUTLRC_27 PPUTLRC_28
-#define PPUTLRC_108    PPUTLRC_27 PPUTLRC_27 PPUTLRC_27 PPUTLRC_27
-#define PPUTLRC_107    PPUTLRC_26 PPUTLRC_27 PPUTLRC_27 PPUTLRC_27
-#define PPUTLRC_106    PPUTLRC_26 PPUTLRC_26 PPUTLRC_27 PPUTLRC_27
-#define PPUTLRC_105    PPUTLRC_26 PPUTLRC_26 PPUTLRC_26 PPUTLRC_27
-#define PPUTLRC_104    PPUTLRC_26 PPUTLRC_26 PPUTLRC_26 PPUTLRC_26
-#define PPUTLRC_103    PPUTLRC_25 PPUTLRC_26 PPUTLRC_26 PPUTLRC_26
-#define PPUTLRC_102    PPUTLRC_25 PPUTLRC_25 PPUTLRC_26 PPUTLRC_26
-#define PPUTLRC_101    PPUTLRC_25 PPUTLRC_25 PPUTLRC_25 PPUTLRC_26
-#define PPUTLRC_100    PPUTLRC_25 PPUTLRC_25 PPUTLRC_25 PPUTLRC_25
-#define PPUTLRC_99     PPUTLRC_24 PPUTLRC_25 PPUTLRC_25 PPUTLRC_25
-#define PPUTLRC_98     PPUTLRC_24 PPUTLRC_24 PPUTLRC_25 PPUTLRC_25
-#define PPUTLRC_97     PPUTLRC_24 PPUTLRC_24 PPUTLRC_24 PPUTLRC_25
-#define PPUTLRC_96     PPUTLRC_24 PPUTLRC_24 PPUTLRC_24 PPUTLRC_24
-#define PPUTLRC_95     PPUTLRC_23 PPUTLRC_24 PPUTLRC_24 PPUTLRC_24
-#define PPUTLRC_94     PPUTLRC_23 PPUTLRC_23 PPUTLRC_24 PPUTLRC_24
-#define PPUTLRC_93     PPUTLRC_23 PPUTLRC_23 PPUTLRC_23 PPUTLRC_24
-#define PPUTLRC_92     PPUTLRC_23 PPUTLRC_23 PPUTLRC_23 PPUTLRC_23
-#define PPUTLRC_91     PPUTLRC_22 PPUTLRC_23 PPUTLRC_23 PPUTLRC_23
-#define PPUTLRC_90     PPUTLRC_22 PPUTLRC_22 PPUTLRC_23 PPUTLRC_23
-#define PPUTLRC_89     PPUTLRC_22 PPUTLRC_22 PPUTLRC_22 PPUTLRC_23
-#define PPUTLRC_88     PPUTLRC_22 PPUTLRC_22 PPUTLRC_22 PPUTLRC_22
-#define PPUTLRC_87     PPUTLRC_21 PPUTLRC_22 PPUTLRC_22 PPUTLRC_22
-#define PPUTLRC_86     PPUTLRC_21 PPUTLRC_21 PPUTLRC_22 PPUTLRC_22
-#define PPUTLRC_85     PPUTLRC_21 PPUTLRC_21 PPUTLRC_21 PPUTLRC_22
-#define PPUTLRC_84     PPUTLRC_21 PPUTLRC_21 PPUTLRC_21 PPUTLRC_21
-#define PPUTLRC_83     PPUTLRC_20 PPUTLRC_21 PPUTLRC_21 PPUTLRC_21
-#define PPUTLRC_82     PPUTLRC_20 PPUTLRC_20 PPUTLRC_21 PPUTLRC_21
-#define PPUTLRC_81     PPUTLRC_20 PPUTLRC_20 PPUTLRC_20 PPUTLRC_21
-#define PPUTLRC_80     PPUTLRC_20 PPUTLRC_20 PPUTLRC_20 PPUTLRC_20
-#define PPUTLRC_79     PPUTLRC_19 PPUTLRC_20 PPUTLRC_20 PPUTLRC_20
-#define PPUTLRC_78     PPUTLRC_19 PPUTLRC_19 PPUTLRC_20 PPUTLRC_20
-#define PPUTLRC_77     PPUTLRC_19 PPUTLRC_19 PPUTLRC_19 PPUTLRC_20
-#define PPUTLRC_76     PPUTLRC_19 PPUTLRC_19 PPUTLRC_19 PPUTLRC_19
-#define PPUTLRC_75     PPUTLRC_18 PPUTLRC_19 PPUTLRC_19 PPUTLRC_19
-#define PPUTLRC_74     PPUTLRC_18 PPUTLRC_18 PPUTLRC_19 PPUTLRC_19
-#define PPUTLRC_73     PPUTLRC_18 PPUTLRC_18 PPUTLRC_18 PPUTLRC_19
-#define PPUTLRC_72     PPUTLRC_18 PPUTLRC_18 PPUTLRC_18 PPUTLRC_18
-#define PPUTLRC_71     PPUTLRC_17 PPUTLRC_18 PPUTLRC_18 PPUTLRC_18
-#define PPUTLRC_70     PPUTLRC_17 PPUTLRC_17 PPUTLRC_18 PPUTLRC_18
-#define PPUTLRC_69     PPUTLRC_17 PPUTLRC_17 PPUTLRC_17 PPUTLRC_18
-#define PPUTLRC_68     PPUTLRC_17 PPUTLRC_17 PPUTLRC_17 PPUTLRC_17
-#define PPUTLRC_67     PPUTLRC_16 PPUTLRC_17 PPUTLRC_17 PPUTLRC_17
-#define PPUTLRC_66     PPUTLRC_16 PPUTLRC_16 PPUTLRC_17 PPUTLRC_17
-#define PPUTLRC_65     PPUTLRC_16 PPUTLRC_16 PPUTLRC_16 PPUTLRC_17
-#define PPUTLRC_64     PPUTLRC_16 PPUTLRC_16 PPUTLRC_16 PPUTLRC_16
-#define PPUTLRC_63     PPUTLRC_15 PPUTLRC_16 PPUTLRC_16 PPUTLRC_16
-#define PPUTLRC_62     PPUTLRC_15 PPUTLRC_15 PPUTLRC_16 PPUTLRC_16
-#define PPUTLRC_61     PPUTLRC_15 PPUTLRC_15 PPUTLRC_15 PPUTLRC_16
-#define PPUTLRC_60     PPUTLRC_15 PPUTLRC_15 PPUTLRC_15 PPUTLRC_15
-#define PPUTLRC_59     PPUTLRC_14 PPUTLRC_15 PPUTLRC_15 PPUTLRC_15
-#define PPUTLRC_58     PPUTLRC_14 PPUTLRC_14 PPUTLRC_15 PPUTLRC_15
-#define PPUTLRC_57     PPUTLRC_14 PPUTLRC_14 PPUTLRC_14 PPUTLRC_15
-#define PPUTLRC_56     PPUTLRC_14 PPUTLRC_14 PPUTLRC_14 PPUTLRC_14
-#define PPUTLRC_55     PPUTLRC_13 PPUTLRC_14 PPUTLRC_14 PPUTLRC_14
-#define PPUTLRC_54     PPUTLRC_13 PPUTLRC_13 PPUTLRC_14 PPUTLRC_14
-#define PPUTLRC_53     PPUTLRC_13 PPUTLRC_13 PPUTLRC_13 PPUTLRC_14
-#define PPUTLRC_52     PPUTLRC_13 PPUTLRC_13 PPUTLRC_13 PPUTLRC_13
-#define PPUTLRC_51     PPUTLRC_12 PPUTLRC_13 PPUTLRC_13 PPUTLRC_13
-#define PPUTLRC_50     PPUTLRC_12 PPUTLRC_12 PPUTLRC_13 PPUTLRC_13
-#define PPUTLRC_49     PPUTLRC_12 PPUTLRC_12 PPUTLRC_12 PPUTLRC_13
-#define PPUTLRC_48     PPUTLRC_12 PPUTLRC_12 PPUTLRC_12 PPUTLRC_12
-#define PPUTLRC_47     PPUTLRC_11 PPUTLRC_12 PPUTLRC_12 PPUTLRC_12
-#define PPUTLRC_46     PPUTLRC_11 PPUTLRC_11 PPUTLRC_12 PPUTLRC_12
-#define PPUTLRC_45     PPUTLRC_11 PPUTLRC_11 PPUTLRC_11 PPUTLRC_12
-#define PPUTLRC_44     PPUTLRC_11 PPUTLRC_11 PPUTLRC_11 PPUTLRC_11
-#define PPUTLRC_43     PPUTLRC_10 PPUTLRC_11 PPUTLRC_11 PPUTLRC_11
-#define PPUTLRC_42     PPUTLRC_10 PPUTLRC_10 PPUTLRC_11 PPUTLRC_11
-#define PPUTLRC_41     PPUTLRC_10 PPUTLRC_10 PPUTLRC_10 PPUTLRC_11
-#define PPUTLRC_40     PPUTLRC_10 PPUTLRC_10 PPUTLRC_10 PPUTLRC_10
-#define PPUTLRC_39     PPUTLRC_9 PPUTLRC_10 PPUTLRC_10 PPUTLRC_10
-#define PPUTLRC_38     PPUTLRC_9 PPUTLRC_9 PPUTLRC_10 PPUTLRC_10
-#define PPUTLRC_37     PPUTLRC_9 PPUTLRC_9 PPUTLRC_9 PPUTLRC_10
-#define PPUTLRC_36     PPUTLRC_9 PPUTLRC_9 PPUTLRC_9 PPUTLRC_9
-#define PPUTLRC_35     PPUTLRC_8 PPUTLRC_9 PPUTLRC_9 PPUTLRC_9
-#define PPUTLRC_34     PPUTLRC_8 PPUTLRC_8 PPUTLRC_9 PPUTLRC_9
-#define PPUTLRC_33     PPUTLRC_8 PPUTLRC_8 PPUTLRC_8 PPUTLRC_9
-#define PPUTLRC_32     PPUTLRC_8 PPUTLRC_8 PPUTLRC_8 PPUTLRC_8
-#define PPUTLRC_31     PPUTLRC_7 PPUTLRC_8 PPUTLRC_8 PPUTLRC_8
-#define PPUTLRC_30     PPUTLRC_7 PPUTLRC_7 PPUTLRC_8 PPUTLRC_8
-#define PPUTLRC_29     PPUTLRC_7 PPUTLRC_7 PPUTLRC_7 PPUTLRC_8
-#define PPUTLRC_28     PPUTLRC_7 PPUTLRC_7 PPUTLRC_7 PPUTLRC_7
-#define PPUTLRC_27     PPUTLRC_6 PPUTLRC_7 PPUTLRC_7 PPUTLRC_7
-#define PPUTLRC_26     PPUTLRC_6 PPUTLRC_6 PPUTLRC_7 PPUTLRC_7
-#define PPUTLRC_25     PPUTLRC_6 PPUTLRC_6 PPUTLRC_6 PPUTLRC_7
-#define PPUTLRC_24     PPUTLRC_6 PPUTLRC_6 PPUTLRC_6 PPUTLRC_6
-#define PPUTLRC_23     PPUTLRC_5 PPUTLRC_6 PPUTLRC_6 PPUTLRC_6
-#define PPUTLRC_22     PPUTLRC_5 PPUTLRC_5 PPUTLRC_6 PPUTLRC_6
-#define PPUTLRC_21     PPUTLRC_5 PPUTLRC_5 PPUTLRC_5 PPUTLRC_6
-#define PPUTLRC_20     PPUTLRC_5 PPUTLRC_5 PPUTLRC_5 PPUTLRC_5
-#define PPUTLRC_19     PPUTLRC_4 PPUTLRC_5 PPUTLRC_5 PPUTLRC_5
-#define PPUTLRC_18     PPUTLRC_4 PPUTLRC_4 PPUTLRC_5 PPUTLRC_5
-#define PPUTLRC_17     PPUTLRC_4 PPUTLRC_4 PPUTLRC_4 PPUTLRC_5
-#define PPUTLRC_16     PPUTLRC_4 PPUTLRC_4 PPUTLRC_4 PPUTLRC_4
-#define PPUTLRC_15     PPUTLRC_3 PPUTLRC_4 PPUTLRC_4 PPUTLRC_4
-#define PPUTLRC_14     PPUTLRC_3 PPUTLRC_3 PPUTLRC_4 PPUTLRC_4
-#define PPUTLRC_13     PPUTLRC_3 PPUTLRC_3 PPUTLRC_3 PPUTLRC_4
-#define PPUTLRC_12     PPUTLRC_3 PPUTLRC_3 PPUTLRC_3 PPUTLRC_3
-#define PPUTLRC_11     PPUTLRC_2 PPUTLRC_3 PPUTLRC_3 PPUTLRC_3
-#define PPUTLRC_10     PPUTLRC_2 PPUTLRC_2 PPUTLRC_3 PPUTLRC_3
-#define PPUTLRC_9      PPUTLRC_2 PPUTLRC_2 PPUTLRC_2 PPUTLRC_3
-#define PPUTLRC_8      PPUTLRC_2 PPUTLRC_2 PPUTLRC_2 PPUTLRC_2
-#define PPUTLRC_7      PPUTLRC_1 PPUTLRC_2 PPUTLRC_2 PPUTLRC_2
-#define PPUTLRC_6      PPUTLRC_1 PPUTLRC_1 PPUTLRC_2 PPUTLRC_2
-#define PPUTLRC_5      PPUTLRC_1 PPUTLRC_1 PPUTLRC_1 PPUTLRC_2
-#define PPUTLRC_4      PPUTLRC_1 PPUTLRC_1 PPUTLRC_1 PPUTLRC_1
-#define PPUTLRC_3      PPUTLRC_1 PPUTLRC_1 PPUTLRC_1
-#define PPUTLRC_2      PPUTLRC_1 PPUTLRC_1
-#define PPUTLRC_1      PTL_RP() PTL_RP() PTL_RP() PTL_RP()
-#define PPUTLRC_0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [control.if]
 /// ------------
 /// conditionally expands items based on a boolean.
@@ -3756,33 +2877,6 @@
 
 #define PPUTLIF_1(_, t, f) PTL_REST((PTL_TUPLE(f)), PTL_ITEMS(t))
 #define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [control.switch]
-/// ----------------
-/// conditionally expands items based on a uint.
-/// the final tuple is the default case.
-///
-/// PTL_SWITCH(0, (1))                 // 1
-/// PTL_SWITCH(1, (1))                 // 1
-/// PTL_SWITCH(2, (1))                 // 1
-/// PTL_SWITCH(1, (1), (2))            // 2
-/// PTL_SWITCH(2, (1), (2))            // 2
-/// PTL_SWITCH(2, (1), (2), (3, 4))    // 3, 4
-/// PTL_SWITCH(1023, (1), (2), (3, 4)) // 3, 4
-#define PTL_SWITCH(/* cs: uint, cases: tuple... */...) /* -> ...cases[cs] */         \
-  PPUTLSWITCH_RES(PPUTLSWITCH_X(PTL_ROPEN(PTL_FIRST(__VA_ARGS__), PPUTLSWITCH_RECUR) \
-                                    __VA_ARGS__ PTL_RCLOSE(PTL_FIRST(__VA_ARGS__))))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLSWITCH_RES(...)         PPUTLSWITCH_RES_X(__VA_ARGS__)
-#define PPUTLSWITCH_RES_X(i, _, ...) PTL_ITEMS(_)
-#define PPUTLSWITCH_X(...)           __VA_ARGS__
-#define PPUTLSWITCH_RECUR(...)       PPUTLSWITCH_RECUR_X(__VA_ARGS__)
-#define PPUTLSWITCH_RECUR_X(i, _, ...) \
-  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(__VA_ARGS__))), (0, _), (PTL_DEC(i), __VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3862,190 +2956,10 @@
   PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))),   \
          (PTL_NOT(PTL_REST(__VA_ARGS__))))
 
-/// [math.add]
-/// ----------
-/// uint addition with overflow.
-///
-/// PTL_ADD(0, 0)    // 0
-/// PTL_ADD(0, 1)    // 1
-/// PTL_ADD(1, 2)    // 3
-/// PTL_ADD(1023, 1) // 0
-/// PTL_ADD(1023, 2) // 1
-#define PTL_ADD(/* l: uint, r: uint */...) /* -> uint{l + r} */               \
-  PPUTLADD_X(PTL_ROPEN(PTL_FIRST(__VA_ARGS__), PTL_INC) PTL_REST(__VA_ARGS__) \
-                 PTL_RCLOSE(PTL_FIRST(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLADD_X(...) __VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [math.sub]
-/// ----------
-/// uint subtraction with underflow.
-///
-/// PTL_SUB(0, 0)    // 0
-/// PTL_SUB(0, 1)    // 1023
-/// PTL_SUB(1, 0)    // 1
-/// PTL_SUB(1, 1)    // 0
-/// PTL_SUB(3, 1)    // 2
-/// PTL_SUB(1, 3)    // 1022
-/// PTL_SUB(0, 1023) // 1
-#define PTL_SUB(/* l: uint, r: uint */...) /* -> uint{l - r} */ \
-  PTL_FIRST(PPUTLSUB_IMPL(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLSUB_IMPL(l, r) /* -> uint, bool */ \
-  PPUTLSUB_X(PTL_ROPEN(r, PPUTLSUB_RECUR) l, 0 PTL_RCLOSE(r))
-#define PPUTLSUB_RECUR(...)            PPUTLSUB_RECUR_RECUR(__VA_ARGS__)
-#define PPUTLSUB_RECUR_RECUR(v, uflow) PTL_DEC(v), PTL_OR(uflow, PTL_EQZ(v))
-#define PPUTLSUB_X(...)                __VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [math.mul]
-/// ----------
-/// uint multiplication with overflow.
-///
-/// PTL_MUL(0, 0)       // 0
-/// PTL_MUL(0, 1)       // 0
-/// PTL_MUL(1, 1)       // 1
-/// PTL_MUL(1, 2)       // 2
-/// PTL_MUL(2, 2)       // 4
-/// PTL_MUL(1023, 1)    // 1023
-/// PTL_MUL(1023, 1023) // 1
-#define PTL_MUL(/* l: uint, r: uint */...) /* -> uint{l * r} */ \
-  PTL_IF(PTL_EQZ(PTL_REST(__VA_ARGS__)), (PPUTLMUL_ZERO_B), (PPUTLMUL_POS_B))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMUL_POS_B(a, b) \
-  PPUTLMUL_RES(PPUTLMUL_X(PTL_ROPEN(PTL_LOG2(b), PPUTLMUL_RECUR) a, b, 0 PTL_RCLOSE(PTL_LOG2(b))))
-#define PPUTLMUL_ZERO_B(a, b) 0
-#define PPUTLMUL_X(...)       __VA_ARGS__
-#define PPUTLMUL_RECUR(...)   PPUTLMUL_RECUR_X(__VA_ARGS__)
-#define PPUTLMUL_RECUR_X(a, b, s) \
-  PTL_MUL2(a), PTL_DIV2(b), PTL_IF(PTL_MOD2(b), (PTL_ADD(s, a)), (s))
-#define PPUTLMUL_RES(...)       PPUTLMUL_RES_X(__VA_ARGS__)
-#define PPUTLMUL_RES_X(a, b, s) PTL_ADD(a, s)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [math.fulldiv]
-/// --------------
-/// uint division that returns both the quotient and remainder.
-/// throws an error on division by zero.
-///
-/// PTL_FULLDIV(6, 3) // 2, 0
-/// PTL_FULLDIV(7, 4) // 1, 3
-#define PTL_FULLDIV(/* l: uint, r: uint */...) /* -> uint{l / r}, uint{l % r} */      \
-  PTL_IF(PTL_EQZ(PTL_REST(__VA_ARGS__)), (PPUTLFULLDIV_ZERO_B), (PPUTLFULLDIV_POS_B)) \
-  (PTL_ISTR([PTL_FULLDIV] division by zero error : __VA_ARGS__), __VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLFULLDIV_POS_B(err, a, b) \
-  PPUTLFULLDIV_RES(PPUTLFULLDIV_X(PTL_ROPEN(a, PPUTLFULLDIV_RECUR) 0, a, b PTL_RCLOSE(a)))
-#define PPUTLFULLDIV_ZERO_B(err, a, b) PTL_FAIL(err)
-#define PPUTLFULLDIV_X(...)            __VA_ARGS__
-#define PPUTLFULLDIV_RECUR(...)        PPUTLFULLDIV_RECUR_X(__VA_ARGS__)
-#define PPUTLFULLDIV_RECUR_X(q, r, b) \
-  PTL_IF(PTL_REST(PPUTLSUB_IMPL(r, b)), (q, r, b), (PTL_INC(q), PTL_SUB(r, b), b))
-#define PPUTLFULLDIV_RES(...)       PPUTLFULLDIV_RES_X(__VA_ARGS__)
-#define PPUTLFULLDIV_RES_X(q, r, b) q, r
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [compare.lt]
-/// ------------
-/// uint less-than comparison.
-///
-/// PTL_LT(0, 0) // 0
-/// PTL_LT(0, 1) // 1
-/// PTL_LT(1, 0) // 0
-/// PTL_LT(1, 1) // 0
-#define PTL_LT(/* l: uint, r: uint */...) /* -> uint{l < r} */ PTL_REST(PPUTLSUB_IMPL(__VA_ARGS__))
-
-/// [compare.gt]
-/// ------------
-/// uint greater-than comparison.
-///
-/// PTL_GT(0, 0) // 0
-/// PTL_GT(0, 1) // 0
-/// PTL_GT(1, 0) // 1
-/// PTL_GT(1, 1) // 0
-#define PTL_GT(/* l: uint, r: uint */...) /* -> uint{l > r} */ PPUTLGT_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLGT_X(l, r) PTL_LT(r, l)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [compare.le]
-/// ------------
-/// uint less-than-or-equal-to comparison.
-///
-/// PTL_LE(0, 0) // 1
-/// PTL_LE(0, 1) // 1
-/// PTL_LE(1, 0) // 0
-/// PTL_LE(1, 1) // 1
-#define PTL_LE(/* l: uint, r: uint */...) /* -> uint{l <= r} */ PTL_NOT(PTL_GT(__VA_ARGS__))
-
-/// [compare.ge]
-/// ------------
-/// uint greater-than-or-equal-to comparison.
-///
-/// PTL_GE(0, 0) // 1
-/// PTL_GE(0, 1) // 0
-/// PTL_GE(1, 0) // 1
-/// PTL_GE(1, 1) // 1
-#define PTL_GE(/* l: uint, r: uint */...) /* -> uint{l >= r} */ PTL_NOT(PTL_LT(__VA_ARGS__))
-
-/// [compare.eq]
-/// ------------
-/// uint equal-to comparison.
-///
-/// PTL_EQ(0, 0) // 1
-/// PTL_EQ(0, 1) // 0
-/// PTL_EQ(1, 0) // 0
-/// PTL_EQ(1, 1) // 1
-#define PTL_EQ(/* l: uint, r: uint */...) /* -> uint{l == r} */ \
-  PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
-
-/// [compare.ne]
-/// ------------
-/// uint not-equal-to comparison.
-///
-/// PTL_EQ(0, 0) // 1
-/// PTL_EQ(0, 1) // 0
-/// PTL_EQ(1, 0) // 0
-/// PTL_EQ(1, 1) // 1
-#define PTL_NE(/* l: uint, r: uint */...) /* -> uint{l != r} */ PTL_NOT(PTL_EQ(__VA_ARGS__))
-
-/// [compare.min]
-/// -------------
-/// uint minimum operation.
-///
-/// PTL_MIN(0, 0) // 0
-/// PTL_MIN(0, 1) // 0
-/// PTL_MIN(1, 0) // 0
-/// PTL_MIN(1, 1) // 1
-#define PTL_MIN(/* l: uint, r: uint */...) /* -> uint{l < r ? l : r} */ \
-  PTL_IF(PTL_LT(__VA_ARGS__), (PTL_FIRST(__VA_ARGS__)), (PTL_REST(__VA_ARGS__)))
-
-/// [compare.max]
-/// -------------
-/// uint maximum operation.
-///
-/// PTL_MAX(0, 0) // 0
-/// PTL_MAX(0, 1) // 1
-/// PTL_MAX(1, 0) // 1
-/// PTL_MAX(1, 1) // 1
-#define PTL_MAX(/* l: uint, r: uint */...) /* -> uint{l > r ? l : r} */ \
-  PTL_IF(PTL_GT(__VA_ARGS__), (PTL_FIRST(__VA_ARGS__)), (PTL_REST(__VA_ARGS__)))
+/// [bitwise.bitnot]
+/// ----------------
+/// bitwise NOT.
+#define PTL_BITNOT(/* v: binary */...) /* -> ~v */ PTL_IF(__VA_ARGS__, (0), (1))
 
 // vim: fdm=marker:fmr={{{,}}}
 

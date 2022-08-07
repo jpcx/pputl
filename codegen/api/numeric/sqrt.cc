@@ -25,26 +25,26 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
-  docs << "uint sqrt lookup.";
-
-  tests << sqrt(0)                  = "0";
-  tests << sqrt(4)                  = "2" >> docs;
-  tests << sqrt(conf::uint_max / 2) = std::to_string((unsigned)std::sqrt(conf::uint_max / 2));
-  tests << sqrt(conf::uint_max)     = std::to_string((unsigned)std::sqrt(conf::uint_max)) >> docs;
-
-  return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-        [&](pack args) {
-          return args[6];
-        }}(args);
-  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-});
-
-} // namespace api
+// #include "numeric.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
+//   docs << "uint sqrt lookup.";
+// 
+//   tests << sqrt(0)                  = "0";
+//   tests << sqrt(4)                  = "2" >> docs;
+//   tests << sqrt(conf::uint_max / 2) = std::to_string((unsigned)std::sqrt(conf::uint_max / 2));
+//   tests << sqrt(conf::uint_max)     = std::to_string((unsigned)std::sqrt(conf::uint_max)) >> docs;
+// 
+//   return def<"x(...)">{[&](va args) {
+//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
+//         [&](pack args) {
+//           return args[6];
+//         }}(args);
+//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+// });
+// 
+// } // namespace api

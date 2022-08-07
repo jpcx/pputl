@@ -32,6 +32,7 @@
 #include "lang.h"
 #include "meta.h"
 #include "numeric.h"
+#include "traits.h"
 #include "type.h"
 
 namespace api {

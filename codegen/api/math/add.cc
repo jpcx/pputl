@@ -25,28 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "math.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(add) add = NIFTY_DEF(add, [&](va args) {
-  docs << "uint addition with overflow.";
-
-  tests << add("0, 0")            = "0" >> docs;
-  tests << add("0, 1")            = "1" >> docs;
-  tests << add("1, 2")            = "3" >> docs;
-  tests << add(conf::uint_max, 1) = "0" >> docs;
-  tests << add(conf::uint_max, 2) = "1" >> docs;
-  tests << add(1, conf::uint_max) = "0";
-  tests << add(2, conf::uint_max) = "1";
-
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
-
-  return meta_recur(x, first(args), inc, rest(args));
-});
-
-} // namespace api
+// #include "math.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(add) add = NIFTY_DEF(add, [&](va args) {
+//   docs << "uint addition with overflow.";
+// 
+//   tests << add("0, 0")            = "0" >> docs;
+//   tests << add("0, 1")            = "1" >> docs;
+//   tests << add("1, 2")            = "3" >> docs;
+//   tests << add(conf::uint_max, 1) = "0" >> docs;
+//   tests << add(conf::uint_max, 2) = "1" >> docs;
+//   tests << add(1, conf::uint_max) = "0";
+//   tests << add(2, conf::uint_max) = "1";
+// 
+//   def<"x(...)"> x = [&](va args) {
+//     return args;
+//   };
+// 
+//   return meta_recur(x, first(args), inc, rest(args));
+// });
+// 
+// } // namespace api

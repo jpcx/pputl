@@ -34,9 +34,9 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tuple(...: t: any...) -> tuple{t}"> const& tuple;
-extern codegen::def<"bool(...: b: any...) -> bool{b}"> const&   bool_;
-extern codegen::def<"uint(...: n: any...) -> uint{n}"> const&   uint;
+extern codegen::def<"tuple(...: t: tuple) -> t"> const& tuple;
+extern codegen::def<"bool(...: b: bool) -> b"> const&   bool_;
+extern codegen::def<"uint(...: n: uint) -> n"> const&   uint;
 
 NIFTY_DECL(tuple);
 namespace detail {
@@ -53,6 +53,7 @@ extern codegen::def<>&                                          uint_seq;
 extern codegen::def<>&                                          uint_rseq;
 extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_decimal;
 extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_traits;
+/* extern std::array<codegen::def<>, (codegen::conf::uint_max + 1) * 2>& uint_traits; */
 extern codegen::def<>&                                          uint_pass;
 extern codegen::def<>&                                          uint_fail;
 extern codegen::def<>&                                          uint_o;

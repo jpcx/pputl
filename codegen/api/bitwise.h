@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,34 +26,24 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
-//   docs << "positive uint logarithm base 2 lookup."
-//        << "fails on n=0.";
-// 
-//   tests << log2(1) = "0" >> docs;
-//   tests << log2(conf::uint_max) =
-//       std::to_string(((unsigned)std::log2(conf::uint_max)) % conf::uint_max) >> docs;
-// 
-//   def<"nez1(err, ...)">{} = [&](arg, va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[2];
-//         }}(args);
-//   };
-// 
-//   def<"nez0(err, ...)"> nez0 = [&](arg err, va) {
-//     return fail(err);
-//   };
-// 
-//   return pp::call(cat(utl::slice(nez0, -1), nez(args)),
-//                   istr("[" + log2 + "] log2 of zero not supported : " + args),
-//                   cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "codegen.h"
+#include "config.h"
+#include "control.h"
+#include "lang.h"
+#include "logic.h"
+#include "meta.h"
+#include "numeric.h"
+#include "traits.h"
+#include "type.h"
+
+namespace api {
+
+inline codegen::category<"bitwise"> bitwise;
+
+extern codegen::def<"bitnot(...: v: binary) -> ~v"> const& bitnot_;
+
+NIFTY_DECL(bitnot_);
+
+inline codegen::end_category<"bitwise"> bitwise_end;
+
+} // namespace api

@@ -43,16 +43,16 @@ extern codegen::def<"id(...: v: any...) -> ...v"> const&                id;
 std::string                                                             xct_expected(unsigned n);
 extern codegen::def<"xct -> xct"> const&                                xct;
 extern codegen::def<"xct_size(...: xct) -> uint"> const&                xct_size;
-extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
-extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
+// extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
+// extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
 
-template<std::convertible_to<std::string>... Args>
-inline std::string
-meta_recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
-  return x + "(" + ropen(n, f) + " "
-       + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ") + " "
-       + rclose(n) + ")";
-}
+// template<std::convertible_to<std::string>... Args>
+// inline std::string
+// meta_recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
+//   return x + "(" + ropen(n, f) + " "
+//        + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ") + " "
+//        + rclose(n) + ")";
+// }
 
 NIFTY_DECL(id);
 namespace detail {
@@ -63,8 +63,8 @@ NIFTY_DECL(xct_b);
 } // namespace detail
 NIFTY_DECL(xct);
 NIFTY_DECL(xct_size);
-NIFTY_DECL(ropen);
-NIFTY_DECL(rclose);
+// NIFTY_DECL(ropen);
+// NIFTY_DECL(rclose);
 
 inline codegen::end_category<"meta"> meta_end;
 

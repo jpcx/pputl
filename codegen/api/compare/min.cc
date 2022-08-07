@@ -25,49 +25,49 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "compare.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(min) min = NIFTY_DEF(min, [&](va args) {
-  docs << "uint minimum operation.";
-
-  tests << min("0, 0")                                 = "0" >> docs;
-  tests << min("0, 1")                                 = "0" >> docs;
-  tests << min("0, 2")                                 = "0";
-  tests << min("0, 3")                                 = "0";
-  tests << min("1, 0")                                 = "0" >> docs;
-  tests << min("1, 1")                                 = "1" >> docs;
-  tests << min("1, 2")                                 = "1";
-  tests << min("1, 3")                                 = "1";
-  tests << min("2, 0")                                 = "0";
-  tests << min("2, 1")                                 = "1";
-  tests << min("2, 2")                                 = "2";
-  tests << min("2, 3")                                 = "2";
-  tests << min("3, 0")                                 = "0";
-  tests << min("3, 1")                                 = "1";
-  tests << min("3, 2")                                 = "2";
-  tests << min("3, 3")                                 = "3";
-  tests << min(0, conf::uint_max)                      = "0";
-  tests << min(0, conf::uint_max - 1)                  = "0";
-  tests << min(1, conf::uint_max)                      = "1";
-  tests << min(1, conf::uint_max - 1)                  = "1";
-  tests << min(conf::uint_max, 0)                      = "0";
-  tests << min(conf::uint_max, 0)                      = "0";
-  tests << min(conf::uint_max - 1, 0)                  = "0";
-  tests << min(conf::uint_max - 1, 0)                  = "0";
-  tests << min(conf::uint_max, 1)                      = "1";
-  tests << min(conf::uint_max, 1)                      = "1";
-  tests << min(conf::uint_max - 1, 1)                  = "1";
-  tests << min(conf::uint_max - 1, 1)                  = "1";
-  tests << min(conf::uint_max, conf::uint_max)         = uint_max_s;
-  tests << min(conf::uint_max, conf::uint_max - 1)     = std::to_string(conf::uint_max - 1);
-  tests << min(conf::uint_max - 1, conf::uint_max)     = std::to_string(conf::uint_max - 1);
-  tests << min(conf::uint_max - 1, conf::uint_max - 1) = std::to_string(conf::uint_max - 1);
-
-  return if_(lt(args), pp::tup(first(args)), pp::tup(rest(args)));
-});
-
-} // namespace api
+// #include "compare.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(min) min = NIFTY_DEF(min, [&](va args) {
+//   docs << "uint minimum operation.";
+// 
+//   tests << min("0, 0")                                 = "0" >> docs;
+//   tests << min("0, 1")                                 = "0" >> docs;
+//   tests << min("0, 2")                                 = "0";
+//   tests << min("0, 3")                                 = "0";
+//   tests << min("1, 0")                                 = "0" >> docs;
+//   tests << min("1, 1")                                 = "1" >> docs;
+//   tests << min("1, 2")                                 = "1";
+//   tests << min("1, 3")                                 = "1";
+//   tests << min("2, 0")                                 = "0";
+//   tests << min("2, 1")                                 = "1";
+//   tests << min("2, 2")                                 = "2";
+//   tests << min("2, 3")                                 = "2";
+//   tests << min("3, 0")                                 = "0";
+//   tests << min("3, 1")                                 = "1";
+//   tests << min("3, 2")                                 = "2";
+//   tests << min("3, 3")                                 = "3";
+//   tests << min(0, conf::uint_max)                      = "0";
+//   tests << min(0, conf::uint_max - 1)                  = "0";
+//   tests << min(1, conf::uint_max)                      = "1";
+//   tests << min(1, conf::uint_max - 1)                  = "1";
+//   tests << min(conf::uint_max, 0)                      = "0";
+//   tests << min(conf::uint_max, 0)                      = "0";
+//   tests << min(conf::uint_max - 1, 0)                  = "0";
+//   tests << min(conf::uint_max - 1, 0)                  = "0";
+//   tests << min(conf::uint_max, 1)                      = "1";
+//   tests << min(conf::uint_max, 1)                      = "1";
+//   tests << min(conf::uint_max - 1, 1)                  = "1";
+//   tests << min(conf::uint_max - 1, 1)                  = "1";
+//   tests << min(conf::uint_max, conf::uint_max)         = uint_max_s;
+//   tests << min(conf::uint_max, conf::uint_max - 1)     = std::to_string(conf::uint_max - 1);
+//   tests << min(conf::uint_max - 1, conf::uint_max)     = std::to_string(conf::uint_max - 1);
+//   tests << min(conf::uint_max - 1, conf::uint_max - 1) = std::to_string(conf::uint_max - 1);
+// 
+//   return if_(lt(args), pp::tup(first(args)), pp::tup(rest(args)));
+// });
+// 
+// } // namespace api

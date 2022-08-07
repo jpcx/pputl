@@ -146,12 +146,17 @@ binary(unsigned n) {
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "uint type (0 through " + uint_max_s + ")."
-       << "expands to n if valid, else fails.";
+       << "expands to n if valid, else fails."
+       << ""
+       << "constructible from binary or decimal.";
 
   tests << uint(0)              = "0" >> docs;
   tests << uint(1)              = "1" >> docs;
   tests << uint(2)              = "2" >> docs;
   tests << uint(conf::uint_max) = uint_max_s >> docs;
+  /* tests << uint("(0)")          = "0" >> docs; */
+  /* tests << uint("(1,0)")        = "2" >> docs; */
+  /* tests << uint("(1,0,1)")      = "5" >> docs; */
 
   auto seq  = utl::base10_seq(conf::uint_max + 1);
   auto rseq = seq;

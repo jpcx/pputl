@@ -25,34 +25,19 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
-//   docs << "positive uint logarithm base 2 lookup."
-//        << "fails on n=0.";
-// 
-//   tests << log2(1) = "0" >> docs;
-//   tests << log2(conf::uint_max) =
-//       std::to_string(((unsigned)std::log2(conf::uint_max)) % conf::uint_max) >> docs;
-// 
-//   def<"nez1(err, ...)">{} = [&](arg, va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[2];
-//         }}(args);
-//   };
-// 
-//   def<"nez0(err, ...)"> nez0 = [&](arg err, va) {
-//     return fail(err);
-//   };
-// 
-//   return pp::call(cat(utl::slice(nez0, -1), nez(args)),
-//                   istr("[" + log2 + "] log2 of zero not supported : " + args),
-//                   cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
+  docs << "bitwise NOT.";
+
+  /* tests << not_("0") = "1" >> docs; */
+  /* tests << not_("1") = "0" >> docs; */
+
+  return if_(args, "(0)", "(1)");
+});
+
+} // namespace api

@@ -25,21 +25,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
-  docs << "uint non-zero detection.";
-
-  tests << nez("0")             = "0" >> docs;
-  tests << nez("1")             = "1";
-  tests << nez("2")             = "1";
-  tests << nez(uint_max_s)      = "1" >> docs;
-
-  return is_some(cat(utl::slice(detail::eqz_0, -1), uint(args)));
-});
-
-} // namespace api
+// #include "numeric.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
+//   docs << "uint non-zero detection.";
+// 
+//   tests << nez("0")             = "0" >> docs;
+//   tests << nez("1")             = "1";
+//   tests << nez("2")             = "1";
+//   tests << nez(uint_max_s)      = "1" >> docs;
+// 
+//   return is_some(cat(utl::slice(detail::eqz_0, -1), uint(args)));
+// });
+// 
+// } // namespace api

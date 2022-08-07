@@ -25,42 +25,49 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(decimal) decimal = NIFTY_DEF(decimal, [&](va args) {
-  docs << "uint decimal from binary lookup."
-       << "number of bits must equal " + uint_bits + " (" + std::to_string(conf::uint_bits) + ").";
-
-  using std::string;
-  using pp::tup;
-  using std::vector;
-
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits, "0"), ", ")))                = "0";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 1, "0"), ", ") + ", 1"))    = "1";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 2, "0"), ", ") + ", 1, 0")) = "2";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 2, "0"), ", ") + ", 1, 1")) = "3";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 0, 0")) =
-      "4";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 0, 1")) =
-      "5" >> docs;
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 1, 0")) =
-      "6";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 1, 1")) =
-      "7";
-  tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits, "1"), ", "))) = uint_max_s;
-
-  auto res =
-      def{"res(" + utl::cat(utl::alpha_base52_seq(conf::uint_bits), ", ") + ")"} = [&](pack args) {
-        return pp::cat(utl::slice(detail::uint_decimal[0], -conf::uint_bits), utl::cat(args, "##"));
-      };
-
-  return def<"x(...)">{[&](va args) {
-    return res + " " + args;
-  }}(tuple(args));
-});
-
-} // namespace api
+// #include "numeric.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(decimal) decimal = NIFTY_DEF(decimal, [&](va args) {
+//   docs << "uint decimal from binary lookup."
+//        << "number of bits must equal " + uint_bits + " (" + std::to_string(conf::uint_bits) + ").";
+// 
+//   using std::string;
+//   using pp::tup;
+//   using std::vector;
+// 
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits, "0"), ", ")))                = "0";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 1, "0"), ", ") + ", 1"))    = "1";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 2, "0"), ", ") + ", 1, 0")) = "2";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 2, "0"), ", ") + ", 1, 1")) = "3";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 0, 0")) =
+//       "4";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 0, 1")) =
+//       "5" >> docs;
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 1, 0")) =
+//       "6";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits - 3, "0"), ", ") + ", 1, 1, 1")) =
+//       "7";
+//   tests << decimal(tup(utl::cat(vector<string>(conf::uint_bits, "1"), ", "))) = uint_max_s;
+// 
+//   auto res =
+//       def{"res(" + utl::cat(utl::alpha_base52_seq(conf::uint_bits), ", ") + ")"} = [&](pack args) {
+//         return pp::cat(utl::slice(detail::uint_decimal[0], -conf::uint_bits), utl::cat(args, "##"));
+//       };
+// 
+//   def<"0(err, ...)"> _0 = [&](arg err, va) {
+//     return fail(err);
+//   };
+// 
+//   def<"1(err, ...)">{} = [&](arg, va args) {
+//     return res + " " + args;
+//   };
+// 
+//   return pp::call(cat(utl::slice(_0, -1), is_binary(args)),
+//                   istr("[" + decimal + "] invalid binary : " + args), args);
+// });
+// 
+// } // namespace api

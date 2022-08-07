@@ -25,49 +25,49 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "compare.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(eq) eq = NIFTY_DEF(eq, [&](va args) {
-  docs << "uint equal-to comparison.";
-
-  tests << eq("0, 0")                                 = "1" >> docs;
-  tests << eq("0, 1")                                 = "0" >> docs;
-  tests << eq("0, 2")                                 = "0";
-  tests << eq("0, 3")                                 = "0";
-  tests << eq("1, 0")                                 = "0" >> docs;
-  tests << eq("1, 1")                                 = "1" >> docs;
-  tests << eq("1, 2")                                 = "0";
-  tests << eq("1, 3")                                 = "0";
-  tests << eq("2, 0")                                 = "0";
-  tests << eq("2, 1")                                 = "0";
-  tests << eq("2, 2")                                 = "1";
-  tests << eq("2, 3")                                 = "0";
-  tests << eq("3, 0")                                 = "0";
-  tests << eq("3, 1")                                 = "0";
-  tests << eq("3, 2")                                 = "0";
-  tests << eq("3, 3")                                 = "1";
-  tests << eq(0, conf::uint_max)                      = "0";
-  tests << eq(0, conf::uint_max - 1)                  = "0";
-  tests << eq(1, conf::uint_max)                      = "0";
-  tests << eq(1, conf::uint_max - 1)                  = "0";
-  tests << eq(conf::uint_max, 0)                      = "0";
-  tests << eq(conf::uint_max, 0)                      = "0";
-  tests << eq(conf::uint_max - 1, 0)                  = "0";
-  tests << eq(conf::uint_max - 1, 0)                  = "0";
-  tests << eq(conf::uint_max, 1)                      = "0";
-  tests << eq(conf::uint_max, 1)                      = "0";
-  tests << eq(conf::uint_max - 1, 1)                  = "0";
-  tests << eq(conf::uint_max - 1, 1)                  = "0";
-  tests << eq(conf::uint_max, conf::uint_max)         = "1";
-  tests << eq(conf::uint_max, conf::uint_max - 1)     = "0";
-  tests << eq(conf::uint_max - 1, conf::uint_max)     = "0";
-  tests << eq(conf::uint_max - 1, conf::uint_max - 1) = "1";
-
-  return and_(le(args), ge(args));
-});
-
-} // namespace api
+// #include "compare.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(eq) eq = NIFTY_DEF(eq, [&](va args) {
+//   docs << "uint equal-to comparison.";
+// 
+//   tests << eq("0, 0")                                 = "1" >> docs;
+//   tests << eq("0, 1")                                 = "0" >> docs;
+//   tests << eq("0, 2")                                 = "0";
+//   tests << eq("0, 3")                                 = "0";
+//   tests << eq("1, 0")                                 = "0" >> docs;
+//   tests << eq("1, 1")                                 = "1" >> docs;
+//   tests << eq("1, 2")                                 = "0";
+//   tests << eq("1, 3")                                 = "0";
+//   tests << eq("2, 0")                                 = "0";
+//   tests << eq("2, 1")                                 = "0";
+//   tests << eq("2, 2")                                 = "1";
+//   tests << eq("2, 3")                                 = "0";
+//   tests << eq("3, 0")                                 = "0";
+//   tests << eq("3, 1")                                 = "0";
+//   tests << eq("3, 2")                                 = "0";
+//   tests << eq("3, 3")                                 = "1";
+//   tests << eq(0, conf::uint_max)                      = "0";
+//   tests << eq(0, conf::uint_max - 1)                  = "0";
+//   tests << eq(1, conf::uint_max)                      = "0";
+//   tests << eq(1, conf::uint_max - 1)                  = "0";
+//   tests << eq(conf::uint_max, 0)                      = "0";
+//   tests << eq(conf::uint_max, 0)                      = "0";
+//   tests << eq(conf::uint_max - 1, 0)                  = "0";
+//   tests << eq(conf::uint_max - 1, 0)                  = "0";
+//   tests << eq(conf::uint_max, 1)                      = "0";
+//   tests << eq(conf::uint_max, 1)                      = "0";
+//   tests << eq(conf::uint_max - 1, 1)                  = "0";
+//   tests << eq(conf::uint_max - 1, 1)                  = "0";
+//   tests << eq(conf::uint_max, conf::uint_max)         = "1";
+//   tests << eq(conf::uint_max, conf::uint_max - 1)     = "0";
+//   tests << eq(conf::uint_max - 1, conf::uint_max)     = "0";
+//   tests << eq(conf::uint_max - 1, conf::uint_max - 1) = "1";
+// 
+//   return and_(le(args), ge(args));
+// });
+// 
+// } // namespace api

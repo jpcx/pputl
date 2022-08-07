@@ -25,30 +25,30 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
-
-namespace api {
-
-using namespace codegen;
-
-namespace detail {
-decltype(eqz_0) eqz_0 = NIFTY_DEF(eqz_0);
-}
-
-decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
-  docs << "uint zero detection.";
-
-  tests << eqz("0")             = "1" >> docs;
-  tests << eqz("1")             = "0";
-  tests << eqz("2")             = "0";
-  tests << eqz(uint_max_s)      = "0";
-  tests << eqz(conf::uint_max)  = "0" >> docs;
-
-  detail::eqz_0 = def{"0"} = [&] {
-    return "";
-  };
-
-  return is_none(cat(utl::slice(detail::eqz_0, -1), uint(args)));
-});
-
-} // namespace api
+// #include "numeric.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// namespace detail {
+// decltype(eqz_0) eqz_0 = NIFTY_DEF(eqz_0);
+// }
+// 
+// decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
+//   docs << "uint zero detection.";
+// 
+//   tests << eqz("0")             = "1" >> docs;
+//   tests << eqz("1")             = "0";
+//   tests << eqz("2")             = "0";
+//   tests << eqz(uint_max_s)      = "0";
+//   tests << eqz(conf::uint_max)  = "0" >> docs;
+// 
+//   detail::eqz_0 = def{"0"} = [&] {
+//     return "";
+//   };
+// 
+//   return is_none(cat(utl::slice(detail::eqz_0, -1), uint(args)));
+// });
+// 
+// } // namespace api

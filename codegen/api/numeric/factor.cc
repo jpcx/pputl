@@ -25,35 +25,35 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(factor) factor = NIFTY_DEF(factor, [&](va args) {
-  docs << "uint prime factorization lookup.";
-
-  auto                     facts0 = utl::prime_factors(conf::uint_max / 3);
-  auto                     facts1 = utl::prime_factors(conf::uint_max);
-  std::vector<std::string> sfacts0(facts0.size());
-  std::vector<std::string> sfacts1(facts1.size());
-  std::ranges::transform(facts0, std::begin(sfacts0), [](auto&& v) {
-    return std::to_string(v);
-  });
-  std::ranges::transform(facts1, std::begin(sfacts1), [](auto&& v) {
-    return std::to_string(v);
-  });
-
-  tests << factor(conf::uint_max / 3) = utl::cat(sfacts0, ", ") >> docs;
-  tests << factor(conf::uint_max)     = utl::cat(sfacts1, ", ") >> docs;
-
-  return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, fact, ...)">{
-        [&](pack args) {
-          return esc + " " + args[15];
-        }}(args);
-  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-});
-
-} // namespace api
+// #include "numeric.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(factor) factor = NIFTY_DEF(factor, [&](va args) {
+//   docs << "uint prime factorization lookup.";
+// 
+//   auto                     facts0 = utl::prime_factors(conf::uint_max / 3);
+//   auto                     facts1 = utl::prime_factors(conf::uint_max);
+//   std::vector<std::string> sfacts0(facts0.size());
+//   std::vector<std::string> sfacts1(facts1.size());
+//   std::ranges::transform(facts0, std::begin(sfacts0), [](auto&& v) {
+//     return std::to_string(v);
+//   });
+//   std::ranges::transform(facts1, std::begin(sfacts1), [](auto&& v) {
+//     return std::to_string(v);
+//   });
+// 
+//   tests << factor(conf::uint_max / 3) = utl::cat(sfacts0, ", ") >> docs;
+//   tests << factor(conf::uint_max)     = utl::cat(sfacts1, ", ") >> docs;
+// 
+//   return def<"x(...)">{[&](va args) {
+//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, fact, ...)">{
+//         [&](pack args) {
+//           return esc + " " + args[15];
+//         }}(args);
+//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+// });
+// 
+// } // namespace api

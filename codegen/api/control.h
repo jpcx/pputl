@@ -39,10 +39,10 @@ namespace api {
 inline codegen::category<"control"> control;
 
 extern codegen::def<"if(...: b: bool, t: tuple, f: tuple) -> b ? ...t : ...f"> const& if_;
-extern codegen::def<"switch(...: cs: uint, cases: tuple...) -> ...cases[cs]"> const&  switch_;
+// extern codegen::def<"switch(...: cs: uint, cases: tuple...) -> ...cases[cs]"> const&  switch_;
 
 NIFTY_DECL(if_);
-NIFTY_DECL(switch_);
+// NIFTY_DECL(switch_);
 
 inline codegen::end_category<"control"> control_end;
 
