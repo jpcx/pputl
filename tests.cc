@@ -41,8 +41,8 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many high-level programming constructs and a 10-bit unsigned integer    //
-//    space with binary arithmetic capabilities.                              //
+//    many high-level programming constructs  and 10-bit binary arithmetic    //
+//    for both unsigned and signed two's complement integers.                 //
 //                                                                            //
 //    pputl algorithms  are built using a preprocessor syntax manipulation    //
 //    technique for constructing inline recursive call stacks that execute    //
@@ -58,8 +58,8 @@
 //    -----                                                                   //
 //    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    Modify the head of codegen/codegen.h  to configure the  unsigned bit    //
-//    size or naming preferences and run `make` to regenerate.                //
+//    Modify  the head of  codegen/codegen.h  to configure the bit size or    //
+//    naming preferences and run `make` to regenerate.                        //
 //                                                                            //
 //    Run `make test` to validate the library on your system.                 //
 //                                                                            //
@@ -74,15 +74,19 @@
 //    generic data ranges  both input and output a variadic argument list.    //
 //    Creating a tuple is trivial but extraction costs an expansion.          //
 //                                                                            //
-//    pputl defines three types: tuple, bool, and uint.  Features that use    //
-//    one of  these types  in their  parameter documentation  assert their    //
+//    pputl defines four types: tuple, bool, uint, and int.  Features that    //
+//    use one of these types in their parameter documentation assert their    //
 //    validity by type-casting.  Type casts expand to their original value    //
 //    if successful, else they trigger a preprocessor error.                  //
 //                                                                            //
 //    uint values are one of two subtypes: decimal or binary.  uint may be    //
 //    constructed from either of these representations.  Binary values are    //
-//    represented using an '0b' prefix and 'u' suffix and their bit length    //
-//    is always fixed to the configured uint bits.                            //
+//    fixed-size strings of bools with a '0b' prefix and 'u' suffix.          //
+//                                                                            //
+//    int values are binary-only due to concatenation restrictions. Signed    //
+//    values may be be used to construct uints or perform two's complement    //
+//    arithmetic.  Negative decimals  may be pasted  but cannot be parsed.    //
+//    Binary values are fixed-size bool strings with a '0b' prefix.           //
 //                                                                            //
 //    pputl errors execute  an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
