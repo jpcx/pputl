@@ -25,38 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include <span>
+
+#include "bitwise.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_decimal) is_decimal = NIFTY_DEF(is_decimal, [&](va args) {
-  docs << "detects if args is a uint represented as decimal.";
+decltype(bitflip_) bitflip_ = NIFTY_DEF(bitflip_, [&](va args) {
+  docs << "flips the ith bit in the uint."
+       << "i must be less than " + uint_bits + " (" + std::to_string(conf::uint_bits) + ").";
 
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
-  auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1")) + "0u";
 
-  tests << is_decimal()               = "0" >> docs;
-  tests << is_decimal(48)             = "1" >> docs;
-  tests << is_decimal(conf::uint_max) = "1" >> docs;
-  tests << is_decimal("foo")          = "0" >> docs;
-  tests << is_decimal(binmin)         = "0" >> docs;
-  tests << is_decimal(binmax)         = "0" >> docs;
+  tests << bitflip_(0, conf::uint_bits - 1)            = "1" >> docs;
+  tests << bitflip_(0, conf::uint_bits - 3)            = "4" >> docs;
+  tests << bitflip_(binmaxminus1, conf::uint_bits - 1) = binmax >> docs;
 
-  def dec = def{std::string{decimal}} = [&] {
-    return "";
-  };
-
-  def<"o_0(...)"> o_0 = [&](va) {
-    return "0";
-  };
-
-  def<"o_1(u)">{} = [&](arg u) {
-    return is_none(cat(utl::slice(dec, -((std::string const&)decimal).size()), typeof(u)));
-  };
-
-  return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);
+  return def<"x(v, i)">{[&](arg v, arg i) {
+    return bitset_(v, i, not_(bitget_(v, i)));
+  }}(args);
 });
 
 } // namespace api

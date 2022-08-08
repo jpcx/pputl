@@ -39,7 +39,25 @@ decltype(or_) or_ = NIFTY_DEF(or_, [&](va args) {
   tests << or_("1, 0") = "1" >> docs;
   tests << or_("1, 1") = "1" >> docs;
 
-  return if_(first(args), "(1)", pp::tup(bool_(rest(args))));
+  def<"00"> _00 = [&] {
+    return "0";
+  };
+
+  def<"01">{} = [&] {
+    return "1";
+  };
+
+  def<"10">{} = [&] {
+    return "1";
+  };
+
+  def<"11">{} = [&] {
+    return "1";
+  };
+
+  return def<"x(a, b)">{[&](arg a, arg b) {
+    return cat(utl::slice(_00, -2), cat(bool_(a), bool_(b)));
+  }}(args);
 });
 
 } // namespace api

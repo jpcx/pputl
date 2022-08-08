@@ -44,8 +44,10 @@ decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
   tests << bitset_(1, conf::uint_bits - 3, 1)      = "5" >> docs;
   tests << bitset_(binmax, conf::uint_bits - 1, 0) = binmaxminus1 >> docs;
 
-  auto bits = utl::alpha_base52_seq(conf::uint_bits);
-  for (auto&& v : bits) {
+  auto params_v = utl::alpha_base52_seq(conf::uint_bits);
+  auto params   = std::deque<std::string>{params_v.begin(), params_v.end()};
+  params.push_front("a");
+  for (auto&& v : params) {
     if (v == "b")
       v = "B";
     else if (v == "u")
@@ -55,9 +57,14 @@ decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
     else if (v == "U")
       v = "_U";
   }
-  auto catbits = utl::cat(bits, ", ");
+  auto bitswapped = [&](unsigned i) -> std::string {
+    auto cpy   = params;
+    cpy[0]     = cpy[i + 1];
+    cpy[i + 1] = '_';
+    return utl::cat(cpy, ", ");
+  };
 
-  def _0 = def{"0(_, " + catbits + ")"} = [&](pack args) {
+  def _0 = def{"0(" + bitswapped(0) + ")"} = [&](pack args) {
     auto rest_bits = std::vector<std::string>{args.begin() + 2, args.end()};
     return pp::cat("0b", args[0], pp::cat(rest_bits), "u");
   };
@@ -66,14 +73,14 @@ decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
     std::size_t i = 1;
 
     for (; i < conf::uint_bits - 1; ++i) {
-      def{std::to_string(i) + "(_, " + catbits + ")"} = [&](pack args) {
+      def{std::to_string(i) + "(" + bitswapped(i) + ")"} = [&](pack args) {
         auto first_bits = std::vector<std::string>{args.begin() + 1, args.begin() + 1 + i};
         auto rest_bits  = std::vector<std::string>{args.begin() + 2 + i, args.end()};
         return pp::cat("0b", pp::cat(first_bits), args[0], pp::cat(rest_bits), "u");
       };
     }
 
-    def{std::to_string(i) + "(_, " + catbits + ")"} = [&](pack args) {
+    def{std::to_string(i) + "(" + bitswapped(i) + ")"} = [&](pack args) {
       auto first_bits = std::vector<std::string>{args.begin() + 1, args.begin() + 1 + i};
       return pp::cat("0b", pp::cat(first_bits), args[0], "u");
     };

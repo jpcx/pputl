@@ -44,18 +44,16 @@ decltype(is_binary) is_binary = NIFTY_DEF(is_binary, [&](va args) {
   tests << is_binary(binmin)         = "1" >> docs;
   tests << is_binary(binmax)         = "1" >> docs;
 
+  def bin = def{std::string{binary}} = [&] {
+    return "";
+  };
+
   def<"o_0(...)"> o_0 = [&](va) {
     return "0";
   };
 
   def<"o_1(u)">{} = [&](arg u) {
-    def<"\\DEC"> _dec = [&] {
-      return "0";
-    };
-    def<"\\BIN">{} = [&] {
-      return "1";
-    };
-    return cat(utl::slice(_dec, -3), first(cat(utl::slice(detail::uint_traits[0], -1), u)));
+    return is_none(cat(utl::slice(bin, -((std::string const&)binary).size()), typeof(u)));
   };
 
   return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);

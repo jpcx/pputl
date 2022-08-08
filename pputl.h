@@ -2585,6 +2585,141 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [logic.not]
+/// -----------
+/// logical NOT.
+///
+/// PTL_NOT(0) // 1
+/// PTL_NOT(1) // 0
+#define PTL_NOT(/* v: bool */...) /* -> bool{!v} */ PTL_CAT(PPUTLNOT_, PTL_BOOL(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLNOT_1 0
+#define PPUTLNOT_0 1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [logic.and]
+/// -----------
+/// logical AND.
+///
+/// PTL_AND(0, 0) // 0
+/// PTL_AND(0, 1) // 0
+/// PTL_AND(1, 0) // 0
+/// PTL_AND(1, 1) // 1
+#define PTL_AND(/* a: bool, b: bool */...) /* -> bool{a and b} */ PPUTLAND_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLAND_X(a, b) PTL_CAT(PPUTLAND_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLAND_11      1
+#define PPUTLAND_10      0
+#define PPUTLAND_01      0
+#define PPUTLAND_00      0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [logic.or]
+/// ----------
+/// logical OR.
+///
+/// PTL_OR(0, 0) // 0
+/// PTL_OR(0, 1) // 1
+/// PTL_OR(1, 0) // 1
+/// PTL_OR(1, 1) // 1
+#define PTL_OR(/* a: bool, b: bool */...) /* -> bool{a or b} */ PPUTLOR_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLOR_X(a, b) PTL_CAT(PPUTLOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLOR_11      1
+#define PPUTLOR_10      1
+#define PPUTLOR_01      1
+#define PPUTLOR_00      0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [logic.nand]
+/// ------------
+/// logical NAND.
+///
+/// PTL_NAND(0, 0) // 1
+/// PTL_NAND(0, 1) // 1
+/// PTL_NAND(1, 0) // 1
+/// PTL_NAND(1, 1) // 0
+#define PTL_NAND(/* a: bool, b: bool */...) /* -> bool{!(a and b)} */ PPUTLNAND_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLNAND_X(a, b) PTL_CAT(PPUTLNAND_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLNAND_11      0
+#define PPUTLNAND_10      1
+#define PPUTLNAND_01      1
+#define PPUTLNAND_00      1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [logic.nor]
+/// -----------
+/// logical NOR.
+///
+/// PTL_NOR(0, 0) // 1
+/// PTL_NOR(0, 1) // 0
+/// PTL_NOR(1, 0) // 0
+/// PTL_NOR(1, 1) // 0
+#define PTL_NOR(/* a: bool, b: bool */...) /* -> bool{!(a or b)} */ PPUTLNOR_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLNOR_X(a, b) PTL_CAT(PPUTLNOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLNOR_11      0
+#define PPUTLNOR_10      0
+#define PPUTLNOR_01      0
+#define PPUTLNOR_00      1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [logic.xor]
+/// -----------
+/// logical XOR.
+///
+/// PTL_XOR(0, 0) // 0
+/// PTL_XOR(0, 1) // 1
+/// PTL_XOR(1, 0) // 1
+/// PTL_XOR(1, 1) // 0
+#define PTL_XOR(/* a: bool, b: bool */...) /* -> bool{a xor b} */ PPUTLXOR_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXOR_X(a, b) PTL_CAT(PPUTLXOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLXOR_11      0
+#define PPUTLXOR_10      1
+#define PPUTLXOR_01      1
+#define PPUTLXOR_00      0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [logic.xnor]
+/// ------------
+/// logical XNOR.
+///
+/// PTL_XNOR(0, 0) // 1
+/// PTL_XNOR(0, 1) // 0
+/// PTL_XNOR(1, 0) // 0
+/// PTL_XNOR(1, 1) // 1
+#define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ PPUTLXNOR_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXNOR_X(a, b) PTL_CAT(PPUTLXNOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLXNOR_11      1
+#define PPUTLXNOR_10      0
+#define PPUTLXNOR_01      0
+#define PPUTLXNOR_00      1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.
@@ -2868,10 +3003,9 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_BINARY_O_1(u)   PTL_CAT(PPUTLIS_BINARY_O_1_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, u)))
-#define PPUTLIS_BINARY_O_1_BIN  1
-#define PPUTLIS_BINARY_O_1_DEC  0
+#define PPUTLIS_BINARY_O_1(u)   PTL_IS_NONE(PTL_CAT(PPUTLIS_BINARY_, PTL_TYPEOF(u)))
 #define PPUTLIS_BINARY_O_0(...) 0
+#define PPUTLIS_BINARY_PTL_BINARY
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2890,10 +3024,9 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_DECIMAL_O_1(u)   PTL_CAT(PPUTLIS_DECIMAL_O_1_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, u)))
-#define PPUTLIS_DECIMAL_O_1_BIN  0
-#define PPUTLIS_DECIMAL_O_1_DEC  1
+#define PPUTLIS_DECIMAL_O_1(u)   PTL_IS_NONE(PTL_CAT(PPUTLIS_DECIMAL_, PTL_TYPEOF(u)))
 #define PPUTLIS_DECIMAL_O_0(...) 0
+#define PPUTLIS_DECIMAL_PTL_DECIMAL
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2946,16 +3079,33 @@
                   PTL_FIRST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(v)))))))
 #define PPUTLBITSET_OO(b, op, bits)                    PPUTLBITSET_OO_X(b, op, PTL_ITEMS(bits))
 #define PPUTLBITSET_OO_X(b, op, ...)                   op(b, __VA_ARGS__)
-#define PPUTLBITSET_9(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##_##u
-#define PPUTLBITSET_8(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##_##j##u
-#define PPUTLBITSET_7(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##_##i##j##u
-#define PPUTLBITSET_6(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##_##h##i##j##u
-#define PPUTLBITSET_5(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##_##g##h##i##j##u
-#define PPUTLBITSET_4(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##_##f##g##h##i##j##u
-#define PPUTLBITSET_3(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##_##e##f##g##h##i##j##u
-#define PPUTLBITSET_2(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##_##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_1(_, a, B, c, d, e, f, g, h, i, j) 0b##a##_##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_0(_, a, B, c, d, e, f, g, h, i, j) 0b##_##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_9(j, a, B, c, d, e, f, g, h, i, _) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_8(i, a, B, c, d, e, f, g, h, _, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_7(h, a, B, c, d, e, f, g, _, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_6(g, a, B, c, d, e, f, _, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_5(f, a, B, c, d, e, _, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_4(e, a, B, c, d, _, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_3(d, a, B, c, _, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_2(c, a, B, _, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_1(B, a, _, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_0(a, _, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitflip]
+/// -----------------
+/// flips the ith bit in the uint.
+/// i must be less than PTL_UINT_BITS (10).
+///
+/// PTL_BITFLIP(0, 9)             // 1
+/// PTL_BITFLIP(0, 7)             // 4
+/// PTL_BITFLIP(0b1111111110u, 9) // 0b1111111111u
+#define PTL_BITFLIP(/* v: uint, i: uint */...) /* -> (v[i] = !v[i]): typeof(v) */ \
+  PPUTLBITFLIP_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITFLIP_X(v, i) PTL_BITSET(v, i, PTL_NOT(PTL_BITGET(v, i)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3047,82 +3197,6 @@
 #define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [logic.not]
-/// -----------
-/// logical NOT.
-///
-/// PTL_NOT(0) // 1
-/// PTL_NOT(1) // 0
-#define PTL_NOT(/* v: bool */...) /* -> bool{!v} */ PTL_IF(__VA_ARGS__, (0), (1))
-
-/// [logic.and]
-/// -----------
-/// logical AND.
-///
-/// PTL_AND(0, 0) // 0
-/// PTL_AND(0, 1) // 0
-/// PTL_AND(1, 0) // 0
-/// PTL_AND(1, 1) // 1
-#define PTL_AND(/* a: bool, b: bool */...) /* -> bool{a and b} */ \
-  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))), (0))
-
-/// [logic.or]
-/// ----------
-/// logical OR.
-///
-/// PTL_OR(0, 0) // 0
-/// PTL_OR(0, 1) // 1
-/// PTL_OR(1, 0) // 1
-/// PTL_OR(1, 1) // 1
-#define PTL_OR(/* a: bool, b: bool */...) /* -> bool{a or b} */ \
-  PTL_IF(PTL_FIRST(__VA_ARGS__), (1), (PTL_BOOL(PTL_REST(__VA_ARGS__))))
-
-/// [logic.nand]
-/// ------------
-/// logical NAND.
-///
-/// PTL_NAND(0, 0) // 1
-/// PTL_NAND(0, 1) // 1
-/// PTL_NAND(1, 0) // 1
-/// PTL_NAND(1, 1) // 0
-#define PTL_NAND(/* a: bool, b: bool */...) /* -> bool{!(a and b)} */ \
-  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_NOT(PTL_REST(__VA_ARGS__))), (1))
-
-/// [logic.nor]
-/// -----------
-/// logical NOR.
-///
-/// PTL_NOR(0, 0) // 1
-/// PTL_NOR(0, 1) // 0
-/// PTL_NOR(1, 0) // 0
-/// PTL_NOR(1, 1) // 0
-#define PTL_NOR(/* a: bool, b: bool */...) /* -> bool{!(a or b)} */ \
-  PTL_IF(PTL_FIRST(__VA_ARGS__), (0), (PTL_NOT(PTL_REST(__VA_ARGS__))))
-
-/// [logic.xor]
-/// -----------
-/// logical XOR.
-///
-/// PTL_XOR(0, 0) // 0
-/// PTL_XOR(0, 1) // 1
-/// PTL_XOR(1, 0) // 1
-/// PTL_XOR(1, 1) // 0
-#define PTL_XOR(/* a: bool, b: bool */...) /* -> bool{a xor b} */  \
-  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_NOT(PTL_REST(__VA_ARGS__))), \
-         (PTL_BOOL(PTL_REST(__VA_ARGS__))))
-
-/// [logic.xnor]
-/// ------------
-/// logical XNOR.
-///
-/// PTL_XNOR(0, 0) // 1
-/// PTL_XNOR(0, 1) // 0
-/// PTL_XNOR(1, 0) // 0
-/// PTL_XNOR(1, 1) // 1
-#define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ \
-  PTL_IF(PTL_FIRST(__VA_ARGS__), (PTL_BOOL(PTL_REST(__VA_ARGS__))),   \
-         (PTL_NOT(PTL_REST(__VA_ARGS__))))
 
 // vim: fdm=marker:fmr={{{,}}}
 
