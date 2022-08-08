@@ -25,47 +25,47 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "compare.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(gt) gt = NIFTY_DEF(gt, [&](va args) {
-  docs << "uint greater-than comparison.";
-
-  tests << gt("0, 0")                                 = "0" >> docs;
-  tests << gt("0, 1")                                 = "0" >> docs;
-  tests << gt("0, 2")                                 = "0";
-  tests << gt("0, 3")                                 = "0";
-  tests << gt("1, 0")                                 = "1" >> docs;
-  tests << gt("1, 1")                                 = "0" >> docs;
-  tests << gt("1, 2")                                 = "0";
-  tests << gt("1, 3")                                 = "0";
-  tests << gt("2, 0")                                 = "1";
-  tests << gt("2, 1")                                 = "1";
-  tests << gt("2, 2")                                 = "0";
-  tests << gt("2, 3")                                 = "0";
-  tests << gt("3, 0")                                 = "1";
-  tests << gt("3, 1")                                 = "1";
-  tests << gt("3, 2")                                 = "1";
-  tests << gt("3, 3")                                 = "0";
-  tests << gt(0, conf::uint_max)                      = "0";
-  tests << gt(0, conf::uint_max - 1)                  = "0";
-  tests << gt(1, conf::uint_max)                      = "0";
-  tests << gt(1, conf::uint_max - 1)                  = "0";
-  tests << gt(conf::uint_max, 0)                      = "1";
-  tests << gt(conf::uint_max - 1, 0)                  = "1";
-  tests << gt(conf::uint_max, 1)                      = "1";
-  tests << gt(conf::uint_max - 1, 1)                  = "1";
-  tests << gt(conf::uint_max, conf::uint_max)         = "0";
-  tests << gt(conf::uint_max, conf::uint_max - 1)     = "1";
-  tests << gt(conf::uint_max - 1, conf::uint_max)     = "0";
-  tests << gt(conf::uint_max - 1, conf::uint_max - 1) = "0";
-
-  return def<"x(l, r)">{[&](arg l, arg r) {
-    return lt(r, l);
-  }}(args);
-});
-
-} // namespace api
+// #include "compare.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(gt) gt = NIFTY_DEF(gt, [&](va args) {
+//   docs << "uint greater-than comparison.";
+// 
+//   tests << gt("0, 0")                                 = "0" >> docs;
+//   tests << gt("0, 1")                                 = "0" >> docs;
+//   tests << gt("0, 2")                                 = "0";
+//   tests << gt("0, 3")                                 = "0";
+//   tests << gt("1, 0")                                 = "1" >> docs;
+//   tests << gt("1, 1")                                 = "0" >> docs;
+//   tests << gt("1, 2")                                 = "0";
+//   tests << gt("1, 3")                                 = "0";
+//   tests << gt("2, 0")                                 = "1";
+//   tests << gt("2, 1")                                 = "1";
+//   tests << gt("2, 2")                                 = "0";
+//   tests << gt("2, 3")                                 = "0";
+//   tests << gt("3, 0")                                 = "1";
+//   tests << gt("3, 1")                                 = "1";
+//   tests << gt("3, 2")                                 = "1";
+//   tests << gt("3, 3")                                 = "0";
+//   tests << gt(0, conf::uint_max)                      = "0";
+//   tests << gt(0, conf::uint_max - 1)                  = "0";
+//   tests << gt(1, conf::uint_max)                      = "0";
+//   tests << gt(1, conf::uint_max - 1)                  = "0";
+//   tests << gt(conf::uint_max, 0)                      = "1";
+//   tests << gt(conf::uint_max - 1, 0)                  = "1";
+//   tests << gt(conf::uint_max, 1)                      = "1";
+//   tests << gt(conf::uint_max - 1, 1)                  = "1";
+//   tests << gt(conf::uint_max, conf::uint_max)         = "0";
+//   tests << gt(conf::uint_max, conf::uint_max - 1)     = "1";
+//   tests << gt(conf::uint_max - 1, conf::uint_max)     = "0";
+//   tests << gt(conf::uint_max - 1, conf::uint_max - 1) = "0";
+// 
+//   return def<"x(l, r)">{[&](arg l, arg r) {
+//     return lt(r, l);
+//   }}(args);
+// });
+// 
+// } // namespace api

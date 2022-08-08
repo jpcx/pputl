@@ -25,30 +25,30 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
-  docs << "extracts uint bits."
-       << "size of returned args is exactly " + uint_bits + " (" + std::to_string(conf::uint_bits)
-              + ").";
-
-  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1")) + "0u";
-
-  tests << bits(0) = utl::cat(std::vector<std::string>(conf::uint_bits, "0"), ", ") >> docs;
-  tests << bits(1) =
-      (utl::cat(std::vector<std::string>(conf::uint_bits - 1, "0"), ", ") + ", 1") >> docs;
-  tests << bits(binmaxminus1) =
-      (utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1"), ", ") + ", 0") >> docs;
-
-  return def<"bits(...)">{[&](va args) {
-    return def<"x(t, d, b, n)">{[&](arg, arg, arg b, arg) {
-      return esc + " " + b;
-    }}(args);
-  }}(cat(utl::slice(detail::uint_traits[0], -1), binary(args)));
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
+//   docs << "extracts uint bits."
+//        << "size of returned args is exactly " + bit_length + " (" + std::to_string(conf::bit_length)
+//               + ").";
+// 
+//   auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
+// 
+//   tests << bits(0) = utl::cat(std::vector<std::string>(conf::bit_length, "0"), ", ") >> docs;
+//   tests << bits(1) =
+//       (utl::cat(std::vector<std::string>(conf::bit_length - 1, "0"), ", ") + ", 1") >> docs;
+//   tests << bits(binmaxminus1) =
+//       (utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"), ", ") + ", 0") >> docs;
+// 
+//   return def<"bits(...)">{[&](va args) {
+//     return def<"x(t, d, b, n)">{[&](arg, arg, arg b, arg) {
+//       return esc + " " + b;
+//     }}(args);
+//   }}(cat(utl::slice(detail::uint_traits[0], -1), binary(args)));
+// });
+// 
+// } // namespace api

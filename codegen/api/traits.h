@@ -42,9 +42,9 @@ extern codegen::def<"is_tuple(...) -> bool"> const&         is_tuple;
 extern codegen::def<"is_bool(...) -> bool"> const&          is_bool;
 extern codegen::def<"is_uint(...) -> bool"> const&          is_uint;
 extern codegen::def<"items(...: v: tuple) -> ...v"> const&  items;
-extern codegen::def<"is_binary(...) -> bool"> const&        is_binary;
-extern codegen::def<"is_decimal(...) -> bool"> const&       is_decimal;
-extern codegen::def<"bits(...: v: uint) -> bool..."> const& bits;
+/* extern codegen::def<"is_binary(...) -> bool"> const&        is_binary; */
+/* extern codegen::def<"is_decimal(...) -> bool"> const&       is_decimal; */
+/* extern codegen::def<"bits(...: v: uint) -> bool..."> const& bits; */
 
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_some);
@@ -53,9 +53,9 @@ NIFTY_DECL(is_tuple);
 NIFTY_DECL(is_bool);
 NIFTY_DECL(is_uint);
 NIFTY_DECL(items);
-NIFTY_DECL(is_binary);
-NIFTY_DECL(is_decimal);
-NIFTY_DECL(bits);
+/* NIFTY_DECL(is_binary); */
+/* NIFTY_DECL(is_decimal); */
+/* NIFTY_DECL(bits); */
 
 inline codegen::end_category<"traits"> traits_end;
 

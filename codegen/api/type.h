@@ -34,12 +34,16 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tuple(...: t: tuple) -> t"> const&        tuple;
-extern codegen::def<"bool(...: b: bool) -> b"> const&          bool_;
-extern codegen::def<"uint(...: n: uint) -> n"> const&          uint;
-extern codegen::def<"binary(...: n: uint) -> binary"> const&   binary;
-extern codegen::def<"decimal(...: n: uint) -> decimal"> const& decimal;
-extern codegen::def<"typeof(...: v: tuple|uint) -> <tuple|binary|decimal ctor>"> const& typeof;
+extern codegen::def<"tuple(...: t: tuple) -> t"> const&               tuple;
+extern codegen::def<"bool(...: b: bool) -> b"> const&                 bool_;
+extern codegen::def<"uint(...: n: uint|int) -> uint{n}"> const&       uint;
+extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&         int_;
+/* extern codegen::def<"ubase2(...: n: uint|int) -> ubase2{n}"> const&   ubase2; */
+/* extern codegen::def<"ibase2(...: n: uint|int) -> ibase2{n}"> const&   ibase2; */
+/* extern codegen::def<"ubase10(...: n: uint|int) -> ubase10{n}"> const& ubase10; */
+/* extern codegen::def<"ibase10(...: n: uint|int) -> ibase10{n}"> const& ibase10; */
+/* extern codegen::def< */
+/*     "typeof(...: v: tuple|uint) -> <tuple|ubase2|ibase2|ubase10|ibase10 ctor>"> const& typeof; */
 
 NIFTY_DECL(tuple);
 namespace detail {
@@ -53,23 +57,26 @@ NIFTY_DECL(bool_o);
 NIFTY_DECL(bool_);
 namespace detail {
 using uint_traits_array = std::array<codegen::def<>, (codegen::conf::uint_max + 1) * 2>;
-extern codegen::def<>&    uint_seq;
-extern codegen::def<>&    uint_rseq;
 extern uint_traits_array& uint_traits;
+extern codegen::def<>&    uint_trait;
 extern codegen::def<>&    uint_pass;
+extern codegen::def<>&    uint_pass_cast;
 extern codegen::def<>&    uint_fail;
 extern codegen::def<>&    uint_o;
-NIFTY_DECL(uint_seq);
-NIFTY_DECL(uint_rseq);
 NIFTY_DECL(uint_traits);
+NIFTY_DECL(uint_trait);
 NIFTY_DECL(uint_pass);
+NIFTY_DECL(uint_pass_cast);
 NIFTY_DECL(uint_fail);
 NIFTY_DECL(uint_o);
 } // namespace detail
 NIFTY_DECL(uint);
-NIFTY_DECL(binary);
-NIFTY_DECL(decimal);
-NIFTY_DECL(typeof);
+NIFTY_DECL(int_);
+/* NIFTY_DECL(ubase2); */
+/* NIFTY_DECL(ibase2); */
+/* NIFTY_DECL(ubase10); */
+/* NIFTY_DECL(ibase10); */
+/* NIFTY_DECL(typeof); */
 
 inline codegen::end_category<"type"> type_end;
 

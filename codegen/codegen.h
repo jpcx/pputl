@@ -70,16 +70,22 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
     {"uint_traits", "utraits"},
 };
 
-// the number of bits in a pputl uint.
-constexpr std::uint8_t uint_bits = 10;
-constexpr unsigned     uint_max  = ([] {
+// the number of bits used for signed and unsigned ints
+// binary representations are fixed at this length
+constexpr std::uint8_t bit_length = 10;
+
+constexpr unsigned uint_max = ([] {
   unsigned res{1};
-  for (unsigned i = 0; i < uint_bits; ++i)
+  for (unsigned i = 0; i < bit_length; ++i)
     res *= 2;
   return res - 1;
 })();
+
+constexpr int int_max = uint_max / 2;
+constexpr int int_min = -((uint_max + 1) / 2);
+
 // needed for documentation and tests
-static_assert(uint_bits >= 4);
+static_assert(bit_length >= 4);
 
 // set the case of pputl names.
 // ignores any chars after a backslash.

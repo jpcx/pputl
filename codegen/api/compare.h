@@ -26,35 +26,35 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "logic.h"
-#include "traits.h"
-#include "type.h"
-
-namespace api {
-
-inline codegen::category<"compare"> compare;
-
-extern codegen::def<"lt(...: l: int|uint, r: typeof(l)) -> bool{l < r}"> const& lt;
-extern codegen::def<"gt(...: l: uint, r: uint) -> bool{l > r}"> const&          gt;
-extern codegen::def<"le(...: l: uint, r: uint) -> bool{l <= r}"> const&         le;
-extern codegen::def<"ge(...: l: uint, r: uint) -> bool{l >= r}"> const&         ge;
-extern codegen::def<"eq(...: l: uint, r: uint) -> bool{l == r}"> const&         eq;
-extern codegen::def<"ne(...: l: uint, r: uint) -> bool{l != r}"> const&         ne;
-extern codegen::def<"min(...: a: uint, b: uint) -> bool{a < b ? a : b}"> const& min;
-extern codegen::def<"max(...: a: uint, b: uint) -> bool{a > b ? a : b}"> const& max;
-
-NIFTY_DECL(lt);
-NIFTY_DECL(gt);
-NIFTY_DECL(le);
-NIFTY_DECL(ge);
-NIFTY_DECL(eq);
-NIFTY_DECL(ne);
-NIFTY_DECL(min);
-NIFTY_DECL(max);
-
-inline codegen::end_category<"compare"> compare_end;
-
-} // namespace api
+// #include "codegen.h"
+// #include "config.h"
+// #include "lang.h"
+// #include "logic.h"
+// #include "traits.h"
+// #include "type.h"
+// 
+// namespace api {
+// 
+// inline codegen::category<"compare"> compare;
+// 
+// extern codegen::def<"lt(...: l: int|uint, r: typeof(l)) -> bool{l < r}"> const& lt;
+// extern codegen::def<"gt(...: l: uint, r: uint) -> bool{l > r}"> const&          gt;
+// extern codegen::def<"le(...: l: uint, r: uint) -> bool{l <= r}"> const&         le;
+// extern codegen::def<"ge(...: l: uint, r: uint) -> bool{l >= r}"> const&         ge;
+// extern codegen::def<"eq(...: l: uint, r: uint) -> bool{l == r}"> const&         eq;
+// extern codegen::def<"ne(...: l: uint, r: uint) -> bool{l != r}"> const&         ne;
+// extern codegen::def<"min(...: a: uint, b: uint) -> bool{a < b ? a : b}"> const& min;
+// extern codegen::def<"max(...: a: uint, b: uint) -> bool{a > b ? a : b}"> const& max;
+// 
+// NIFTY_DECL(lt);
+// NIFTY_DECL(gt);
+// NIFTY_DECL(le);
+// NIFTY_DECL(ge);
+// NIFTY_DECL(eq);
+// NIFTY_DECL(ne);
+// NIFTY_DECL(min);
+// NIFTY_DECL(max);
+// 
+// inline codegen::end_category<"compare"> compare_end;
+// 
+// } // namespace api

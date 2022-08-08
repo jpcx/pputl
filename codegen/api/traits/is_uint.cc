@@ -33,11 +33,11 @@ using namespace codegen;
 
 decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   docs << "detects if args is a uint."
-       << "binary bit length is fixed at " + uint_bits + " (" + std::to_string(conf::uint_bits)
+       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
               + ").";
 
-  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
-  auto binmax    = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+  auto binmax    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
   auto binwrong0 = binmax;
   binwrong0.pop_back();
   auto binwrong1 = "0b110u";

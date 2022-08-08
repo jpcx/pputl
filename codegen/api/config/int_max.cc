@@ -31,10 +31,10 @@ namespace api {
 
 using namespace codegen;
 
-decltype(uint_bits) uint_bits = NIFTY_DEF(uint_bits, [&] {
-  docs << "the number of bits in a pputl unsigned int."
+decltype(int_max) int_max = NIFTY_DEF(int_max, [&] {
+  docs << "the maximum value of a pputl signed int."
        << "see the readme code generation section to configure.";
-  return std::to_string(conf::uint_bits);
+  return int_max_s;
 });
 
 } // namespace api

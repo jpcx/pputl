@@ -25,45 +25,45 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "compare.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(le) le = NIFTY_DEF(le, [&](va args) {
-  docs << "uint less-than-or-equal-to comparison.";
-
-  tests << le("0, 0")                                 = "1" >> docs;
-  tests << le("0, 1")                                 = "1" >> docs;
-  tests << le("0, 2")                                 = "1";
-  tests << le("0, 3")                                 = "1";
-  tests << le("1, 0")                                 = "0" >> docs;
-  tests << le("1, 1")                                 = "1" >> docs;
-  tests << le("1, 2")                                 = "1";
-  tests << le("1, 3")                                 = "1";
-  tests << le("2, 0")                                 = "0";
-  tests << le("2, 1")                                 = "0";
-  tests << le("2, 2")                                 = "1";
-  tests << le("2, 3")                                 = "1";
-  tests << le("3, 0")                                 = "0";
-  tests << le("3, 1")                                 = "0";
-  tests << le("3, 2")                                 = "0";
-  tests << le("3, 3")                                 = "1";
-  tests << le(0, conf::uint_max)                      = "1";
-  tests << le(0, conf::uint_max - 1)                  = "1";
-  tests << le(1, conf::uint_max)                      = "1";
-  tests << le(1, conf::uint_max - 1)                  = "1";
-  tests << le(conf::uint_max, 0)                      = "0";
-  tests << le(conf::uint_max - 1, 0)                  = "0";
-  tests << le(conf::uint_max, 1)                      = "0";
-  tests << le(conf::uint_max - 1, 1)                  = "0";
-  tests << le(conf::uint_max, conf::uint_max)         = "1";
-  tests << le(conf::uint_max, conf::uint_max - 1)     = "0";
-  tests << le(conf::uint_max - 1, conf::uint_max)     = "1";
-  tests << le(conf::uint_max - 1, conf::uint_max - 1) = "1";
-
-  return not_(gt(args));
-});
-
-} // namespace api
+// #include "compare.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(le) le = NIFTY_DEF(le, [&](va args) {
+//   docs << "uint less-than-or-equal-to comparison.";
+// 
+//   tests << le("0, 0")                                 = "1" >> docs;
+//   tests << le("0, 1")                                 = "1" >> docs;
+//   tests << le("0, 2")                                 = "1";
+//   tests << le("0, 3")                                 = "1";
+//   tests << le("1, 0")                                 = "0" >> docs;
+//   tests << le("1, 1")                                 = "1" >> docs;
+//   tests << le("1, 2")                                 = "1";
+//   tests << le("1, 3")                                 = "1";
+//   tests << le("2, 0")                                 = "0";
+//   tests << le("2, 1")                                 = "0";
+//   tests << le("2, 2")                                 = "1";
+//   tests << le("2, 3")                                 = "1";
+//   tests << le("3, 0")                                 = "0";
+//   tests << le("3, 1")                                 = "0";
+//   tests << le("3, 2")                                 = "0";
+//   tests << le("3, 3")                                 = "1";
+//   tests << le(0, conf::uint_max)                      = "1";
+//   tests << le(0, conf::uint_max - 1)                  = "1";
+//   tests << le(1, conf::uint_max)                      = "1";
+//   tests << le(1, conf::uint_max - 1)                  = "1";
+//   tests << le(conf::uint_max, 0)                      = "0";
+//   tests << le(conf::uint_max - 1, 0)                  = "0";
+//   tests << le(conf::uint_max, 1)                      = "0";
+//   tests << le(conf::uint_max - 1, 1)                  = "0";
+//   tests << le(conf::uint_max, conf::uint_max)         = "1";
+//   tests << le(conf::uint_max, conf::uint_max - 1)     = "0";
+//   tests << le(conf::uint_max - 1, conf::uint_max)     = "1";
+//   tests << le(conf::uint_max - 1, conf::uint_max - 1) = "1";
+// 
+//   return not_(gt(args));
+// });
+// 
+// } // namespace api

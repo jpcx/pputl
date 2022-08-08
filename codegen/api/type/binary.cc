@@ -27,39 +27,39 @@
 
 #include "type.h"
 
-namespace api {
-
-using namespace codegen;
-
-decltype(binary) binary = NIFTY_DEF(binary, [&](va args) {
-  docs << "casts a uint to its binary subtype.";
-
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
-  auto binone = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "0")) + "1u";
-  auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
-
-  tests << binary(0)          = binmin >> docs;
-  tests << binary(1)          = binone >> docs;
-  tests << binary(uint_max_s) = binmax >> docs;
-  tests << binary(binmin)     = binmin >> docs;
-  tests << binary(binone)     = binone >> docs;
-  tests << binary(binmax)     = binmax >> docs;
-
-  def<"\\DEC(n, bin, ...)"> dec = [&](arg, arg bin, va) {
-    return bin;
-  };
-
-  def<"\\BIN(n, dec, ...)">{} = [&](arg n, arg, va) {
-    return n;
-  };
-
-  return def<"o(n)">{[&](arg n) {
-    return def<"o(...)">{[&](va args) {
-      return def<"x(n, t, ...)">{[&](arg n, arg t, va args) {
-        return pp::call(cat(utl::slice(dec, -3), t), n, args);
-      }}(args);
-    }}(n, cat(utl::slice(detail::uint_traits[0], -1), n));
-  }}(uint(args));
-});
-
-} // namespace api
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(binary) binary = NIFTY_DEF(binary, [&](va args) {
+//   docs << "casts a uint to its binary subtype.";
+// 
+//   auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+//   auto binone = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0")) + "1u";
+//   auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
+// 
+//   tests << binary(0)          = binmin >> docs;
+//   tests << binary(1)          = binone >> docs;
+//   tests << binary(uint_max_s) = binmax >> docs;
+//   tests << binary(binmin)     = binmin >> docs;
+//   tests << binary(binone)     = binone >> docs;
+//   tests << binary(binmax)     = binmax >> docs;
+// 
+//   def<"\\DEC(n, bin, ...)"> dec = [&](arg, arg bin, va) {
+//     return bin;
+//   };
+// 
+//   def<"\\BIN(n, dec, ...)">{} = [&](arg n, arg, va) {
+//     return n;
+//   };
+// 
+//   return def<"o(n)">{[&](arg n) {
+//     return def<"o(...)">{[&](va args) {
+//       return def<"x(n, t, ...)">{[&](arg n, arg t, va args) {
+//         return pp::call(cat(utl::slice(dec, -3), t), n, args);
+//       }}(args);
+//     }}(n, cat(utl::slice(detail::uint_traits[0], -1), n));
+//   }}(uint(args));
+// });
+// 
+// } // namespace api

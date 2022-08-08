@@ -102,18 +102,32 @@
 /// the build number of this pputl release (ISO8601).
 #define PTL_BUILD /* -> <c++ int> */ 20220808
 
-/// [config.uint_bits]
-/// ------------------
-/// the number of bits in a pputl unsigned int.
+/// [config.bit_length]
+/// -------------------
+/// the number of bits used by pputl integers.
+/// binary representations are fixed at this length.
 /// see the readme code generation section to configure.
-#define PTL_UINT_BITS /* -> uint */ 10
+#define PTL_BIT_LENGTH /* -> uint */ 10
 
 /// [config.uint_max]
 /// -----------------
 /// the maximum value of a pputl unsigned int.
 /// upper bound on the number of args for many pputl functions.
 /// see the readme code generation section to configure.
-#define PTL_UINT_MAX /* -> uint */ 1023
+#define PTL_UINT_MAX /* -> uint */ 1023u
+
+/// [config.int_max]
+/// ----------------
+/// the maximum value of a pputl signed int.
+/// see the readme code generation section to configure.
+#define PTL_INT_MAX /* -> int */ 511
+
+/// [config.int_min]
+/// ----------------
+/// the minimum value of a pputl signed int.
+/// only representable as binary. see type.int for details.
+/// see the readme code generation section to configure.
+#define PTL_INT_MIN /* -> binary */ 0b1000000000
 
 /// [lang.lp]
 /// ---------
@@ -253,16 +267,16 @@
 /// PTL_TUPLE(())     // ()
 /// PTL_TUPLE((1, 2)) // (1, 2)
 #define PTL_TUPLE(/* t: tuple */...) /* -> t */ \
-  PPUTLTUPLE_O(PTL_EAT __VA_ARGS__)(PTL_ISTR([PTL_TUPLE] invalid tuple : __VA_ARGS__), __VA_ARGS__)
+  PPUTLTUPLE_o(PTL_EAT __VA_ARGS__)(PTL_ISTR([PTL_TUPLE] invalid tuple : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 /// first parentheses; detects tuple
-#define PPUTLTUPLE_O(...) PPUTLTUPLE_OO##__VA_OPT__(_NO)##_PASS
+#define PPUTLTUPLE_o(...) PPUTLTUPLE_oo##__VA_OPT__(_NO)##_PASS
 
 /// second parentheses; returns or fails
-#define PPUTLTUPLE_OO_NO_PASS(err, ...) PTL_FAIL(err)
-#define PPUTLTUPLE_OO_PASS(err, ...)    __VA_ARGS__
+#define PPUTLTUPLE_oo_NO_PASS(err, ...) PTL_FAIL(err)
+#define PPUTLTUPLE_oo_PASS(err, ...)    __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -273,28 +287,29 @@
 ///
 /// PTL_BOOL(0) // 0
 /// PTL_BOOL(1) // 1
-#define PTL_BOOL(/* b: bool */...) /* -> b */ \
-  PPUTLBOOL_O(__VA_ARGS__.)                   \
-  (__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_BOOL] invalid bool : __VA_ARGS__), __VA_ARGS__)
+#define PTL_BOOL(/* b: bool */...) /* -> b */                                          \
+  PPUTLBOOL_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_BOOL] invalid bool \
+                                                               : __VA_ARGS__),         \
+                                                      __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 /// first parentheses; asserts only one arg.
-#define PPUTLBOOL_O(_, ...)      PPUTLBOOL_O_##__VA_OPT__(NO_)##PASS()
-#define PPUTLBOOL_O_NO_PASS(...) PPUTLBOOL_OO_FAIL
-#define PPUTLBOOL_O_PASS(...)    PPUTLBOOL_OO
+#define PPUTLBOOL_o(_, ...)      PPUTLBOOL_o_##__VA_OPT__(NO_)##PASS()
+#define PPUTLBOOL_o_NO_PASS(...) PPUTLBOOL_oo_FAIL
+#define PPUTLBOOL_o_PASS(...)    PPUTLBOOL_oo
 
 /// second parentheses; asserts non-tuple.
-#define PPUTLBOOL_OO(_, ...)      PPUTLBOOL_OO_RES(PTL_EAT _)
-#define PPUTLBOOL_OO_RES(...)     PPUTLBOOL_OO_##__VA_OPT__(NO_)##FAIL()
-#define PPUTLBOOL_OO_NO_FAIL(...) PPUTLBOOL_OOO
-#define PPUTLBOOL_OO_FAIL(...)    PPUTLBOOL_OOO_NO_PASS
+#define PPUTLBOOL_oo(_, ...)      PPUTLBOOL_oo_RES(PTL_EAT _)
+#define PPUTLBOOL_oo_RES(...)     PPUTLBOOL_oo_##__VA_OPT__(NO_)##FAIL()
+#define PPUTLBOOL_oo_NO_FAIL(...) PPUTLBOOL_ooo
+#define PPUTLBOOL_oo_FAIL(...)    PPUTLBOOL_ooo_NO_PASS
 
 /// third parentheses; asserts either 0 or 1.
-#define PPUTLBOOL_OOO(...)         PPUTLBOOL_OOO_RES(PPUTLBOOL_CHK_##__VA_ARGS__)
-#define PPUTLBOOL_OOO_RES(...)     PPUTLBOOL_OOO_##__VA_OPT__(NO_)##PASS()
-#define PPUTLBOOL_OOO_PASS(...)    PPUTLBOOL_PASS
-#define PPUTLBOOL_OOO_NO_PASS(...) PPUTLBOOL_FAIL
+#define PPUTLBOOL_ooo(...)         PPUTLBOOL_ooo_RES(PPUTLBOOL_CHK_##__VA_ARGS__)
+#define PPUTLBOOL_ooo_RES(...)     PPUTLBOOL_ooo_##__VA_OPT__(NO_)##PASS()
+#define PPUTLBOOL_ooo_PASS(...)    PPUTLBOOL_PASS
+#define PPUTLBOOL_ooo_NO_PASS(...) PPUTLBOOL_FAIL
 
 /// fourth parentheses; returns
 #define PPUTLBOOL_PASS(err, ...) __VA_ARGS__
@@ -308,54 +323,80 @@
 
 /// [type.uint]
 /// -----------
-/// uint type (0 through 1023).
-/// expands to n if valid, else fails.
+/// 10-bit unsigned integer type.
+/// may be constructed from either unsigned or signed ints.
+/// cannot parse negative decimals; use math.neg instead.
 ///
-/// constructible from binary or decimal.
-/// binary bit length is fixed at PTL_UINT_BITS (10).
+/// bit length is fixed. cannot parse shorter bit lengths.
 ///
-/// PTL_UINT(0)             // 0
-/// PTL_UINT(1)             // 1
-/// PTL_UINT(2)             // 2
-/// PTL_UINT(1023)          // 1023
+/// preserves binary/decimal representation.
+///
+/// uses a 'u' suffix for both representations.
+/// see fmt.paste_uint to remove suffix before pasting.
+///
+/// cast from signed reinterprets bits as unsigned.
+///
+/// PTL_UINT(0)             // 0u
+/// PTL_UINT(1)             // 1u
+/// PTL_UINT(2u)            // 2u
+/// PTL_UINT(1023)          // 1023u
+/// PTL_UINT(1023u)         // 1023u
 /// PTL_UINT(0b0000000000u) // 0b0000000000u
-/// PTL_UINT(0b1111111111u) // 0b1111111111u
-#define PTL_UINT(/* n: uint */...) /* -> n */                              \
-  PPUTLUINT_O(__VA_ARGS__.)                                                \
-  (__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_UINT] invalid uint \
-                                                   : __VA_ARGS__),         \
-                                          __VA_ARGS__)
+/// PTL_UINT(0b1111111111)  // 0b1111111111u
+#define PTL_UINT(/* n: uint|int */...) /* -> uint{n} */          \
+  PPUTLUINT_o(__VA_ARGS__.)(__VA_ARGS__)(                        \
+      __VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_UINT] invalid uint \
+                                         : __VA_ARGS__),         \
+                                __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 /// first parentheses; asserts only one arg.
-#define PPUTLUINT_O(_, ...)      PPUTLUINT_O_##__VA_OPT__(NO_)##PASS()
-#define PPUTLUINT_O_NO_PASS(...) PPUTLUINT_OO_FAIL
-#define PPUTLUINT_O_PASS(...)    PPUTLUINT_OO
+#define PPUTLUINT_o(_, ...)      PPUTLUINT_o_##__VA_OPT__(NO_)##PASS()
+#define PPUTLUINT_o_NO_PASS(...) PPUTLUINT_oo_FAIL
+#define PPUTLUINT_o_PASS(...)    PPUTLUINT_oo
 
 /// second parentheses; asserts non-tuple.
-#define PPUTLUINT_OO(_, ...)      PPUTLUINT_OO_RES(PTL_EAT _)
-#define PPUTLUINT_OO_RES(...)     PPUTLUINT_OO_##__VA_OPT__(NO_)##FAIL()
-#define PPUTLUINT_OO_NO_FAIL(...) PPUTLUINT_OOO
-#define PPUTLUINT_OO_FAIL(...)    PPUTLUINT_OOO_FAIL
+#define PPUTLUINT_oo(_, ...)      PPUTLUINT_oo_RES(PTL_EAT _)
+#define PPUTLUINT_oo_RES(...)     PPUTLUINT_oo_##__VA_OPT__(NO_)##FAIL()
+#define PPUTLUINT_oo_NO_FAIL(...) PPUTLUINT_ooo
+#define PPUTLUINT_oo_FAIL(...)    PPUTLUINT_ooo_FAIL
 
 /// third parentheses; checks for validity without added 'u' suffix.
-#define PPUTLUINT_OOO(...)          PPUTLUINT_OOO_RES(PPUTLUTRAITS_##__VA_ARGS__)
-#define PPUTLUINT_OOO_RES(...)      PPUTLUINT_OOO_RES_X(__VA_ARGS__)
-#define PPUTLUINT_OOO_RES_X(_, ...) PPUTLUINT_OOO_##__VA_OPT__(NO_)##FAIL()
-#define PPUTLUINT_OOO_NO_FAIL(...)  PPUTLUINT_OOOO_NO_FAIL
-#define PPUTLUINT_OOO_FAIL(...)     PPUTLUINT_OOOO
+#define PPUTLUINT_ooo(...)          PPUTLUINT_ooo_RES(PPUTLUTRAITS_##__VA_ARGS__)
+#define PPUTLUINT_ooo_RES(...)      PPUTLUINT_ooo_RES_o(__VA_ARGS__)
+#define PPUTLUINT_ooo_RES_o(_, ...) PPUTLUINT_ooo_##__VA_OPT__(NO_)##FAIL()
+#define PPUTLUINT_ooo_NO_FAIL(...)  PPUTLUINT_oooo_EARLYPASS
+#define PPUTLUINT_ooo_FAIL(...)     PPUTLUINT_oooo
 
-/// fourth parentheses; checks for validity with added 'u' suffix.
-#define PPUTLUINT_OOOO(...)          PPUTLUINT_OOOO_RES(PPUTLUTRAITS_##__VA_ARGS__##u)
-#define PPUTLUINT_OOOO_RES(...)      PPUTLUINT_OOOO_RES_X(__VA_ARGS__)
-#define PPUTLUINT_OOOO_RES_X(_, ...) PPUTLUINT_OOOO_##__VA_OPT__(NO_)##FAIL()
-#define PPUTLUINT_OOOO_NO_FAIL(...)  PPUTLUINT_PASS
-#define PPUTLUINT_OOOO_FAIL(...)     PPUTLUINT_FAIL
+/// fourth parentheses; checks for validity with added 'u' suffix (cast from int).
+#define PPUTLUINT_oooo(...)           PPUTLUINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__##u)
+#define PPUTLUINT_oooo_RES(...)       PPUTLUINT_oooo_RES_o(__VA_ARGS__)
+#define PPUTLUINT_oooo_RES_o(_, ...)  PPUTLUINT_oooo_##__VA_OPT__(NO_)##FAIL
+#define PPUTLUINT_oooo_EARLYPASS(...) PPUTLUINT_PASS
+#define PPUTLUINT_oooo_NO_FAIL        PPUTLUINT_PASS_CAST
+#define PPUTLUINT_oooo_FAIL           PPUTLUINT_FAIL
 
-/// fourth parentheses; returns
-#define PPUTLUINT_PASS(err, ...) __VA_ARGS__
-#define PPUTLUINT_FAIL(err, ...) PTL_FAIL(err)
+/// fifth parentheses; returns
+#define PPUTLUINT_PASS(e, v)      v
+#define PPUTLUINT_PASS_CAST(e, v) v##u
+#define PPUTLUINT_FAIL(e, ...)    PTL_FAIL(e)
+
+/// internal traits retrieval. uint must be valid and have a suffix.
+#define PPUTLUINT_TRAIT(...)           PPUTLUINT_TRAIT_o(__VA_ARGS__)
+#define PPUTLUINT_TRAIT_o(uint, trait) PPUTLUINT_TRAIT_oo(trait, PTL_CAT(PPUTLUTRAITS_, uint))
+#define PPUTLUINT_TRAIT_oo(trait, ...) PPUTLUINT_TRAIT_##trait(__VA_ARGS__)
+
+/// uint traits. trait name follows the PPUTLUINT_TRAIT_ prefix
+#define PPUTLUINT_TRAIT_DEC_FACT(t, b, l2, sq, f)  f
+#define PPUTLUINT_TRAIT_DEC_SQRT(t, ib, l2, sq, f) sq
+#define PPUTLUINT_TRAIT_DEC_LOG2(t, ib, l2, sq, f) l2
+#define PPUTLUINT_TRAIT_DEC_IBIN(t, ib, l2, sq, f) ib
+#define PPUTLUINT_TRAIT_BIN_BNOT(t, ud, id, b, bn) bn
+#define PPUTLUINT_TRAIT_BIN_BITS(t, ud, id, b, bn) b
+#define PPUTLUINT_TRAIT_BIN_IDEC(t, ud, id, b, bn) id
+#define PPUTLUINT_TRAIT_BIN_UDEC(t, ud, id, b, bn) ud
+#define PPUTLUINT_TRAIT_TYPE(t, ...)               t
 
 // clang-format off
 
@@ -1385,1220 +1426,1103 @@
 #define PPUTLUTRAITS_0b0000000001u BIN,1u,1,(0,0,0,0,0,0,0,0,0,1),0b1111111110u
 #define PPUTLUTRAITS_0b0000000000u BIN,0u,0,(0,0,0,0,0,0,0,0,0,0),0b1111111111u
 
-/// type, binary, log2, sqrt, factors
-#define PPUTLUTRAITS_1023u DEC,0b1111111111u,9u,31u,(3u, 11u, 31u)
-#define PPUTLUTRAITS_1022u DEC,0b1111111110u,9u,31u,(2u, 7u, 73u)
-#define PPUTLUTRAITS_1021u DEC,0b1111111101u,9u,31u,()
-#define PPUTLUTRAITS_1020u DEC,0b1111111100u,9u,31u,(2u, 2u, 3u, 5u, 17u)
-#define PPUTLUTRAITS_1019u DEC,0b1111111011u,9u,31u,()
-#define PPUTLUTRAITS_1018u DEC,0b1111111010u,9u,31u,(2u, 509u)
-#define PPUTLUTRAITS_1017u DEC,0b1111111001u,9u,31u,(3u, 3u, 113u)
-#define PPUTLUTRAITS_1016u DEC,0b1111111000u,9u,31u,(2u, 2u, 2u, 127u)
-#define PPUTLUTRAITS_1015u DEC,0b1111110111u,9u,31u,(5u, 7u, 29u)
-#define PPUTLUTRAITS_1014u DEC,0b1111110110u,9u,31u,(2u, 3u, 13u, 13u)
-#define PPUTLUTRAITS_1013u DEC,0b1111110101u,9u,31u,()
-#define PPUTLUTRAITS_1012u DEC,0b1111110100u,9u,31u,(2u, 2u, 11u, 23u)
-#define PPUTLUTRAITS_1011u DEC,0b1111110011u,9u,31u,(3u, 337u)
-#define PPUTLUTRAITS_1010u DEC,0b1111110010u,9u,31u,(2u, 5u, 101u)
-#define PPUTLUTRAITS_1009u DEC,0b1111110001u,9u,31u,()
-#define PPUTLUTRAITS_1008u DEC,0b1111110000u,9u,31u,(2u, 2u, 2u, 2u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_1007u DEC,0b1111101111u,9u,31u,(19u, 53u)
-#define PPUTLUTRAITS_1006u DEC,0b1111101110u,9u,31u,(2u, 503u)
-#define PPUTLUTRAITS_1005u DEC,0b1111101101u,9u,31u,(3u, 5u, 67u)
-#define PPUTLUTRAITS_1004u DEC,0b1111101100u,9u,31u,(2u, 2u, 251u)
-#define PPUTLUTRAITS_1003u DEC,0b1111101011u,9u,31u,(17u, 59u)
-#define PPUTLUTRAITS_1002u DEC,0b1111101010u,9u,31u,(2u, 3u, 167u)
-#define PPUTLUTRAITS_1001u DEC,0b1111101001u,9u,31u,(7u, 11u, 13u)
-#define PPUTLUTRAITS_1000u DEC,0b1111101000u,9u,31u,(2u, 2u, 2u, 5u, 5u, 5u)
-#define PPUTLUTRAITS_999u DEC,0b1111100111u,9u,31u,(3u, 3u, 3u, 37u)
-#define PPUTLUTRAITS_998u DEC,0b1111100110u,9u,31u,(2u, 499u)
-#define PPUTLUTRAITS_997u DEC,0b1111100101u,9u,31u,()
-#define PPUTLUTRAITS_996u DEC,0b1111100100u,9u,31u,(2u, 2u, 3u, 83u)
-#define PPUTLUTRAITS_995u DEC,0b1111100011u,9u,31u,(5u, 199u)
-#define PPUTLUTRAITS_994u DEC,0b1111100010u,9u,31u,(2u, 7u, 71u)
-#define PPUTLUTRAITS_993u DEC,0b1111100001u,9u,31u,(3u, 331u)
-#define PPUTLUTRAITS_992u DEC,0b1111100000u,9u,31u,(2u, 2u, 2u, 2u, 2u, 31u)
-#define PPUTLUTRAITS_991u DEC,0b1111011111u,9u,31u,()
-#define PPUTLUTRAITS_990u DEC,0b1111011110u,9u,31u,(2u, 3u, 3u, 5u, 11u)
-#define PPUTLUTRAITS_989u DEC,0b1111011101u,9u,31u,(23u, 43u)
-#define PPUTLUTRAITS_988u DEC,0b1111011100u,9u,31u,(2u, 2u, 13u, 19u)
-#define PPUTLUTRAITS_987u DEC,0b1111011011u,9u,31u,(3u, 7u, 47u)
-#define PPUTLUTRAITS_986u DEC,0b1111011010u,9u,31u,(2u, 17u, 29u)
-#define PPUTLUTRAITS_985u DEC,0b1111011001u,9u,31u,(5u, 197u)
-#define PPUTLUTRAITS_984u DEC,0b1111011000u,9u,31u,(2u, 2u, 2u, 3u, 41u)
-#define PPUTLUTRAITS_983u DEC,0b1111010111u,9u,31u,()
-#define PPUTLUTRAITS_982u DEC,0b1111010110u,9u,31u,(2u, 491u)
-#define PPUTLUTRAITS_981u DEC,0b1111010101u,9u,31u,(3u, 3u, 109u)
-#define PPUTLUTRAITS_980u DEC,0b1111010100u,9u,31u,(2u, 2u, 5u, 7u, 7u)
-#define PPUTLUTRAITS_979u DEC,0b1111010011u,9u,31u,(11u, 89u)
-#define PPUTLUTRAITS_978u DEC,0b1111010010u,9u,31u,(2u, 3u, 163u)
-#define PPUTLUTRAITS_977u DEC,0b1111010001u,9u,31u,()
-#define PPUTLUTRAITS_976u DEC,0b1111010000u,9u,31u,(2u, 2u, 2u, 2u, 61u)
-#define PPUTLUTRAITS_975u DEC,0b1111001111u,9u,31u,(3u, 5u, 5u, 13u)
-#define PPUTLUTRAITS_974u DEC,0b1111001110u,9u,31u,(2u, 487u)
-#define PPUTLUTRAITS_973u DEC,0b1111001101u,9u,31u,(7u, 139u)
-#define PPUTLUTRAITS_972u DEC,0b1111001100u,9u,31u,(2u, 2u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_971u DEC,0b1111001011u,9u,31u,()
-#define PPUTLUTRAITS_970u DEC,0b1111001010u,9u,31u,(2u, 5u, 97u)
-#define PPUTLUTRAITS_969u DEC,0b1111001001u,9u,31u,(3u, 17u, 19u)
-#define PPUTLUTRAITS_968u DEC,0b1111001000u,9u,31u,(2u, 2u, 2u, 11u, 11u)
-#define PPUTLUTRAITS_967u DEC,0b1111000111u,9u,31u,()
-#define PPUTLUTRAITS_966u DEC,0b1111000110u,9u,31u,(2u, 3u, 7u, 23u)
-#define PPUTLUTRAITS_965u DEC,0b1111000101u,9u,31u,(5u, 193u)
-#define PPUTLUTRAITS_964u DEC,0b1111000100u,9u,31u,(2u, 2u, 241u)
-#define PPUTLUTRAITS_963u DEC,0b1111000011u,9u,31u,(3u, 3u, 107u)
-#define PPUTLUTRAITS_962u DEC,0b1111000010u,9u,31u,(2u, 13u, 37u)
-#define PPUTLUTRAITS_961u DEC,0b1111000001u,9u,31u,(31u, 31u)
-#define PPUTLUTRAITS_960u DEC,0b1111000000u,9u,30u,(2u, 2u, 2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLUTRAITS_959u DEC,0b1110111111u,9u,30u,(7u, 137u)
-#define PPUTLUTRAITS_958u DEC,0b1110111110u,9u,30u,(2u, 479u)
-#define PPUTLUTRAITS_957u DEC,0b1110111101u,9u,30u,(3u, 11u, 29u)
-#define PPUTLUTRAITS_956u DEC,0b1110111100u,9u,30u,(2u, 2u, 239u)
-#define PPUTLUTRAITS_955u DEC,0b1110111011u,9u,30u,(5u, 191u)
-#define PPUTLUTRAITS_954u DEC,0b1110111010u,9u,30u,(2u, 3u, 3u, 53u)
-#define PPUTLUTRAITS_953u DEC,0b1110111001u,9u,30u,()
-#define PPUTLUTRAITS_952u DEC,0b1110111000u,9u,30u,(2u, 2u, 2u, 7u, 17u)
-#define PPUTLUTRAITS_951u DEC,0b1110110111u,9u,30u,(3u, 317u)
-#define PPUTLUTRAITS_950u DEC,0b1110110110u,9u,30u,(2u, 5u, 5u, 19u)
-#define PPUTLUTRAITS_949u DEC,0b1110110101u,9u,30u,(13u, 73u)
-#define PPUTLUTRAITS_948u DEC,0b1110110100u,9u,30u,(2u, 2u, 3u, 79u)
-#define PPUTLUTRAITS_947u DEC,0b1110110011u,9u,30u,()
-#define PPUTLUTRAITS_946u DEC,0b1110110010u,9u,30u,(2u, 11u, 43u)
-#define PPUTLUTRAITS_945u DEC,0b1110110001u,9u,30u,(3u, 3u, 3u, 5u, 7u)
-#define PPUTLUTRAITS_944u DEC,0b1110110000u,9u,30u,(2u, 2u, 2u, 2u, 59u)
-#define PPUTLUTRAITS_943u DEC,0b1110101111u,9u,30u,(23u, 41u)
-#define PPUTLUTRAITS_942u DEC,0b1110101110u,9u,30u,(2u, 3u, 157u)
-#define PPUTLUTRAITS_941u DEC,0b1110101101u,9u,30u,()
-#define PPUTLUTRAITS_940u DEC,0b1110101100u,9u,30u,(2u, 2u, 5u, 47u)
-#define PPUTLUTRAITS_939u DEC,0b1110101011u,9u,30u,(3u, 313u)
-#define PPUTLUTRAITS_938u DEC,0b1110101010u,9u,30u,(2u, 7u, 67u)
-#define PPUTLUTRAITS_937u DEC,0b1110101001u,9u,30u,()
-#define PPUTLUTRAITS_936u DEC,0b1110101000u,9u,30u,(2u, 2u, 2u, 3u, 3u, 13u)
-#define PPUTLUTRAITS_935u DEC,0b1110100111u,9u,30u,(5u, 11u, 17u)
-#define PPUTLUTRAITS_934u DEC,0b1110100110u,9u,30u,(2u, 467u)
-#define PPUTLUTRAITS_933u DEC,0b1110100101u,9u,30u,(3u, 311u)
-#define PPUTLUTRAITS_932u DEC,0b1110100100u,9u,30u,(2u, 2u, 233u)
-#define PPUTLUTRAITS_931u DEC,0b1110100011u,9u,30u,(7u, 7u, 19u)
-#define PPUTLUTRAITS_930u DEC,0b1110100010u,9u,30u,(2u, 3u, 5u, 31u)
-#define PPUTLUTRAITS_929u DEC,0b1110100001u,9u,30u,()
-#define PPUTLUTRAITS_928u DEC,0b1110100000u,9u,30u,(2u, 2u, 2u, 2u, 2u, 29u)
-#define PPUTLUTRAITS_927u DEC,0b1110011111u,9u,30u,(3u, 3u, 103u)
-#define PPUTLUTRAITS_926u DEC,0b1110011110u,9u,30u,(2u, 463u)
-#define PPUTLUTRAITS_925u DEC,0b1110011101u,9u,30u,(5u, 5u, 37u)
-#define PPUTLUTRAITS_924u DEC,0b1110011100u,9u,30u,(2u, 2u, 3u, 7u, 11u)
-#define PPUTLUTRAITS_923u DEC,0b1110011011u,9u,30u,(13u, 71u)
-#define PPUTLUTRAITS_922u DEC,0b1110011010u,9u,30u,(2u, 461u)
-#define PPUTLUTRAITS_921u DEC,0b1110011001u,9u,30u,(3u, 307u)
-#define PPUTLUTRAITS_920u DEC,0b1110011000u,9u,30u,(2u, 2u, 2u, 5u, 23u)
-#define PPUTLUTRAITS_919u DEC,0b1110010111u,9u,30u,()
-#define PPUTLUTRAITS_918u DEC,0b1110010110u,9u,30u,(2u, 3u, 3u, 3u, 17u)
-#define PPUTLUTRAITS_917u DEC,0b1110010101u,9u,30u,(7u, 131u)
-#define PPUTLUTRAITS_916u DEC,0b1110010100u,9u,30u,(2u, 2u, 229u)
-#define PPUTLUTRAITS_915u DEC,0b1110010011u,9u,30u,(3u, 5u, 61u)
-#define PPUTLUTRAITS_914u DEC,0b1110010010u,9u,30u,(2u, 457u)
-#define PPUTLUTRAITS_913u DEC,0b1110010001u,9u,30u,(11u, 83u)
-#define PPUTLUTRAITS_912u DEC,0b1110010000u,9u,30u,(2u, 2u, 2u, 2u, 3u, 19u)
-#define PPUTLUTRAITS_911u DEC,0b1110001111u,9u,30u,()
-#define PPUTLUTRAITS_910u DEC,0b1110001110u,9u,30u,(2u, 5u, 7u, 13u)
-#define PPUTLUTRAITS_909u DEC,0b1110001101u,9u,30u,(3u, 3u, 101u)
-#define PPUTLUTRAITS_908u DEC,0b1110001100u,9u,30u,(2u, 2u, 227u)
-#define PPUTLUTRAITS_907u DEC,0b1110001011u,9u,30u,()
-#define PPUTLUTRAITS_906u DEC,0b1110001010u,9u,30u,(2u, 3u, 151u)
-#define PPUTLUTRAITS_905u DEC,0b1110001001u,9u,30u,(5u, 181u)
-#define PPUTLUTRAITS_904u DEC,0b1110001000u,9u,30u,(2u, 2u, 2u, 113u)
-#define PPUTLUTRAITS_903u DEC,0b1110000111u,9u,30u,(3u, 7u, 43u)
-#define PPUTLUTRAITS_902u DEC,0b1110000110u,9u,30u,(2u, 11u, 41u)
-#define PPUTLUTRAITS_901u DEC,0b1110000101u,9u,30u,(17u, 53u)
-#define PPUTLUTRAITS_900u DEC,0b1110000100u,9u,30u,(2u, 2u, 3u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_899u DEC,0b1110000011u,9u,29u,(29u, 31u)
-#define PPUTLUTRAITS_898u DEC,0b1110000010u,9u,29u,(2u, 449u)
-#define PPUTLUTRAITS_897u DEC,0b1110000001u,9u,29u,(3u, 13u, 23u)
-#define PPUTLUTRAITS_896u DEC,0b1110000000u,9u,29u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLUTRAITS_895u DEC,0b1101111111u,9u,29u,(5u, 179u)
-#define PPUTLUTRAITS_894u DEC,0b1101111110u,9u,29u,(2u, 3u, 149u)
-#define PPUTLUTRAITS_893u DEC,0b1101111101u,9u,29u,(19u, 47u)
-#define PPUTLUTRAITS_892u DEC,0b1101111100u,9u,29u,(2u, 2u, 223u)
-#define PPUTLUTRAITS_891u DEC,0b1101111011u,9u,29u,(3u, 3u, 3u, 3u, 11u)
-#define PPUTLUTRAITS_890u DEC,0b1101111010u,9u,29u,(2u, 5u, 89u)
-#define PPUTLUTRAITS_889u DEC,0b1101111001u,9u,29u,(7u, 127u)
-#define PPUTLUTRAITS_888u DEC,0b1101111000u,9u,29u,(2u, 2u, 2u, 3u, 37u)
-#define PPUTLUTRAITS_887u DEC,0b1101110111u,9u,29u,()
-#define PPUTLUTRAITS_886u DEC,0b1101110110u,9u,29u,(2u, 443u)
-#define PPUTLUTRAITS_885u DEC,0b1101110101u,9u,29u,(3u, 5u, 59u)
-#define PPUTLUTRAITS_884u DEC,0b1101110100u,9u,29u,(2u, 2u, 13u, 17u)
-#define PPUTLUTRAITS_883u DEC,0b1101110011u,9u,29u,()
-#define PPUTLUTRAITS_882u DEC,0b1101110010u,9u,29u,(2u, 3u, 3u, 7u, 7u)
-#define PPUTLUTRAITS_881u DEC,0b1101110001u,9u,29u,()
-#define PPUTLUTRAITS_880u DEC,0b1101110000u,9u,29u,(2u, 2u, 2u, 2u, 5u, 11u)
-#define PPUTLUTRAITS_879u DEC,0b1101101111u,9u,29u,(3u, 293u)
-#define PPUTLUTRAITS_878u DEC,0b1101101110u,9u,29u,(2u, 439u)
-#define PPUTLUTRAITS_877u DEC,0b1101101101u,9u,29u,()
-#define PPUTLUTRAITS_876u DEC,0b1101101100u,9u,29u,(2u, 2u, 3u, 73u)
-#define PPUTLUTRAITS_875u DEC,0b1101101011u,9u,29u,(5u, 5u, 5u, 7u)
-#define PPUTLUTRAITS_874u DEC,0b1101101010u,9u,29u,(2u, 19u, 23u)
-#define PPUTLUTRAITS_873u DEC,0b1101101001u,9u,29u,(3u, 3u, 97u)
-#define PPUTLUTRAITS_872u DEC,0b1101101000u,9u,29u,(2u, 2u, 2u, 109u)
-#define PPUTLUTRAITS_871u DEC,0b1101100111u,9u,29u,(13u, 67u)
-#define PPUTLUTRAITS_870u DEC,0b1101100110u,9u,29u,(2u, 3u, 5u, 29u)
-#define PPUTLUTRAITS_869u DEC,0b1101100101u,9u,29u,(11u, 79u)
-#define PPUTLUTRAITS_868u DEC,0b1101100100u,9u,29u,(2u, 2u, 7u, 31u)
-#define PPUTLUTRAITS_867u DEC,0b1101100011u,9u,29u,(3u, 17u, 17u)
-#define PPUTLUTRAITS_866u DEC,0b1101100010u,9u,29u,(2u, 433u)
-#define PPUTLUTRAITS_865u DEC,0b1101100001u,9u,29u,(5u, 173u)
-#define PPUTLUTRAITS_864u DEC,0b1101100000u,9u,29u,(2u, 2u, 2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_863u DEC,0b1101011111u,9u,29u,()
-#define PPUTLUTRAITS_862u DEC,0b1101011110u,9u,29u,(2u, 431u)
-#define PPUTLUTRAITS_861u DEC,0b1101011101u,9u,29u,(3u, 7u, 41u)
-#define PPUTLUTRAITS_860u DEC,0b1101011100u,9u,29u,(2u, 2u, 5u, 43u)
-#define PPUTLUTRAITS_859u DEC,0b1101011011u,9u,29u,()
-#define PPUTLUTRAITS_858u DEC,0b1101011010u,9u,29u,(2u, 3u, 11u, 13u)
-#define PPUTLUTRAITS_857u DEC,0b1101011001u,9u,29u,()
-#define PPUTLUTRAITS_856u DEC,0b1101011000u,9u,29u,(2u, 2u, 2u, 107u)
-#define PPUTLUTRAITS_855u DEC,0b1101010111u,9u,29u,(3u, 3u, 5u, 19u)
-#define PPUTLUTRAITS_854u DEC,0b1101010110u,9u,29u,(2u, 7u, 61u)
-#define PPUTLUTRAITS_853u DEC,0b1101010101u,9u,29u,()
-#define PPUTLUTRAITS_852u DEC,0b1101010100u,9u,29u,(2u, 2u, 3u, 71u)
-#define PPUTLUTRAITS_851u DEC,0b1101010011u,9u,29u,(23u, 37u)
-#define PPUTLUTRAITS_850u DEC,0b1101010010u,9u,29u,(2u, 5u, 5u, 17u)
-#define PPUTLUTRAITS_849u DEC,0b1101010001u,9u,29u,(3u, 283u)
-#define PPUTLUTRAITS_848u DEC,0b1101010000u,9u,29u,(2u, 2u, 2u, 2u, 53u)
-#define PPUTLUTRAITS_847u DEC,0b1101001111u,9u,29u,(7u, 11u, 11u)
-#define PPUTLUTRAITS_846u DEC,0b1101001110u,9u,29u,(2u, 3u, 3u, 47u)
-#define PPUTLUTRAITS_845u DEC,0b1101001101u,9u,29u,(5u, 13u, 13u)
-#define PPUTLUTRAITS_844u DEC,0b1101001100u,9u,29u,(2u, 2u, 211u)
-#define PPUTLUTRAITS_843u DEC,0b1101001011u,9u,29u,(3u, 281u)
-#define PPUTLUTRAITS_842u DEC,0b1101001010u,9u,29u,(2u, 421u)
-#define PPUTLUTRAITS_841u DEC,0b1101001001u,9u,29u,(29u, 29u)
-#define PPUTLUTRAITS_840u DEC,0b1101001000u,9u,28u,(2u, 2u, 2u, 3u, 5u, 7u)
-#define PPUTLUTRAITS_839u DEC,0b1101000111u,9u,28u,()
-#define PPUTLUTRAITS_838u DEC,0b1101000110u,9u,28u,(2u, 419u)
-#define PPUTLUTRAITS_837u DEC,0b1101000101u,9u,28u,(3u, 3u, 3u, 31u)
-#define PPUTLUTRAITS_836u DEC,0b1101000100u,9u,28u,(2u, 2u, 11u, 19u)
-#define PPUTLUTRAITS_835u DEC,0b1101000011u,9u,28u,(5u, 167u)
-#define PPUTLUTRAITS_834u DEC,0b1101000010u,9u,28u,(2u, 3u, 139u)
-#define PPUTLUTRAITS_833u DEC,0b1101000001u,9u,28u,(7u, 7u, 17u)
-#define PPUTLUTRAITS_832u DEC,0b1101000000u,9u,28u,(2u, 2u, 2u, 2u, 2u, 2u, 13u)
-#define PPUTLUTRAITS_831u DEC,0b1100111111u,9u,28u,(3u, 277u)
-#define PPUTLUTRAITS_830u DEC,0b1100111110u,9u,28u,(2u, 5u, 83u)
-#define PPUTLUTRAITS_829u DEC,0b1100111101u,9u,28u,()
-#define PPUTLUTRAITS_828u DEC,0b1100111100u,9u,28u,(2u, 2u, 3u, 3u, 23u)
-#define PPUTLUTRAITS_827u DEC,0b1100111011u,9u,28u,()
-#define PPUTLUTRAITS_826u DEC,0b1100111010u,9u,28u,(2u, 7u, 59u)
-#define PPUTLUTRAITS_825u DEC,0b1100111001u,9u,28u,(3u, 5u, 5u, 11u)
-#define PPUTLUTRAITS_824u DEC,0b1100111000u,9u,28u,(2u, 2u, 2u, 103u)
-#define PPUTLUTRAITS_823u DEC,0b1100110111u,9u,28u,()
-#define PPUTLUTRAITS_822u DEC,0b1100110110u,9u,28u,(2u, 3u, 137u)
-#define PPUTLUTRAITS_821u DEC,0b1100110101u,9u,28u,()
-#define PPUTLUTRAITS_820u DEC,0b1100110100u,9u,28u,(2u, 2u, 5u, 41u)
-#define PPUTLUTRAITS_819u DEC,0b1100110011u,9u,28u,(3u, 3u, 7u, 13u)
-#define PPUTLUTRAITS_818u DEC,0b1100110010u,9u,28u,(2u, 409u)
-#define PPUTLUTRAITS_817u DEC,0b1100110001u,9u,28u,(19u, 43u)
-#define PPUTLUTRAITS_816u DEC,0b1100110000u,9u,28u,(2u, 2u, 2u, 2u, 3u, 17u)
-#define PPUTLUTRAITS_815u DEC,0b1100101111u,9u,28u,(5u, 163u)
-#define PPUTLUTRAITS_814u DEC,0b1100101110u,9u,28u,(2u, 11u, 37u)
-#define PPUTLUTRAITS_813u DEC,0b1100101101u,9u,28u,(3u, 271u)
-#define PPUTLUTRAITS_812u DEC,0b1100101100u,9u,28u,(2u, 2u, 7u, 29u)
-#define PPUTLUTRAITS_811u DEC,0b1100101011u,9u,28u,()
-#define PPUTLUTRAITS_810u DEC,0b1100101010u,9u,28u,(2u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_809u DEC,0b1100101001u,9u,28u,()
-#define PPUTLUTRAITS_808u DEC,0b1100101000u,9u,28u,(2u, 2u, 2u, 101u)
-#define PPUTLUTRAITS_807u DEC,0b1100100111u,9u,28u,(3u, 269u)
-#define PPUTLUTRAITS_806u DEC,0b1100100110u,9u,28u,(2u, 13u, 31u)
-#define PPUTLUTRAITS_805u DEC,0b1100100101u,9u,28u,(5u, 7u, 23u)
-#define PPUTLUTRAITS_804u DEC,0b1100100100u,9u,28u,(2u, 2u, 3u, 67u)
-#define PPUTLUTRAITS_803u DEC,0b1100100011u,9u,28u,(11u, 73u)
-#define PPUTLUTRAITS_802u DEC,0b1100100010u,9u,28u,(2u, 401u)
-#define PPUTLUTRAITS_801u DEC,0b1100100001u,9u,28u,(3u, 3u, 89u)
-#define PPUTLUTRAITS_800u DEC,0b1100100000u,9u,28u,(2u, 2u, 2u, 2u, 2u, 5u, 5u)
-#define PPUTLUTRAITS_799u DEC,0b1100011111u,9u,28u,(17u, 47u)
-#define PPUTLUTRAITS_798u DEC,0b1100011110u,9u,28u,(2u, 3u, 7u, 19u)
-#define PPUTLUTRAITS_797u DEC,0b1100011101u,9u,28u,()
-#define PPUTLUTRAITS_796u DEC,0b1100011100u,9u,28u,(2u, 2u, 199u)
-#define PPUTLUTRAITS_795u DEC,0b1100011011u,9u,28u,(3u, 5u, 53u)
-#define PPUTLUTRAITS_794u DEC,0b1100011010u,9u,28u,(2u, 397u)
-#define PPUTLUTRAITS_793u DEC,0b1100011001u,9u,28u,(13u, 61u)
-#define PPUTLUTRAITS_792u DEC,0b1100011000u,9u,28u,(2u, 2u, 2u, 3u, 3u, 11u)
-#define PPUTLUTRAITS_791u DEC,0b1100010111u,9u,28u,(7u, 113u)
-#define PPUTLUTRAITS_790u DEC,0b1100010110u,9u,28u,(2u, 5u, 79u)
-#define PPUTLUTRAITS_789u DEC,0b1100010101u,9u,28u,(3u, 263u)
-#define PPUTLUTRAITS_788u DEC,0b1100010100u,9u,28u,(2u, 2u, 197u)
-#define PPUTLUTRAITS_787u DEC,0b1100010011u,9u,28u,()
-#define PPUTLUTRAITS_786u DEC,0b1100010010u,9u,28u,(2u, 3u, 131u)
-#define PPUTLUTRAITS_785u DEC,0b1100010001u,9u,28u,(5u, 157u)
-#define PPUTLUTRAITS_784u DEC,0b1100010000u,9u,28u,(2u, 2u, 2u, 2u, 7u, 7u)
-#define PPUTLUTRAITS_783u DEC,0b1100001111u,9u,27u,(3u, 3u, 3u, 29u)
-#define PPUTLUTRAITS_782u DEC,0b1100001110u,9u,27u,(2u, 17u, 23u)
-#define PPUTLUTRAITS_781u DEC,0b1100001101u,9u,27u,(11u, 71u)
-#define PPUTLUTRAITS_780u DEC,0b1100001100u,9u,27u,(2u, 2u, 3u, 5u, 13u)
-#define PPUTLUTRAITS_779u DEC,0b1100001011u,9u,27u,(19u, 41u)
-#define PPUTLUTRAITS_778u DEC,0b1100001010u,9u,27u,(2u, 389u)
-#define PPUTLUTRAITS_777u DEC,0b1100001001u,9u,27u,(3u, 7u, 37u)
-#define PPUTLUTRAITS_776u DEC,0b1100001000u,9u,27u,(2u, 2u, 2u, 97u)
-#define PPUTLUTRAITS_775u DEC,0b1100000111u,9u,27u,(5u, 5u, 31u)
-#define PPUTLUTRAITS_774u DEC,0b1100000110u,9u,27u,(2u, 3u, 3u, 43u)
-#define PPUTLUTRAITS_773u DEC,0b1100000101u,9u,27u,()
-#define PPUTLUTRAITS_772u DEC,0b1100000100u,9u,27u,(2u, 2u, 193u)
-#define PPUTLUTRAITS_771u DEC,0b1100000011u,9u,27u,(3u, 257u)
-#define PPUTLUTRAITS_770u DEC,0b1100000010u,9u,27u,(2u, 5u, 7u, 11u)
-#define PPUTLUTRAITS_769u DEC,0b1100000001u,9u,27u,()
-#define PPUTLUTRAITS_768u DEC,0b1100000000u,9u,27u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLUTRAITS_767u DEC,0b1011111111u,9u,27u,(13u, 59u)
-#define PPUTLUTRAITS_766u DEC,0b1011111110u,9u,27u,(2u, 383u)
-#define PPUTLUTRAITS_765u DEC,0b1011111101u,9u,27u,(3u, 3u, 5u, 17u)
-#define PPUTLUTRAITS_764u DEC,0b1011111100u,9u,27u,(2u, 2u, 191u)
-#define PPUTLUTRAITS_763u DEC,0b1011111011u,9u,27u,(7u, 109u)
-#define PPUTLUTRAITS_762u DEC,0b1011111010u,9u,27u,(2u, 3u, 127u)
-#define PPUTLUTRAITS_761u DEC,0b1011111001u,9u,27u,()
-#define PPUTLUTRAITS_760u DEC,0b1011111000u,9u,27u,(2u, 2u, 2u, 5u, 19u)
-#define PPUTLUTRAITS_759u DEC,0b1011110111u,9u,27u,(3u, 11u, 23u)
-#define PPUTLUTRAITS_758u DEC,0b1011110110u,9u,27u,(2u, 379u)
-#define PPUTLUTRAITS_757u DEC,0b1011110101u,9u,27u,()
-#define PPUTLUTRAITS_756u DEC,0b1011110100u,9u,27u,(2u, 2u, 3u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_755u DEC,0b1011110011u,9u,27u,(5u, 151u)
-#define PPUTLUTRAITS_754u DEC,0b1011110010u,9u,27u,(2u, 13u, 29u)
-#define PPUTLUTRAITS_753u DEC,0b1011110001u,9u,27u,(3u, 251u)
-#define PPUTLUTRAITS_752u DEC,0b1011110000u,9u,27u,(2u, 2u, 2u, 2u, 47u)
-#define PPUTLUTRAITS_751u DEC,0b1011101111u,9u,27u,()
-#define PPUTLUTRAITS_750u DEC,0b1011101110u,9u,27u,(2u, 3u, 5u, 5u, 5u)
-#define PPUTLUTRAITS_749u DEC,0b1011101101u,9u,27u,(7u, 107u)
-#define PPUTLUTRAITS_748u DEC,0b1011101100u,9u,27u,(2u, 2u, 11u, 17u)
-#define PPUTLUTRAITS_747u DEC,0b1011101011u,9u,27u,(3u, 3u, 83u)
-#define PPUTLUTRAITS_746u DEC,0b1011101010u,9u,27u,(2u, 373u)
-#define PPUTLUTRAITS_745u DEC,0b1011101001u,9u,27u,(5u, 149u)
-#define PPUTLUTRAITS_744u DEC,0b1011101000u,9u,27u,(2u, 2u, 2u, 3u, 31u)
-#define PPUTLUTRAITS_743u DEC,0b1011100111u,9u,27u,()
-#define PPUTLUTRAITS_742u DEC,0b1011100110u,9u,27u,(2u, 7u, 53u)
-#define PPUTLUTRAITS_741u DEC,0b1011100101u,9u,27u,(3u, 13u, 19u)
-#define PPUTLUTRAITS_740u DEC,0b1011100100u,9u,27u,(2u, 2u, 5u, 37u)
-#define PPUTLUTRAITS_739u DEC,0b1011100011u,9u,27u,()
-#define PPUTLUTRAITS_738u DEC,0b1011100010u,9u,27u,(2u, 3u, 3u, 41u)
-#define PPUTLUTRAITS_737u DEC,0b1011100001u,9u,27u,(11u, 67u)
-#define PPUTLUTRAITS_736u DEC,0b1011100000u,9u,27u,(2u, 2u, 2u, 2u, 2u, 23u)
-#define PPUTLUTRAITS_735u DEC,0b1011011111u,9u,27u,(3u, 5u, 7u, 7u)
-#define PPUTLUTRAITS_734u DEC,0b1011011110u,9u,27u,(2u, 367u)
-#define PPUTLUTRAITS_733u DEC,0b1011011101u,9u,27u,()
-#define PPUTLUTRAITS_732u DEC,0b1011011100u,9u,27u,(2u, 2u, 3u, 61u)
-#define PPUTLUTRAITS_731u DEC,0b1011011011u,9u,27u,(17u, 43u)
-#define PPUTLUTRAITS_730u DEC,0b1011011010u,9u,27u,(2u, 5u, 73u)
-#define PPUTLUTRAITS_729u DEC,0b1011011001u,9u,27u,(3u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_728u DEC,0b1011011000u,9u,26u,(2u, 2u, 2u, 7u, 13u)
-#define PPUTLUTRAITS_727u DEC,0b1011010111u,9u,26u,()
-#define PPUTLUTRAITS_726u DEC,0b1011010110u,9u,26u,(2u, 3u, 11u, 11u)
-#define PPUTLUTRAITS_725u DEC,0b1011010101u,9u,26u,(5u, 5u, 29u)
-#define PPUTLUTRAITS_724u DEC,0b1011010100u,9u,26u,(2u, 2u, 181u)
-#define PPUTLUTRAITS_723u DEC,0b1011010011u,9u,26u,(3u, 241u)
-#define PPUTLUTRAITS_722u DEC,0b1011010010u,9u,26u,(2u, 19u, 19u)
-#define PPUTLUTRAITS_721u DEC,0b1011010001u,9u,26u,(7u, 103u)
-#define PPUTLUTRAITS_720u DEC,0b1011010000u,9u,26u,(2u, 2u, 2u, 2u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_719u DEC,0b1011001111u,9u,26u,()
-#define PPUTLUTRAITS_718u DEC,0b1011001110u,9u,26u,(2u, 359u)
-#define PPUTLUTRAITS_717u DEC,0b1011001101u,9u,26u,(3u, 239u)
-#define PPUTLUTRAITS_716u DEC,0b1011001100u,9u,26u,(2u, 2u, 179u)
-#define PPUTLUTRAITS_715u DEC,0b1011001011u,9u,26u,(5u, 11u, 13u)
-#define PPUTLUTRAITS_714u DEC,0b1011001010u,9u,26u,(2u, 3u, 7u, 17u)
-#define PPUTLUTRAITS_713u DEC,0b1011001001u,9u,26u,(23u, 31u)
-#define PPUTLUTRAITS_712u DEC,0b1011001000u,9u,26u,(2u, 2u, 2u, 89u)
-#define PPUTLUTRAITS_711u DEC,0b1011000111u,9u,26u,(3u, 3u, 79u)
-#define PPUTLUTRAITS_710u DEC,0b1011000110u,9u,26u,(2u, 5u, 71u)
-#define PPUTLUTRAITS_709u DEC,0b1011000101u,9u,26u,()
-#define PPUTLUTRAITS_708u DEC,0b1011000100u,9u,26u,(2u, 2u, 3u, 59u)
-#define PPUTLUTRAITS_707u DEC,0b1011000011u,9u,26u,(7u, 101u)
-#define PPUTLUTRAITS_706u DEC,0b1011000010u,9u,26u,(2u, 353u)
-#define PPUTLUTRAITS_705u DEC,0b1011000001u,9u,26u,(3u, 5u, 47u)
-#define PPUTLUTRAITS_704u DEC,0b1011000000u,9u,26u,(2u, 2u, 2u, 2u, 2u, 2u, 11u)
-#define PPUTLUTRAITS_703u DEC,0b1010111111u,9u,26u,(19u, 37u)
-#define PPUTLUTRAITS_702u DEC,0b1010111110u,9u,26u,(2u, 3u, 3u, 3u, 13u)
-#define PPUTLUTRAITS_701u DEC,0b1010111101u,9u,26u,()
-#define PPUTLUTRAITS_700u DEC,0b1010111100u,9u,26u,(2u, 2u, 5u, 5u, 7u)
-#define PPUTLUTRAITS_699u DEC,0b1010111011u,9u,26u,(3u, 233u)
-#define PPUTLUTRAITS_698u DEC,0b1010111010u,9u,26u,(2u, 349u)
-#define PPUTLUTRAITS_697u DEC,0b1010111001u,9u,26u,(17u, 41u)
-#define PPUTLUTRAITS_696u DEC,0b1010111000u,9u,26u,(2u, 2u, 2u, 3u, 29u)
-#define PPUTLUTRAITS_695u DEC,0b1010110111u,9u,26u,(5u, 139u)
-#define PPUTLUTRAITS_694u DEC,0b1010110110u,9u,26u,(2u, 347u)
-#define PPUTLUTRAITS_693u DEC,0b1010110101u,9u,26u,(3u, 3u, 7u, 11u)
-#define PPUTLUTRAITS_692u DEC,0b1010110100u,9u,26u,(2u, 2u, 173u)
-#define PPUTLUTRAITS_691u DEC,0b1010110011u,9u,26u,()
-#define PPUTLUTRAITS_690u DEC,0b1010110010u,9u,26u,(2u, 3u, 5u, 23u)
-#define PPUTLUTRAITS_689u DEC,0b1010110001u,9u,26u,(13u, 53u)
-#define PPUTLUTRAITS_688u DEC,0b1010110000u,9u,26u,(2u, 2u, 2u, 2u, 43u)
-#define PPUTLUTRAITS_687u DEC,0b1010101111u,9u,26u,(3u, 229u)
-#define PPUTLUTRAITS_686u DEC,0b1010101110u,9u,26u,(2u, 7u, 7u, 7u)
-#define PPUTLUTRAITS_685u DEC,0b1010101101u,9u,26u,(5u, 137u)
-#define PPUTLUTRAITS_684u DEC,0b1010101100u,9u,26u,(2u, 2u, 3u, 3u, 19u)
-#define PPUTLUTRAITS_683u DEC,0b1010101011u,9u,26u,()
-#define PPUTLUTRAITS_682u DEC,0b1010101010u,9u,26u,(2u, 11u, 31u)
-#define PPUTLUTRAITS_681u DEC,0b1010101001u,9u,26u,(3u, 227u)
-#define PPUTLUTRAITS_680u DEC,0b1010101000u,9u,26u,(2u, 2u, 2u, 5u, 17u)
-#define PPUTLUTRAITS_679u DEC,0b1010100111u,9u,26u,(7u, 97u)
-#define PPUTLUTRAITS_678u DEC,0b1010100110u,9u,26u,(2u, 3u, 113u)
-#define PPUTLUTRAITS_677u DEC,0b1010100101u,9u,26u,()
-#define PPUTLUTRAITS_676u DEC,0b1010100100u,9u,26u,(2u, 2u, 13u, 13u)
-#define PPUTLUTRAITS_675u DEC,0b1010100011u,9u,25u,(3u, 3u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_674u DEC,0b1010100010u,9u,25u,(2u, 337u)
-#define PPUTLUTRAITS_673u DEC,0b1010100001u,9u,25u,()
-#define PPUTLUTRAITS_672u DEC,0b1010100000u,9u,25u,(2u, 2u, 2u, 2u, 2u, 3u, 7u)
-#define PPUTLUTRAITS_671u DEC,0b1010011111u,9u,25u,(11u, 61u)
-#define PPUTLUTRAITS_670u DEC,0b1010011110u,9u,25u,(2u, 5u, 67u)
-#define PPUTLUTRAITS_669u DEC,0b1010011101u,9u,25u,(3u, 223u)
-#define PPUTLUTRAITS_668u DEC,0b1010011100u,9u,25u,(2u, 2u, 167u)
-#define PPUTLUTRAITS_667u DEC,0b1010011011u,9u,25u,(23u, 29u)
-#define PPUTLUTRAITS_666u DEC,0b1010011010u,9u,25u,(2u, 3u, 3u, 37u)
-#define PPUTLUTRAITS_665u DEC,0b1010011001u,9u,25u,(5u, 7u, 19u)
-#define PPUTLUTRAITS_664u DEC,0b1010011000u,9u,25u,(2u, 2u, 2u, 83u)
-#define PPUTLUTRAITS_663u DEC,0b1010010111u,9u,25u,(3u, 13u, 17u)
-#define PPUTLUTRAITS_662u DEC,0b1010010110u,9u,25u,(2u, 331u)
-#define PPUTLUTRAITS_661u DEC,0b1010010101u,9u,25u,()
-#define PPUTLUTRAITS_660u DEC,0b1010010100u,9u,25u,(2u, 2u, 3u, 5u, 11u)
-#define PPUTLUTRAITS_659u DEC,0b1010010011u,9u,25u,()
-#define PPUTLUTRAITS_658u DEC,0b1010010010u,9u,25u,(2u, 7u, 47u)
-#define PPUTLUTRAITS_657u DEC,0b1010010001u,9u,25u,(3u, 3u, 73u)
-#define PPUTLUTRAITS_656u DEC,0b1010010000u,9u,25u,(2u, 2u, 2u, 2u, 41u)
-#define PPUTLUTRAITS_655u DEC,0b1010001111u,9u,25u,(5u, 131u)
-#define PPUTLUTRAITS_654u DEC,0b1010001110u,9u,25u,(2u, 3u, 109u)
-#define PPUTLUTRAITS_653u DEC,0b1010001101u,9u,25u,()
-#define PPUTLUTRAITS_652u DEC,0b1010001100u,9u,25u,(2u, 2u, 163u)
-#define PPUTLUTRAITS_651u DEC,0b1010001011u,9u,25u,(3u, 7u, 31u)
-#define PPUTLUTRAITS_650u DEC,0b1010001010u,9u,25u,(2u, 5u, 5u, 13u)
-#define PPUTLUTRAITS_649u DEC,0b1010001001u,9u,25u,(11u, 59u)
-#define PPUTLUTRAITS_648u DEC,0b1010001000u,9u,25u,(2u, 2u, 2u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_647u DEC,0b1010000111u,9u,25u,()
-#define PPUTLUTRAITS_646u DEC,0b1010000110u,9u,25u,(2u, 17u, 19u)
-#define PPUTLUTRAITS_645u DEC,0b1010000101u,9u,25u,(3u, 5u, 43u)
-#define PPUTLUTRAITS_644u DEC,0b1010000100u,9u,25u,(2u, 2u, 7u, 23u)
-#define PPUTLUTRAITS_643u DEC,0b1010000011u,9u,25u,()
-#define PPUTLUTRAITS_642u DEC,0b1010000010u,9u,25u,(2u, 3u, 107u)
-#define PPUTLUTRAITS_641u DEC,0b1010000001u,9u,25u,()
-#define PPUTLUTRAITS_640u DEC,0b1010000000u,9u,25u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLUTRAITS_639u DEC,0b1001111111u,9u,25u,(3u, 3u, 71u)
-#define PPUTLUTRAITS_638u DEC,0b1001111110u,9u,25u,(2u, 11u, 29u)
-#define PPUTLUTRAITS_637u DEC,0b1001111101u,9u,25u,(7u, 7u, 13u)
-#define PPUTLUTRAITS_636u DEC,0b1001111100u,9u,25u,(2u, 2u, 3u, 53u)
-#define PPUTLUTRAITS_635u DEC,0b1001111011u,9u,25u,(5u, 127u)
-#define PPUTLUTRAITS_634u DEC,0b1001111010u,9u,25u,(2u, 317u)
-#define PPUTLUTRAITS_633u DEC,0b1001111001u,9u,25u,(3u, 211u)
-#define PPUTLUTRAITS_632u DEC,0b1001111000u,9u,25u,(2u, 2u, 2u, 79u)
-#define PPUTLUTRAITS_631u DEC,0b1001110111u,9u,25u,()
-#define PPUTLUTRAITS_630u DEC,0b1001110110u,9u,25u,(2u, 3u, 3u, 5u, 7u)
-#define PPUTLUTRAITS_629u DEC,0b1001110101u,9u,25u,(17u, 37u)
-#define PPUTLUTRAITS_628u DEC,0b1001110100u,9u,25u,(2u, 2u, 157u)
-#define PPUTLUTRAITS_627u DEC,0b1001110011u,9u,25u,(3u, 11u, 19u)
-#define PPUTLUTRAITS_626u DEC,0b1001110010u,9u,25u,(2u, 313u)
-#define PPUTLUTRAITS_625u DEC,0b1001110001u,9u,25u,(5u, 5u, 5u, 5u)
-#define PPUTLUTRAITS_624u DEC,0b1001110000u,9u,24u,(2u, 2u, 2u, 2u, 3u, 13u)
-#define PPUTLUTRAITS_623u DEC,0b1001101111u,9u,24u,(7u, 89u)
-#define PPUTLUTRAITS_622u DEC,0b1001101110u,9u,24u,(2u, 311u)
-#define PPUTLUTRAITS_621u DEC,0b1001101101u,9u,24u,(3u, 3u, 3u, 23u)
-#define PPUTLUTRAITS_620u DEC,0b1001101100u,9u,24u,(2u, 2u, 5u, 31u)
-#define PPUTLUTRAITS_619u DEC,0b1001101011u,9u,24u,()
-#define PPUTLUTRAITS_618u DEC,0b1001101010u,9u,24u,(2u, 3u, 103u)
-#define PPUTLUTRAITS_617u DEC,0b1001101001u,9u,24u,()
-#define PPUTLUTRAITS_616u DEC,0b1001101000u,9u,24u,(2u, 2u, 2u, 7u, 11u)
-#define PPUTLUTRAITS_615u DEC,0b1001100111u,9u,24u,(3u, 5u, 41u)
-#define PPUTLUTRAITS_614u DEC,0b1001100110u,9u,24u,(2u, 307u)
-#define PPUTLUTRAITS_613u DEC,0b1001100101u,9u,24u,()
-#define PPUTLUTRAITS_612u DEC,0b1001100100u,9u,24u,(2u, 2u, 3u, 3u, 17u)
-#define PPUTLUTRAITS_611u DEC,0b1001100011u,9u,24u,(13u, 47u)
-#define PPUTLUTRAITS_610u DEC,0b1001100010u,9u,24u,(2u, 5u, 61u)
-#define PPUTLUTRAITS_609u DEC,0b1001100001u,9u,24u,(3u, 7u, 29u)
-#define PPUTLUTRAITS_608u DEC,0b1001100000u,9u,24u,(2u, 2u, 2u, 2u, 2u, 19u)
-#define PPUTLUTRAITS_607u DEC,0b1001011111u,9u,24u,()
-#define PPUTLUTRAITS_606u DEC,0b1001011110u,9u,24u,(2u, 3u, 101u)
-#define PPUTLUTRAITS_605u DEC,0b1001011101u,9u,24u,(5u, 11u, 11u)
-#define PPUTLUTRAITS_604u DEC,0b1001011100u,9u,24u,(2u, 2u, 151u)
-#define PPUTLUTRAITS_603u DEC,0b1001011011u,9u,24u,(3u, 3u, 67u)
-#define PPUTLUTRAITS_602u DEC,0b1001011010u,9u,24u,(2u, 7u, 43u)
-#define PPUTLUTRAITS_601u DEC,0b1001011001u,9u,24u,()
-#define PPUTLUTRAITS_600u DEC,0b1001011000u,9u,24u,(2u, 2u, 2u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_599u DEC,0b1001010111u,9u,24u,()
-#define PPUTLUTRAITS_598u DEC,0b1001010110u,9u,24u,(2u, 13u, 23u)
-#define PPUTLUTRAITS_597u DEC,0b1001010101u,9u,24u,(3u, 199u)
-#define PPUTLUTRAITS_596u DEC,0b1001010100u,9u,24u,(2u, 2u, 149u)
-#define PPUTLUTRAITS_595u DEC,0b1001010011u,9u,24u,(5u, 7u, 17u)
-#define PPUTLUTRAITS_594u DEC,0b1001010010u,9u,24u,(2u, 3u, 3u, 3u, 11u)
-#define PPUTLUTRAITS_593u DEC,0b1001010001u,9u,24u,()
-#define PPUTLUTRAITS_592u DEC,0b1001010000u,9u,24u,(2u, 2u, 2u, 2u, 37u)
-#define PPUTLUTRAITS_591u DEC,0b1001001111u,9u,24u,(3u, 197u)
-#define PPUTLUTRAITS_590u DEC,0b1001001110u,9u,24u,(2u, 5u, 59u)
-#define PPUTLUTRAITS_589u DEC,0b1001001101u,9u,24u,(19u, 31u)
-#define PPUTLUTRAITS_588u DEC,0b1001001100u,9u,24u,(2u, 2u, 3u, 7u, 7u)
-#define PPUTLUTRAITS_587u DEC,0b1001001011u,9u,24u,()
-#define PPUTLUTRAITS_586u DEC,0b1001001010u,9u,24u,(2u, 293u)
-#define PPUTLUTRAITS_585u DEC,0b1001001001u,9u,24u,(3u, 3u, 5u, 13u)
-#define PPUTLUTRAITS_584u DEC,0b1001001000u,9u,24u,(2u, 2u, 2u, 73u)
-#define PPUTLUTRAITS_583u DEC,0b1001000111u,9u,24u,(11u, 53u)
-#define PPUTLUTRAITS_582u DEC,0b1001000110u,9u,24u,(2u, 3u, 97u)
-#define PPUTLUTRAITS_581u DEC,0b1001000101u,9u,24u,(7u, 83u)
-#define PPUTLUTRAITS_580u DEC,0b1001000100u,9u,24u,(2u, 2u, 5u, 29u)
-#define PPUTLUTRAITS_579u DEC,0b1001000011u,9u,24u,(3u, 193u)
-#define PPUTLUTRAITS_578u DEC,0b1001000010u,9u,24u,(2u, 17u, 17u)
-#define PPUTLUTRAITS_577u DEC,0b1001000001u,9u,24u,()
-#define PPUTLUTRAITS_576u DEC,0b1001000000u,9u,24u,(2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLUTRAITS_575u DEC,0b1000111111u,9u,23u,(5u, 5u, 23u)
-#define PPUTLUTRAITS_574u DEC,0b1000111110u,9u,23u,(2u, 7u, 41u)
-#define PPUTLUTRAITS_573u DEC,0b1000111101u,9u,23u,(3u, 191u)
-#define PPUTLUTRAITS_572u DEC,0b1000111100u,9u,23u,(2u, 2u, 11u, 13u)
-#define PPUTLUTRAITS_571u DEC,0b1000111011u,9u,23u,()
-#define PPUTLUTRAITS_570u DEC,0b1000111010u,9u,23u,(2u, 3u, 5u, 19u)
-#define PPUTLUTRAITS_569u DEC,0b1000111001u,9u,23u,()
-#define PPUTLUTRAITS_568u DEC,0b1000111000u,9u,23u,(2u, 2u, 2u, 71u)
-#define PPUTLUTRAITS_567u DEC,0b1000110111u,9u,23u,(3u, 3u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_566u DEC,0b1000110110u,9u,23u,(2u, 283u)
-#define PPUTLUTRAITS_565u DEC,0b1000110101u,9u,23u,(5u, 113u)
-#define PPUTLUTRAITS_564u DEC,0b1000110100u,9u,23u,(2u, 2u, 3u, 47u)
-#define PPUTLUTRAITS_563u DEC,0b1000110011u,9u,23u,()
-#define PPUTLUTRAITS_562u DEC,0b1000110010u,9u,23u,(2u, 281u)
-#define PPUTLUTRAITS_561u DEC,0b1000110001u,9u,23u,(3u, 11u, 17u)
-#define PPUTLUTRAITS_560u DEC,0b1000110000u,9u,23u,(2u, 2u, 2u, 2u, 5u, 7u)
-#define PPUTLUTRAITS_559u DEC,0b1000101111u,9u,23u,(13u, 43u)
-#define PPUTLUTRAITS_558u DEC,0b1000101110u,9u,23u,(2u, 3u, 3u, 31u)
-#define PPUTLUTRAITS_557u DEC,0b1000101101u,9u,23u,()
-#define PPUTLUTRAITS_556u DEC,0b1000101100u,9u,23u,(2u, 2u, 139u)
-#define PPUTLUTRAITS_555u DEC,0b1000101011u,9u,23u,(3u, 5u, 37u)
-#define PPUTLUTRAITS_554u DEC,0b1000101010u,9u,23u,(2u, 277u)
-#define PPUTLUTRAITS_553u DEC,0b1000101001u,9u,23u,(7u, 79u)
-#define PPUTLUTRAITS_552u DEC,0b1000101000u,9u,23u,(2u, 2u, 2u, 3u, 23u)
-#define PPUTLUTRAITS_551u DEC,0b1000100111u,9u,23u,(19u, 29u)
-#define PPUTLUTRAITS_550u DEC,0b1000100110u,9u,23u,(2u, 5u, 5u, 11u)
-#define PPUTLUTRAITS_549u DEC,0b1000100101u,9u,23u,(3u, 3u, 61u)
-#define PPUTLUTRAITS_548u DEC,0b1000100100u,9u,23u,(2u, 2u, 137u)
-#define PPUTLUTRAITS_547u DEC,0b1000100011u,9u,23u,()
-#define PPUTLUTRAITS_546u DEC,0b1000100010u,9u,23u,(2u, 3u, 7u, 13u)
-#define PPUTLUTRAITS_545u DEC,0b1000100001u,9u,23u,(5u, 109u)
-#define PPUTLUTRAITS_544u DEC,0b1000100000u,9u,23u,(2u, 2u, 2u, 2u, 2u, 17u)
-#define PPUTLUTRAITS_543u DEC,0b1000011111u,9u,23u,(3u, 181u)
-#define PPUTLUTRAITS_542u DEC,0b1000011110u,9u,23u,(2u, 271u)
-#define PPUTLUTRAITS_541u DEC,0b1000011101u,9u,23u,()
-#define PPUTLUTRAITS_540u DEC,0b1000011100u,9u,23u,(2u, 2u, 3u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_539u DEC,0b1000011011u,9u,23u,(7u, 7u, 11u)
-#define PPUTLUTRAITS_538u DEC,0b1000011010u,9u,23u,(2u, 269u)
-#define PPUTLUTRAITS_537u DEC,0b1000011001u,9u,23u,(3u, 179u)
-#define PPUTLUTRAITS_536u DEC,0b1000011000u,9u,23u,(2u, 2u, 2u, 67u)
-#define PPUTLUTRAITS_535u DEC,0b1000010111u,9u,23u,(5u, 107u)
-#define PPUTLUTRAITS_534u DEC,0b1000010110u,9u,23u,(2u, 3u, 89u)
-#define PPUTLUTRAITS_533u DEC,0b1000010101u,9u,23u,(13u, 41u)
-#define PPUTLUTRAITS_532u DEC,0b1000010100u,9u,23u,(2u, 2u, 7u, 19u)
-#define PPUTLUTRAITS_531u DEC,0b1000010011u,9u,23u,(3u, 3u, 59u)
-#define PPUTLUTRAITS_530u DEC,0b1000010010u,9u,23u,(2u, 5u, 53u)
-#define PPUTLUTRAITS_529u DEC,0b1000010001u,9u,23u,(23u, 23u)
-#define PPUTLUTRAITS_528u DEC,0b1000010000u,9u,22u,(2u, 2u, 2u, 2u, 3u, 11u)
-#define PPUTLUTRAITS_527u DEC,0b1000001111u,9u,22u,(17u, 31u)
-#define PPUTLUTRAITS_526u DEC,0b1000001110u,9u,22u,(2u, 263u)
-#define PPUTLUTRAITS_525u DEC,0b1000001101u,9u,22u,(3u, 5u, 5u, 7u)
-#define PPUTLUTRAITS_524u DEC,0b1000001100u,9u,22u,(2u, 2u, 131u)
-#define PPUTLUTRAITS_523u DEC,0b1000001011u,9u,22u,()
-#define PPUTLUTRAITS_522u DEC,0b1000001010u,9u,22u,(2u, 3u, 3u, 29u)
-#define PPUTLUTRAITS_521u DEC,0b1000001001u,9u,22u,()
-#define PPUTLUTRAITS_520u DEC,0b1000001000u,9u,22u,(2u, 2u, 2u, 5u, 13u)
-#define PPUTLUTRAITS_519u DEC,0b1000000111u,9u,22u,(3u, 173u)
-#define PPUTLUTRAITS_518u DEC,0b1000000110u,9u,22u,(2u, 7u, 37u)
-#define PPUTLUTRAITS_517u DEC,0b1000000101u,9u,22u,(11u, 47u)
-#define PPUTLUTRAITS_516u DEC,0b1000000100u,9u,22u,(2u, 2u, 3u, 43u)
-#define PPUTLUTRAITS_515u DEC,0b1000000011u,9u,22u,(5u, 103u)
-#define PPUTLUTRAITS_514u DEC,0b1000000010u,9u,22u,(2u, 257u)
-#define PPUTLUTRAITS_513u DEC,0b1000000001u,9u,22u,(3u, 3u, 3u, 19u)
-#define PPUTLUTRAITS_512u DEC,0b1000000000u,9u,22u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLUTRAITS_511u DEC,0b0111111111u,8u,22u,(7u, 73u)
-#define PPUTLUTRAITS_510u DEC,0b0111111110u,8u,22u,(2u, 3u, 5u, 17u)
-#define PPUTLUTRAITS_509u DEC,0b0111111101u,8u,22u,()
-#define PPUTLUTRAITS_508u DEC,0b0111111100u,8u,22u,(2u, 2u, 127u)
-#define PPUTLUTRAITS_507u DEC,0b0111111011u,8u,22u,(3u, 13u, 13u)
-#define PPUTLUTRAITS_506u DEC,0b0111111010u,8u,22u,(2u, 11u, 23u)
-#define PPUTLUTRAITS_505u DEC,0b0111111001u,8u,22u,(5u, 101u)
-#define PPUTLUTRAITS_504u DEC,0b0111111000u,8u,22u,(2u, 2u, 2u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_503u DEC,0b0111110111u,8u,22u,()
-#define PPUTLUTRAITS_502u DEC,0b0111110110u,8u,22u,(2u, 251u)
-#define PPUTLUTRAITS_501u DEC,0b0111110101u,8u,22u,(3u, 167u)
-#define PPUTLUTRAITS_500u DEC,0b0111110100u,8u,22u,(2u, 2u, 5u, 5u, 5u)
-#define PPUTLUTRAITS_499u DEC,0b0111110011u,8u,22u,()
-#define PPUTLUTRAITS_498u DEC,0b0111110010u,8u,22u,(2u, 3u, 83u)
-#define PPUTLUTRAITS_497u DEC,0b0111110001u,8u,22u,(7u, 71u)
-#define PPUTLUTRAITS_496u DEC,0b0111110000u,8u,22u,(2u, 2u, 2u, 2u, 31u)
-#define PPUTLUTRAITS_495u DEC,0b0111101111u,8u,22u,(3u, 3u, 5u, 11u)
-#define PPUTLUTRAITS_494u DEC,0b0111101110u,8u,22u,(2u, 13u, 19u)
-#define PPUTLUTRAITS_493u DEC,0b0111101101u,8u,22u,(17u, 29u)
-#define PPUTLUTRAITS_492u DEC,0b0111101100u,8u,22u,(2u, 2u, 3u, 41u)
-#define PPUTLUTRAITS_491u DEC,0b0111101011u,8u,22u,()
-#define PPUTLUTRAITS_490u DEC,0b0111101010u,8u,22u,(2u, 5u, 7u, 7u)
-#define PPUTLUTRAITS_489u DEC,0b0111101001u,8u,22u,(3u, 163u)
-#define PPUTLUTRAITS_488u DEC,0b0111101000u,8u,22u,(2u, 2u, 2u, 61u)
-#define PPUTLUTRAITS_487u DEC,0b0111100111u,8u,22u,()
-#define PPUTLUTRAITS_486u DEC,0b0111100110u,8u,22u,(2u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_485u DEC,0b0111100101u,8u,22u,(5u, 97u)
-#define PPUTLUTRAITS_484u DEC,0b0111100100u,8u,22u,(2u, 2u, 11u, 11u)
-#define PPUTLUTRAITS_483u DEC,0b0111100011u,8u,21u,(3u, 7u, 23u)
-#define PPUTLUTRAITS_482u DEC,0b0111100010u,8u,21u,(2u, 241u)
-#define PPUTLUTRAITS_481u DEC,0b0111100001u,8u,21u,(13u, 37u)
-#define PPUTLUTRAITS_480u DEC,0b0111100000u,8u,21u,(2u, 2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLUTRAITS_479u DEC,0b0111011111u,8u,21u,()
-#define PPUTLUTRAITS_478u DEC,0b0111011110u,8u,21u,(2u, 239u)
-#define PPUTLUTRAITS_477u DEC,0b0111011101u,8u,21u,(3u, 3u, 53u)
-#define PPUTLUTRAITS_476u DEC,0b0111011100u,8u,21u,(2u, 2u, 7u, 17u)
-#define PPUTLUTRAITS_475u DEC,0b0111011011u,8u,21u,(5u, 5u, 19u)
-#define PPUTLUTRAITS_474u DEC,0b0111011010u,8u,21u,(2u, 3u, 79u)
-#define PPUTLUTRAITS_473u DEC,0b0111011001u,8u,21u,(11u, 43u)
-#define PPUTLUTRAITS_472u DEC,0b0111011000u,8u,21u,(2u, 2u, 2u, 59u)
-#define PPUTLUTRAITS_471u DEC,0b0111010111u,8u,21u,(3u, 157u)
-#define PPUTLUTRAITS_470u DEC,0b0111010110u,8u,21u,(2u, 5u, 47u)
-#define PPUTLUTRAITS_469u DEC,0b0111010101u,8u,21u,(7u, 67u)
-#define PPUTLUTRAITS_468u DEC,0b0111010100u,8u,21u,(2u, 2u, 3u, 3u, 13u)
-#define PPUTLUTRAITS_467u DEC,0b0111010011u,8u,21u,()
-#define PPUTLUTRAITS_466u DEC,0b0111010010u,8u,21u,(2u, 233u)
-#define PPUTLUTRAITS_465u DEC,0b0111010001u,8u,21u,(3u, 5u, 31u)
-#define PPUTLUTRAITS_464u DEC,0b0111010000u,8u,21u,(2u, 2u, 2u, 2u, 29u)
-#define PPUTLUTRAITS_463u DEC,0b0111001111u,8u,21u,()
-#define PPUTLUTRAITS_462u DEC,0b0111001110u,8u,21u,(2u, 3u, 7u, 11u)
-#define PPUTLUTRAITS_461u DEC,0b0111001101u,8u,21u,()
-#define PPUTLUTRAITS_460u DEC,0b0111001100u,8u,21u,(2u, 2u, 5u, 23u)
-#define PPUTLUTRAITS_459u DEC,0b0111001011u,8u,21u,(3u, 3u, 3u, 17u)
-#define PPUTLUTRAITS_458u DEC,0b0111001010u,8u,21u,(2u, 229u)
-#define PPUTLUTRAITS_457u DEC,0b0111001001u,8u,21u,()
-#define PPUTLUTRAITS_456u DEC,0b0111001000u,8u,21u,(2u, 2u, 2u, 3u, 19u)
-#define PPUTLUTRAITS_455u DEC,0b0111000111u,8u,21u,(5u, 7u, 13u)
-#define PPUTLUTRAITS_454u DEC,0b0111000110u,8u,21u,(2u, 227u)
-#define PPUTLUTRAITS_453u DEC,0b0111000101u,8u,21u,(3u, 151u)
-#define PPUTLUTRAITS_452u DEC,0b0111000100u,8u,21u,(2u, 2u, 113u)
-#define PPUTLUTRAITS_451u DEC,0b0111000011u,8u,21u,(11u, 41u)
-#define PPUTLUTRAITS_450u DEC,0b0111000010u,8u,21u,(2u, 3u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_449u DEC,0b0111000001u,8u,21u,()
-#define PPUTLUTRAITS_448u DEC,0b0111000000u,8u,21u,(2u, 2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLUTRAITS_447u DEC,0b0110111111u,8u,21u,(3u, 149u)
-#define PPUTLUTRAITS_446u DEC,0b0110111110u,8u,21u,(2u, 223u)
-#define PPUTLUTRAITS_445u DEC,0b0110111101u,8u,21u,(5u, 89u)
-#define PPUTLUTRAITS_444u DEC,0b0110111100u,8u,21u,(2u, 2u, 3u, 37u)
-#define PPUTLUTRAITS_443u DEC,0b0110111011u,8u,21u,()
-#define PPUTLUTRAITS_442u DEC,0b0110111010u,8u,21u,(2u, 13u, 17u)
-#define PPUTLUTRAITS_441u DEC,0b0110111001u,8u,21u,(3u, 3u, 7u, 7u)
-#define PPUTLUTRAITS_440u DEC,0b0110111000u,8u,20u,(2u, 2u, 2u, 5u, 11u)
-#define PPUTLUTRAITS_439u DEC,0b0110110111u,8u,20u,()
-#define PPUTLUTRAITS_438u DEC,0b0110110110u,8u,20u,(2u, 3u, 73u)
-#define PPUTLUTRAITS_437u DEC,0b0110110101u,8u,20u,(19u, 23u)
-#define PPUTLUTRAITS_436u DEC,0b0110110100u,8u,20u,(2u, 2u, 109u)
-#define PPUTLUTRAITS_435u DEC,0b0110110011u,8u,20u,(3u, 5u, 29u)
-#define PPUTLUTRAITS_434u DEC,0b0110110010u,8u,20u,(2u, 7u, 31u)
-#define PPUTLUTRAITS_433u DEC,0b0110110001u,8u,20u,()
-#define PPUTLUTRAITS_432u DEC,0b0110110000u,8u,20u,(2u, 2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_431u DEC,0b0110101111u,8u,20u,()
-#define PPUTLUTRAITS_430u DEC,0b0110101110u,8u,20u,(2u, 5u, 43u)
-#define PPUTLUTRAITS_429u DEC,0b0110101101u,8u,20u,(3u, 11u, 13u)
-#define PPUTLUTRAITS_428u DEC,0b0110101100u,8u,20u,(2u, 2u, 107u)
-#define PPUTLUTRAITS_427u DEC,0b0110101011u,8u,20u,(7u, 61u)
-#define PPUTLUTRAITS_426u DEC,0b0110101010u,8u,20u,(2u, 3u, 71u)
-#define PPUTLUTRAITS_425u DEC,0b0110101001u,8u,20u,(5u, 5u, 17u)
-#define PPUTLUTRAITS_424u DEC,0b0110101000u,8u,20u,(2u, 2u, 2u, 53u)
-#define PPUTLUTRAITS_423u DEC,0b0110100111u,8u,20u,(3u, 3u, 47u)
-#define PPUTLUTRAITS_422u DEC,0b0110100110u,8u,20u,(2u, 211u)
-#define PPUTLUTRAITS_421u DEC,0b0110100101u,8u,20u,()
-#define PPUTLUTRAITS_420u DEC,0b0110100100u,8u,20u,(2u, 2u, 3u, 5u, 7u)
-#define PPUTLUTRAITS_419u DEC,0b0110100011u,8u,20u,()
-#define PPUTLUTRAITS_418u DEC,0b0110100010u,8u,20u,(2u, 11u, 19u)
-#define PPUTLUTRAITS_417u DEC,0b0110100001u,8u,20u,(3u, 139u)
-#define PPUTLUTRAITS_416u DEC,0b0110100000u,8u,20u,(2u, 2u, 2u, 2u, 2u, 13u)
-#define PPUTLUTRAITS_415u DEC,0b0110011111u,8u,20u,(5u, 83u)
-#define PPUTLUTRAITS_414u DEC,0b0110011110u,8u,20u,(2u, 3u, 3u, 23u)
-#define PPUTLUTRAITS_413u DEC,0b0110011101u,8u,20u,(7u, 59u)
-#define PPUTLUTRAITS_412u DEC,0b0110011100u,8u,20u,(2u, 2u, 103u)
-#define PPUTLUTRAITS_411u DEC,0b0110011011u,8u,20u,(3u, 137u)
-#define PPUTLUTRAITS_410u DEC,0b0110011010u,8u,20u,(2u, 5u, 41u)
-#define PPUTLUTRAITS_409u DEC,0b0110011001u,8u,20u,()
-#define PPUTLUTRAITS_408u DEC,0b0110011000u,8u,20u,(2u, 2u, 2u, 3u, 17u)
-#define PPUTLUTRAITS_407u DEC,0b0110010111u,8u,20u,(11u, 37u)
-#define PPUTLUTRAITS_406u DEC,0b0110010110u,8u,20u,(2u, 7u, 29u)
-#define PPUTLUTRAITS_405u DEC,0b0110010101u,8u,20u,(3u, 3u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_404u DEC,0b0110010100u,8u,20u,(2u, 2u, 101u)
-#define PPUTLUTRAITS_403u DEC,0b0110010011u,8u,20u,(13u, 31u)
-#define PPUTLUTRAITS_402u DEC,0b0110010010u,8u,20u,(2u, 3u, 67u)
-#define PPUTLUTRAITS_401u DEC,0b0110010001u,8u,20u,()
-#define PPUTLUTRAITS_400u DEC,0b0110010000u,8u,20u,(2u, 2u, 2u, 2u, 5u, 5u)
-#define PPUTLUTRAITS_399u DEC,0b0110001111u,8u,19u,(3u, 7u, 19u)
-#define PPUTLUTRAITS_398u DEC,0b0110001110u,8u,19u,(2u, 199u)
-#define PPUTLUTRAITS_397u DEC,0b0110001101u,8u,19u,()
-#define PPUTLUTRAITS_396u DEC,0b0110001100u,8u,19u,(2u, 2u, 3u, 3u, 11u)
-#define PPUTLUTRAITS_395u DEC,0b0110001011u,8u,19u,(5u, 79u)
-#define PPUTLUTRAITS_394u DEC,0b0110001010u,8u,19u,(2u, 197u)
-#define PPUTLUTRAITS_393u DEC,0b0110001001u,8u,19u,(3u, 131u)
-#define PPUTLUTRAITS_392u DEC,0b0110001000u,8u,19u,(2u, 2u, 2u, 7u, 7u)
-#define PPUTLUTRAITS_391u DEC,0b0110000111u,8u,19u,(17u, 23u)
-#define PPUTLUTRAITS_390u DEC,0b0110000110u,8u,19u,(2u, 3u, 5u, 13u)
-#define PPUTLUTRAITS_389u DEC,0b0110000101u,8u,19u,()
-#define PPUTLUTRAITS_388u DEC,0b0110000100u,8u,19u,(2u, 2u, 97u)
-#define PPUTLUTRAITS_387u DEC,0b0110000011u,8u,19u,(3u, 3u, 43u)
-#define PPUTLUTRAITS_386u DEC,0b0110000010u,8u,19u,(2u, 193u)
-#define PPUTLUTRAITS_385u DEC,0b0110000001u,8u,19u,(5u, 7u, 11u)
-#define PPUTLUTRAITS_384u DEC,0b0110000000u,8u,19u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLUTRAITS_383u DEC,0b0101111111u,8u,19u,()
-#define PPUTLUTRAITS_382u DEC,0b0101111110u,8u,19u,(2u, 191u)
-#define PPUTLUTRAITS_381u DEC,0b0101111101u,8u,19u,(3u, 127u)
-#define PPUTLUTRAITS_380u DEC,0b0101111100u,8u,19u,(2u, 2u, 5u, 19u)
-#define PPUTLUTRAITS_379u DEC,0b0101111011u,8u,19u,()
-#define PPUTLUTRAITS_378u DEC,0b0101111010u,8u,19u,(2u, 3u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_377u DEC,0b0101111001u,8u,19u,(13u, 29u)
-#define PPUTLUTRAITS_376u DEC,0b0101111000u,8u,19u,(2u, 2u, 2u, 47u)
-#define PPUTLUTRAITS_375u DEC,0b0101110111u,8u,19u,(3u, 5u, 5u, 5u)
-#define PPUTLUTRAITS_374u DEC,0b0101110110u,8u,19u,(2u, 11u, 17u)
-#define PPUTLUTRAITS_373u DEC,0b0101110101u,8u,19u,()
-#define PPUTLUTRAITS_372u DEC,0b0101110100u,8u,19u,(2u, 2u, 3u, 31u)
-#define PPUTLUTRAITS_371u DEC,0b0101110011u,8u,19u,(7u, 53u)
-#define PPUTLUTRAITS_370u DEC,0b0101110010u,8u,19u,(2u, 5u, 37u)
-#define PPUTLUTRAITS_369u DEC,0b0101110001u,8u,19u,(3u, 3u, 41u)
-#define PPUTLUTRAITS_368u DEC,0b0101110000u,8u,19u,(2u, 2u, 2u, 2u, 23u)
-#define PPUTLUTRAITS_367u DEC,0b0101101111u,8u,19u,()
-#define PPUTLUTRAITS_366u DEC,0b0101101110u,8u,19u,(2u, 3u, 61u)
-#define PPUTLUTRAITS_365u DEC,0b0101101101u,8u,19u,(5u, 73u)
-#define PPUTLUTRAITS_364u DEC,0b0101101100u,8u,19u,(2u, 2u, 7u, 13u)
-#define PPUTLUTRAITS_363u DEC,0b0101101011u,8u,19u,(3u, 11u, 11u)
-#define PPUTLUTRAITS_362u DEC,0b0101101010u,8u,19u,(2u, 181u)
-#define PPUTLUTRAITS_361u DEC,0b0101101001u,8u,19u,(19u, 19u)
-#define PPUTLUTRAITS_360u DEC,0b0101101000u,8u,18u,(2u, 2u, 2u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_359u DEC,0b0101100111u,8u,18u,()
-#define PPUTLUTRAITS_358u DEC,0b0101100110u,8u,18u,(2u, 179u)
-#define PPUTLUTRAITS_357u DEC,0b0101100101u,8u,18u,(3u, 7u, 17u)
-#define PPUTLUTRAITS_356u DEC,0b0101100100u,8u,18u,(2u, 2u, 89u)
-#define PPUTLUTRAITS_355u DEC,0b0101100011u,8u,18u,(5u, 71u)
-#define PPUTLUTRAITS_354u DEC,0b0101100010u,8u,18u,(2u, 3u, 59u)
-#define PPUTLUTRAITS_353u DEC,0b0101100001u,8u,18u,()
-#define PPUTLUTRAITS_352u DEC,0b0101100000u,8u,18u,(2u, 2u, 2u, 2u, 2u, 11u)
-#define PPUTLUTRAITS_351u DEC,0b0101011111u,8u,18u,(3u, 3u, 3u, 13u)
-#define PPUTLUTRAITS_350u DEC,0b0101011110u,8u,18u,(2u, 5u, 5u, 7u)
-#define PPUTLUTRAITS_349u DEC,0b0101011101u,8u,18u,()
-#define PPUTLUTRAITS_348u DEC,0b0101011100u,8u,18u,(2u, 2u, 3u, 29u)
-#define PPUTLUTRAITS_347u DEC,0b0101011011u,8u,18u,()
-#define PPUTLUTRAITS_346u DEC,0b0101011010u,8u,18u,(2u, 173u)
-#define PPUTLUTRAITS_345u DEC,0b0101011001u,8u,18u,(3u, 5u, 23u)
-#define PPUTLUTRAITS_344u DEC,0b0101011000u,8u,18u,(2u, 2u, 2u, 43u)
-#define PPUTLUTRAITS_343u DEC,0b0101010111u,8u,18u,(7u, 7u, 7u)
-#define PPUTLUTRAITS_342u DEC,0b0101010110u,8u,18u,(2u, 3u, 3u, 19u)
-#define PPUTLUTRAITS_341u DEC,0b0101010101u,8u,18u,(11u, 31u)
-#define PPUTLUTRAITS_340u DEC,0b0101010100u,8u,18u,(2u, 2u, 5u, 17u)
-#define PPUTLUTRAITS_339u DEC,0b0101010011u,8u,18u,(3u, 113u)
-#define PPUTLUTRAITS_338u DEC,0b0101010010u,8u,18u,(2u, 13u, 13u)
-#define PPUTLUTRAITS_337u DEC,0b0101010001u,8u,18u,()
-#define PPUTLUTRAITS_336u DEC,0b0101010000u,8u,18u,(2u, 2u, 2u, 2u, 3u, 7u)
-#define PPUTLUTRAITS_335u DEC,0b0101001111u,8u,18u,(5u, 67u)
-#define PPUTLUTRAITS_334u DEC,0b0101001110u,8u,18u,(2u, 167u)
-#define PPUTLUTRAITS_333u DEC,0b0101001101u,8u,18u,(3u, 3u, 37u)
-#define PPUTLUTRAITS_332u DEC,0b0101001100u,8u,18u,(2u, 2u, 83u)
-#define PPUTLUTRAITS_331u DEC,0b0101001011u,8u,18u,()
-#define PPUTLUTRAITS_330u DEC,0b0101001010u,8u,18u,(2u, 3u, 5u, 11u)
-#define PPUTLUTRAITS_329u DEC,0b0101001001u,8u,18u,(7u, 47u)
-#define PPUTLUTRAITS_328u DEC,0b0101001000u,8u,18u,(2u, 2u, 2u, 41u)
-#define PPUTLUTRAITS_327u DEC,0b0101000111u,8u,18u,(3u, 109u)
-#define PPUTLUTRAITS_326u DEC,0b0101000110u,8u,18u,(2u, 163u)
-#define PPUTLUTRAITS_325u DEC,0b0101000101u,8u,18u,(5u, 5u, 13u)
-#define PPUTLUTRAITS_324u DEC,0b0101000100u,8u,18u,(2u, 2u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_323u DEC,0b0101000011u,8u,17u,(17u, 19u)
-#define PPUTLUTRAITS_322u DEC,0b0101000010u,8u,17u,(2u, 7u, 23u)
-#define PPUTLUTRAITS_321u DEC,0b0101000001u,8u,17u,(3u, 107u)
-#define PPUTLUTRAITS_320u DEC,0b0101000000u,8u,17u,(2u, 2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLUTRAITS_319u DEC,0b0100111111u,8u,17u,(11u, 29u)
-#define PPUTLUTRAITS_318u DEC,0b0100111110u,8u,17u,(2u, 3u, 53u)
-#define PPUTLUTRAITS_317u DEC,0b0100111101u,8u,17u,()
-#define PPUTLUTRAITS_316u DEC,0b0100111100u,8u,17u,(2u, 2u, 79u)
-#define PPUTLUTRAITS_315u DEC,0b0100111011u,8u,17u,(3u, 3u, 5u, 7u)
-#define PPUTLUTRAITS_314u DEC,0b0100111010u,8u,17u,(2u, 157u)
-#define PPUTLUTRAITS_313u DEC,0b0100111001u,8u,17u,()
-#define PPUTLUTRAITS_312u DEC,0b0100111000u,8u,17u,(2u, 2u, 2u, 3u, 13u)
-#define PPUTLUTRAITS_311u DEC,0b0100110111u,8u,17u,()
-#define PPUTLUTRAITS_310u DEC,0b0100110110u,8u,17u,(2u, 5u, 31u)
-#define PPUTLUTRAITS_309u DEC,0b0100110101u,8u,17u,(3u, 103u)
-#define PPUTLUTRAITS_308u DEC,0b0100110100u,8u,17u,(2u, 2u, 7u, 11u)
-#define PPUTLUTRAITS_307u DEC,0b0100110011u,8u,17u,()
-#define PPUTLUTRAITS_306u DEC,0b0100110010u,8u,17u,(2u, 3u, 3u, 17u)
-#define PPUTLUTRAITS_305u DEC,0b0100110001u,8u,17u,(5u, 61u)
-#define PPUTLUTRAITS_304u DEC,0b0100110000u,8u,17u,(2u, 2u, 2u, 2u, 19u)
-#define PPUTLUTRAITS_303u DEC,0b0100101111u,8u,17u,(3u, 101u)
-#define PPUTLUTRAITS_302u DEC,0b0100101110u,8u,17u,(2u, 151u)
-#define PPUTLUTRAITS_301u DEC,0b0100101101u,8u,17u,(7u, 43u)
-#define PPUTLUTRAITS_300u DEC,0b0100101100u,8u,17u,(2u, 2u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_299u DEC,0b0100101011u,8u,17u,(13u, 23u)
-#define PPUTLUTRAITS_298u DEC,0b0100101010u,8u,17u,(2u, 149u)
-#define PPUTLUTRAITS_297u DEC,0b0100101001u,8u,17u,(3u, 3u, 3u, 11u)
-#define PPUTLUTRAITS_296u DEC,0b0100101000u,8u,17u,(2u, 2u, 2u, 37u)
-#define PPUTLUTRAITS_295u DEC,0b0100100111u,8u,17u,(5u, 59u)
-#define PPUTLUTRAITS_294u DEC,0b0100100110u,8u,17u,(2u, 3u, 7u, 7u)
-#define PPUTLUTRAITS_293u DEC,0b0100100101u,8u,17u,()
-#define PPUTLUTRAITS_292u DEC,0b0100100100u,8u,17u,(2u, 2u, 73u)
-#define PPUTLUTRAITS_291u DEC,0b0100100011u,8u,17u,(3u, 97u)
-#define PPUTLUTRAITS_290u DEC,0b0100100010u,8u,17u,(2u, 5u, 29u)
-#define PPUTLUTRAITS_289u DEC,0b0100100001u,8u,17u,(17u, 17u)
-#define PPUTLUTRAITS_288u DEC,0b0100100000u,8u,16u,(2u, 2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLUTRAITS_287u DEC,0b0100011111u,8u,16u,(7u, 41u)
-#define PPUTLUTRAITS_286u DEC,0b0100011110u,8u,16u,(2u, 11u, 13u)
-#define PPUTLUTRAITS_285u DEC,0b0100011101u,8u,16u,(3u, 5u, 19u)
-#define PPUTLUTRAITS_284u DEC,0b0100011100u,8u,16u,(2u, 2u, 71u)
-#define PPUTLUTRAITS_283u DEC,0b0100011011u,8u,16u,()
-#define PPUTLUTRAITS_282u DEC,0b0100011010u,8u,16u,(2u, 3u, 47u)
-#define PPUTLUTRAITS_281u DEC,0b0100011001u,8u,16u,()
-#define PPUTLUTRAITS_280u DEC,0b0100011000u,8u,16u,(2u, 2u, 2u, 5u, 7u)
-#define PPUTLUTRAITS_279u DEC,0b0100010111u,8u,16u,(3u, 3u, 31u)
-#define PPUTLUTRAITS_278u DEC,0b0100010110u,8u,16u,(2u, 139u)
-#define PPUTLUTRAITS_277u DEC,0b0100010101u,8u,16u,()
-#define PPUTLUTRAITS_276u DEC,0b0100010100u,8u,16u,(2u, 2u, 3u, 23u)
-#define PPUTLUTRAITS_275u DEC,0b0100010011u,8u,16u,(5u, 5u, 11u)
-#define PPUTLUTRAITS_274u DEC,0b0100010010u,8u,16u,(2u, 137u)
-#define PPUTLUTRAITS_273u DEC,0b0100010001u,8u,16u,(3u, 7u, 13u)
-#define PPUTLUTRAITS_272u DEC,0b0100010000u,8u,16u,(2u, 2u, 2u, 2u, 17u)
-#define PPUTLUTRAITS_271u DEC,0b0100001111u,8u,16u,()
-#define PPUTLUTRAITS_270u DEC,0b0100001110u,8u,16u,(2u, 3u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_269u DEC,0b0100001101u,8u,16u,()
-#define PPUTLUTRAITS_268u DEC,0b0100001100u,8u,16u,(2u, 2u, 67u)
-#define PPUTLUTRAITS_267u DEC,0b0100001011u,8u,16u,(3u, 89u)
-#define PPUTLUTRAITS_266u DEC,0b0100001010u,8u,16u,(2u, 7u, 19u)
-#define PPUTLUTRAITS_265u DEC,0b0100001001u,8u,16u,(5u, 53u)
-#define PPUTLUTRAITS_264u DEC,0b0100001000u,8u,16u,(2u, 2u, 2u, 3u, 11u)
-#define PPUTLUTRAITS_263u DEC,0b0100000111u,8u,16u,()
-#define PPUTLUTRAITS_262u DEC,0b0100000110u,8u,16u,(2u, 131u)
-#define PPUTLUTRAITS_261u DEC,0b0100000101u,8u,16u,(3u, 3u, 29u)
-#define PPUTLUTRAITS_260u DEC,0b0100000100u,8u,16u,(2u, 2u, 5u, 13u)
-#define PPUTLUTRAITS_259u DEC,0b0100000011u,8u,16u,(7u, 37u)
-#define PPUTLUTRAITS_258u DEC,0b0100000010u,8u,16u,(2u, 3u, 43u)
-#define PPUTLUTRAITS_257u DEC,0b0100000001u,8u,16u,()
-#define PPUTLUTRAITS_256u DEC,0b0100000000u,8u,16u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLUTRAITS_255u DEC,0b0011111111u,7u,15u,(3u, 5u, 17u)
-#define PPUTLUTRAITS_254u DEC,0b0011111110u,7u,15u,(2u, 127u)
-#define PPUTLUTRAITS_253u DEC,0b0011111101u,7u,15u,(11u, 23u)
-#define PPUTLUTRAITS_252u DEC,0b0011111100u,7u,15u,(2u, 2u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_251u DEC,0b0011111011u,7u,15u,()
-#define PPUTLUTRAITS_250u DEC,0b0011111010u,7u,15u,(2u, 5u, 5u, 5u)
-#define PPUTLUTRAITS_249u DEC,0b0011111001u,7u,15u,(3u, 83u)
-#define PPUTLUTRAITS_248u DEC,0b0011111000u,7u,15u,(2u, 2u, 2u, 31u)
-#define PPUTLUTRAITS_247u DEC,0b0011110111u,7u,15u,(13u, 19u)
-#define PPUTLUTRAITS_246u DEC,0b0011110110u,7u,15u,(2u, 3u, 41u)
-#define PPUTLUTRAITS_245u DEC,0b0011110101u,7u,15u,(5u, 7u, 7u)
-#define PPUTLUTRAITS_244u DEC,0b0011110100u,7u,15u,(2u, 2u, 61u)
-#define PPUTLUTRAITS_243u DEC,0b0011110011u,7u,15u,(3u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_242u DEC,0b0011110010u,7u,15u,(2u, 11u, 11u)
-#define PPUTLUTRAITS_241u DEC,0b0011110001u,7u,15u,()
-#define PPUTLUTRAITS_240u DEC,0b0011110000u,7u,15u,(2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLUTRAITS_239u DEC,0b0011101111u,7u,15u,()
-#define PPUTLUTRAITS_238u DEC,0b0011101110u,7u,15u,(2u, 7u, 17u)
-#define PPUTLUTRAITS_237u DEC,0b0011101101u,7u,15u,(3u, 79u)
-#define PPUTLUTRAITS_236u DEC,0b0011101100u,7u,15u,(2u, 2u, 59u)
-#define PPUTLUTRAITS_235u DEC,0b0011101011u,7u,15u,(5u, 47u)
-#define PPUTLUTRAITS_234u DEC,0b0011101010u,7u,15u,(2u, 3u, 3u, 13u)
-#define PPUTLUTRAITS_233u DEC,0b0011101001u,7u,15u,()
-#define PPUTLUTRAITS_232u DEC,0b0011101000u,7u,15u,(2u, 2u, 2u, 29u)
-#define PPUTLUTRAITS_231u DEC,0b0011100111u,7u,15u,(3u, 7u, 11u)
-#define PPUTLUTRAITS_230u DEC,0b0011100110u,7u,15u,(2u, 5u, 23u)
-#define PPUTLUTRAITS_229u DEC,0b0011100101u,7u,15u,()
-#define PPUTLUTRAITS_228u DEC,0b0011100100u,7u,15u,(2u, 2u, 3u, 19u)
-#define PPUTLUTRAITS_227u DEC,0b0011100011u,7u,15u,()
-#define PPUTLUTRAITS_226u DEC,0b0011100010u,7u,15u,(2u, 113u)
-#define PPUTLUTRAITS_225u DEC,0b0011100001u,7u,15u,(3u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_224u DEC,0b0011100000u,7u,14u,(2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLUTRAITS_223u DEC,0b0011011111u,7u,14u,()
-#define PPUTLUTRAITS_222u DEC,0b0011011110u,7u,14u,(2u, 3u, 37u)
-#define PPUTLUTRAITS_221u DEC,0b0011011101u,7u,14u,(13u, 17u)
-#define PPUTLUTRAITS_220u DEC,0b0011011100u,7u,14u,(2u, 2u, 5u, 11u)
-#define PPUTLUTRAITS_219u DEC,0b0011011011u,7u,14u,(3u, 73u)
-#define PPUTLUTRAITS_218u DEC,0b0011011010u,7u,14u,(2u, 109u)
-#define PPUTLUTRAITS_217u DEC,0b0011011001u,7u,14u,(7u, 31u)
-#define PPUTLUTRAITS_216u DEC,0b0011011000u,7u,14u,(2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_215u DEC,0b0011010111u,7u,14u,(5u, 43u)
-#define PPUTLUTRAITS_214u DEC,0b0011010110u,7u,14u,(2u, 107u)
-#define PPUTLUTRAITS_213u DEC,0b0011010101u,7u,14u,(3u, 71u)
-#define PPUTLUTRAITS_212u DEC,0b0011010100u,7u,14u,(2u, 2u, 53u)
-#define PPUTLUTRAITS_211u DEC,0b0011010011u,7u,14u,()
-#define PPUTLUTRAITS_210u DEC,0b0011010010u,7u,14u,(2u, 3u, 5u, 7u)
-#define PPUTLUTRAITS_209u DEC,0b0011010001u,7u,14u,(11u, 19u)
-#define PPUTLUTRAITS_208u DEC,0b0011010000u,7u,14u,(2u, 2u, 2u, 2u, 13u)
-#define PPUTLUTRAITS_207u DEC,0b0011001111u,7u,14u,(3u, 3u, 23u)
-#define PPUTLUTRAITS_206u DEC,0b0011001110u,7u,14u,(2u, 103u)
-#define PPUTLUTRAITS_205u DEC,0b0011001101u,7u,14u,(5u, 41u)
-#define PPUTLUTRAITS_204u DEC,0b0011001100u,7u,14u,(2u, 2u, 3u, 17u)
-#define PPUTLUTRAITS_203u DEC,0b0011001011u,7u,14u,(7u, 29u)
-#define PPUTLUTRAITS_202u DEC,0b0011001010u,7u,14u,(2u, 101u)
-#define PPUTLUTRAITS_201u DEC,0b0011001001u,7u,14u,(3u, 67u)
-#define PPUTLUTRAITS_200u DEC,0b0011001000u,7u,14u,(2u, 2u, 2u, 5u, 5u)
-#define PPUTLUTRAITS_199u DEC,0b0011000111u,7u,14u,()
-#define PPUTLUTRAITS_198u DEC,0b0011000110u,7u,14u,(2u, 3u, 3u, 11u)
-#define PPUTLUTRAITS_197u DEC,0b0011000101u,7u,14u,()
-#define PPUTLUTRAITS_196u DEC,0b0011000100u,7u,14u,(2u, 2u, 7u, 7u)
-#define PPUTLUTRAITS_195u DEC,0b0011000011u,7u,13u,(3u, 5u, 13u)
-#define PPUTLUTRAITS_194u DEC,0b0011000010u,7u,13u,(2u, 97u)
-#define PPUTLUTRAITS_193u DEC,0b0011000001u,7u,13u,()
-#define PPUTLUTRAITS_192u DEC,0b0011000000u,7u,13u,(2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLUTRAITS_191u DEC,0b0010111111u,7u,13u,()
-#define PPUTLUTRAITS_190u DEC,0b0010111110u,7u,13u,(2u, 5u, 19u)
-#define PPUTLUTRAITS_189u DEC,0b0010111101u,7u,13u,(3u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_188u DEC,0b0010111100u,7u,13u,(2u, 2u, 47u)
-#define PPUTLUTRAITS_187u DEC,0b0010111011u,7u,13u,(11u, 17u)
-#define PPUTLUTRAITS_186u DEC,0b0010111010u,7u,13u,(2u, 3u, 31u)
-#define PPUTLUTRAITS_185u DEC,0b0010111001u,7u,13u,(5u, 37u)
-#define PPUTLUTRAITS_184u DEC,0b0010111000u,7u,13u,(2u, 2u, 2u, 23u)
-#define PPUTLUTRAITS_183u DEC,0b0010110111u,7u,13u,(3u, 61u)
-#define PPUTLUTRAITS_182u DEC,0b0010110110u,7u,13u,(2u, 7u, 13u)
-#define PPUTLUTRAITS_181u DEC,0b0010110101u,7u,13u,()
-#define PPUTLUTRAITS_180u DEC,0b0010110100u,7u,13u,(2u, 2u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_179u DEC,0b0010110011u,7u,13u,()
-#define PPUTLUTRAITS_178u DEC,0b0010110010u,7u,13u,(2u, 89u)
-#define PPUTLUTRAITS_177u DEC,0b0010110001u,7u,13u,(3u, 59u)
-#define PPUTLUTRAITS_176u DEC,0b0010110000u,7u,13u,(2u, 2u, 2u, 2u, 11u)
-#define PPUTLUTRAITS_175u DEC,0b0010101111u,7u,13u,(5u, 5u, 7u)
-#define PPUTLUTRAITS_174u DEC,0b0010101110u,7u,13u,(2u, 3u, 29u)
-#define PPUTLUTRAITS_173u DEC,0b0010101101u,7u,13u,()
-#define PPUTLUTRAITS_172u DEC,0b0010101100u,7u,13u,(2u, 2u, 43u)
-#define PPUTLUTRAITS_171u DEC,0b0010101011u,7u,13u,(3u, 3u, 19u)
-#define PPUTLUTRAITS_170u DEC,0b0010101010u,7u,13u,(2u, 5u, 17u)
-#define PPUTLUTRAITS_169u DEC,0b0010101001u,7u,13u,(13u, 13u)
-#define PPUTLUTRAITS_168u DEC,0b0010101000u,7u,12u,(2u, 2u, 2u, 3u, 7u)
-#define PPUTLUTRAITS_167u DEC,0b0010100111u,7u,12u,()
-#define PPUTLUTRAITS_166u DEC,0b0010100110u,7u,12u,(2u, 83u)
-#define PPUTLUTRAITS_165u DEC,0b0010100101u,7u,12u,(3u, 5u, 11u)
-#define PPUTLUTRAITS_164u DEC,0b0010100100u,7u,12u,(2u, 2u, 41u)
-#define PPUTLUTRAITS_163u DEC,0b0010100011u,7u,12u,()
-#define PPUTLUTRAITS_162u DEC,0b0010100010u,7u,12u,(2u, 3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_161u DEC,0b0010100001u,7u,12u,(7u, 23u)
-#define PPUTLUTRAITS_160u DEC,0b0010100000u,7u,12u,(2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLUTRAITS_159u DEC,0b0010011111u,7u,12u,(3u, 53u)
-#define PPUTLUTRAITS_158u DEC,0b0010011110u,7u,12u,(2u, 79u)
-#define PPUTLUTRAITS_157u DEC,0b0010011101u,7u,12u,()
-#define PPUTLUTRAITS_156u DEC,0b0010011100u,7u,12u,(2u, 2u, 3u, 13u)
-#define PPUTLUTRAITS_155u DEC,0b0010011011u,7u,12u,(5u, 31u)
-#define PPUTLUTRAITS_154u DEC,0b0010011010u,7u,12u,(2u, 7u, 11u)
-#define PPUTLUTRAITS_153u DEC,0b0010011001u,7u,12u,(3u, 3u, 17u)
-#define PPUTLUTRAITS_152u DEC,0b0010011000u,7u,12u,(2u, 2u, 2u, 19u)
-#define PPUTLUTRAITS_151u DEC,0b0010010111u,7u,12u,()
-#define PPUTLUTRAITS_150u DEC,0b0010010110u,7u,12u,(2u, 3u, 5u, 5u)
-#define PPUTLUTRAITS_149u DEC,0b0010010101u,7u,12u,()
-#define PPUTLUTRAITS_148u DEC,0b0010010100u,7u,12u,(2u, 2u, 37u)
-#define PPUTLUTRAITS_147u DEC,0b0010010011u,7u,12u,(3u, 7u, 7u)
-#define PPUTLUTRAITS_146u DEC,0b0010010010u,7u,12u,(2u, 73u)
-#define PPUTLUTRAITS_145u DEC,0b0010010001u,7u,12u,(5u, 29u)
-#define PPUTLUTRAITS_144u DEC,0b0010010000u,7u,12u,(2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLUTRAITS_143u DEC,0b0010001111u,7u,11u,(11u, 13u)
-#define PPUTLUTRAITS_142u DEC,0b0010001110u,7u,11u,(2u, 71u)
-#define PPUTLUTRAITS_141u DEC,0b0010001101u,7u,11u,(3u, 47u)
-#define PPUTLUTRAITS_140u DEC,0b0010001100u,7u,11u,(2u, 2u, 5u, 7u)
-#define PPUTLUTRAITS_139u DEC,0b0010001011u,7u,11u,()
-#define PPUTLUTRAITS_138u DEC,0b0010001010u,7u,11u,(2u, 3u, 23u)
-#define PPUTLUTRAITS_137u DEC,0b0010001001u,7u,11u,()
-#define PPUTLUTRAITS_136u DEC,0b0010001000u,7u,11u,(2u, 2u, 2u, 17u)
-#define PPUTLUTRAITS_135u DEC,0b0010000111u,7u,11u,(3u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_134u DEC,0b0010000110u,7u,11u,(2u, 67u)
-#define PPUTLUTRAITS_133u DEC,0b0010000101u,7u,11u,(7u, 19u)
-#define PPUTLUTRAITS_132u DEC,0b0010000100u,7u,11u,(2u, 2u, 3u, 11u)
-#define PPUTLUTRAITS_131u DEC,0b0010000011u,7u,11u,()
-#define PPUTLUTRAITS_130u DEC,0b0010000010u,7u,11u,(2u, 5u, 13u)
-#define PPUTLUTRAITS_129u DEC,0b0010000001u,7u,11u,(3u, 43u)
-#define PPUTLUTRAITS_128u DEC,0b0010000000u,7u,11u,(2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLUTRAITS_127u DEC,0b0001111111u,6u,11u,()
-#define PPUTLUTRAITS_126u DEC,0b0001111110u,6u,11u,(2u, 3u, 3u, 7u)
-#define PPUTLUTRAITS_125u DEC,0b0001111101u,6u,11u,(5u, 5u, 5u)
-#define PPUTLUTRAITS_124u DEC,0b0001111100u,6u,11u,(2u, 2u, 31u)
-#define PPUTLUTRAITS_123u DEC,0b0001111011u,6u,11u,(3u, 41u)
-#define PPUTLUTRAITS_122u DEC,0b0001111010u,6u,11u,(2u, 61u)
-#define PPUTLUTRAITS_121u DEC,0b0001111001u,6u,11u,(11u, 11u)
-#define PPUTLUTRAITS_120u DEC,0b0001111000u,6u,10u,(2u, 2u, 2u, 3u, 5u)
-#define PPUTLUTRAITS_119u DEC,0b0001110111u,6u,10u,(7u, 17u)
-#define PPUTLUTRAITS_118u DEC,0b0001110110u,6u,10u,(2u, 59u)
-#define PPUTLUTRAITS_117u DEC,0b0001110101u,6u,10u,(3u, 3u, 13u)
-#define PPUTLUTRAITS_116u DEC,0b0001110100u,6u,10u,(2u, 2u, 29u)
-#define PPUTLUTRAITS_115u DEC,0b0001110011u,6u,10u,(5u, 23u)
-#define PPUTLUTRAITS_114u DEC,0b0001110010u,6u,10u,(2u, 3u, 19u)
-#define PPUTLUTRAITS_113u DEC,0b0001110001u,6u,10u,()
-#define PPUTLUTRAITS_112u DEC,0b0001110000u,6u,10u,(2u, 2u, 2u, 2u, 7u)
-#define PPUTLUTRAITS_111u DEC,0b0001101111u,6u,10u,(3u, 37u)
-#define PPUTLUTRAITS_110u DEC,0b0001101110u,6u,10u,(2u, 5u, 11u)
-#define PPUTLUTRAITS_109u DEC,0b0001101101u,6u,10u,()
-#define PPUTLUTRAITS_108u DEC,0b0001101100u,6u,10u,(2u, 2u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_107u DEC,0b0001101011u,6u,10u,()
-#define PPUTLUTRAITS_106u DEC,0b0001101010u,6u,10u,(2u, 53u)
-#define PPUTLUTRAITS_105u DEC,0b0001101001u,6u,10u,(3u, 5u, 7u)
-#define PPUTLUTRAITS_104u DEC,0b0001101000u,6u,10u,(2u, 2u, 2u, 13u)
-#define PPUTLUTRAITS_103u DEC,0b0001100111u,6u,10u,()
-#define PPUTLUTRAITS_102u DEC,0b0001100110u,6u,10u,(2u, 3u, 17u)
-#define PPUTLUTRAITS_101u DEC,0b0001100101u,6u,10u,()
-#define PPUTLUTRAITS_100u DEC,0b0001100100u,6u,10u,(2u, 2u, 5u, 5u)
-#define PPUTLUTRAITS_99u DEC,0b0001100011u,6u,9u,(3u, 3u, 11u)
-#define PPUTLUTRAITS_98u DEC,0b0001100010u,6u,9u,(2u, 7u, 7u)
-#define PPUTLUTRAITS_97u DEC,0b0001100001u,6u,9u,()
-#define PPUTLUTRAITS_96u DEC,0b0001100000u,6u,9u,(2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLUTRAITS_95u DEC,0b0001011111u,6u,9u,(5u, 19u)
-#define PPUTLUTRAITS_94u DEC,0b0001011110u,6u,9u,(2u, 47u)
-#define PPUTLUTRAITS_93u DEC,0b0001011101u,6u,9u,(3u, 31u)
-#define PPUTLUTRAITS_92u DEC,0b0001011100u,6u,9u,(2u, 2u, 23u)
-#define PPUTLUTRAITS_91u DEC,0b0001011011u,6u,9u,(7u, 13u)
-#define PPUTLUTRAITS_90u DEC,0b0001011010u,6u,9u,(2u, 3u, 3u, 5u)
-#define PPUTLUTRAITS_89u DEC,0b0001011001u,6u,9u,()
-#define PPUTLUTRAITS_88u DEC,0b0001011000u,6u,9u,(2u, 2u, 2u, 11u)
-#define PPUTLUTRAITS_87u DEC,0b0001010111u,6u,9u,(3u, 29u)
-#define PPUTLUTRAITS_86u DEC,0b0001010110u,6u,9u,(2u, 43u)
-#define PPUTLUTRAITS_85u DEC,0b0001010101u,6u,9u,(5u, 17u)
-#define PPUTLUTRAITS_84u DEC,0b0001010100u,6u,9u,(2u, 2u, 3u, 7u)
-#define PPUTLUTRAITS_83u DEC,0b0001010011u,6u,9u,()
-#define PPUTLUTRAITS_82u DEC,0b0001010010u,6u,9u,(2u, 41u)
-#define PPUTLUTRAITS_81u DEC,0b0001010001u,6u,9u,(3u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_80u DEC,0b0001010000u,6u,8u,(2u, 2u, 2u, 2u, 5u)
-#define PPUTLUTRAITS_79u DEC,0b0001001111u,6u,8u,()
-#define PPUTLUTRAITS_78u DEC,0b0001001110u,6u,8u,(2u, 3u, 13u)
-#define PPUTLUTRAITS_77u DEC,0b0001001101u,6u,8u,(7u, 11u)
-#define PPUTLUTRAITS_76u DEC,0b0001001100u,6u,8u,(2u, 2u, 19u)
-#define PPUTLUTRAITS_75u DEC,0b0001001011u,6u,8u,(3u, 5u, 5u)
-#define PPUTLUTRAITS_74u DEC,0b0001001010u,6u,8u,(2u, 37u)
-#define PPUTLUTRAITS_73u DEC,0b0001001001u,6u,8u,()
-#define PPUTLUTRAITS_72u DEC,0b0001001000u,6u,8u,(2u, 2u, 2u, 3u, 3u)
-#define PPUTLUTRAITS_71u DEC,0b0001000111u,6u,8u,()
-#define PPUTLUTRAITS_70u DEC,0b0001000110u,6u,8u,(2u, 5u, 7u)
-#define PPUTLUTRAITS_69u DEC,0b0001000101u,6u,8u,(3u, 23u)
-#define PPUTLUTRAITS_68u DEC,0b0001000100u,6u,8u,(2u, 2u, 17u)
-#define PPUTLUTRAITS_67u DEC,0b0001000011u,6u,8u,()
-#define PPUTLUTRAITS_66u DEC,0b0001000010u,6u,8u,(2u, 3u, 11u)
-#define PPUTLUTRAITS_65u DEC,0b0001000001u,6u,8u,(5u, 13u)
-#define PPUTLUTRAITS_64u DEC,0b0001000000u,6u,8u,(2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLUTRAITS_63u DEC,0b0000111111u,5u,7u,(3u, 3u, 7u)
-#define PPUTLUTRAITS_62u DEC,0b0000111110u,5u,7u,(2u, 31u)
-#define PPUTLUTRAITS_61u DEC,0b0000111101u,5u,7u,()
-#define PPUTLUTRAITS_60u DEC,0b0000111100u,5u,7u,(2u, 2u, 3u, 5u)
-#define PPUTLUTRAITS_59u DEC,0b0000111011u,5u,7u,()
-#define PPUTLUTRAITS_58u DEC,0b0000111010u,5u,7u,(2u, 29u)
-#define PPUTLUTRAITS_57u DEC,0b0000111001u,5u,7u,(3u, 19u)
-#define PPUTLUTRAITS_56u DEC,0b0000111000u,5u,7u,(2u, 2u, 2u, 7u)
-#define PPUTLUTRAITS_55u DEC,0b0000110111u,5u,7u,(5u, 11u)
-#define PPUTLUTRAITS_54u DEC,0b0000110110u,5u,7u,(2u, 3u, 3u, 3u)
-#define PPUTLUTRAITS_53u DEC,0b0000110101u,5u,7u,()
-#define PPUTLUTRAITS_52u DEC,0b0000110100u,5u,7u,(2u, 2u, 13u)
-#define PPUTLUTRAITS_51u DEC,0b0000110011u,5u,7u,(3u, 17u)
-#define PPUTLUTRAITS_50u DEC,0b0000110010u,5u,7u,(2u, 5u, 5u)
-#define PPUTLUTRAITS_49u DEC,0b0000110001u,5u,7u,(7u, 7u)
-#define PPUTLUTRAITS_48u DEC,0b0000110000u,5u,6u,(2u, 2u, 2u, 2u, 3u)
-#define PPUTLUTRAITS_47u DEC,0b0000101111u,5u,6u,()
-#define PPUTLUTRAITS_46u DEC,0b0000101110u,5u,6u,(2u, 23u)
-#define PPUTLUTRAITS_45u DEC,0b0000101101u,5u,6u,(3u, 3u, 5u)
-#define PPUTLUTRAITS_44u DEC,0b0000101100u,5u,6u,(2u, 2u, 11u)
-#define PPUTLUTRAITS_43u DEC,0b0000101011u,5u,6u,()
-#define PPUTLUTRAITS_42u DEC,0b0000101010u,5u,6u,(2u, 3u, 7u)
-#define PPUTLUTRAITS_41u DEC,0b0000101001u,5u,6u,()
-#define PPUTLUTRAITS_40u DEC,0b0000101000u,5u,6u,(2u, 2u, 2u, 5u)
-#define PPUTLUTRAITS_39u DEC,0b0000100111u,5u,6u,(3u, 13u)
-#define PPUTLUTRAITS_38u DEC,0b0000100110u,5u,6u,(2u, 19u)
-#define PPUTLUTRAITS_37u DEC,0b0000100101u,5u,6u,()
-#define PPUTLUTRAITS_36u DEC,0b0000100100u,5u,6u,(2u, 2u, 3u, 3u)
-#define PPUTLUTRAITS_35u DEC,0b0000100011u,5u,5u,(5u, 7u)
-#define PPUTLUTRAITS_34u DEC,0b0000100010u,5u,5u,(2u, 17u)
-#define PPUTLUTRAITS_33u DEC,0b0000100001u,5u,5u,(3u, 11u)
-#define PPUTLUTRAITS_32u DEC,0b0000100000u,5u,5u,(2u, 2u, 2u, 2u, 2u)
-#define PPUTLUTRAITS_31u DEC,0b0000011111u,4u,5u,()
-#define PPUTLUTRAITS_30u DEC,0b0000011110u,4u,5u,(2u, 3u, 5u)
-#define PPUTLUTRAITS_29u DEC,0b0000011101u,4u,5u,()
-#define PPUTLUTRAITS_28u DEC,0b0000011100u,4u,5u,(2u, 2u, 7u)
-#define PPUTLUTRAITS_27u DEC,0b0000011011u,4u,5u,(3u, 3u, 3u)
-#define PPUTLUTRAITS_26u DEC,0b0000011010u,4u,5u,(2u, 13u)
-#define PPUTLUTRAITS_25u DEC,0b0000011001u,4u,5u,(5u, 5u)
-#define PPUTLUTRAITS_24u DEC,0b0000011000u,4u,4u,(2u, 2u, 2u, 3u)
-#define PPUTLUTRAITS_23u DEC,0b0000010111u,4u,4u,()
-#define PPUTLUTRAITS_22u DEC,0b0000010110u,4u,4u,(2u, 11u)
-#define PPUTLUTRAITS_21u DEC,0b0000010101u,4u,4u,(3u, 7u)
-#define PPUTLUTRAITS_20u DEC,0b0000010100u,4u,4u,(2u, 2u, 5u)
-#define PPUTLUTRAITS_19u DEC,0b0000010011u,4u,4u,()
-#define PPUTLUTRAITS_18u DEC,0b0000010010u,4u,4u,(2u, 3u, 3u)
-#define PPUTLUTRAITS_17u DEC,0b0000010001u,4u,4u,()
-#define PPUTLUTRAITS_16u DEC,0b0000010000u,4u,4u,(2u, 2u, 2u, 2u)
-#define PPUTLUTRAITS_15u DEC,0b0000001111u,3u,3u,(3u, 5u)
-#define PPUTLUTRAITS_14u DEC,0b0000001110u,3u,3u,(2u, 7u)
-#define PPUTLUTRAITS_13u DEC,0b0000001101u,3u,3u,()
-#define PPUTLUTRAITS_12u DEC,0b0000001100u,3u,3u,(2u, 2u, 3u)
-#define PPUTLUTRAITS_11u DEC,0b0000001011u,3u,3u,()
-#define PPUTLUTRAITS_10u DEC,0b0000001010u,3u,3u,(2u, 5u)
-#define PPUTLUTRAITS_9u DEC,0b0000001001u,3u,3u,(3u, 3u)
-#define PPUTLUTRAITS_8u DEC,0b0000001000u,3u,2u,(2u, 2u, 2u)
-#define PPUTLUTRAITS_7u DEC,0b0000000111u,2u,2u,()
-#define PPUTLUTRAITS_6u DEC,0b0000000110u,2u,2u,(2u, 3u)
-#define PPUTLUTRAITS_5u DEC,0b0000000101u,2u,2u,()
-#define PPUTLUTRAITS_4u DEC,0b0000000100u,2u,2u,(2u, 2u)
-#define PPUTLUTRAITS_3u DEC,0b0000000011u,1u,1u,()
-#define PPUTLUTRAITS_2u DEC,0b0000000010u,1u,1u,()
-#define PPUTLUTRAITS_1u DEC,0b0000000001u,0u,1u,()
-#define PPUTLUTRAITS_0u DEC,0b0000000000u,,0u,()
+/// type, signed binary, log2, sqrt, factors
+#define PPUTLUTRAITS_1023u DEC,0b1111111111,9u,31u,(3u, 11u, 31u)
+#define PPUTLUTRAITS_1022u DEC,0b1111111110,9u,31u,(2u, 7u, 73u)
+#define PPUTLUTRAITS_1021u DEC,0b1111111101,9u,31u,()
+#define PPUTLUTRAITS_1020u DEC,0b1111111100,9u,31u,(2u, 2u, 3u, 5u, 17u)
+#define PPUTLUTRAITS_1019u DEC,0b1111111011,9u,31u,()
+#define PPUTLUTRAITS_1018u DEC,0b1111111010,9u,31u,(2u, 509u)
+#define PPUTLUTRAITS_1017u DEC,0b1111111001,9u,31u,(3u, 3u, 113u)
+#define PPUTLUTRAITS_1016u DEC,0b1111111000,9u,31u,(2u, 2u, 2u, 127u)
+#define PPUTLUTRAITS_1015u DEC,0b1111110111,9u,31u,(5u, 7u, 29u)
+#define PPUTLUTRAITS_1014u DEC,0b1111110110,9u,31u,(2u, 3u, 13u, 13u)
+#define PPUTLUTRAITS_1013u DEC,0b1111110101,9u,31u,()
+#define PPUTLUTRAITS_1012u DEC,0b1111110100,9u,31u,(2u, 2u, 11u, 23u)
+#define PPUTLUTRAITS_1011u DEC,0b1111110011,9u,31u,(3u, 337u)
+#define PPUTLUTRAITS_1010u DEC,0b1111110010,9u,31u,(2u, 5u, 101u)
+#define PPUTLUTRAITS_1009u DEC,0b1111110001,9u,31u,()
+#define PPUTLUTRAITS_1008u DEC,0b1111110000,9u,31u,(2u, 2u, 2u, 2u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_1007u DEC,0b1111101111,9u,31u,(19u, 53u)
+#define PPUTLUTRAITS_1006u DEC,0b1111101110,9u,31u,(2u, 503u)
+#define PPUTLUTRAITS_1005u DEC,0b1111101101,9u,31u,(3u, 5u, 67u)
+#define PPUTLUTRAITS_1004u DEC,0b1111101100,9u,31u,(2u, 2u, 251u)
+#define PPUTLUTRAITS_1003u DEC,0b1111101011,9u,31u,(17u, 59u)
+#define PPUTLUTRAITS_1002u DEC,0b1111101010,9u,31u,(2u, 3u, 167u)
+#define PPUTLUTRAITS_1001u DEC,0b1111101001,9u,31u,(7u, 11u, 13u)
+#define PPUTLUTRAITS_1000u DEC,0b1111101000,9u,31u,(2u, 2u, 2u, 5u, 5u, 5u)
+#define PPUTLUTRAITS_999u DEC,0b1111100111,9u,31u,(3u, 3u, 3u, 37u)
+#define PPUTLUTRAITS_998u DEC,0b1111100110,9u,31u,(2u, 499u)
+#define PPUTLUTRAITS_997u DEC,0b1111100101,9u,31u,()
+#define PPUTLUTRAITS_996u DEC,0b1111100100,9u,31u,(2u, 2u, 3u, 83u)
+#define PPUTLUTRAITS_995u DEC,0b1111100011,9u,31u,(5u, 199u)
+#define PPUTLUTRAITS_994u DEC,0b1111100010,9u,31u,(2u, 7u, 71u)
+#define PPUTLUTRAITS_993u DEC,0b1111100001,9u,31u,(3u, 331u)
+#define PPUTLUTRAITS_992u DEC,0b1111100000,9u,31u,(2u, 2u, 2u, 2u, 2u, 31u)
+#define PPUTLUTRAITS_991u DEC,0b1111011111,9u,31u,()
+#define PPUTLUTRAITS_990u DEC,0b1111011110,9u,31u,(2u, 3u, 3u, 5u, 11u)
+#define PPUTLUTRAITS_989u DEC,0b1111011101,9u,31u,(23u, 43u)
+#define PPUTLUTRAITS_988u DEC,0b1111011100,9u,31u,(2u, 2u, 13u, 19u)
+#define PPUTLUTRAITS_987u DEC,0b1111011011,9u,31u,(3u, 7u, 47u)
+#define PPUTLUTRAITS_986u DEC,0b1111011010,9u,31u,(2u, 17u, 29u)
+#define PPUTLUTRAITS_985u DEC,0b1111011001,9u,31u,(5u, 197u)
+#define PPUTLUTRAITS_984u DEC,0b1111011000,9u,31u,(2u, 2u, 2u, 3u, 41u)
+#define PPUTLUTRAITS_983u DEC,0b1111010111,9u,31u,()
+#define PPUTLUTRAITS_982u DEC,0b1111010110,9u,31u,(2u, 491u)
+#define PPUTLUTRAITS_981u DEC,0b1111010101,9u,31u,(3u, 3u, 109u)
+#define PPUTLUTRAITS_980u DEC,0b1111010100,9u,31u,(2u, 2u, 5u, 7u, 7u)
+#define PPUTLUTRAITS_979u DEC,0b1111010011,9u,31u,(11u, 89u)
+#define PPUTLUTRAITS_978u DEC,0b1111010010,9u,31u,(2u, 3u, 163u)
+#define PPUTLUTRAITS_977u DEC,0b1111010001,9u,31u,()
+#define PPUTLUTRAITS_976u DEC,0b1111010000,9u,31u,(2u, 2u, 2u, 2u, 61u)
+#define PPUTLUTRAITS_975u DEC,0b1111001111,9u,31u,(3u, 5u, 5u, 13u)
+#define PPUTLUTRAITS_974u DEC,0b1111001110,9u,31u,(2u, 487u)
+#define PPUTLUTRAITS_973u DEC,0b1111001101,9u,31u,(7u, 139u)
+#define PPUTLUTRAITS_972u DEC,0b1111001100,9u,31u,(2u, 2u, 3u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_971u DEC,0b1111001011,9u,31u,()
+#define PPUTLUTRAITS_970u DEC,0b1111001010,9u,31u,(2u, 5u, 97u)
+#define PPUTLUTRAITS_969u DEC,0b1111001001,9u,31u,(3u, 17u, 19u)
+#define PPUTLUTRAITS_968u DEC,0b1111001000,9u,31u,(2u, 2u, 2u, 11u, 11u)
+#define PPUTLUTRAITS_967u DEC,0b1111000111,9u,31u,()
+#define PPUTLUTRAITS_966u DEC,0b1111000110,9u,31u,(2u, 3u, 7u, 23u)
+#define PPUTLUTRAITS_965u DEC,0b1111000101,9u,31u,(5u, 193u)
+#define PPUTLUTRAITS_964u DEC,0b1111000100,9u,31u,(2u, 2u, 241u)
+#define PPUTLUTRAITS_963u DEC,0b1111000011,9u,31u,(3u, 3u, 107u)
+#define PPUTLUTRAITS_962u DEC,0b1111000010,9u,31u,(2u, 13u, 37u)
+#define PPUTLUTRAITS_961u DEC,0b1111000001,9u,31u,(31u, 31u)
+#define PPUTLUTRAITS_960u DEC,0b1111000000,9u,30u,(2u, 2u, 2u, 2u, 2u, 2u, 3u, 5u)
+#define PPUTLUTRAITS_959u DEC,0b1110111111,9u,30u,(7u, 137u)
+#define PPUTLUTRAITS_958u DEC,0b1110111110,9u,30u,(2u, 479u)
+#define PPUTLUTRAITS_957u DEC,0b1110111101,9u,30u,(3u, 11u, 29u)
+#define PPUTLUTRAITS_956u DEC,0b1110111100,9u,30u,(2u, 2u, 239u)
+#define PPUTLUTRAITS_955u DEC,0b1110111011,9u,30u,(5u, 191u)
+#define PPUTLUTRAITS_954u DEC,0b1110111010,9u,30u,(2u, 3u, 3u, 53u)
+#define PPUTLUTRAITS_953u DEC,0b1110111001,9u,30u,()
+#define PPUTLUTRAITS_952u DEC,0b1110111000,9u,30u,(2u, 2u, 2u, 7u, 17u)
+#define PPUTLUTRAITS_951u DEC,0b1110110111,9u,30u,(3u, 317u)
+#define PPUTLUTRAITS_950u DEC,0b1110110110,9u,30u,(2u, 5u, 5u, 19u)
+#define PPUTLUTRAITS_949u DEC,0b1110110101,9u,30u,(13u, 73u)
+#define PPUTLUTRAITS_948u DEC,0b1110110100,9u,30u,(2u, 2u, 3u, 79u)
+#define PPUTLUTRAITS_947u DEC,0b1110110011,9u,30u,()
+#define PPUTLUTRAITS_946u DEC,0b1110110010,9u,30u,(2u, 11u, 43u)
+#define PPUTLUTRAITS_945u DEC,0b1110110001,9u,30u,(3u, 3u, 3u, 5u, 7u)
+#define PPUTLUTRAITS_944u DEC,0b1110110000,9u,30u,(2u, 2u, 2u, 2u, 59u)
+#define PPUTLUTRAITS_943u DEC,0b1110101111,9u,30u,(23u, 41u)
+#define PPUTLUTRAITS_942u DEC,0b1110101110,9u,30u,(2u, 3u, 157u)
+#define PPUTLUTRAITS_941u DEC,0b1110101101,9u,30u,()
+#define PPUTLUTRAITS_940u DEC,0b1110101100,9u,30u,(2u, 2u, 5u, 47u)
+#define PPUTLUTRAITS_939u DEC,0b1110101011,9u,30u,(3u, 313u)
+#define PPUTLUTRAITS_938u DEC,0b1110101010,9u,30u,(2u, 7u, 67u)
+#define PPUTLUTRAITS_937u DEC,0b1110101001,9u,30u,()
+#define PPUTLUTRAITS_936u DEC,0b1110101000,9u,30u,(2u, 2u, 2u, 3u, 3u, 13u)
+#define PPUTLUTRAITS_935u DEC,0b1110100111,9u,30u,(5u, 11u, 17u)
+#define PPUTLUTRAITS_934u DEC,0b1110100110,9u,30u,(2u, 467u)
+#define PPUTLUTRAITS_933u DEC,0b1110100101,9u,30u,(3u, 311u)
+#define PPUTLUTRAITS_932u DEC,0b1110100100,9u,30u,(2u, 2u, 233u)
+#define PPUTLUTRAITS_931u DEC,0b1110100011,9u,30u,(7u, 7u, 19u)
+#define PPUTLUTRAITS_930u DEC,0b1110100010,9u,30u,(2u, 3u, 5u, 31u)
+#define PPUTLUTRAITS_929u DEC,0b1110100001,9u,30u,()
+#define PPUTLUTRAITS_928u DEC,0b1110100000,9u,30u,(2u, 2u, 2u, 2u, 2u, 29u)
+#define PPUTLUTRAITS_927u DEC,0b1110011111,9u,30u,(3u, 3u, 103u)
+#define PPUTLUTRAITS_926u DEC,0b1110011110,9u,30u,(2u, 463u)
+#define PPUTLUTRAITS_925u DEC,0b1110011101,9u,30u,(5u, 5u, 37u)
+#define PPUTLUTRAITS_924u DEC,0b1110011100,9u,30u,(2u, 2u, 3u, 7u, 11u)
+#define PPUTLUTRAITS_923u DEC,0b1110011011,9u,30u,(13u, 71u)
+#define PPUTLUTRAITS_922u DEC,0b1110011010,9u,30u,(2u, 461u)
+#define PPUTLUTRAITS_921u DEC,0b1110011001,9u,30u,(3u, 307u)
+#define PPUTLUTRAITS_920u DEC,0b1110011000,9u,30u,(2u, 2u, 2u, 5u, 23u)
+#define PPUTLUTRAITS_919u DEC,0b1110010111,9u,30u,()
+#define PPUTLUTRAITS_918u DEC,0b1110010110,9u,30u,(2u, 3u, 3u, 3u, 17u)
+#define PPUTLUTRAITS_917u DEC,0b1110010101,9u,30u,(7u, 131u)
+#define PPUTLUTRAITS_916u DEC,0b1110010100,9u,30u,(2u, 2u, 229u)
+#define PPUTLUTRAITS_915u DEC,0b1110010011,9u,30u,(3u, 5u, 61u)
+#define PPUTLUTRAITS_914u DEC,0b1110010010,9u,30u,(2u, 457u)
+#define PPUTLUTRAITS_913u DEC,0b1110010001,9u,30u,(11u, 83u)
+#define PPUTLUTRAITS_912u DEC,0b1110010000,9u,30u,(2u, 2u, 2u, 2u, 3u, 19u)
+#define PPUTLUTRAITS_911u DEC,0b1110001111,9u,30u,()
+#define PPUTLUTRAITS_910u DEC,0b1110001110,9u,30u,(2u, 5u, 7u, 13u)
+#define PPUTLUTRAITS_909u DEC,0b1110001101,9u,30u,(3u, 3u, 101u)
+#define PPUTLUTRAITS_908u DEC,0b1110001100,9u,30u,(2u, 2u, 227u)
+#define PPUTLUTRAITS_907u DEC,0b1110001011,9u,30u,()
+#define PPUTLUTRAITS_906u DEC,0b1110001010,9u,30u,(2u, 3u, 151u)
+#define PPUTLUTRAITS_905u DEC,0b1110001001,9u,30u,(5u, 181u)
+#define PPUTLUTRAITS_904u DEC,0b1110001000,9u,30u,(2u, 2u, 2u, 113u)
+#define PPUTLUTRAITS_903u DEC,0b1110000111,9u,30u,(3u, 7u, 43u)
+#define PPUTLUTRAITS_902u DEC,0b1110000110,9u,30u,(2u, 11u, 41u)
+#define PPUTLUTRAITS_901u DEC,0b1110000101,9u,30u,(17u, 53u)
+#define PPUTLUTRAITS_900u DEC,0b1110000100,9u,30u,(2u, 2u, 3u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_899u DEC,0b1110000011,9u,29u,(29u, 31u)
+#define PPUTLUTRAITS_898u DEC,0b1110000010,9u,29u,(2u, 449u)
+#define PPUTLUTRAITS_897u DEC,0b1110000001,9u,29u,(3u, 13u, 23u)
+#define PPUTLUTRAITS_896u DEC,0b1110000000,9u,29u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 7u)
+#define PPUTLUTRAITS_895u DEC,0b1101111111,9u,29u,(5u, 179u)
+#define PPUTLUTRAITS_894u DEC,0b1101111110,9u,29u,(2u, 3u, 149u)
+#define PPUTLUTRAITS_893u DEC,0b1101111101,9u,29u,(19u, 47u)
+#define PPUTLUTRAITS_892u DEC,0b1101111100,9u,29u,(2u, 2u, 223u)
+#define PPUTLUTRAITS_891u DEC,0b1101111011,9u,29u,(3u, 3u, 3u, 3u, 11u)
+#define PPUTLUTRAITS_890u DEC,0b1101111010,9u,29u,(2u, 5u, 89u)
+#define PPUTLUTRAITS_889u DEC,0b1101111001,9u,29u,(7u, 127u)
+#define PPUTLUTRAITS_888u DEC,0b1101111000,9u,29u,(2u, 2u, 2u, 3u, 37u)
+#define PPUTLUTRAITS_887u DEC,0b1101110111,9u,29u,()
+#define PPUTLUTRAITS_886u DEC,0b1101110110,9u,29u,(2u, 443u)
+#define PPUTLUTRAITS_885u DEC,0b1101110101,9u,29u,(3u, 5u, 59u)
+#define PPUTLUTRAITS_884u DEC,0b1101110100,9u,29u,(2u, 2u, 13u, 17u)
+#define PPUTLUTRAITS_883u DEC,0b1101110011,9u,29u,()
+#define PPUTLUTRAITS_882u DEC,0b1101110010,9u,29u,(2u, 3u, 3u, 7u, 7u)
+#define PPUTLUTRAITS_881u DEC,0b1101110001,9u,29u,()
+#define PPUTLUTRAITS_880u DEC,0b1101110000,9u,29u,(2u, 2u, 2u, 2u, 5u, 11u)
+#define PPUTLUTRAITS_879u DEC,0b1101101111,9u,29u,(3u, 293u)
+#define PPUTLUTRAITS_878u DEC,0b1101101110,9u,29u,(2u, 439u)
+#define PPUTLUTRAITS_877u DEC,0b1101101101,9u,29u,()
+#define PPUTLUTRAITS_876u DEC,0b1101101100,9u,29u,(2u, 2u, 3u, 73u)
+#define PPUTLUTRAITS_875u DEC,0b1101101011,9u,29u,(5u, 5u, 5u, 7u)
+#define PPUTLUTRAITS_874u DEC,0b1101101010,9u,29u,(2u, 19u, 23u)
+#define PPUTLUTRAITS_873u DEC,0b1101101001,9u,29u,(3u, 3u, 97u)
+#define PPUTLUTRAITS_872u DEC,0b1101101000,9u,29u,(2u, 2u, 2u, 109u)
+#define PPUTLUTRAITS_871u DEC,0b1101100111,9u,29u,(13u, 67u)
+#define PPUTLUTRAITS_870u DEC,0b1101100110,9u,29u,(2u, 3u, 5u, 29u)
+#define PPUTLUTRAITS_869u DEC,0b1101100101,9u,29u,(11u, 79u)
+#define PPUTLUTRAITS_868u DEC,0b1101100100,9u,29u,(2u, 2u, 7u, 31u)
+#define PPUTLUTRAITS_867u DEC,0b1101100011,9u,29u,(3u, 17u, 17u)
+#define PPUTLUTRAITS_866u DEC,0b1101100010,9u,29u,(2u, 433u)
+#define PPUTLUTRAITS_865u DEC,0b1101100001,9u,29u,(5u, 173u)
+#define PPUTLUTRAITS_864u DEC,0b1101100000,9u,29u,(2u, 2u, 2u, 2u, 2u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_863u DEC,0b1101011111,9u,29u,()
+#define PPUTLUTRAITS_862u DEC,0b1101011110,9u,29u,(2u, 431u)
+#define PPUTLUTRAITS_861u DEC,0b1101011101,9u,29u,(3u, 7u, 41u)
+#define PPUTLUTRAITS_860u DEC,0b1101011100,9u,29u,(2u, 2u, 5u, 43u)
+#define PPUTLUTRAITS_859u DEC,0b1101011011,9u,29u,()
+#define PPUTLUTRAITS_858u DEC,0b1101011010,9u,29u,(2u, 3u, 11u, 13u)
+#define PPUTLUTRAITS_857u DEC,0b1101011001,9u,29u,()
+#define PPUTLUTRAITS_856u DEC,0b1101011000,9u,29u,(2u, 2u, 2u, 107u)
+#define PPUTLUTRAITS_855u DEC,0b1101010111,9u,29u,(3u, 3u, 5u, 19u)
+#define PPUTLUTRAITS_854u DEC,0b1101010110,9u,29u,(2u, 7u, 61u)
+#define PPUTLUTRAITS_853u DEC,0b1101010101,9u,29u,()
+#define PPUTLUTRAITS_852u DEC,0b1101010100,9u,29u,(2u, 2u, 3u, 71u)
+#define PPUTLUTRAITS_851u DEC,0b1101010011,9u,29u,(23u, 37u)
+#define PPUTLUTRAITS_850u DEC,0b1101010010,9u,29u,(2u, 5u, 5u, 17u)
+#define PPUTLUTRAITS_849u DEC,0b1101010001,9u,29u,(3u, 283u)
+#define PPUTLUTRAITS_848u DEC,0b1101010000,9u,29u,(2u, 2u, 2u, 2u, 53u)
+#define PPUTLUTRAITS_847u DEC,0b1101001111,9u,29u,(7u, 11u, 11u)
+#define PPUTLUTRAITS_846u DEC,0b1101001110,9u,29u,(2u, 3u, 3u, 47u)
+#define PPUTLUTRAITS_845u DEC,0b1101001101,9u,29u,(5u, 13u, 13u)
+#define PPUTLUTRAITS_844u DEC,0b1101001100,9u,29u,(2u, 2u, 211u)
+#define PPUTLUTRAITS_843u DEC,0b1101001011,9u,29u,(3u, 281u)
+#define PPUTLUTRAITS_842u DEC,0b1101001010,9u,29u,(2u, 421u)
+#define PPUTLUTRAITS_841u DEC,0b1101001001,9u,29u,(29u, 29u)
+#define PPUTLUTRAITS_840u DEC,0b1101001000,9u,28u,(2u, 2u, 2u, 3u, 5u, 7u)
+#define PPUTLUTRAITS_839u DEC,0b1101000111,9u,28u,()
+#define PPUTLUTRAITS_838u DEC,0b1101000110,9u,28u,(2u, 419u)
+#define PPUTLUTRAITS_837u DEC,0b1101000101,9u,28u,(3u, 3u, 3u, 31u)
+#define PPUTLUTRAITS_836u DEC,0b1101000100,9u,28u,(2u, 2u, 11u, 19u)
+#define PPUTLUTRAITS_835u DEC,0b1101000011,9u,28u,(5u, 167u)
+#define PPUTLUTRAITS_834u DEC,0b1101000010,9u,28u,(2u, 3u, 139u)
+#define PPUTLUTRAITS_833u DEC,0b1101000001,9u,28u,(7u, 7u, 17u)
+#define PPUTLUTRAITS_832u DEC,0b1101000000,9u,28u,(2u, 2u, 2u, 2u, 2u, 2u, 13u)
+#define PPUTLUTRAITS_831u DEC,0b1100111111,9u,28u,(3u, 277u)
+#define PPUTLUTRAITS_830u DEC,0b1100111110,9u,28u,(2u, 5u, 83u)
+#define PPUTLUTRAITS_829u DEC,0b1100111101,9u,28u,()
+#define PPUTLUTRAITS_828u DEC,0b1100111100,9u,28u,(2u, 2u, 3u, 3u, 23u)
+#define PPUTLUTRAITS_827u DEC,0b1100111011,9u,28u,()
+#define PPUTLUTRAITS_826u DEC,0b1100111010,9u,28u,(2u, 7u, 59u)
+#define PPUTLUTRAITS_825u DEC,0b1100111001,9u,28u,(3u, 5u, 5u, 11u)
+#define PPUTLUTRAITS_824u DEC,0b1100111000,9u,28u,(2u, 2u, 2u, 103u)
+#define PPUTLUTRAITS_823u DEC,0b1100110111,9u,28u,()
+#define PPUTLUTRAITS_822u DEC,0b1100110110,9u,28u,(2u, 3u, 137u)
+#define PPUTLUTRAITS_821u DEC,0b1100110101,9u,28u,()
+#define PPUTLUTRAITS_820u DEC,0b1100110100,9u,28u,(2u, 2u, 5u, 41u)
+#define PPUTLUTRAITS_819u DEC,0b1100110011,9u,28u,(3u, 3u, 7u, 13u)
+#define PPUTLUTRAITS_818u DEC,0b1100110010,9u,28u,(2u, 409u)
+#define PPUTLUTRAITS_817u DEC,0b1100110001,9u,28u,(19u, 43u)
+#define PPUTLUTRAITS_816u DEC,0b1100110000,9u,28u,(2u, 2u, 2u, 2u, 3u, 17u)
+#define PPUTLUTRAITS_815u DEC,0b1100101111,9u,28u,(5u, 163u)
+#define PPUTLUTRAITS_814u DEC,0b1100101110,9u,28u,(2u, 11u, 37u)
+#define PPUTLUTRAITS_813u DEC,0b1100101101,9u,28u,(3u, 271u)
+#define PPUTLUTRAITS_812u DEC,0b1100101100,9u,28u,(2u, 2u, 7u, 29u)
+#define PPUTLUTRAITS_811u DEC,0b1100101011,9u,28u,()
+#define PPUTLUTRAITS_810u DEC,0b1100101010,9u,28u,(2u, 3u, 3u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_809u DEC,0b1100101001,9u,28u,()
+#define PPUTLUTRAITS_808u DEC,0b1100101000,9u,28u,(2u, 2u, 2u, 101u)
+#define PPUTLUTRAITS_807u DEC,0b1100100111,9u,28u,(3u, 269u)
+#define PPUTLUTRAITS_806u DEC,0b1100100110,9u,28u,(2u, 13u, 31u)
+#define PPUTLUTRAITS_805u DEC,0b1100100101,9u,28u,(5u, 7u, 23u)
+#define PPUTLUTRAITS_804u DEC,0b1100100100,9u,28u,(2u, 2u, 3u, 67u)
+#define PPUTLUTRAITS_803u DEC,0b1100100011,9u,28u,(11u, 73u)
+#define PPUTLUTRAITS_802u DEC,0b1100100010,9u,28u,(2u, 401u)
+#define PPUTLUTRAITS_801u DEC,0b1100100001,9u,28u,(3u, 3u, 89u)
+#define PPUTLUTRAITS_800u DEC,0b1100100000,9u,28u,(2u, 2u, 2u, 2u, 2u, 5u, 5u)
+#define PPUTLUTRAITS_799u DEC,0b1100011111,9u,28u,(17u, 47u)
+#define PPUTLUTRAITS_798u DEC,0b1100011110,9u,28u,(2u, 3u, 7u, 19u)
+#define PPUTLUTRAITS_797u DEC,0b1100011101,9u,28u,()
+#define PPUTLUTRAITS_796u DEC,0b1100011100,9u,28u,(2u, 2u, 199u)
+#define PPUTLUTRAITS_795u DEC,0b1100011011,9u,28u,(3u, 5u, 53u)
+#define PPUTLUTRAITS_794u DEC,0b1100011010,9u,28u,(2u, 397u)
+#define PPUTLUTRAITS_793u DEC,0b1100011001,9u,28u,(13u, 61u)
+#define PPUTLUTRAITS_792u DEC,0b1100011000,9u,28u,(2u, 2u, 2u, 3u, 3u, 11u)
+#define PPUTLUTRAITS_791u DEC,0b1100010111,9u,28u,(7u, 113u)
+#define PPUTLUTRAITS_790u DEC,0b1100010110,9u,28u,(2u, 5u, 79u)
+#define PPUTLUTRAITS_789u DEC,0b1100010101,9u,28u,(3u, 263u)
+#define PPUTLUTRAITS_788u DEC,0b1100010100,9u,28u,(2u, 2u, 197u)
+#define PPUTLUTRAITS_787u DEC,0b1100010011,9u,28u,()
+#define PPUTLUTRAITS_786u DEC,0b1100010010,9u,28u,(2u, 3u, 131u)
+#define PPUTLUTRAITS_785u DEC,0b1100010001,9u,28u,(5u, 157u)
+#define PPUTLUTRAITS_784u DEC,0b1100010000,9u,28u,(2u, 2u, 2u, 2u, 7u, 7u)
+#define PPUTLUTRAITS_783u DEC,0b1100001111,9u,27u,(3u, 3u, 3u, 29u)
+#define PPUTLUTRAITS_782u DEC,0b1100001110,9u,27u,(2u, 17u, 23u)
+#define PPUTLUTRAITS_781u DEC,0b1100001101,9u,27u,(11u, 71u)
+#define PPUTLUTRAITS_780u DEC,0b1100001100,9u,27u,(2u, 2u, 3u, 5u, 13u)
+#define PPUTLUTRAITS_779u DEC,0b1100001011,9u,27u,(19u, 41u)
+#define PPUTLUTRAITS_778u DEC,0b1100001010,9u,27u,(2u, 389u)
+#define PPUTLUTRAITS_777u DEC,0b1100001001,9u,27u,(3u, 7u, 37u)
+#define PPUTLUTRAITS_776u DEC,0b1100001000,9u,27u,(2u, 2u, 2u, 97u)
+#define PPUTLUTRAITS_775u DEC,0b1100000111,9u,27u,(5u, 5u, 31u)
+#define PPUTLUTRAITS_774u DEC,0b1100000110,9u,27u,(2u, 3u, 3u, 43u)
+#define PPUTLUTRAITS_773u DEC,0b1100000101,9u,27u,()
+#define PPUTLUTRAITS_772u DEC,0b1100000100,9u,27u,(2u, 2u, 193u)
+#define PPUTLUTRAITS_771u DEC,0b1100000011,9u,27u,(3u, 257u)
+#define PPUTLUTRAITS_770u DEC,0b1100000010,9u,27u,(2u, 5u, 7u, 11u)
+#define PPUTLUTRAITS_769u DEC,0b1100000001,9u,27u,()
+#define PPUTLUTRAITS_768u DEC,0b1100000000,9u,27u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
+#define PPUTLUTRAITS_767u DEC,0b1011111111,9u,27u,(13u, 59u)
+#define PPUTLUTRAITS_766u DEC,0b1011111110,9u,27u,(2u, 383u)
+#define PPUTLUTRAITS_765u DEC,0b1011111101,9u,27u,(3u, 3u, 5u, 17u)
+#define PPUTLUTRAITS_764u DEC,0b1011111100,9u,27u,(2u, 2u, 191u)
+#define PPUTLUTRAITS_763u DEC,0b1011111011,9u,27u,(7u, 109u)
+#define PPUTLUTRAITS_762u DEC,0b1011111010,9u,27u,(2u, 3u, 127u)
+#define PPUTLUTRAITS_761u DEC,0b1011111001,9u,27u,()
+#define PPUTLUTRAITS_760u DEC,0b1011111000,9u,27u,(2u, 2u, 2u, 5u, 19u)
+#define PPUTLUTRAITS_759u DEC,0b1011110111,9u,27u,(3u, 11u, 23u)
+#define PPUTLUTRAITS_758u DEC,0b1011110110,9u,27u,(2u, 379u)
+#define PPUTLUTRAITS_757u DEC,0b1011110101,9u,27u,()
+#define PPUTLUTRAITS_756u DEC,0b1011110100,9u,27u,(2u, 2u, 3u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_755u DEC,0b1011110011,9u,27u,(5u, 151u)
+#define PPUTLUTRAITS_754u DEC,0b1011110010,9u,27u,(2u, 13u, 29u)
+#define PPUTLUTRAITS_753u DEC,0b1011110001,9u,27u,(3u, 251u)
+#define PPUTLUTRAITS_752u DEC,0b1011110000,9u,27u,(2u, 2u, 2u, 2u, 47u)
+#define PPUTLUTRAITS_751u DEC,0b1011101111,9u,27u,()
+#define PPUTLUTRAITS_750u DEC,0b1011101110,9u,27u,(2u, 3u, 5u, 5u, 5u)
+#define PPUTLUTRAITS_749u DEC,0b1011101101,9u,27u,(7u, 107u)
+#define PPUTLUTRAITS_748u DEC,0b1011101100,9u,27u,(2u, 2u, 11u, 17u)
+#define PPUTLUTRAITS_747u DEC,0b1011101011,9u,27u,(3u, 3u, 83u)
+#define PPUTLUTRAITS_746u DEC,0b1011101010,9u,27u,(2u, 373u)
+#define PPUTLUTRAITS_745u DEC,0b1011101001,9u,27u,(5u, 149u)
+#define PPUTLUTRAITS_744u DEC,0b1011101000,9u,27u,(2u, 2u, 2u, 3u, 31u)
+#define PPUTLUTRAITS_743u DEC,0b1011100111,9u,27u,()
+#define PPUTLUTRAITS_742u DEC,0b1011100110,9u,27u,(2u, 7u, 53u)
+#define PPUTLUTRAITS_741u DEC,0b1011100101,9u,27u,(3u, 13u, 19u)
+#define PPUTLUTRAITS_740u DEC,0b1011100100,9u,27u,(2u, 2u, 5u, 37u)
+#define PPUTLUTRAITS_739u DEC,0b1011100011,9u,27u,()
+#define PPUTLUTRAITS_738u DEC,0b1011100010,9u,27u,(2u, 3u, 3u, 41u)
+#define PPUTLUTRAITS_737u DEC,0b1011100001,9u,27u,(11u, 67u)
+#define PPUTLUTRAITS_736u DEC,0b1011100000,9u,27u,(2u, 2u, 2u, 2u, 2u, 23u)
+#define PPUTLUTRAITS_735u DEC,0b1011011111,9u,27u,(3u, 5u, 7u, 7u)
+#define PPUTLUTRAITS_734u DEC,0b1011011110,9u,27u,(2u, 367u)
+#define PPUTLUTRAITS_733u DEC,0b1011011101,9u,27u,()
+#define PPUTLUTRAITS_732u DEC,0b1011011100,9u,27u,(2u, 2u, 3u, 61u)
+#define PPUTLUTRAITS_731u DEC,0b1011011011,9u,27u,(17u, 43u)
+#define PPUTLUTRAITS_730u DEC,0b1011011010,9u,27u,(2u, 5u, 73u)
+#define PPUTLUTRAITS_729u DEC,0b1011011001,9u,27u,(3u, 3u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_728u DEC,0b1011011000,9u,26u,(2u, 2u, 2u, 7u, 13u)
+#define PPUTLUTRAITS_727u DEC,0b1011010111,9u,26u,()
+#define PPUTLUTRAITS_726u DEC,0b1011010110,9u,26u,(2u, 3u, 11u, 11u)
+#define PPUTLUTRAITS_725u DEC,0b1011010101,9u,26u,(5u, 5u, 29u)
+#define PPUTLUTRAITS_724u DEC,0b1011010100,9u,26u,(2u, 2u, 181u)
+#define PPUTLUTRAITS_723u DEC,0b1011010011,9u,26u,(3u, 241u)
+#define PPUTLUTRAITS_722u DEC,0b1011010010,9u,26u,(2u, 19u, 19u)
+#define PPUTLUTRAITS_721u DEC,0b1011010001,9u,26u,(7u, 103u)
+#define PPUTLUTRAITS_720u DEC,0b1011010000,9u,26u,(2u, 2u, 2u, 2u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_719u DEC,0b1011001111,9u,26u,()
+#define PPUTLUTRAITS_718u DEC,0b1011001110,9u,26u,(2u, 359u)
+#define PPUTLUTRAITS_717u DEC,0b1011001101,9u,26u,(3u, 239u)
+#define PPUTLUTRAITS_716u DEC,0b1011001100,9u,26u,(2u, 2u, 179u)
+#define PPUTLUTRAITS_715u DEC,0b1011001011,9u,26u,(5u, 11u, 13u)
+#define PPUTLUTRAITS_714u DEC,0b1011001010,9u,26u,(2u, 3u, 7u, 17u)
+#define PPUTLUTRAITS_713u DEC,0b1011001001,9u,26u,(23u, 31u)
+#define PPUTLUTRAITS_712u DEC,0b1011001000,9u,26u,(2u, 2u, 2u, 89u)
+#define PPUTLUTRAITS_711u DEC,0b1011000111,9u,26u,(3u, 3u, 79u)
+#define PPUTLUTRAITS_710u DEC,0b1011000110,9u,26u,(2u, 5u, 71u)
+#define PPUTLUTRAITS_709u DEC,0b1011000101,9u,26u,()
+#define PPUTLUTRAITS_708u DEC,0b1011000100,9u,26u,(2u, 2u, 3u, 59u)
+#define PPUTLUTRAITS_707u DEC,0b1011000011,9u,26u,(7u, 101u)
+#define PPUTLUTRAITS_706u DEC,0b1011000010,9u,26u,(2u, 353u)
+#define PPUTLUTRAITS_705u DEC,0b1011000001,9u,26u,(3u, 5u, 47u)
+#define PPUTLUTRAITS_704u DEC,0b1011000000,9u,26u,(2u, 2u, 2u, 2u, 2u, 2u, 11u)
+#define PPUTLUTRAITS_703u DEC,0b1010111111,9u,26u,(19u, 37u)
+#define PPUTLUTRAITS_702u DEC,0b1010111110,9u,26u,(2u, 3u, 3u, 3u, 13u)
+#define PPUTLUTRAITS_701u DEC,0b1010111101,9u,26u,()
+#define PPUTLUTRAITS_700u DEC,0b1010111100,9u,26u,(2u, 2u, 5u, 5u, 7u)
+#define PPUTLUTRAITS_699u DEC,0b1010111011,9u,26u,(3u, 233u)
+#define PPUTLUTRAITS_698u DEC,0b1010111010,9u,26u,(2u, 349u)
+#define PPUTLUTRAITS_697u DEC,0b1010111001,9u,26u,(17u, 41u)
+#define PPUTLUTRAITS_696u DEC,0b1010111000,9u,26u,(2u, 2u, 2u, 3u, 29u)
+#define PPUTLUTRAITS_695u DEC,0b1010110111,9u,26u,(5u, 139u)
+#define PPUTLUTRAITS_694u DEC,0b1010110110,9u,26u,(2u, 347u)
+#define PPUTLUTRAITS_693u DEC,0b1010110101,9u,26u,(3u, 3u, 7u, 11u)
+#define PPUTLUTRAITS_692u DEC,0b1010110100,9u,26u,(2u, 2u, 173u)
+#define PPUTLUTRAITS_691u DEC,0b1010110011,9u,26u,()
+#define PPUTLUTRAITS_690u DEC,0b1010110010,9u,26u,(2u, 3u, 5u, 23u)
+#define PPUTLUTRAITS_689u DEC,0b1010110001,9u,26u,(13u, 53u)
+#define PPUTLUTRAITS_688u DEC,0b1010110000,9u,26u,(2u, 2u, 2u, 2u, 43u)
+#define PPUTLUTRAITS_687u DEC,0b1010101111,9u,26u,(3u, 229u)
+#define PPUTLUTRAITS_686u DEC,0b1010101110,9u,26u,(2u, 7u, 7u, 7u)
+#define PPUTLUTRAITS_685u DEC,0b1010101101,9u,26u,(5u, 137u)
+#define PPUTLUTRAITS_684u DEC,0b1010101100,9u,26u,(2u, 2u, 3u, 3u, 19u)
+#define PPUTLUTRAITS_683u DEC,0b1010101011,9u,26u,()
+#define PPUTLUTRAITS_682u DEC,0b1010101010,9u,26u,(2u, 11u, 31u)
+#define PPUTLUTRAITS_681u DEC,0b1010101001,9u,26u,(3u, 227u)
+#define PPUTLUTRAITS_680u DEC,0b1010101000,9u,26u,(2u, 2u, 2u, 5u, 17u)
+#define PPUTLUTRAITS_679u DEC,0b1010100111,9u,26u,(7u, 97u)
+#define PPUTLUTRAITS_678u DEC,0b1010100110,9u,26u,(2u, 3u, 113u)
+#define PPUTLUTRAITS_677u DEC,0b1010100101,9u,26u,()
+#define PPUTLUTRAITS_676u DEC,0b1010100100,9u,26u,(2u, 2u, 13u, 13u)
+#define PPUTLUTRAITS_675u DEC,0b1010100011,9u,25u,(3u, 3u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_674u DEC,0b1010100010,9u,25u,(2u, 337u)
+#define PPUTLUTRAITS_673u DEC,0b1010100001,9u,25u,()
+#define PPUTLUTRAITS_672u DEC,0b1010100000,9u,25u,(2u, 2u, 2u, 2u, 2u, 3u, 7u)
+#define PPUTLUTRAITS_671u DEC,0b1010011111,9u,25u,(11u, 61u)
+#define PPUTLUTRAITS_670u DEC,0b1010011110,9u,25u,(2u, 5u, 67u)
+#define PPUTLUTRAITS_669u DEC,0b1010011101,9u,25u,(3u, 223u)
+#define PPUTLUTRAITS_668u DEC,0b1010011100,9u,25u,(2u, 2u, 167u)
+#define PPUTLUTRAITS_667u DEC,0b1010011011,9u,25u,(23u, 29u)
+#define PPUTLUTRAITS_666u DEC,0b1010011010,9u,25u,(2u, 3u, 3u, 37u)
+#define PPUTLUTRAITS_665u DEC,0b1010011001,9u,25u,(5u, 7u, 19u)
+#define PPUTLUTRAITS_664u DEC,0b1010011000,9u,25u,(2u, 2u, 2u, 83u)
+#define PPUTLUTRAITS_663u DEC,0b1010010111,9u,25u,(3u, 13u, 17u)
+#define PPUTLUTRAITS_662u DEC,0b1010010110,9u,25u,(2u, 331u)
+#define PPUTLUTRAITS_661u DEC,0b1010010101,9u,25u,()
+#define PPUTLUTRAITS_660u DEC,0b1010010100,9u,25u,(2u, 2u, 3u, 5u, 11u)
+#define PPUTLUTRAITS_659u DEC,0b1010010011,9u,25u,()
+#define PPUTLUTRAITS_658u DEC,0b1010010010,9u,25u,(2u, 7u, 47u)
+#define PPUTLUTRAITS_657u DEC,0b1010010001,9u,25u,(3u, 3u, 73u)
+#define PPUTLUTRAITS_656u DEC,0b1010010000,9u,25u,(2u, 2u, 2u, 2u, 41u)
+#define PPUTLUTRAITS_655u DEC,0b1010001111,9u,25u,(5u, 131u)
+#define PPUTLUTRAITS_654u DEC,0b1010001110,9u,25u,(2u, 3u, 109u)
+#define PPUTLUTRAITS_653u DEC,0b1010001101,9u,25u,()
+#define PPUTLUTRAITS_652u DEC,0b1010001100,9u,25u,(2u, 2u, 163u)
+#define PPUTLUTRAITS_651u DEC,0b1010001011,9u,25u,(3u, 7u, 31u)
+#define PPUTLUTRAITS_650u DEC,0b1010001010,9u,25u,(2u, 5u, 5u, 13u)
+#define PPUTLUTRAITS_649u DEC,0b1010001001,9u,25u,(11u, 59u)
+#define PPUTLUTRAITS_648u DEC,0b1010001000,9u,25u,(2u, 2u, 2u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_647u DEC,0b1010000111,9u,25u,()
+#define PPUTLUTRAITS_646u DEC,0b1010000110,9u,25u,(2u, 17u, 19u)
+#define PPUTLUTRAITS_645u DEC,0b1010000101,9u,25u,(3u, 5u, 43u)
+#define PPUTLUTRAITS_644u DEC,0b1010000100,9u,25u,(2u, 2u, 7u, 23u)
+#define PPUTLUTRAITS_643u DEC,0b1010000011,9u,25u,()
+#define PPUTLUTRAITS_642u DEC,0b1010000010,9u,25u,(2u, 3u, 107u)
+#define PPUTLUTRAITS_641u DEC,0b1010000001,9u,25u,()
+#define PPUTLUTRAITS_640u DEC,0b1010000000,9u,25u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 5u)
+#define PPUTLUTRAITS_639u DEC,0b1001111111,9u,25u,(3u, 3u, 71u)
+#define PPUTLUTRAITS_638u DEC,0b1001111110,9u,25u,(2u, 11u, 29u)
+#define PPUTLUTRAITS_637u DEC,0b1001111101,9u,25u,(7u, 7u, 13u)
+#define PPUTLUTRAITS_636u DEC,0b1001111100,9u,25u,(2u, 2u, 3u, 53u)
+#define PPUTLUTRAITS_635u DEC,0b1001111011,9u,25u,(5u, 127u)
+#define PPUTLUTRAITS_634u DEC,0b1001111010,9u,25u,(2u, 317u)
+#define PPUTLUTRAITS_633u DEC,0b1001111001,9u,25u,(3u, 211u)
+#define PPUTLUTRAITS_632u DEC,0b1001111000,9u,25u,(2u, 2u, 2u, 79u)
+#define PPUTLUTRAITS_631u DEC,0b1001110111,9u,25u,()
+#define PPUTLUTRAITS_630u DEC,0b1001110110,9u,25u,(2u, 3u, 3u, 5u, 7u)
+#define PPUTLUTRAITS_629u DEC,0b1001110101,9u,25u,(17u, 37u)
+#define PPUTLUTRAITS_628u DEC,0b1001110100,9u,25u,(2u, 2u, 157u)
+#define PPUTLUTRAITS_627u DEC,0b1001110011,9u,25u,(3u, 11u, 19u)
+#define PPUTLUTRAITS_626u DEC,0b1001110010,9u,25u,(2u, 313u)
+#define PPUTLUTRAITS_625u DEC,0b1001110001,9u,25u,(5u, 5u, 5u, 5u)
+#define PPUTLUTRAITS_624u DEC,0b1001110000,9u,24u,(2u, 2u, 2u, 2u, 3u, 13u)
+#define PPUTLUTRAITS_623u DEC,0b1001101111,9u,24u,(7u, 89u)
+#define PPUTLUTRAITS_622u DEC,0b1001101110,9u,24u,(2u, 311u)
+#define PPUTLUTRAITS_621u DEC,0b1001101101,9u,24u,(3u, 3u, 3u, 23u)
+#define PPUTLUTRAITS_620u DEC,0b1001101100,9u,24u,(2u, 2u, 5u, 31u)
+#define PPUTLUTRAITS_619u DEC,0b1001101011,9u,24u,()
+#define PPUTLUTRAITS_618u DEC,0b1001101010,9u,24u,(2u, 3u, 103u)
+#define PPUTLUTRAITS_617u DEC,0b1001101001,9u,24u,()
+#define PPUTLUTRAITS_616u DEC,0b1001101000,9u,24u,(2u, 2u, 2u, 7u, 11u)
+#define PPUTLUTRAITS_615u DEC,0b1001100111,9u,24u,(3u, 5u, 41u)
+#define PPUTLUTRAITS_614u DEC,0b1001100110,9u,24u,(2u, 307u)
+#define PPUTLUTRAITS_613u DEC,0b1001100101,9u,24u,()
+#define PPUTLUTRAITS_612u DEC,0b1001100100,9u,24u,(2u, 2u, 3u, 3u, 17u)
+#define PPUTLUTRAITS_611u DEC,0b1001100011,9u,24u,(13u, 47u)
+#define PPUTLUTRAITS_610u DEC,0b1001100010,9u,24u,(2u, 5u, 61u)
+#define PPUTLUTRAITS_609u DEC,0b1001100001,9u,24u,(3u, 7u, 29u)
+#define PPUTLUTRAITS_608u DEC,0b1001100000,9u,24u,(2u, 2u, 2u, 2u, 2u, 19u)
+#define PPUTLUTRAITS_607u DEC,0b1001011111,9u,24u,()
+#define PPUTLUTRAITS_606u DEC,0b1001011110,9u,24u,(2u, 3u, 101u)
+#define PPUTLUTRAITS_605u DEC,0b1001011101,9u,24u,(5u, 11u, 11u)
+#define PPUTLUTRAITS_604u DEC,0b1001011100,9u,24u,(2u, 2u, 151u)
+#define PPUTLUTRAITS_603u DEC,0b1001011011,9u,24u,(3u, 3u, 67u)
+#define PPUTLUTRAITS_602u DEC,0b1001011010,9u,24u,(2u, 7u, 43u)
+#define PPUTLUTRAITS_601u DEC,0b1001011001,9u,24u,()
+#define PPUTLUTRAITS_600u DEC,0b1001011000,9u,24u,(2u, 2u, 2u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_599u DEC,0b1001010111,9u,24u,()
+#define PPUTLUTRAITS_598u DEC,0b1001010110,9u,24u,(2u, 13u, 23u)
+#define PPUTLUTRAITS_597u DEC,0b1001010101,9u,24u,(3u, 199u)
+#define PPUTLUTRAITS_596u DEC,0b1001010100,9u,24u,(2u, 2u, 149u)
+#define PPUTLUTRAITS_595u DEC,0b1001010011,9u,24u,(5u, 7u, 17u)
+#define PPUTLUTRAITS_594u DEC,0b1001010010,9u,24u,(2u, 3u, 3u, 3u, 11u)
+#define PPUTLUTRAITS_593u DEC,0b1001010001,9u,24u,()
+#define PPUTLUTRAITS_592u DEC,0b1001010000,9u,24u,(2u, 2u, 2u, 2u, 37u)
+#define PPUTLUTRAITS_591u DEC,0b1001001111,9u,24u,(3u, 197u)
+#define PPUTLUTRAITS_590u DEC,0b1001001110,9u,24u,(2u, 5u, 59u)
+#define PPUTLUTRAITS_589u DEC,0b1001001101,9u,24u,(19u, 31u)
+#define PPUTLUTRAITS_588u DEC,0b1001001100,9u,24u,(2u, 2u, 3u, 7u, 7u)
+#define PPUTLUTRAITS_587u DEC,0b1001001011,9u,24u,()
+#define PPUTLUTRAITS_586u DEC,0b1001001010,9u,24u,(2u, 293u)
+#define PPUTLUTRAITS_585u DEC,0b1001001001,9u,24u,(3u, 3u, 5u, 13u)
+#define PPUTLUTRAITS_584u DEC,0b1001001000,9u,24u,(2u, 2u, 2u, 73u)
+#define PPUTLUTRAITS_583u DEC,0b1001000111,9u,24u,(11u, 53u)
+#define PPUTLUTRAITS_582u DEC,0b1001000110,9u,24u,(2u, 3u, 97u)
+#define PPUTLUTRAITS_581u DEC,0b1001000101,9u,24u,(7u, 83u)
+#define PPUTLUTRAITS_580u DEC,0b1001000100,9u,24u,(2u, 2u, 5u, 29u)
+#define PPUTLUTRAITS_579u DEC,0b1001000011,9u,24u,(3u, 193u)
+#define PPUTLUTRAITS_578u DEC,0b1001000010,9u,24u,(2u, 17u, 17u)
+#define PPUTLUTRAITS_577u DEC,0b1001000001,9u,24u,()
+#define PPUTLUTRAITS_576u DEC,0b1001000000,9u,24u,(2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u)
+#define PPUTLUTRAITS_575u DEC,0b1000111111,9u,23u,(5u, 5u, 23u)
+#define PPUTLUTRAITS_574u DEC,0b1000111110,9u,23u,(2u, 7u, 41u)
+#define PPUTLUTRAITS_573u DEC,0b1000111101,9u,23u,(3u, 191u)
+#define PPUTLUTRAITS_572u DEC,0b1000111100,9u,23u,(2u, 2u, 11u, 13u)
+#define PPUTLUTRAITS_571u DEC,0b1000111011,9u,23u,()
+#define PPUTLUTRAITS_570u DEC,0b1000111010,9u,23u,(2u, 3u, 5u, 19u)
+#define PPUTLUTRAITS_569u DEC,0b1000111001,9u,23u,()
+#define PPUTLUTRAITS_568u DEC,0b1000111000,9u,23u,(2u, 2u, 2u, 71u)
+#define PPUTLUTRAITS_567u DEC,0b1000110111,9u,23u,(3u, 3u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_566u DEC,0b1000110110,9u,23u,(2u, 283u)
+#define PPUTLUTRAITS_565u DEC,0b1000110101,9u,23u,(5u, 113u)
+#define PPUTLUTRAITS_564u DEC,0b1000110100,9u,23u,(2u, 2u, 3u, 47u)
+#define PPUTLUTRAITS_563u DEC,0b1000110011,9u,23u,()
+#define PPUTLUTRAITS_562u DEC,0b1000110010,9u,23u,(2u, 281u)
+#define PPUTLUTRAITS_561u DEC,0b1000110001,9u,23u,(3u, 11u, 17u)
+#define PPUTLUTRAITS_560u DEC,0b1000110000,9u,23u,(2u, 2u, 2u, 2u, 5u, 7u)
+#define PPUTLUTRAITS_559u DEC,0b1000101111,9u,23u,(13u, 43u)
+#define PPUTLUTRAITS_558u DEC,0b1000101110,9u,23u,(2u, 3u, 3u, 31u)
+#define PPUTLUTRAITS_557u DEC,0b1000101101,9u,23u,()
+#define PPUTLUTRAITS_556u DEC,0b1000101100,9u,23u,(2u, 2u, 139u)
+#define PPUTLUTRAITS_555u DEC,0b1000101011,9u,23u,(3u, 5u, 37u)
+#define PPUTLUTRAITS_554u DEC,0b1000101010,9u,23u,(2u, 277u)
+#define PPUTLUTRAITS_553u DEC,0b1000101001,9u,23u,(7u, 79u)
+#define PPUTLUTRAITS_552u DEC,0b1000101000,9u,23u,(2u, 2u, 2u, 3u, 23u)
+#define PPUTLUTRAITS_551u DEC,0b1000100111,9u,23u,(19u, 29u)
+#define PPUTLUTRAITS_550u DEC,0b1000100110,9u,23u,(2u, 5u, 5u, 11u)
+#define PPUTLUTRAITS_549u DEC,0b1000100101,9u,23u,(3u, 3u, 61u)
+#define PPUTLUTRAITS_548u DEC,0b1000100100,9u,23u,(2u, 2u, 137u)
+#define PPUTLUTRAITS_547u DEC,0b1000100011,9u,23u,()
+#define PPUTLUTRAITS_546u DEC,0b1000100010,9u,23u,(2u, 3u, 7u, 13u)
+#define PPUTLUTRAITS_545u DEC,0b1000100001,9u,23u,(5u, 109u)
+#define PPUTLUTRAITS_544u DEC,0b1000100000,9u,23u,(2u, 2u, 2u, 2u, 2u, 17u)
+#define PPUTLUTRAITS_543u DEC,0b1000011111,9u,23u,(3u, 181u)
+#define PPUTLUTRAITS_542u DEC,0b1000011110,9u,23u,(2u, 271u)
+#define PPUTLUTRAITS_541u DEC,0b1000011101,9u,23u,()
+#define PPUTLUTRAITS_540u DEC,0b1000011100,9u,23u,(2u, 2u, 3u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_539u DEC,0b1000011011,9u,23u,(7u, 7u, 11u)
+#define PPUTLUTRAITS_538u DEC,0b1000011010,9u,23u,(2u, 269u)
+#define PPUTLUTRAITS_537u DEC,0b1000011001,9u,23u,(3u, 179u)
+#define PPUTLUTRAITS_536u DEC,0b1000011000,9u,23u,(2u, 2u, 2u, 67u)
+#define PPUTLUTRAITS_535u DEC,0b1000010111,9u,23u,(5u, 107u)
+#define PPUTLUTRAITS_534u DEC,0b1000010110,9u,23u,(2u, 3u, 89u)
+#define PPUTLUTRAITS_533u DEC,0b1000010101,9u,23u,(13u, 41u)
+#define PPUTLUTRAITS_532u DEC,0b1000010100,9u,23u,(2u, 2u, 7u, 19u)
+#define PPUTLUTRAITS_531u DEC,0b1000010011,9u,23u,(3u, 3u, 59u)
+#define PPUTLUTRAITS_530u DEC,0b1000010010,9u,23u,(2u, 5u, 53u)
+#define PPUTLUTRAITS_529u DEC,0b1000010001,9u,23u,(23u, 23u)
+#define PPUTLUTRAITS_528u DEC,0b1000010000,9u,22u,(2u, 2u, 2u, 2u, 3u, 11u)
+#define PPUTLUTRAITS_527u DEC,0b1000001111,9u,22u,(17u, 31u)
+#define PPUTLUTRAITS_526u DEC,0b1000001110,9u,22u,(2u, 263u)
+#define PPUTLUTRAITS_525u DEC,0b1000001101,9u,22u,(3u, 5u, 5u, 7u)
+#define PPUTLUTRAITS_524u DEC,0b1000001100,9u,22u,(2u, 2u, 131u)
+#define PPUTLUTRAITS_523u DEC,0b1000001011,9u,22u,()
+#define PPUTLUTRAITS_522u DEC,0b1000001010,9u,22u,(2u, 3u, 3u, 29u)
+#define PPUTLUTRAITS_521u DEC,0b1000001001,9u,22u,()
+#define PPUTLUTRAITS_520u DEC,0b1000001000,9u,22u,(2u, 2u, 2u, 5u, 13u)
+#define PPUTLUTRAITS_519u DEC,0b1000000111,9u,22u,(3u, 173u)
+#define PPUTLUTRAITS_518u DEC,0b1000000110,9u,22u,(2u, 7u, 37u)
+#define PPUTLUTRAITS_517u DEC,0b1000000101,9u,22u,(11u, 47u)
+#define PPUTLUTRAITS_516u DEC,0b1000000100,9u,22u,(2u, 2u, 3u, 43u)
+#define PPUTLUTRAITS_515u DEC,0b1000000011,9u,22u,(5u, 103u)
+#define PPUTLUTRAITS_514u DEC,0b1000000010,9u,22u,(2u, 257u)
+#define PPUTLUTRAITS_513u DEC,0b1000000001,9u,22u,(3u, 3u, 3u, 19u)
+#define PPUTLUTRAITS_512u DEC,0b1000000000,9u,22u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
+#define PPUTLUTRAITS_511u DEC,0b0111111111,8u,22u,(7u, 73u)
+#define PPUTLUTRAITS_510u DEC,0b0111111110,8u,22u,(2u, 3u, 5u, 17u)
+#define PPUTLUTRAITS_509u DEC,0b0111111101,8u,22u,()
+#define PPUTLUTRAITS_508u DEC,0b0111111100,8u,22u,(2u, 2u, 127u)
+#define PPUTLUTRAITS_507u DEC,0b0111111011,8u,22u,(3u, 13u, 13u)
+#define PPUTLUTRAITS_506u DEC,0b0111111010,8u,22u,(2u, 11u, 23u)
+#define PPUTLUTRAITS_505u DEC,0b0111111001,8u,22u,(5u, 101u)
+#define PPUTLUTRAITS_504u DEC,0b0111111000,8u,22u,(2u, 2u, 2u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_503u DEC,0b0111110111,8u,22u,()
+#define PPUTLUTRAITS_502u DEC,0b0111110110,8u,22u,(2u, 251u)
+#define PPUTLUTRAITS_501u DEC,0b0111110101,8u,22u,(3u, 167u)
+#define PPUTLUTRAITS_500u DEC,0b0111110100,8u,22u,(2u, 2u, 5u, 5u, 5u)
+#define PPUTLUTRAITS_499u DEC,0b0111110011,8u,22u,()
+#define PPUTLUTRAITS_498u DEC,0b0111110010,8u,22u,(2u, 3u, 83u)
+#define PPUTLUTRAITS_497u DEC,0b0111110001,8u,22u,(7u, 71u)
+#define PPUTLUTRAITS_496u DEC,0b0111110000,8u,22u,(2u, 2u, 2u, 2u, 31u)
+#define PPUTLUTRAITS_495u DEC,0b0111101111,8u,22u,(3u, 3u, 5u, 11u)
+#define PPUTLUTRAITS_494u DEC,0b0111101110,8u,22u,(2u, 13u, 19u)
+#define PPUTLUTRAITS_493u DEC,0b0111101101,8u,22u,(17u, 29u)
+#define PPUTLUTRAITS_492u DEC,0b0111101100,8u,22u,(2u, 2u, 3u, 41u)
+#define PPUTLUTRAITS_491u DEC,0b0111101011,8u,22u,()
+#define PPUTLUTRAITS_490u DEC,0b0111101010,8u,22u,(2u, 5u, 7u, 7u)
+#define PPUTLUTRAITS_489u DEC,0b0111101001,8u,22u,(3u, 163u)
+#define PPUTLUTRAITS_488u DEC,0b0111101000,8u,22u,(2u, 2u, 2u, 61u)
+#define PPUTLUTRAITS_487u DEC,0b0111100111,8u,22u,()
+#define PPUTLUTRAITS_486u DEC,0b0111100110,8u,22u,(2u, 3u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_485u DEC,0b0111100101,8u,22u,(5u, 97u)
+#define PPUTLUTRAITS_484u DEC,0b0111100100,8u,22u,(2u, 2u, 11u, 11u)
+#define PPUTLUTRAITS_483u DEC,0b0111100011,8u,21u,(3u, 7u, 23u)
+#define PPUTLUTRAITS_482u DEC,0b0111100010,8u,21u,(2u, 241u)
+#define PPUTLUTRAITS_481u DEC,0b0111100001,8u,21u,(13u, 37u)
+#define PPUTLUTRAITS_480u DEC,0b0111100000,8u,21u,(2u, 2u, 2u, 2u, 2u, 3u, 5u)
+#define PPUTLUTRAITS_479u DEC,0b0111011111,8u,21u,()
+#define PPUTLUTRAITS_478u DEC,0b0111011110,8u,21u,(2u, 239u)
+#define PPUTLUTRAITS_477u DEC,0b0111011101,8u,21u,(3u, 3u, 53u)
+#define PPUTLUTRAITS_476u DEC,0b0111011100,8u,21u,(2u, 2u, 7u, 17u)
+#define PPUTLUTRAITS_475u DEC,0b0111011011,8u,21u,(5u, 5u, 19u)
+#define PPUTLUTRAITS_474u DEC,0b0111011010,8u,21u,(2u, 3u, 79u)
+#define PPUTLUTRAITS_473u DEC,0b0111011001,8u,21u,(11u, 43u)
+#define PPUTLUTRAITS_472u DEC,0b0111011000,8u,21u,(2u, 2u, 2u, 59u)
+#define PPUTLUTRAITS_471u DEC,0b0111010111,8u,21u,(3u, 157u)
+#define PPUTLUTRAITS_470u DEC,0b0111010110,8u,21u,(2u, 5u, 47u)
+#define PPUTLUTRAITS_469u DEC,0b0111010101,8u,21u,(7u, 67u)
+#define PPUTLUTRAITS_468u DEC,0b0111010100,8u,21u,(2u, 2u, 3u, 3u, 13u)
+#define PPUTLUTRAITS_467u DEC,0b0111010011,8u,21u,()
+#define PPUTLUTRAITS_466u DEC,0b0111010010,8u,21u,(2u, 233u)
+#define PPUTLUTRAITS_465u DEC,0b0111010001,8u,21u,(3u, 5u, 31u)
+#define PPUTLUTRAITS_464u DEC,0b0111010000,8u,21u,(2u, 2u, 2u, 2u, 29u)
+#define PPUTLUTRAITS_463u DEC,0b0111001111,8u,21u,()
+#define PPUTLUTRAITS_462u DEC,0b0111001110,8u,21u,(2u, 3u, 7u, 11u)
+#define PPUTLUTRAITS_461u DEC,0b0111001101,8u,21u,()
+#define PPUTLUTRAITS_460u DEC,0b0111001100,8u,21u,(2u, 2u, 5u, 23u)
+#define PPUTLUTRAITS_459u DEC,0b0111001011,8u,21u,(3u, 3u, 3u, 17u)
+#define PPUTLUTRAITS_458u DEC,0b0111001010,8u,21u,(2u, 229u)
+#define PPUTLUTRAITS_457u DEC,0b0111001001,8u,21u,()
+#define PPUTLUTRAITS_456u DEC,0b0111001000,8u,21u,(2u, 2u, 2u, 3u, 19u)
+#define PPUTLUTRAITS_455u DEC,0b0111000111,8u,21u,(5u, 7u, 13u)
+#define PPUTLUTRAITS_454u DEC,0b0111000110,8u,21u,(2u, 227u)
+#define PPUTLUTRAITS_453u DEC,0b0111000101,8u,21u,(3u, 151u)
+#define PPUTLUTRAITS_452u DEC,0b0111000100,8u,21u,(2u, 2u, 113u)
+#define PPUTLUTRAITS_451u DEC,0b0111000011,8u,21u,(11u, 41u)
+#define PPUTLUTRAITS_450u DEC,0b0111000010,8u,21u,(2u, 3u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_449u DEC,0b0111000001,8u,21u,()
+#define PPUTLUTRAITS_448u DEC,0b0111000000,8u,21u,(2u, 2u, 2u, 2u, 2u, 2u, 7u)
+#define PPUTLUTRAITS_447u DEC,0b0110111111,8u,21u,(3u, 149u)
+#define PPUTLUTRAITS_446u DEC,0b0110111110,8u,21u,(2u, 223u)
+#define PPUTLUTRAITS_445u DEC,0b0110111101,8u,21u,(5u, 89u)
+#define PPUTLUTRAITS_444u DEC,0b0110111100,8u,21u,(2u, 2u, 3u, 37u)
+#define PPUTLUTRAITS_443u DEC,0b0110111011,8u,21u,()
+#define PPUTLUTRAITS_442u DEC,0b0110111010,8u,21u,(2u, 13u, 17u)
+#define PPUTLUTRAITS_441u DEC,0b0110111001,8u,21u,(3u, 3u, 7u, 7u)
+#define PPUTLUTRAITS_440u DEC,0b0110111000,8u,20u,(2u, 2u, 2u, 5u, 11u)
+#define PPUTLUTRAITS_439u DEC,0b0110110111,8u,20u,()
+#define PPUTLUTRAITS_438u DEC,0b0110110110,8u,20u,(2u, 3u, 73u)
+#define PPUTLUTRAITS_437u DEC,0b0110110101,8u,20u,(19u, 23u)
+#define PPUTLUTRAITS_436u DEC,0b0110110100,8u,20u,(2u, 2u, 109u)
+#define PPUTLUTRAITS_435u DEC,0b0110110011,8u,20u,(3u, 5u, 29u)
+#define PPUTLUTRAITS_434u DEC,0b0110110010,8u,20u,(2u, 7u, 31u)
+#define PPUTLUTRAITS_433u DEC,0b0110110001,8u,20u,()
+#define PPUTLUTRAITS_432u DEC,0b0110110000,8u,20u,(2u, 2u, 2u, 2u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_431u DEC,0b0110101111,8u,20u,()
+#define PPUTLUTRAITS_430u DEC,0b0110101110,8u,20u,(2u, 5u, 43u)
+#define PPUTLUTRAITS_429u DEC,0b0110101101,8u,20u,(3u, 11u, 13u)
+#define PPUTLUTRAITS_428u DEC,0b0110101100,8u,20u,(2u, 2u, 107u)
+#define PPUTLUTRAITS_427u DEC,0b0110101011,8u,20u,(7u, 61u)
+#define PPUTLUTRAITS_426u DEC,0b0110101010,8u,20u,(2u, 3u, 71u)
+#define PPUTLUTRAITS_425u DEC,0b0110101001,8u,20u,(5u, 5u, 17u)
+#define PPUTLUTRAITS_424u DEC,0b0110101000,8u,20u,(2u, 2u, 2u, 53u)
+#define PPUTLUTRAITS_423u DEC,0b0110100111,8u,20u,(3u, 3u, 47u)
+#define PPUTLUTRAITS_422u DEC,0b0110100110,8u,20u,(2u, 211u)
+#define PPUTLUTRAITS_421u DEC,0b0110100101,8u,20u,()
+#define PPUTLUTRAITS_420u DEC,0b0110100100,8u,20u,(2u, 2u, 3u, 5u, 7u)
+#define PPUTLUTRAITS_419u DEC,0b0110100011,8u,20u,()
+#define PPUTLUTRAITS_418u DEC,0b0110100010,8u,20u,(2u, 11u, 19u)
+#define PPUTLUTRAITS_417u DEC,0b0110100001,8u,20u,(3u, 139u)
+#define PPUTLUTRAITS_416u DEC,0b0110100000,8u,20u,(2u, 2u, 2u, 2u, 2u, 13u)
+#define PPUTLUTRAITS_415u DEC,0b0110011111,8u,20u,(5u, 83u)
+#define PPUTLUTRAITS_414u DEC,0b0110011110,8u,20u,(2u, 3u, 3u, 23u)
+#define PPUTLUTRAITS_413u DEC,0b0110011101,8u,20u,(7u, 59u)
+#define PPUTLUTRAITS_412u DEC,0b0110011100,8u,20u,(2u, 2u, 103u)
+#define PPUTLUTRAITS_411u DEC,0b0110011011,8u,20u,(3u, 137u)
+#define PPUTLUTRAITS_410u DEC,0b0110011010,8u,20u,(2u, 5u, 41u)
+#define PPUTLUTRAITS_409u DEC,0b0110011001,8u,20u,()
+#define PPUTLUTRAITS_408u DEC,0b0110011000,8u,20u,(2u, 2u, 2u, 3u, 17u)
+#define PPUTLUTRAITS_407u DEC,0b0110010111,8u,20u,(11u, 37u)
+#define PPUTLUTRAITS_406u DEC,0b0110010110,8u,20u,(2u, 7u, 29u)
+#define PPUTLUTRAITS_405u DEC,0b0110010101,8u,20u,(3u, 3u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_404u DEC,0b0110010100,8u,20u,(2u, 2u, 101u)
+#define PPUTLUTRAITS_403u DEC,0b0110010011,8u,20u,(13u, 31u)
+#define PPUTLUTRAITS_402u DEC,0b0110010010,8u,20u,(2u, 3u, 67u)
+#define PPUTLUTRAITS_401u DEC,0b0110010001,8u,20u,()
+#define PPUTLUTRAITS_400u DEC,0b0110010000,8u,20u,(2u, 2u, 2u, 2u, 5u, 5u)
+#define PPUTLUTRAITS_399u DEC,0b0110001111,8u,19u,(3u, 7u, 19u)
+#define PPUTLUTRAITS_398u DEC,0b0110001110,8u,19u,(2u, 199u)
+#define PPUTLUTRAITS_397u DEC,0b0110001101,8u,19u,()
+#define PPUTLUTRAITS_396u DEC,0b0110001100,8u,19u,(2u, 2u, 3u, 3u, 11u)
+#define PPUTLUTRAITS_395u DEC,0b0110001011,8u,19u,(5u, 79u)
+#define PPUTLUTRAITS_394u DEC,0b0110001010,8u,19u,(2u, 197u)
+#define PPUTLUTRAITS_393u DEC,0b0110001001,8u,19u,(3u, 131u)
+#define PPUTLUTRAITS_392u DEC,0b0110001000,8u,19u,(2u, 2u, 2u, 7u, 7u)
+#define PPUTLUTRAITS_391u DEC,0b0110000111,8u,19u,(17u, 23u)
+#define PPUTLUTRAITS_390u DEC,0b0110000110,8u,19u,(2u, 3u, 5u, 13u)
+#define PPUTLUTRAITS_389u DEC,0b0110000101,8u,19u,()
+#define PPUTLUTRAITS_388u DEC,0b0110000100,8u,19u,(2u, 2u, 97u)
+#define PPUTLUTRAITS_387u DEC,0b0110000011,8u,19u,(3u, 3u, 43u)
+#define PPUTLUTRAITS_386u DEC,0b0110000010,8u,19u,(2u, 193u)
+#define PPUTLUTRAITS_385u DEC,0b0110000001,8u,19u,(5u, 7u, 11u)
+#define PPUTLUTRAITS_384u DEC,0b0110000000,8u,19u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
+#define PPUTLUTRAITS_383u DEC,0b0101111111,8u,19u,()
+#define PPUTLUTRAITS_382u DEC,0b0101111110,8u,19u,(2u, 191u)
+#define PPUTLUTRAITS_381u DEC,0b0101111101,8u,19u,(3u, 127u)
+#define PPUTLUTRAITS_380u DEC,0b0101111100,8u,19u,(2u, 2u, 5u, 19u)
+#define PPUTLUTRAITS_379u DEC,0b0101111011,8u,19u,()
+#define PPUTLUTRAITS_378u DEC,0b0101111010,8u,19u,(2u, 3u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_377u DEC,0b0101111001,8u,19u,(13u, 29u)
+#define PPUTLUTRAITS_376u DEC,0b0101111000,8u,19u,(2u, 2u, 2u, 47u)
+#define PPUTLUTRAITS_375u DEC,0b0101110111,8u,19u,(3u, 5u, 5u, 5u)
+#define PPUTLUTRAITS_374u DEC,0b0101110110,8u,19u,(2u, 11u, 17u)
+#define PPUTLUTRAITS_373u DEC,0b0101110101,8u,19u,()
+#define PPUTLUTRAITS_372u DEC,0b0101110100,8u,19u,(2u, 2u, 3u, 31u)
+#define PPUTLUTRAITS_371u DEC,0b0101110011,8u,19u,(7u, 53u)
+#define PPUTLUTRAITS_370u DEC,0b0101110010,8u,19u,(2u, 5u, 37u)
+#define PPUTLUTRAITS_369u DEC,0b0101110001,8u,19u,(3u, 3u, 41u)
+#define PPUTLUTRAITS_368u DEC,0b0101110000,8u,19u,(2u, 2u, 2u, 2u, 23u)
+#define PPUTLUTRAITS_367u DEC,0b0101101111,8u,19u,()
+#define PPUTLUTRAITS_366u DEC,0b0101101110,8u,19u,(2u, 3u, 61u)
+#define PPUTLUTRAITS_365u DEC,0b0101101101,8u,19u,(5u, 73u)
+#define PPUTLUTRAITS_364u DEC,0b0101101100,8u,19u,(2u, 2u, 7u, 13u)
+#define PPUTLUTRAITS_363u DEC,0b0101101011,8u,19u,(3u, 11u, 11u)
+#define PPUTLUTRAITS_362u DEC,0b0101101010,8u,19u,(2u, 181u)
+#define PPUTLUTRAITS_361u DEC,0b0101101001,8u,19u,(19u, 19u)
+#define PPUTLUTRAITS_360u DEC,0b0101101000,8u,18u,(2u, 2u, 2u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_359u DEC,0b0101100111,8u,18u,()
+#define PPUTLUTRAITS_358u DEC,0b0101100110,8u,18u,(2u, 179u)
+#define PPUTLUTRAITS_357u DEC,0b0101100101,8u,18u,(3u, 7u, 17u)
+#define PPUTLUTRAITS_356u DEC,0b0101100100,8u,18u,(2u, 2u, 89u)
+#define PPUTLUTRAITS_355u DEC,0b0101100011,8u,18u,(5u, 71u)
+#define PPUTLUTRAITS_354u DEC,0b0101100010,8u,18u,(2u, 3u, 59u)
+#define PPUTLUTRAITS_353u DEC,0b0101100001,8u,18u,()
+#define PPUTLUTRAITS_352u DEC,0b0101100000,8u,18u,(2u, 2u, 2u, 2u, 2u, 11u)
+#define PPUTLUTRAITS_351u DEC,0b0101011111,8u,18u,(3u, 3u, 3u, 13u)
+#define PPUTLUTRAITS_350u DEC,0b0101011110,8u,18u,(2u, 5u, 5u, 7u)
+#define PPUTLUTRAITS_349u DEC,0b0101011101,8u,18u,()
+#define PPUTLUTRAITS_348u DEC,0b0101011100,8u,18u,(2u, 2u, 3u, 29u)
+#define PPUTLUTRAITS_347u DEC,0b0101011011,8u,18u,()
+#define PPUTLUTRAITS_346u DEC,0b0101011010,8u,18u,(2u, 173u)
+#define PPUTLUTRAITS_345u DEC,0b0101011001,8u,18u,(3u, 5u, 23u)
+#define PPUTLUTRAITS_344u DEC,0b0101011000,8u,18u,(2u, 2u, 2u, 43u)
+#define PPUTLUTRAITS_343u DEC,0b0101010111,8u,18u,(7u, 7u, 7u)
+#define PPUTLUTRAITS_342u DEC,0b0101010110,8u,18u,(2u, 3u, 3u, 19u)
+#define PPUTLUTRAITS_341u DEC,0b0101010101,8u,18u,(11u, 31u)
+#define PPUTLUTRAITS_340u DEC,0b0101010100,8u,18u,(2u, 2u, 5u, 17u)
+#define PPUTLUTRAITS_339u DEC,0b0101010011,8u,18u,(3u, 113u)
+#define PPUTLUTRAITS_338u DEC,0b0101010010,8u,18u,(2u, 13u, 13u)
+#define PPUTLUTRAITS_337u DEC,0b0101010001,8u,18u,()
+#define PPUTLUTRAITS_336u DEC,0b0101010000,8u,18u,(2u, 2u, 2u, 2u, 3u, 7u)
+#define PPUTLUTRAITS_335u DEC,0b0101001111,8u,18u,(5u, 67u)
+#define PPUTLUTRAITS_334u DEC,0b0101001110,8u,18u,(2u, 167u)
+#define PPUTLUTRAITS_333u DEC,0b0101001101,8u,18u,(3u, 3u, 37u)
+#define PPUTLUTRAITS_332u DEC,0b0101001100,8u,18u,(2u, 2u, 83u)
+#define PPUTLUTRAITS_331u DEC,0b0101001011,8u,18u,()
+#define PPUTLUTRAITS_330u DEC,0b0101001010,8u,18u,(2u, 3u, 5u, 11u)
+#define PPUTLUTRAITS_329u DEC,0b0101001001,8u,18u,(7u, 47u)
+#define PPUTLUTRAITS_328u DEC,0b0101001000,8u,18u,(2u, 2u, 2u, 41u)
+#define PPUTLUTRAITS_327u DEC,0b0101000111,8u,18u,(3u, 109u)
+#define PPUTLUTRAITS_326u DEC,0b0101000110,8u,18u,(2u, 163u)
+#define PPUTLUTRAITS_325u DEC,0b0101000101,8u,18u,(5u, 5u, 13u)
+#define PPUTLUTRAITS_324u DEC,0b0101000100,8u,18u,(2u, 2u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_323u DEC,0b0101000011,8u,17u,(17u, 19u)
+#define PPUTLUTRAITS_322u DEC,0b0101000010,8u,17u,(2u, 7u, 23u)
+#define PPUTLUTRAITS_321u DEC,0b0101000001,8u,17u,(3u, 107u)
+#define PPUTLUTRAITS_320u DEC,0b0101000000,8u,17u,(2u, 2u, 2u, 2u, 2u, 2u, 5u)
+#define PPUTLUTRAITS_319u DEC,0b0100111111,8u,17u,(11u, 29u)
+#define PPUTLUTRAITS_318u DEC,0b0100111110,8u,17u,(2u, 3u, 53u)
+#define PPUTLUTRAITS_317u DEC,0b0100111101,8u,17u,()
+#define PPUTLUTRAITS_316u DEC,0b0100111100,8u,17u,(2u, 2u, 79u)
+#define PPUTLUTRAITS_315u DEC,0b0100111011,8u,17u,(3u, 3u, 5u, 7u)
+#define PPUTLUTRAITS_314u DEC,0b0100111010,8u,17u,(2u, 157u)
+#define PPUTLUTRAITS_313u DEC,0b0100111001,8u,17u,()
+#define PPUTLUTRAITS_312u DEC,0b0100111000,8u,17u,(2u, 2u, 2u, 3u, 13u)
+#define PPUTLUTRAITS_311u DEC,0b0100110111,8u,17u,()
+#define PPUTLUTRAITS_310u DEC,0b0100110110,8u,17u,(2u, 5u, 31u)
+#define PPUTLUTRAITS_309u DEC,0b0100110101,8u,17u,(3u, 103u)
+#define PPUTLUTRAITS_308u DEC,0b0100110100,8u,17u,(2u, 2u, 7u, 11u)
+#define PPUTLUTRAITS_307u DEC,0b0100110011,8u,17u,()
+#define PPUTLUTRAITS_306u DEC,0b0100110010,8u,17u,(2u, 3u, 3u, 17u)
+#define PPUTLUTRAITS_305u DEC,0b0100110001,8u,17u,(5u, 61u)
+#define PPUTLUTRAITS_304u DEC,0b0100110000,8u,17u,(2u, 2u, 2u, 2u, 19u)
+#define PPUTLUTRAITS_303u DEC,0b0100101111,8u,17u,(3u, 101u)
+#define PPUTLUTRAITS_302u DEC,0b0100101110,8u,17u,(2u, 151u)
+#define PPUTLUTRAITS_301u DEC,0b0100101101,8u,17u,(7u, 43u)
+#define PPUTLUTRAITS_300u DEC,0b0100101100,8u,17u,(2u, 2u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_299u DEC,0b0100101011,8u,17u,(13u, 23u)
+#define PPUTLUTRAITS_298u DEC,0b0100101010,8u,17u,(2u, 149u)
+#define PPUTLUTRAITS_297u DEC,0b0100101001,8u,17u,(3u, 3u, 3u, 11u)
+#define PPUTLUTRAITS_296u DEC,0b0100101000,8u,17u,(2u, 2u, 2u, 37u)
+#define PPUTLUTRAITS_295u DEC,0b0100100111,8u,17u,(5u, 59u)
+#define PPUTLUTRAITS_294u DEC,0b0100100110,8u,17u,(2u, 3u, 7u, 7u)
+#define PPUTLUTRAITS_293u DEC,0b0100100101,8u,17u,()
+#define PPUTLUTRAITS_292u DEC,0b0100100100,8u,17u,(2u, 2u, 73u)
+#define PPUTLUTRAITS_291u DEC,0b0100100011,8u,17u,(3u, 97u)
+#define PPUTLUTRAITS_290u DEC,0b0100100010,8u,17u,(2u, 5u, 29u)
+#define PPUTLUTRAITS_289u DEC,0b0100100001,8u,17u,(17u, 17u)
+#define PPUTLUTRAITS_288u DEC,0b0100100000,8u,16u,(2u, 2u, 2u, 2u, 2u, 3u, 3u)
+#define PPUTLUTRAITS_287u DEC,0b0100011111,8u,16u,(7u, 41u)
+#define PPUTLUTRAITS_286u DEC,0b0100011110,8u,16u,(2u, 11u, 13u)
+#define PPUTLUTRAITS_285u DEC,0b0100011101,8u,16u,(3u, 5u, 19u)
+#define PPUTLUTRAITS_284u DEC,0b0100011100,8u,16u,(2u, 2u, 71u)
+#define PPUTLUTRAITS_283u DEC,0b0100011011,8u,16u,()
+#define PPUTLUTRAITS_282u DEC,0b0100011010,8u,16u,(2u, 3u, 47u)
+#define PPUTLUTRAITS_281u DEC,0b0100011001,8u,16u,()
+#define PPUTLUTRAITS_280u DEC,0b0100011000,8u,16u,(2u, 2u, 2u, 5u, 7u)
+#define PPUTLUTRAITS_279u DEC,0b0100010111,8u,16u,(3u, 3u, 31u)
+#define PPUTLUTRAITS_278u DEC,0b0100010110,8u,16u,(2u, 139u)
+#define PPUTLUTRAITS_277u DEC,0b0100010101,8u,16u,()
+#define PPUTLUTRAITS_276u DEC,0b0100010100,8u,16u,(2u, 2u, 3u, 23u)
+#define PPUTLUTRAITS_275u DEC,0b0100010011,8u,16u,(5u, 5u, 11u)
+#define PPUTLUTRAITS_274u DEC,0b0100010010,8u,16u,(2u, 137u)
+#define PPUTLUTRAITS_273u DEC,0b0100010001,8u,16u,(3u, 7u, 13u)
+#define PPUTLUTRAITS_272u DEC,0b0100010000,8u,16u,(2u, 2u, 2u, 2u, 17u)
+#define PPUTLUTRAITS_271u DEC,0b0100001111,8u,16u,()
+#define PPUTLUTRAITS_270u DEC,0b0100001110,8u,16u,(2u, 3u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_269u DEC,0b0100001101,8u,16u,()
+#define PPUTLUTRAITS_268u DEC,0b0100001100,8u,16u,(2u, 2u, 67u)
+#define PPUTLUTRAITS_267u DEC,0b0100001011,8u,16u,(3u, 89u)
+#define PPUTLUTRAITS_266u DEC,0b0100001010,8u,16u,(2u, 7u, 19u)
+#define PPUTLUTRAITS_265u DEC,0b0100001001,8u,16u,(5u, 53u)
+#define PPUTLUTRAITS_264u DEC,0b0100001000,8u,16u,(2u, 2u, 2u, 3u, 11u)
+#define PPUTLUTRAITS_263u DEC,0b0100000111,8u,16u,()
+#define PPUTLUTRAITS_262u DEC,0b0100000110,8u,16u,(2u, 131u)
+#define PPUTLUTRAITS_261u DEC,0b0100000101,8u,16u,(3u, 3u, 29u)
+#define PPUTLUTRAITS_260u DEC,0b0100000100,8u,16u,(2u, 2u, 5u, 13u)
+#define PPUTLUTRAITS_259u DEC,0b0100000011,8u,16u,(7u, 37u)
+#define PPUTLUTRAITS_258u DEC,0b0100000010,8u,16u,(2u, 3u, 43u)
+#define PPUTLUTRAITS_257u DEC,0b0100000001,8u,16u,()
+#define PPUTLUTRAITS_256u DEC,0b0100000000,8u,16u,(2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
+#define PPUTLUTRAITS_255u DEC,0b0011111111,7u,15u,(3u, 5u, 17u)
+#define PPUTLUTRAITS_254u DEC,0b0011111110,7u,15u,(2u, 127u)
+#define PPUTLUTRAITS_253u DEC,0b0011111101,7u,15u,(11u, 23u)
+#define PPUTLUTRAITS_252u DEC,0b0011111100,7u,15u,(2u, 2u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_251u DEC,0b0011111011,7u,15u,()
+#define PPUTLUTRAITS_250u DEC,0b0011111010,7u,15u,(2u, 5u, 5u, 5u)
+#define PPUTLUTRAITS_249u DEC,0b0011111001,7u,15u,(3u, 83u)
+#define PPUTLUTRAITS_248u DEC,0b0011111000,7u,15u,(2u, 2u, 2u, 31u)
+#define PPUTLUTRAITS_247u DEC,0b0011110111,7u,15u,(13u, 19u)
+#define PPUTLUTRAITS_246u DEC,0b0011110110,7u,15u,(2u, 3u, 41u)
+#define PPUTLUTRAITS_245u DEC,0b0011110101,7u,15u,(5u, 7u, 7u)
+#define PPUTLUTRAITS_244u DEC,0b0011110100,7u,15u,(2u, 2u, 61u)
+#define PPUTLUTRAITS_243u DEC,0b0011110011,7u,15u,(3u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_242u DEC,0b0011110010,7u,15u,(2u, 11u, 11u)
+#define PPUTLUTRAITS_241u DEC,0b0011110001,7u,15u,()
+#define PPUTLUTRAITS_240u DEC,0b0011110000,7u,15u,(2u, 2u, 2u, 2u, 3u, 5u)
+#define PPUTLUTRAITS_239u DEC,0b0011101111,7u,15u,()
+#define PPUTLUTRAITS_238u DEC,0b0011101110,7u,15u,(2u, 7u, 17u)
+#define PPUTLUTRAITS_237u DEC,0b0011101101,7u,15u,(3u, 79u)
+#define PPUTLUTRAITS_236u DEC,0b0011101100,7u,15u,(2u, 2u, 59u)
+#define PPUTLUTRAITS_235u DEC,0b0011101011,7u,15u,(5u, 47u)
+#define PPUTLUTRAITS_234u DEC,0b0011101010,7u,15u,(2u, 3u, 3u, 13u)
+#define PPUTLUTRAITS_233u DEC,0b0011101001,7u,15u,()
+#define PPUTLUTRAITS_232u DEC,0b0011101000,7u,15u,(2u, 2u, 2u, 29u)
+#define PPUTLUTRAITS_231u DEC,0b0011100111,7u,15u,(3u, 7u, 11u)
+#define PPUTLUTRAITS_230u DEC,0b0011100110,7u,15u,(2u, 5u, 23u)
+#define PPUTLUTRAITS_229u DEC,0b0011100101,7u,15u,()
+#define PPUTLUTRAITS_228u DEC,0b0011100100,7u,15u,(2u, 2u, 3u, 19u)
+#define PPUTLUTRAITS_227u DEC,0b0011100011,7u,15u,()
+#define PPUTLUTRAITS_226u DEC,0b0011100010,7u,15u,(2u, 113u)
+#define PPUTLUTRAITS_225u DEC,0b0011100001,7u,15u,(3u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_224u DEC,0b0011100000,7u,14u,(2u, 2u, 2u, 2u, 2u, 7u)
+#define PPUTLUTRAITS_223u DEC,0b0011011111,7u,14u,()
+#define PPUTLUTRAITS_222u DEC,0b0011011110,7u,14u,(2u, 3u, 37u)
+#define PPUTLUTRAITS_221u DEC,0b0011011101,7u,14u,(13u, 17u)
+#define PPUTLUTRAITS_220u DEC,0b0011011100,7u,14u,(2u, 2u, 5u, 11u)
+#define PPUTLUTRAITS_219u DEC,0b0011011011,7u,14u,(3u, 73u)
+#define PPUTLUTRAITS_218u DEC,0b0011011010,7u,14u,(2u, 109u)
+#define PPUTLUTRAITS_217u DEC,0b0011011001,7u,14u,(7u, 31u)
+#define PPUTLUTRAITS_216u DEC,0b0011011000,7u,14u,(2u, 2u, 2u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_215u DEC,0b0011010111,7u,14u,(5u, 43u)
+#define PPUTLUTRAITS_214u DEC,0b0011010110,7u,14u,(2u, 107u)
+#define PPUTLUTRAITS_213u DEC,0b0011010101,7u,14u,(3u, 71u)
+#define PPUTLUTRAITS_212u DEC,0b0011010100,7u,14u,(2u, 2u, 53u)
+#define PPUTLUTRAITS_211u DEC,0b0011010011,7u,14u,()
+#define PPUTLUTRAITS_210u DEC,0b0011010010,7u,14u,(2u, 3u, 5u, 7u)
+#define PPUTLUTRAITS_209u DEC,0b0011010001,7u,14u,(11u, 19u)
+#define PPUTLUTRAITS_208u DEC,0b0011010000,7u,14u,(2u, 2u, 2u, 2u, 13u)
+#define PPUTLUTRAITS_207u DEC,0b0011001111,7u,14u,(3u, 3u, 23u)
+#define PPUTLUTRAITS_206u DEC,0b0011001110,7u,14u,(2u, 103u)
+#define PPUTLUTRAITS_205u DEC,0b0011001101,7u,14u,(5u, 41u)
+#define PPUTLUTRAITS_204u DEC,0b0011001100,7u,14u,(2u, 2u, 3u, 17u)
+#define PPUTLUTRAITS_203u DEC,0b0011001011,7u,14u,(7u, 29u)
+#define PPUTLUTRAITS_202u DEC,0b0011001010,7u,14u,(2u, 101u)
+#define PPUTLUTRAITS_201u DEC,0b0011001001,7u,14u,(3u, 67u)
+#define PPUTLUTRAITS_200u DEC,0b0011001000,7u,14u,(2u, 2u, 2u, 5u, 5u)
+#define PPUTLUTRAITS_199u DEC,0b0011000111,7u,14u,()
+#define PPUTLUTRAITS_198u DEC,0b0011000110,7u,14u,(2u, 3u, 3u, 11u)
+#define PPUTLUTRAITS_197u DEC,0b0011000101,7u,14u,()
+#define PPUTLUTRAITS_196u DEC,0b0011000100,7u,14u,(2u, 2u, 7u, 7u)
+#define PPUTLUTRAITS_195u DEC,0b0011000011,7u,13u,(3u, 5u, 13u)
+#define PPUTLUTRAITS_194u DEC,0b0011000010,7u,13u,(2u, 97u)
+#define PPUTLUTRAITS_193u DEC,0b0011000001,7u,13u,()
+#define PPUTLUTRAITS_192u DEC,0b0011000000,7u,13u,(2u, 2u, 2u, 2u, 2u, 2u, 3u)
+#define PPUTLUTRAITS_191u DEC,0b0010111111,7u,13u,()
+#define PPUTLUTRAITS_190u DEC,0b0010111110,7u,13u,(2u, 5u, 19u)
+#define PPUTLUTRAITS_189u DEC,0b0010111101,7u,13u,(3u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_188u DEC,0b0010111100,7u,13u,(2u, 2u, 47u)
+#define PPUTLUTRAITS_187u DEC,0b0010111011,7u,13u,(11u, 17u)
+#define PPUTLUTRAITS_186u DEC,0b0010111010,7u,13u,(2u, 3u, 31u)
+#define PPUTLUTRAITS_185u DEC,0b0010111001,7u,13u,(5u, 37u)
+#define PPUTLUTRAITS_184u DEC,0b0010111000,7u,13u,(2u, 2u, 2u, 23u)
+#define PPUTLUTRAITS_183u DEC,0b0010110111,7u,13u,(3u, 61u)
+#define PPUTLUTRAITS_182u DEC,0b0010110110,7u,13u,(2u, 7u, 13u)
+#define PPUTLUTRAITS_181u DEC,0b0010110101,7u,13u,()
+#define PPUTLUTRAITS_180u DEC,0b0010110100,7u,13u,(2u, 2u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_179u DEC,0b0010110011,7u,13u,()
+#define PPUTLUTRAITS_178u DEC,0b0010110010,7u,13u,(2u, 89u)
+#define PPUTLUTRAITS_177u DEC,0b0010110001,7u,13u,(3u, 59u)
+#define PPUTLUTRAITS_176u DEC,0b0010110000,7u,13u,(2u, 2u, 2u, 2u, 11u)
+#define PPUTLUTRAITS_175u DEC,0b0010101111,7u,13u,(5u, 5u, 7u)
+#define PPUTLUTRAITS_174u DEC,0b0010101110,7u,13u,(2u, 3u, 29u)
+#define PPUTLUTRAITS_173u DEC,0b0010101101,7u,13u,()
+#define PPUTLUTRAITS_172u DEC,0b0010101100,7u,13u,(2u, 2u, 43u)
+#define PPUTLUTRAITS_171u DEC,0b0010101011,7u,13u,(3u, 3u, 19u)
+#define PPUTLUTRAITS_170u DEC,0b0010101010,7u,13u,(2u, 5u, 17u)
+#define PPUTLUTRAITS_169u DEC,0b0010101001,7u,13u,(13u, 13u)
+#define PPUTLUTRAITS_168u DEC,0b0010101000,7u,12u,(2u, 2u, 2u, 3u, 7u)
+#define PPUTLUTRAITS_167u DEC,0b0010100111,7u,12u,()
+#define PPUTLUTRAITS_166u DEC,0b0010100110,7u,12u,(2u, 83u)
+#define PPUTLUTRAITS_165u DEC,0b0010100101,7u,12u,(3u, 5u, 11u)
+#define PPUTLUTRAITS_164u DEC,0b0010100100,7u,12u,(2u, 2u, 41u)
+#define PPUTLUTRAITS_163u DEC,0b0010100011,7u,12u,()
+#define PPUTLUTRAITS_162u DEC,0b0010100010,7u,12u,(2u, 3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_161u DEC,0b0010100001,7u,12u,(7u, 23u)
+#define PPUTLUTRAITS_160u DEC,0b0010100000,7u,12u,(2u, 2u, 2u, 2u, 2u, 5u)
+#define PPUTLUTRAITS_159u DEC,0b0010011111,7u,12u,(3u, 53u)
+#define PPUTLUTRAITS_158u DEC,0b0010011110,7u,12u,(2u, 79u)
+#define PPUTLUTRAITS_157u DEC,0b0010011101,7u,12u,()
+#define PPUTLUTRAITS_156u DEC,0b0010011100,7u,12u,(2u, 2u, 3u, 13u)
+#define PPUTLUTRAITS_155u DEC,0b0010011011,7u,12u,(5u, 31u)
+#define PPUTLUTRAITS_154u DEC,0b0010011010,7u,12u,(2u, 7u, 11u)
+#define PPUTLUTRAITS_153u DEC,0b0010011001,7u,12u,(3u, 3u, 17u)
+#define PPUTLUTRAITS_152u DEC,0b0010011000,7u,12u,(2u, 2u, 2u, 19u)
+#define PPUTLUTRAITS_151u DEC,0b0010010111,7u,12u,()
+#define PPUTLUTRAITS_150u DEC,0b0010010110,7u,12u,(2u, 3u, 5u, 5u)
+#define PPUTLUTRAITS_149u DEC,0b0010010101,7u,12u,()
+#define PPUTLUTRAITS_148u DEC,0b0010010100,7u,12u,(2u, 2u, 37u)
+#define PPUTLUTRAITS_147u DEC,0b0010010011,7u,12u,(3u, 7u, 7u)
+#define PPUTLUTRAITS_146u DEC,0b0010010010,7u,12u,(2u, 73u)
+#define PPUTLUTRAITS_145u DEC,0b0010010001,7u,12u,(5u, 29u)
+#define PPUTLUTRAITS_144u DEC,0b0010010000,7u,12u,(2u, 2u, 2u, 2u, 3u, 3u)
+#define PPUTLUTRAITS_143u DEC,0b0010001111,7u,11u,(11u, 13u)
+#define PPUTLUTRAITS_142u DEC,0b0010001110,7u,11u,(2u, 71u)
+#define PPUTLUTRAITS_141u DEC,0b0010001101,7u,11u,(3u, 47u)
+#define PPUTLUTRAITS_140u DEC,0b0010001100,7u,11u,(2u, 2u, 5u, 7u)
+#define PPUTLUTRAITS_139u DEC,0b0010001011,7u,11u,()
+#define PPUTLUTRAITS_138u DEC,0b0010001010,7u,11u,(2u, 3u, 23u)
+#define PPUTLUTRAITS_137u DEC,0b0010001001,7u,11u,()
+#define PPUTLUTRAITS_136u DEC,0b0010001000,7u,11u,(2u, 2u, 2u, 17u)
+#define PPUTLUTRAITS_135u DEC,0b0010000111,7u,11u,(3u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_134u DEC,0b0010000110,7u,11u,(2u, 67u)
+#define PPUTLUTRAITS_133u DEC,0b0010000101,7u,11u,(7u, 19u)
+#define PPUTLUTRAITS_132u DEC,0b0010000100,7u,11u,(2u, 2u, 3u, 11u)
+#define PPUTLUTRAITS_131u DEC,0b0010000011,7u,11u,()
+#define PPUTLUTRAITS_130u DEC,0b0010000010,7u,11u,(2u, 5u, 13u)
+#define PPUTLUTRAITS_129u DEC,0b0010000001,7u,11u,(3u, 43u)
+#define PPUTLUTRAITS_128u DEC,0b0010000000,7u,11u,(2u, 2u, 2u, 2u, 2u, 2u, 2u)
+#define PPUTLUTRAITS_127u DEC,0b0001111111,6u,11u,()
+#define PPUTLUTRAITS_126u DEC,0b0001111110,6u,11u,(2u, 3u, 3u, 7u)
+#define PPUTLUTRAITS_125u DEC,0b0001111101,6u,11u,(5u, 5u, 5u)
+#define PPUTLUTRAITS_124u DEC,0b0001111100,6u,11u,(2u, 2u, 31u)
+#define PPUTLUTRAITS_123u DEC,0b0001111011,6u,11u,(3u, 41u)
+#define PPUTLUTRAITS_122u DEC,0b0001111010,6u,11u,(2u, 61u)
+#define PPUTLUTRAITS_121u DEC,0b0001111001,6u,11u,(11u, 11u)
+#define PPUTLUTRAITS_120u DEC,0b0001111000,6u,10u,(2u, 2u, 2u, 3u, 5u)
+#define PPUTLUTRAITS_119u DEC,0b0001110111,6u,10u,(7u, 17u)
+#define PPUTLUTRAITS_118u DEC,0b0001110110,6u,10u,(2u, 59u)
+#define PPUTLUTRAITS_117u DEC,0b0001110101,6u,10u,(3u, 3u, 13u)
+#define PPUTLUTRAITS_116u DEC,0b0001110100,6u,10u,(2u, 2u, 29u)
+#define PPUTLUTRAITS_115u DEC,0b0001110011,6u,10u,(5u, 23u)
+#define PPUTLUTRAITS_114u DEC,0b0001110010,6u,10u,(2u, 3u, 19u)
+#define PPUTLUTRAITS_113u DEC,0b0001110001,6u,10u,()
+#define PPUTLUTRAITS_112u DEC,0b0001110000,6u,10u,(2u, 2u, 2u, 2u, 7u)
+#define PPUTLUTRAITS_111u DEC,0b0001101111,6u,10u,(3u, 37u)
+#define PPUTLUTRAITS_110u DEC,0b0001101110,6u,10u,(2u, 5u, 11u)
+#define PPUTLUTRAITS_109u DEC,0b0001101101,6u,10u,()
+#define PPUTLUTRAITS_108u DEC,0b0001101100,6u,10u,(2u, 2u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_107u DEC,0b0001101011,6u,10u,()
+#define PPUTLUTRAITS_106u DEC,0b0001101010,6u,10u,(2u, 53u)
+#define PPUTLUTRAITS_105u DEC,0b0001101001,6u,10u,(3u, 5u, 7u)
+#define PPUTLUTRAITS_104u DEC,0b0001101000,6u,10u,(2u, 2u, 2u, 13u)
+#define PPUTLUTRAITS_103u DEC,0b0001100111,6u,10u,()
+#define PPUTLUTRAITS_102u DEC,0b0001100110,6u,10u,(2u, 3u, 17u)
+#define PPUTLUTRAITS_101u DEC,0b0001100101,6u,10u,()
+#define PPUTLUTRAITS_100u DEC,0b0001100100,6u,10u,(2u, 2u, 5u, 5u)
+#define PPUTLUTRAITS_99u DEC,0b0001100011,6u,9u,(3u, 3u, 11u)
+#define PPUTLUTRAITS_98u DEC,0b0001100010,6u,9u,(2u, 7u, 7u)
+#define PPUTLUTRAITS_97u DEC,0b0001100001,6u,9u,()
+#define PPUTLUTRAITS_96u DEC,0b0001100000,6u,9u,(2u, 2u, 2u, 2u, 2u, 3u)
+#define PPUTLUTRAITS_95u DEC,0b0001011111,6u,9u,(5u, 19u)
+#define PPUTLUTRAITS_94u DEC,0b0001011110,6u,9u,(2u, 47u)
+#define PPUTLUTRAITS_93u DEC,0b0001011101,6u,9u,(3u, 31u)
+#define PPUTLUTRAITS_92u DEC,0b0001011100,6u,9u,(2u, 2u, 23u)
+#define PPUTLUTRAITS_91u DEC,0b0001011011,6u,9u,(7u, 13u)
+#define PPUTLUTRAITS_90u DEC,0b0001011010,6u,9u,(2u, 3u, 3u, 5u)
+#define PPUTLUTRAITS_89u DEC,0b0001011001,6u,9u,()
+#define PPUTLUTRAITS_88u DEC,0b0001011000,6u,9u,(2u, 2u, 2u, 11u)
+#define PPUTLUTRAITS_87u DEC,0b0001010111,6u,9u,(3u, 29u)
+#define PPUTLUTRAITS_86u DEC,0b0001010110,6u,9u,(2u, 43u)
+#define PPUTLUTRAITS_85u DEC,0b0001010101,6u,9u,(5u, 17u)
+#define PPUTLUTRAITS_84u DEC,0b0001010100,6u,9u,(2u, 2u, 3u, 7u)
+#define PPUTLUTRAITS_83u DEC,0b0001010011,6u,9u,()
+#define PPUTLUTRAITS_82u DEC,0b0001010010,6u,9u,(2u, 41u)
+#define PPUTLUTRAITS_81u DEC,0b0001010001,6u,9u,(3u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_80u DEC,0b0001010000,6u,8u,(2u, 2u, 2u, 2u, 5u)
+#define PPUTLUTRAITS_79u DEC,0b0001001111,6u,8u,()
+#define PPUTLUTRAITS_78u DEC,0b0001001110,6u,8u,(2u, 3u, 13u)
+#define PPUTLUTRAITS_77u DEC,0b0001001101,6u,8u,(7u, 11u)
+#define PPUTLUTRAITS_76u DEC,0b0001001100,6u,8u,(2u, 2u, 19u)
+#define PPUTLUTRAITS_75u DEC,0b0001001011,6u,8u,(3u, 5u, 5u)
+#define PPUTLUTRAITS_74u DEC,0b0001001010,6u,8u,(2u, 37u)
+#define PPUTLUTRAITS_73u DEC,0b0001001001,6u,8u,()
+#define PPUTLUTRAITS_72u DEC,0b0001001000,6u,8u,(2u, 2u, 2u, 3u, 3u)
+#define PPUTLUTRAITS_71u DEC,0b0001000111,6u,8u,()
+#define PPUTLUTRAITS_70u DEC,0b0001000110,6u,8u,(2u, 5u, 7u)
+#define PPUTLUTRAITS_69u DEC,0b0001000101,6u,8u,(3u, 23u)
+#define PPUTLUTRAITS_68u DEC,0b0001000100,6u,8u,(2u, 2u, 17u)
+#define PPUTLUTRAITS_67u DEC,0b0001000011,6u,8u,()
+#define PPUTLUTRAITS_66u DEC,0b0001000010,6u,8u,(2u, 3u, 11u)
+#define PPUTLUTRAITS_65u DEC,0b0001000001,6u,8u,(5u, 13u)
+#define PPUTLUTRAITS_64u DEC,0b0001000000,6u,8u,(2u, 2u, 2u, 2u, 2u, 2u)
+#define PPUTLUTRAITS_63u DEC,0b0000111111,5u,7u,(3u, 3u, 7u)
+#define PPUTLUTRAITS_62u DEC,0b0000111110,5u,7u,(2u, 31u)
+#define PPUTLUTRAITS_61u DEC,0b0000111101,5u,7u,()
+#define PPUTLUTRAITS_60u DEC,0b0000111100,5u,7u,(2u, 2u, 3u, 5u)
+#define PPUTLUTRAITS_59u DEC,0b0000111011,5u,7u,()
+#define PPUTLUTRAITS_58u DEC,0b0000111010,5u,7u,(2u, 29u)
+#define PPUTLUTRAITS_57u DEC,0b0000111001,5u,7u,(3u, 19u)
+#define PPUTLUTRAITS_56u DEC,0b0000111000,5u,7u,(2u, 2u, 2u, 7u)
+#define PPUTLUTRAITS_55u DEC,0b0000110111,5u,7u,(5u, 11u)
+#define PPUTLUTRAITS_54u DEC,0b0000110110,5u,7u,(2u, 3u, 3u, 3u)
+#define PPUTLUTRAITS_53u DEC,0b0000110101,5u,7u,()
+#define PPUTLUTRAITS_52u DEC,0b0000110100,5u,7u,(2u, 2u, 13u)
+#define PPUTLUTRAITS_51u DEC,0b0000110011,5u,7u,(3u, 17u)
+#define PPUTLUTRAITS_50u DEC,0b0000110010,5u,7u,(2u, 5u, 5u)
+#define PPUTLUTRAITS_49u DEC,0b0000110001,5u,7u,(7u, 7u)
+#define PPUTLUTRAITS_48u DEC,0b0000110000,5u,6u,(2u, 2u, 2u, 2u, 3u)
+#define PPUTLUTRAITS_47u DEC,0b0000101111,5u,6u,()
+#define PPUTLUTRAITS_46u DEC,0b0000101110,5u,6u,(2u, 23u)
+#define PPUTLUTRAITS_45u DEC,0b0000101101,5u,6u,(3u, 3u, 5u)
+#define PPUTLUTRAITS_44u DEC,0b0000101100,5u,6u,(2u, 2u, 11u)
+#define PPUTLUTRAITS_43u DEC,0b0000101011,5u,6u,()
+#define PPUTLUTRAITS_42u DEC,0b0000101010,5u,6u,(2u, 3u, 7u)
+#define PPUTLUTRAITS_41u DEC,0b0000101001,5u,6u,()
+#define PPUTLUTRAITS_40u DEC,0b0000101000,5u,6u,(2u, 2u, 2u, 5u)
+#define PPUTLUTRAITS_39u DEC,0b0000100111,5u,6u,(3u, 13u)
+#define PPUTLUTRAITS_38u DEC,0b0000100110,5u,6u,(2u, 19u)
+#define PPUTLUTRAITS_37u DEC,0b0000100101,5u,6u,()
+#define PPUTLUTRAITS_36u DEC,0b0000100100,5u,6u,(2u, 2u, 3u, 3u)
+#define PPUTLUTRAITS_35u DEC,0b0000100011,5u,5u,(5u, 7u)
+#define PPUTLUTRAITS_34u DEC,0b0000100010,5u,5u,(2u, 17u)
+#define PPUTLUTRAITS_33u DEC,0b0000100001,5u,5u,(3u, 11u)
+#define PPUTLUTRAITS_32u DEC,0b0000100000,5u,5u,(2u, 2u, 2u, 2u, 2u)
+#define PPUTLUTRAITS_31u DEC,0b0000011111,4u,5u,()
+#define PPUTLUTRAITS_30u DEC,0b0000011110,4u,5u,(2u, 3u, 5u)
+#define PPUTLUTRAITS_29u DEC,0b0000011101,4u,5u,()
+#define PPUTLUTRAITS_28u DEC,0b0000011100,4u,5u,(2u, 2u, 7u)
+#define PPUTLUTRAITS_27u DEC,0b0000011011,4u,5u,(3u, 3u, 3u)
+#define PPUTLUTRAITS_26u DEC,0b0000011010,4u,5u,(2u, 13u)
+#define PPUTLUTRAITS_25u DEC,0b0000011001,4u,5u,(5u, 5u)
+#define PPUTLUTRAITS_24u DEC,0b0000011000,4u,4u,(2u, 2u, 2u, 3u)
+#define PPUTLUTRAITS_23u DEC,0b0000010111,4u,4u,()
+#define PPUTLUTRAITS_22u DEC,0b0000010110,4u,4u,(2u, 11u)
+#define PPUTLUTRAITS_21u DEC,0b0000010101,4u,4u,(3u, 7u)
+#define PPUTLUTRAITS_20u DEC,0b0000010100,4u,4u,(2u, 2u, 5u)
+#define PPUTLUTRAITS_19u DEC,0b0000010011,4u,4u,()
+#define PPUTLUTRAITS_18u DEC,0b0000010010,4u,4u,(2u, 3u, 3u)
+#define PPUTLUTRAITS_17u DEC,0b0000010001,4u,4u,()
+#define PPUTLUTRAITS_16u DEC,0b0000010000,4u,4u,(2u, 2u, 2u, 2u)
+#define PPUTLUTRAITS_15u DEC,0b0000001111,3u,3u,(3u, 5u)
+#define PPUTLUTRAITS_14u DEC,0b0000001110,3u,3u,(2u, 7u)
+#define PPUTLUTRAITS_13u DEC,0b0000001101,3u,3u,()
+#define PPUTLUTRAITS_12u DEC,0b0000001100,3u,3u,(2u, 2u, 3u)
+#define PPUTLUTRAITS_11u DEC,0b0000001011,3u,3u,()
+#define PPUTLUTRAITS_10u DEC,0b0000001010,3u,3u,(2u, 5u)
+#define PPUTLUTRAITS_9u DEC,0b0000001001,3u,3u,(3u, 3u)
+#define PPUTLUTRAITS_8u DEC,0b0000001000,3u,2u,(2u, 2u, 2u)
+#define PPUTLUTRAITS_7u DEC,0b0000000111,2u,2u,()
+#define PPUTLUTRAITS_6u DEC,0b0000000110,2u,2u,(2u, 3u)
+#define PPUTLUTRAITS_5u DEC,0b0000000101,2u,2u,()
+#define PPUTLUTRAITS_4u DEC,0b0000000100,2u,2u,(2u, 2u)
+#define PPUTLUTRAITS_3u DEC,0b0000000011,1u,1u,()
+#define PPUTLUTRAITS_2u DEC,0b0000000010,1u,1u,()
+#define PPUTLUTRAITS_1u DEC,0b0000000001,0u,1u,()
+#define PPUTLUTRAITS_0u DEC,0b0000000000,,0u,()
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // clang-format on
 
-/// full unsigned integer sequences
-#define PPUTLUINT_SEQ                                                                             \
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,   \
-      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, \
-      49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, \
-      72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, \
-      95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,   \
-      114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131,   \
-      132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149,   \
-      150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167,   \
-      168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185,   \
-      186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203,   \
-      204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221,   \
-      222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,   \
-      240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257,   \
-      258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275,   \
-      276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293,   \
-      294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311,   \
-      312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329,   \
-      330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347,   \
-      348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365,   \
-      366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383,   \
-      384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401,   \
-      402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419,   \
-      420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437,   \
-      438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455,   \
-      456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473,   \
-      474, 475, 476, 477, 478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491,   \
-      492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509,   \
-      510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527,   \
-      528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545,   \
-      546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563,   \
-      564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581,   \
-      582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599,   \
-      600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617,   \
-      618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635,   \
-      636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653,   \
-      654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671,   \
-      672, 673, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689,   \
-      690, 691, 692, 693, 694, 695, 696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707,   \
-      708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 718, 719, 720, 721, 722, 723, 724, 725,   \
-      726, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741, 742, 743,   \
-      744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 760, 761,   \
-      762, 763, 764, 765, 766, 767, 768, 769, 770, 771, 772, 773, 774, 775, 776, 777, 778, 779,   \
-      780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 794, 795, 796, 797,   \
-      798, 799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815,   \
-      816, 817, 818, 819, 820, 821, 822, 823, 824, 825, 826, 827, 828, 829, 830, 831, 832, 833,   \
-      834, 835, 836, 837, 838, 839, 840, 841, 842, 843, 844, 845, 846, 847, 848, 849, 850, 851,   \
-      852, 853, 854, 855, 856, 857, 858, 859, 860, 861, 862, 863, 864, 865, 866, 867, 868, 869,   \
-      870, 871, 872, 873, 874, 875, 876, 877, 878, 879, 880, 881, 882, 883, 884, 885, 886, 887,   \
-      888, 889, 890, 891, 892, 893, 894, 895, 896, 897, 898, 899, 900, 901, 902, 903, 904, 905,   \
-      906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923,   \
-      924, 925, 926, 927, 928, 929, 930, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941,   \
-      942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959,   \
-      960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974, 975, 976, 977,   \
-      978, 979, 980, 981, 982, 983, 984, 985, 986, 987, 988, 989, 990, 991, 992, 993, 994, 995,   \
-      996, 997, 998, 999, 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, \
-      1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023
-#define PPUTLUINT_RSEQ                                                                             \
-  1023, 1022, 1021, 1020, 1019, 1018, 1017, 1016, 1015, 1014, 1013, 1012, 1011, 1010, 1009, 1008,  \
-      1007, 1006, 1005, 1004, 1003, 1002, 1001, 1000, 999, 998, 997, 996, 995, 994, 993, 992, 991, \
-      990, 989, 988, 987, 986, 985, 984, 983, 982, 981, 980, 979, 978, 977, 976, 975, 974, 973,    \
-      972, 971, 970, 969, 968, 967, 966, 965, 964, 963, 962, 961, 960, 959, 958, 957, 956, 955,    \
-      954, 953, 952, 951, 950, 949, 948, 947, 946, 945, 944, 943, 942, 941, 940, 939, 938, 937,    \
-      936, 935, 934, 933, 932, 931, 930, 929, 928, 927, 926, 925, 924, 923, 922, 921, 920, 919,    \
-      918, 917, 916, 915, 914, 913, 912, 911, 910, 909, 908, 907, 906, 905, 904, 903, 902, 901,    \
-      900, 899, 898, 897, 896, 895, 894, 893, 892, 891, 890, 889, 888, 887, 886, 885, 884, 883,    \
-      882, 881, 880, 879, 878, 877, 876, 875, 874, 873, 872, 871, 870, 869, 868, 867, 866, 865,    \
-      864, 863, 862, 861, 860, 859, 858, 857, 856, 855, 854, 853, 852, 851, 850, 849, 848, 847,    \
-      846, 845, 844, 843, 842, 841, 840, 839, 838, 837, 836, 835, 834, 833, 832, 831, 830, 829,    \
-      828, 827, 826, 825, 824, 823, 822, 821, 820, 819, 818, 817, 816, 815, 814, 813, 812, 811,    \
-      810, 809, 808, 807, 806, 805, 804, 803, 802, 801, 800, 799, 798, 797, 796, 795, 794, 793,    \
-      792, 791, 790, 789, 788, 787, 786, 785, 784, 783, 782, 781, 780, 779, 778, 777, 776, 775,    \
-      774, 773, 772, 771, 770, 769, 768, 767, 766, 765, 764, 763, 762, 761, 760, 759, 758, 757,    \
-      756, 755, 754, 753, 752, 751, 750, 749, 748, 747, 746, 745, 744, 743, 742, 741, 740, 739,    \
-      738, 737, 736, 735, 734, 733, 732, 731, 730, 729, 728, 727, 726, 725, 724, 723, 722, 721,    \
-      720, 719, 718, 717, 716, 715, 714, 713, 712, 711, 710, 709, 708, 707, 706, 705, 704, 703,    \
-      702, 701, 700, 699, 698, 697, 696, 695, 694, 693, 692, 691, 690, 689, 688, 687, 686, 685,    \
-      684, 683, 682, 681, 680, 679, 678, 677, 676, 675, 674, 673, 672, 671, 670, 669, 668, 667,    \
-      666, 665, 664, 663, 662, 661, 660, 659, 658, 657, 656, 655, 654, 653, 652, 651, 650, 649,    \
-      648, 647, 646, 645, 644, 643, 642, 641, 640, 639, 638, 637, 636, 635, 634, 633, 632, 631,    \
-      630, 629, 628, 627, 626, 625, 624, 623, 622, 621, 620, 619, 618, 617, 616, 615, 614, 613,    \
-      612, 611, 610, 609, 608, 607, 606, 605, 604, 603, 602, 601, 600, 599, 598, 597, 596, 595,    \
-      594, 593, 592, 591, 590, 589, 588, 587, 586, 585, 584, 583, 582, 581, 580, 579, 578, 577,    \
-      576, 575, 574, 573, 572, 571, 570, 569, 568, 567, 566, 565, 564, 563, 562, 561, 560, 559,    \
-      558, 557, 556, 555, 554, 553, 552, 551, 550, 549, 548, 547, 546, 545, 544, 543, 542, 541,    \
-      540, 539, 538, 537, 536, 535, 534, 533, 532, 531, 530, 529, 528, 527, 526, 525, 524, 523,    \
-      522, 521, 520, 519, 518, 517, 516, 515, 514, 513, 512, 511, 510, 509, 508, 507, 506, 505,    \
-      504, 503, 502, 501, 500, 499, 498, 497, 496, 495, 494, 493, 492, 491, 490, 489, 488, 487,    \
-      486, 485, 484, 483, 482, 481, 480, 479, 478, 477, 476, 475, 474, 473, 472, 471, 470, 469,    \
-      468, 467, 466, 465, 464, 463, 462, 461, 460, 459, 458, 457, 456, 455, 454, 453, 452, 451,    \
-      450, 449, 448, 447, 446, 445, 444, 443, 442, 441, 440, 439, 438, 437, 436, 435, 434, 433,    \
-      432, 431, 430, 429, 428, 427, 426, 425, 424, 423, 422, 421, 420, 419, 418, 417, 416, 415,    \
-      414, 413, 412, 411, 410, 409, 408, 407, 406, 405, 404, 403, 402, 401, 400, 399, 398, 397,    \
-      396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380, 379,    \
-      378, 377, 376, 375, 374, 373, 372, 371, 370, 369, 368, 367, 366, 365, 364, 363, 362, 361,    \
-      360, 359, 358, 357, 356, 355, 354, 353, 352, 351, 350, 349, 348, 347, 346, 345, 344, 343,    \
-      342, 341, 340, 339, 338, 337, 336, 335, 334, 333, 332, 331, 330, 329, 328, 327, 326, 325,    \
-      324, 323, 322, 321, 320, 319, 318, 317, 316, 315, 314, 313, 312, 311, 310, 309, 308, 307,    \
-      306, 305, 304, 303, 302, 301, 300, 299, 298, 297, 296, 295, 294, 293, 292, 291, 290, 289,    \
-      288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271,    \
-      270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253,    \
-      252, 251, 250, 249, 248, 247, 246, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235,    \
-      234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217,    \
-      216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199,    \
-      198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181,    \
-      180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163,    \
-      162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145,    \
-      144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127,    \
-      126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109,    \
-      108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, \
-      87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65,  \
-      64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42,  \
-      41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19,  \
-      18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [type.binary]
-/// -------------
-/// casts a uint to its binary subtype.
+/// [type.int]
+/// ----------
+/// 10-bit signed integer type.
+/// may be constructed from either unsigned or signed ints.
+/// cannot parse negative decimals; use math.neg instead.
 ///
-/// PTL_BINARY(0)             // 0b0000000000u
-/// PTL_BINARY(1)             // 0b0000000001u
-/// PTL_BINARY(1023)          // 0b1111111111u
-/// PTL_BINARY(0b0000000000u) // 0b0000000000u
-/// PTL_BINARY(0b0000000001u) // 0b0000000001u
-/// PTL_BINARY(0b1111111111u) // 0b1111111111u
-#define PTL_BINARY(/* n: uint */...) /* -> binary */ PPUTLBINARY_O(PTL_UINT(__VA_ARGS__))
+/// bit length is fixed. cannot parse shorter bit lengths.
+///
+/// attempts to preserve binary/decimal representation, but will
+/// output binary if casting the input yields a negative number
+///
+/// cast from unsigned reinterprets bits as signed two's complement.
+///
+/// PTL_INT(0)             // 0
+/// PTL_INT(1u)            // 1
+/// PTL_INT(0b0000000000)  // 0b0000000000
+/// PTL_INT(511)           // 511
+/// PTL_INT(0b0111111111u) // 0b0111111111
+/// PTL_INT(1023u)         // 0b1111111111
+#define PTL_INT(/* n: uint|int */...) /* -> int{n} */                                            \
+  PPUTLINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_INT] invalid int \
+                                                                           : __VA_ARGS__),       \
+                                                                  __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBINARY_O(n)             PPUTLBINARY_OO(n, PTL_CAT(PPUTLUTRAITS_0, n))
-#define PPUTLBINARY_OO(...)          PPUTLBINARY_OO_X(__VA_ARGS__)
-#define PPUTLBINARY_OO_X(n, t, ...)  PTL_CAT(PPUTLBINARY_, t)(n, __VA_ARGS__)
-#define PPUTLBINARY_BIN(n, dec, ...) n
-#define PPUTLBINARY_DEC(n, bin, ...) bin
+/// first parentheses; asserts only one arg.
+#define PPUTLINT_o(_, ...)      PPUTLINT_o_##__VA_OPT__(NO_)##PASS()
+#define PPUTLINT_o_NO_PASS(...) PPUTLINT_oo_FAIL
+#define PPUTLINT_o_PASS(...)    PPUTLINT_oo
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+/// second parentheses; asserts non-tuple.
+#define PPUTLINT_oo(_, ...)      PPUTLINT_oo_RES(PTL_EAT _)
+#define PPUTLINT_oo_RES(...)     PPUTLINT_oo_##__VA_OPT__(NO_)##FAIL()
+#define PPUTLINT_oo_NO_FAIL(...) PPUTLINT_ooo
+#define PPUTLINT_oo_FAIL(...)    PPUTLINT_ooo_FAIL
 
-/// [type.decimal]
-/// --------------
-/// casts a uint to its decimal subtype.
-///
-/// PTL_DECIMAL(0)             // 0
-/// PTL_DECIMAL(1)             // 1
-/// PTL_DECIMAL(1023)          // 1023
-/// PTL_DECIMAL(0b0000000000u) // 0
-/// PTL_DECIMAL(0b0000000001u) // 1
-/// PTL_DECIMAL(0b1111111111u) // 1023
-#define PTL_DECIMAL(/* n: uint */...) /* -> decimal */ PPUTLDECIMAL_O(PTL_UINT(__VA_ARGS__))
+/// third parentheses; checks for validity with added 'u' suffix.
+#define PPUTLINT_ooo(...)          PPUTLINT_ooo_RES(PPUTLUTRAITS_##__VA_ARGS__##u)
+#define PPUTLINT_ooo_RES(...)      PPUTLINT_ooo_RES_o(__VA_ARGS__)
+#define PPUTLINT_ooo_RES_o(_, ...) PPUTLINT_ooo_##__VA_OPT__(NO_)##FAIL()
+#define PPUTLINT_ooo_NO_FAIL(...)  PPUTLINT_oooo_EARLYPASS
+#define PPUTLINT_ooo_FAIL(...)     PPUTLINT_oooo
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+/// fourth parentheses; checks for validity with added 'u' suffix (cast from uint).
+#define PPUTLINT_oooo(...)           PPUTLINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__)
+#define PPUTLINT_oooo_RES(...)       PPUTLINT_oooo_RES_o(__VA_ARGS__)
+#define PPUTLINT_oooo_RES_o(_, ...)  PPUTLINT_oooo_##__VA_OPT__(NO_)##FAIL
+#define PPUTLINT_oooo_EARLYPASS(...) PPUTLINT_PASS
+#define PPUTLINT_oooo_NO_FAIL        PPUTLINT_PASS_CAST
+#define PPUTLINT_oooo_FAIL           PPUTLINT_FAIL
 
-#define PPUTLDECIMAL_O(n)             PPUTLDECIMAL_OO(n, PTL_CAT(PPUTLUTRAITS_0, n))
-#define PPUTLDECIMAL_OO(...)          PPUTLDECIMAL_OO_X(__VA_ARGS__)
-#define PPUTLDECIMAL_OO_X(n, t, ...)  PTL_CAT(PPUTLDECIMAL_, t)(n, __VA_ARGS__)
-#define PPUTLDECIMAL_BIN(n, dec, ...) dec
-#define PPUTLDECIMAL_DEC(n, dec, ...) n
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [type.typeof]
-/// -------------
-/// detects the value type. will fail if the type is not tuple or uint.
-/// literal 0 and 1 are considered decimal rather than bool.
-///
-/// returns one of:
-/// - PTL_TUPLE
-/// - PTL_BINARY
-/// - PTL_DECIMAL
-///
-/// PTL_TYPEOF((foo))         // PTL_TUPLE
-/// PTL_TYPEOF(0)             // PTL_DECIMAL
-/// PTL_TYPEOF(0b1111111111u) // PTL_BINARY
-#define PTL_TYPEOF(/* v: tuple|uint */...) /* -> <tuple|binary|decimal ctor> */ \
-  PPUTLTYPEOF_O(PTL_EAT __VA_ARGS__)(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLTYPEOF_O(...) PPUTLTYPEOF_OO##__VA_OPT__(_NO)##_TUPLE
-#define PPUTLTYPEOF_OO_NO_TUPLE(...) \
-  PTL_CAT(PPUTLTYPEOF_OO_NO_TUPLE_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_0, PTL_UINT(__VA_ARGS__))))
-#define PPUTLTYPEOF_OO_NO_TUPLE_BIN PTL_BINARY
-#define PPUTLTYPEOF_OO_NO_TUPLE_DEC PTL_DECIMAL
-#define PPUTLTYPEOF_OO_TUPLE(...)   PTL_TUPLE
+/// fifth parentheses; returns
+#define PPUTLINT_PASS(e, v)                v
+#define PPUTLINT_PASS_CAST(e, v)           PTL_CAT(PPUTLINT_PASS_CAST_, PPUTLUINT_TRAIT(v, TYPE))(v)
+#define PPUTLINT_PASS_CAST_BIN(v)          PPUTLUINT_TRAIT(PPUTLUINT_TRAIT(v, BIN_UDEC), DEC_IBIN)
+#define PPUTLINT_PASS_CAST_DEC(v)          PPUTLINT_PASS_CAST_DEC_o(v, PPUTLUINT_TRAIT(v, DEC_IBIN))
+#define PPUTLINT_PASS_CAST_DEC_o(v, ibin)  PPUTLINT_PASS_CAST_DEC_oo(v, ibin)
+#define PPUTLINT_PASS_CAST_DEC_oo(v, ibin) PPUTLINT_PASS_CAST_DEC_ooo(v, ibin, ibin##u)
+#define PPUTLINT_PASS_CAST_DEC_ooo(v, ibin, ubin)                                         \
+  PTL_CAT(PPUTLINT_PASS_CAST_DEC_, PTL_ESC(PPUTLINT_MSB PPUTLUINT_TRAIT(ubin, BIN_BITS))) \
+  (v, ibin, ubin)
+#define PPUTLINT_PASS_CAST_DEC_1(v, ibin, ubin) ibin
+#define PPUTLINT_PASS_CAST_DEC_0(v, ibin, ubin) PPUTLUINT_TRAIT(ubin, BIN_IDEC)
+#define PPUTLINT_MSB(a, ...)                    a
+#define PPUTLINT_FAIL(e, ...)                   PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2641,11 +2565,11 @@
 /// ----------
 /// logical OR.
 ///
-/// PTL_OR(0, 0) // 0
-/// PTL_OR(0, 1) // 1
-/// PTL_OR(1, 0) // 1
-/// PTL_OR(1, 1) // 1
-#define PTL_OR(/* a: bool, b: bool */...) /* -> bool{a or b} */ PPUTLOR_X(__VA_ARGS__)
+/// PTL_oR(0, 0) // 0
+/// PTL_oR(0, 1) // 1
+/// PTL_oR(1, 0) // 1
+/// PTL_oR(1, 1) // 1
+#define PTL_oR(/* a: bool, b: bool */...) /* -> bool{a or b} */ PPUTLOR_X(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2745,12 +2669,12 @@
 /// PTL_IS_NONE(foo)       // 0
 /// PTL_IS_NONE(foo, bar)  // 0
 /// PTL_IS_NONE(PTL_ESC()) // 1
-#define PTL_IS_NONE(...) /* -> bool */ PPUTLIS_NONE_O##__VA_OPT__(0)
+#define PTL_IS_NONE(...) /* -> bool */ PPUTLIS_NONE_o##__VA_OPT__(0)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_NONE_O0 0
-#define PPUTLIS_NONE_O  1
+#define PPUTLIS_NONE_o0 0
+#define PPUTLIS_NONE_o  1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2762,12 +2686,12 @@
 /// PTL_IS_SOME(foo)       // 1
 /// PTL_IS_SOME(foo, bar)  // 1
 /// PTL_IS_SOME(PTL_ESC()) // 0
-#define PTL_IS_SOME(...) /* -> bool */ PPUTLIS_SOME_O##__VA_OPT__(1)
+#define PTL_IS_SOME(...) /* -> bool */ PPUTLIS_SOME_o##__VA_OPT__(1)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_SOME_O1 1
-#define PPUTLIS_SOME_O  0
+#define PPUTLIS_SOME_o1 1
+#define PPUTLIS_SOME_o  0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2954,7 +2878,7 @@
 /// PTL_IS_BOOL(0, 1) // 0
 /// PTL_IS_BOOL((0))  // 0
 #define PTL_IS_BOOL(...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_BOOL_, PPUTLBOOL_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
+  PTL_CAT(PPUTLIS_BOOL_, PPUTLBOOL_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2966,7 +2890,7 @@
 /// [traits.is_uint]
 /// ----------------
 /// detects if args is a uint.
-/// binary bit length is fixed at PTL_UINT_BITS (10).
+/// binary bit length is fixed at PTL_BIT_LENGTH (10).
 ///
 /// PTL_IS_UINT()              // 0
 /// PTL_IS_UINT(foo)           // 0
@@ -2980,7 +2904,7 @@
 /// PTL_IS_UINT(0b1111111111)  // 0
 /// PTL_IS_UINT(0b110u)        // 0
 #define PTL_IS_UINT(...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UINT_, PPUTLUINT_O(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
+  PTL_CAT(PPUTLIS_UINT_, PPUTLINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -3002,186 +2926,6 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLITEMS_X(...) PTL_ESC __VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [traits.is_binary]
-/// ------------------
-/// detects if args is a uint represented as binary.
-///
-/// PTL_IS_BINARY()              // 0
-/// PTL_IS_BINARY(48)            // 0
-/// PTL_IS_BINARY(1023)          // 0
-/// PTL_IS_BINARY(foo)           // 0
-/// PTL_IS_BINARY(0b0000000000u) // 1
-/// PTL_IS_BINARY(0b1111111111u) // 1
-#define PTL_IS_BINARY(...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_BINARY_O_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIS_BINARY_O_1(u)   PTL_IS_NONE(PTL_CAT(PPUTLIS_BINARY_, PTL_TYPEOF(u)))
-#define PPUTLIS_BINARY_O_0(...) 0
-#define PPUTLIS_BINARY_PTL_BINARY
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [traits.is_decimal]
-/// -------------------
-/// detects if args is a uint represented as decimal.
-///
-/// PTL_IS_DECIMAL()              // 0
-/// PTL_IS_DECIMAL(48)            // 1
-/// PTL_IS_DECIMAL(1023)          // 1
-/// PTL_IS_DECIMAL(foo)           // 0
-/// PTL_IS_DECIMAL(0b0000000000u) // 0
-/// PTL_IS_DECIMAL(0b1111111111u) // 0
-#define PTL_IS_DECIMAL(...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_DECIMAL_O_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIS_DECIMAL_O_1(u)   PTL_IS_NONE(PTL_CAT(PPUTLIS_DECIMAL_, PTL_TYPEOF(u)))
-#define PPUTLIS_DECIMAL_O_0(...) 0
-#define PPUTLIS_DECIMAL_PTL_DECIMAL
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [traits.bits]
-/// -------------
-/// extracts uint bits.
-/// size of returned args is exactly PTL_UINT_BITS (10).
-///
-/// PTL_BITS(0)             // 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-/// PTL_BITS(1)             // 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-/// PTL_BITS(0b1111111110u) // 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
-#define PTL_BITS(/* v: uint */...) /* -> bool... */ \
-  PPUTLBITS_BITS(PTL_CAT(PPUTLUTRAITS_0, PTL_BINARY(__VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITS_BITS(...)          PPUTLBITS_BITS_X(__VA_ARGS__)
-#define PPUTLBITS_BITS_X(t, d, b, n) PTL_ESC b
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitget]
-/// ----------------
-/// gets the ith bit from the uint.
-/// i must be less than PTL_UINT_BITS (10).
-///
-/// PTL_BITGET(2, 7)             // 0
-/// PTL_BITGET(2, 8)             // 1
-/// PTL_BITGET(2, 9)             // 0
-/// PTL_BITGET(0b1111111110u, 9) // 0
-#define PTL_BITGET(/* v: uint, i: uint */...) /* -> v[i]: bool */ PPUTLBITGET_O(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITGET_O(v, i)                         PPUTLBITGET_OO(PTL_DECIMAL(i), PTL_BITS(v))
-#define PPUTLBITGET_OO(i, ...)                      PTL_CAT(PPUTLBITGET_, i)(__VA_ARGS__)
-#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j) j
-#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j) i
-#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j) h
-#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j) g
-#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j) f
-#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j) e
-#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j) d
-#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j) c
-#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j) b
-#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j) a
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitset]
-/// ----------------
-/// sets the ith bit in the uint to b.
-/// i must be less than PTL_UINT_BITS (10).
-///
-/// PTL_BITSET(0, 8, 1)             // 2
-/// PTL_BITSET(1, 7, 1)             // 5
-/// PTL_BITSET(0b1111111111u, 9, 0) // 0b1111111110u
-#define PTL_BITSET(/* v: uint, i: uint, b: bool */...) /* -> (v[i] = b): typeof(v) */ \
-  PPUTLBITSET_O(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITSET_O(v, i, b) \
-  PTL_TYPEOF(v)(PPUTLBITSET_OO(b, PTL_CAT(PPUTLBITSET_, PTL_DECIMAL(i)), PTL_BITS(v)))
-#define PPUTLBITSET_OO(b, op, ...)                     op(b, __VA_ARGS__)
-#define PPUTLBITSET_9(j, a, B, c, d, e, f, g, h, i, _) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_8(i, a, B, c, d, e, f, g, h, _, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_7(h, a, B, c, d, e, f, g, _, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_6(g, a, B, c, d, e, f, _, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_5(f, a, B, c, d, e, _, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_4(e, a, B, c, d, _, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_3(d, a, B, c, _, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_2(c, a, B, _, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_1(B, a, _, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_0(a, _, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitflip]
-/// -----------------
-/// flips the ith bit in the uint.
-/// i must be less than PTL_UINT_BITS (10).
-///
-/// PTL_BITFLIP(0, 9)             // 1
-/// PTL_BITFLIP(0, 7)             // 4
-/// PTL_BITFLIP(0b1111111110u, 9) // 0b1111111111u
-#define PTL_BITFLIP(/* v: uint, i: uint */...) /* -> (v[i] = !v[i]): typeof(v) */ \
-  PPUTLBITFLIP_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITFLIP_X(v, i) PTL_BITSET(v, i, PTL_NOT(PTL_BITGET(v, i)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitnot]
-/// ----------------
-/// bitwise NOT.
-/// returns the same uint representation as its input.
-///
-/// PTL_BITNOT(0)             // 1023
-/// PTL_BITNOT(1)             // 1022
-/// PTL_BITNOT(0b0000000000u) // 0b1111111111u
-/// PTL_BITNOT(0b0000000001u) // 0b1111111110u
-#define PTL_BITNOT(/* v: uint */...) /* -> ~v: typeof(v) */ \
-  PTL_TYPEOF(__VA_ARGS__)(PPUTLBITNOT_NOT(PTL_CAT(PPUTLUTRAITS_0, PTL_BINARY(__VA_ARGS__))))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITNOT_NOT(...)          PPUTLBITNOT_NOT_X(__VA_ARGS__)
-#define PPUTLBITNOT_NOT_X(t, d, b, n) n
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitshift_left]
-/// -----------------------
-/// TODO
-///
-/// PTL_BITSHIFT_LEFT(0b1111111111u, 1) // 0b1111111110u
-#define PTL_BITSHIFT_LEFT(/* v: uint, i: uint */...) /* -> (v << i): typeof(v) */ \
-  PPUTLBITSHIFT_LEFT_O(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITSHIFT_LEFT_O(v, i) PTL_TYPEOF(v)(PPUTLBITSHIFT_LEFT_OO(PTL_DECIMAL(i), PTL_BITS(v)))
-
-#define PPUTLBITSHIFT_LEFT_OO(i, ...)                       PTL_CAT(PPUTLBITSHIFT_LEFT_, i)(__VA_ARGS__)
-#define PPUTLBITSHIFT_LEFT_10(a, B, c, d, e, f, g, h, i, j) 0b0000000000u
-#define PPUTLBITSHIFT_LEFT_9(a, B, c, d, e, f, g, h, i, j)  0b##j##000000000u
-#define PPUTLBITSHIFT_LEFT_8(a, B, c, d, e, f, g, h, i, j)  0b##i##j##00000000u
-#define PPUTLBITSHIFT_LEFT_7(a, B, c, d, e, f, g, h, i, j)  0b##h##i##j##0000000u
-#define PPUTLBITSHIFT_LEFT_6(a, B, c, d, e, f, g, h, i, j)  0b##g##h##i##j##000000u
-#define PPUTLBITSHIFT_LEFT_5(a, B, c, d, e, f, g, h, i, j)  0b##f##g##h##i##j##00000u
-#define PPUTLBITSHIFT_LEFT_4(a, B, c, d, e, f, g, h, i, j)  0b##e##f##g##h##i##j##0000u
-#define PPUTLBITSHIFT_LEFT_3(a, B, c, d, e, f, g, h, i, j)  0b##d##e##f##g##h##i##j##000u
-#define PPUTLBITSHIFT_LEFT_2(a, B, c, d, e, f, g, h, i, j)  0b##c##d##e##f##g##h##i##j##00u
-#define PPUTLBITSHIFT_LEFT_1(a, B, c, d, e, f, g, h, i, j)  0b##B##c##d##e##f##g##h##i##j##0u
-#define PPUTLBITSHIFT_LEFT_0(a, B, c, d, e, f, g, h, i, j)  0b##a##B##c##d##e##f##g##h##i##j##u
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3258,138 +3002,6 @@
 
 #define PPUTLIF_1(_, t, f) PTL_REST((PTL_TUPLE(f)), PTL_ITEMS(t))
 #define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [compare.lt]
-/// ------------
-/// uint less-than comparison.
-///
-/// PTL_LT(0, 0) // 0
-/// PTL_LT(0, 1) // 1
-/// PTL_LT(1, 0) // 0
-/// PTL_LT(1, 1) // 0
-#define PTL_LT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l < r} */ PPUTLLT_O(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLLT_O(l, r) PPUTLLT_OO(PTL_BITS(l), PTL_BITS(r))
-#define PPUTLLT_OO(...)                                        \
-  PTL_FIRST(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R( \
-      PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(0, 0, PPUTLLT_ZIP(__VA_ARGS__))))))))))))
-#define PPUTLLT_ZIP(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) \
-  a, k, b, l, c, m, d, n, e, o, f, p, g, q, h, r, i, s, j, t
-#define PPUTLLT_R(...)                 PPUTLLT_R_O(__VA_ARGS__)
-#define PPUTLLT_R_O(fl, fg, a, b, ...) PPUTLLT_##fl##fg##a##b, PPUTLLT_##fg##fl##b##a, __VA_ARGS__
-#define PPUTLLT_1111                   1
-#define PPUTLLT_1110                   1
-#define PPUTLLT_1101                   1
-#define PPUTLLT_1100                   1
-#define PPUTLLT_1011                   1
-#define PPUTLLT_1010                   1
-#define PPUTLLT_1001                   1
-#define PPUTLLT_1000                   1
-#define PPUTLLT_0111                   0
-#define PPUTLLT_0110                   0
-#define PPUTLLT_0101                   0
-#define PPUTLLT_0100                   0
-#define PPUTLLT_0011                   0
-#define PPUTLLT_0010                   0
-#define PPUTLLT_0001                   1
-#define PPUTLLT_0000                   0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [compare.gt]
-/// ------------
-/// uint greater-than comparison.
-///
-/// PTL_GT(0, 0) // 0
-/// PTL_GT(0, 1) // 0
-/// PTL_GT(1, 0) // 1
-/// PTL_GT(1, 1) // 0
-#define PTL_GT(/* l: uint, r: uint */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLGT_X(l, r) PTL_LT(r, l)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [compare.le]
-/// ------------
-/// uint less-than-or-equal-to comparison.
-///
-/// PTL_LE(0, 0) // 1
-/// PTL_LE(0, 1) // 1
-/// PTL_LE(1, 0) // 0
-/// PTL_LE(1, 1) // 1
-#define PTL_LE(/* l: uint, r: uint */...) /* -> bool{l <= r} */ PTL_NOT(PTL_GT(__VA_ARGS__))
-
-/// [compare.ge]
-/// ------------
-/// uint greater-than-or-equal-to comparison.
-///
-/// PTL_GE(0, 0) // 1
-/// PTL_GE(0, 1) // 0
-/// PTL_GE(1, 0) // 1
-/// PTL_GE(1, 1) // 1
-#define PTL_GE(/* l: uint, r: uint */...) /* -> bool{l >= r} */ PTL_NOT(PTL_LT(__VA_ARGS__))
-
-/// [compare.eq]
-/// ------------
-/// uint equal-to comparison.
-///
-/// PTL_EQ(0, 0) // 1
-/// PTL_EQ(0, 1) // 0
-/// PTL_EQ(1, 0) // 0
-/// PTL_EQ(1, 1) // 1
-#define PTL_EQ(/* l: uint, r: uint */...) /* -> bool{l == r} */ \
-  PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
-
-/// [compare.ne]
-/// ------------
-/// uint not-equal-to comparison.
-///
-/// PTL_EQ(0, 0) // 1
-/// PTL_EQ(0, 1) // 0
-/// PTL_EQ(1, 0) // 0
-/// PTL_EQ(1, 1) // 1
-#define PTL_NE(/* l: uint, r: uint */...) /* -> bool{l != r} */ PTL_NOT(PTL_EQ(__VA_ARGS__))
-
-/// [compare.min]
-/// -------------
-/// uint minimum operation.
-///
-/// PTL_MIN(0, 0) // 0
-/// PTL_MIN(0, 1) // 0
-/// PTL_MIN(1, 0) // 0
-/// PTL_MIN(1, 1) // 1
-#define PTL_MIN(/* a: uint, b: uint */...) /* -> bool{a < b ? a : b} */ \
-  PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMIN_1(a, b) a
-#define PPUTLMIN_0(a, b) b
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [compare.max]
-/// -------------
-/// uint maximum operation.
-///
-/// PTL_MAX(0, 0) // 0
-/// PTL_MAX(0, 1) // 1
-/// PTL_MAX(1, 0) // 1
-/// PTL_MAX(1, 1) // 1
-#define PTL_MAX(/* a: uint, b: uint */...) /* -> bool{a > b ? a : b} */ \
-  PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLMAX_1(a, b) a
-#define PPUTLMAX_0(a, b) b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
