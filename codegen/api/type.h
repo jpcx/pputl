@@ -39,6 +39,7 @@ extern codegen::def<"bool(...: b: bool) -> b"> const&          bool_;
 extern codegen::def<"uint(...: n: uint) -> n"> const&          uint;
 extern codegen::def<"binary(...: n: uint) -> binary"> const&   binary;
 extern codegen::def<"decimal(...: n: uint) -> decimal"> const& decimal;
+extern codegen::def<"typeof(...: v: tuple|uint) -> <tuple|binary|decimal ctor>"> const& typeof;
 
 NIFTY_DECL(tuple);
 namespace detail {
@@ -68,6 +69,7 @@ NIFTY_DECL(uint_o);
 NIFTY_DECL(uint);
 NIFTY_DECL(binary);
 NIFTY_DECL(decimal);
+NIFTY_DECL(typeof);
 
 inline codegen::end_category<"type"> type_end;
 

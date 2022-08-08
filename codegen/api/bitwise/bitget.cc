@@ -25,21 +25,39 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "bitwise.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
-//   docs << "bitwise NOT.";
-// 
-//   /* tests << not_("0") = "1" >> docs; */
-//   /* tests << not_("1") = "0" >> docs; */
-// 
-//   return def<"o(...)">{[&](va args) {
-//     return "";
-//   }}(binary(args));
-// });
-// 
-// } // namespace api
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitget_) bitget_ = NIFTY_DEF(bitget_, [&](va args) {
+  docs << "gets the ith bit from the uint."
+       << "i must be less than " + uint_bits + " (" + std::to_string(conf::uint_bits) + ").";
+
+  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1")) + "0u";
+
+  tests << bitget_(2, 7)            = "0" >> docs;
+  tests << bitget_(2, 8)            = "1" >> docs;
+  tests << bitget_(2, 9)            = "0" >> docs;
+  tests << bitget_(binmaxminus1, 9) = "0" >> docs;
+
+  auto bits = utl::cat(utl::alpha_base52_seq(conf::uint_bits), ", ");
+
+  def _0 = def{"0(" + bits + ")"} = [&](pack args) {
+    return args[0];
+  };
+
+  for (std::size_t i = 1; i < conf::uint_bits; ++i) {
+    def{"" + std::to_string(i) + "(" + bits + ")"} = [&](pack args) {
+      return args[i];
+    };
+  }
+
+  return def<"o(op, bits)">{[&](arg op, arg bits) {
+    return op + " " + bits;
+  }}(cat(utl::slice(_0, -1), decimal(rest(args))),
+     first(rest(rest(cat(utl::slice(detail::uint_traits[0], -1), binary(first(args)))))));
+});
+
+} // namespace api

@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,29 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "traits.h"
-#include "type.h"
+#include "bitwise.h"
 
 namespace api {
 
-inline codegen::category<"bitwise"> bitwise;
+using namespace codegen;
 
-extern codegen::def<"bitget(...: v: uint, i: uint) -> v[i]: bool"> const& bitget_;
-extern codegen::def<"bitset(...: v: uint, i: uint, b: bool) -> (v[i] = b): typeof(v)"> const&
-                                                                    bitset_;
-/* extern codegen::def<"bitflip(...: v: uint, i: uint) -> (v[i] = !v[i]): typeof(v)"> const&
- * bitflip_;
- */
-extern codegen::def<"bitnot(...: v: uint) -> ~v: typeof(v)"> const& bitnot_;
+decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
+  docs << "bitwise NOT."
+       << "returns the same uint representation as its input.";
 
-NIFTY_DECL(bitget_);
-NIFTY_DECL(bitset_);
-/* NIFTY_DECL(bitflip_); */
-NIFTY_DECL(bitnot_);
+  auto binmin       = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
+  auto binone       = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "0")) + "1u";
+  auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1")) + "0u";
 
-inline codegen::end_category<"bitwise"> bitwise_end;
+  tests << bitnot_("0")    = uint_max_s >> docs;
+  tests << bitnot_("1")    = std::to_string(conf::uint_max - 1) >> docs;
+  tests << bitnot_(binmin) = binmax >> docs;
+  tests << bitnot_(binone) = binmaxminus1 >> docs;
+
+  return pp::call(typeof(args),
+                  rest(rest(rest(cat(utl::slice(detail::uint_traits[0], -1), binary(args))))));
+});
 
 } // namespace api

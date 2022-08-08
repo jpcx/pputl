@@ -96,7 +96,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220807
+#define PTL_BUILD /* -> <c++ int> */ 20220808
 
 /// [config.uint_bits]
 /// ------------------
@@ -2558,6 +2558,33 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [type.typeof]
+/// -------------
+/// detects the value type. will fail if the type is not tuple or uint.
+/// literal 0 and 1 are considered decimal rather than bool.
+///
+/// returns one of:
+/// - PTL_TUPLE
+/// - PTL_BINARY
+/// - PTL_DECIMAL
+///
+/// PTL_TYPEOF((foo))         // PTL_TUPLE
+/// PTL_TYPEOF(0)             // PTL_DECIMAL
+/// PTL_TYPEOF(0b1111111111u) // PTL_BINARY
+#define PTL_TYPEOF(/* v: tuple|uint */...) /* -> <tuple|binary|decimal ctor> */ \
+  PPUTLTYPEOF_O(PTL_EAT __VA_ARGS__)(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLTYPEOF_O(...) PPUTLTYPEOF_OO##__VA_OPT__(_NO)##_TUPLE
+#define PPUTLTYPEOF_OO_NO_TUPLE(...) \
+  PTL_CAT(PPUTLTYPEOF_OO_NO_TUPLE_, PTL_FIRST(PTL_CAT(PPUTLUTRAITS_, PTL_UINT(__VA_ARGS__))))
+#define PPUTLTYPEOF_OO_NO_TUPLE_BIN PTL_BINARY
+#define PPUTLTYPEOF_OO_NO_TUPLE_DEC PTL_DECIMAL
+#define PPUTLTYPEOF_OO_TUPLE(...)   PTL_TUPLE
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.
@@ -2869,6 +2896,81 @@
 #define PPUTLIS_DECIMAL_O_0(...) 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitget]
+/// ----------------
+/// gets the ith bit from the uint.
+/// i must be less than PTL_UINT_BITS (10).
+///
+/// PTL_BITGET(2, 7)             // 0
+/// PTL_BITGET(2, 8)             // 1
+/// PTL_BITGET(2, 9)             // 0
+/// PTL_BITGET(0b1111111110u, 9) // 0
+#define PTL_BITGET(/* v: uint, i: uint */...) /* -> v[i]: bool */ \
+  PPUTLBITGET_O(                                                  \
+      PTL_CAT(PPUTLBITGET_, PTL_DECIMAL(PTL_REST(__VA_ARGS__))),  \
+      PTL_FIRST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(PTL_FIRST(__VA_ARGS__)))))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITGET_O(op, bits)                     op bits
+#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j) j
+#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j) i
+#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j) h
+#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j) g
+#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j) f
+#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j) e
+#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j) d
+#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j) c
+#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j) b
+#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j) a
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitset]
+/// ----------------
+/// sets the ith bit in the uint to b.
+/// i must be less than PTL_UINT_BITS (10).
+///
+/// PTL_BITSET(0, 8, 1)             // 2
+/// PTL_BITSET(1, 7, 1)             // 5
+/// PTL_BITSET(0b1111111111u, 9, 0) // 0b1111111110u
+#define PTL_BITSET(/* v: uint, i: uint, b: bool */...) /* -> (v[i] = b): typeof(v) */ \
+  PPUTLBITSET_O(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITSET_O(v, i, b)                              \
+  PTL_TYPEOF(v)                                             \
+  (PPUTLBITSET_OO(b, PTL_CAT(PPUTLBITSET_, PTL_DECIMAL(i)), \
+                  PTL_FIRST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(v)))))))
+#define PPUTLBITSET_OO(b, op, bits)                    PPUTLBITSET_OO_X(b, op, PTL_ITEMS(bits))
+#define PPUTLBITSET_OO_X(b, op, ...)                   op(b, __VA_ARGS__)
+#define PPUTLBITSET_9(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##_##u
+#define PPUTLBITSET_8(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##_##j##u
+#define PPUTLBITSET_7(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##_##i##j##u
+#define PPUTLBITSET_6(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##_##h##i##j##u
+#define PPUTLBITSET_5(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##_##g##h##i##j##u
+#define PPUTLBITSET_4(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##_##f##g##h##i##j##u
+#define PPUTLBITSET_3(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##_##e##f##g##h##i##j##u
+#define PPUTLBITSET_2(_, a, B, c, d, e, f, g, h, i, j) 0b##a##B##_##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_1(_, a, B, c, d, e, f, g, h, i, j) 0b##a##_##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_0(_, a, B, c, d, e, f, g, h, i, j) 0b##_##B##c##d##e##f##g##h##i##j##u
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitnot]
+/// ----------------
+/// bitwise NOT.
+/// returns the same uint representation as its input.
+///
+/// PTL_BITNOT(0)             // 1023
+/// PTL_BITNOT(1)             // 1022
+/// PTL_BITNOT(0b0000000000u) // 0b1111111111u
+/// PTL_BITNOT(0b0000000001u) // 0b1111111110u
+#define PTL_BITNOT(/* v: uint */...) /* -> ~v: typeof(v) */ \
+  PTL_TYPEOF(__VA_ARGS__)                                   \
+  (PTL_REST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(__VA_ARGS__))))))
 
 /// [meta.id]
 /// ---------
