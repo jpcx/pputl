@@ -25,40 +25,30 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bitget_) bitget_ = NIFTY_DEF(bitget_, [&](va args) {
-  docs << "gets the ith bit from the uint."
-       << "i must be less than " + uint_bits + " (" + std::to_string(conf::uint_bits) + ").";
+decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
+  docs << "extracts uint bits."
+       << "size of returned args is exactly " + uint_bits + " (" + std::to_string(conf::uint_bits)
+              + ").";
 
   auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1")) + "0u";
 
-  tests << bitget_(2, 7)            = "0" >> docs;
-  tests << bitget_(2, 8)            = "1" >> docs;
-  tests << bitget_(2, 9)            = "0" >> docs;
-  tests << bitget_(binmaxminus1, 9) = "0" >> docs;
+  tests << bits(0) = utl::cat(std::vector<std::string>(conf::uint_bits, "0"), ", ") >> docs;
+  tests << bits(1) =
+      (utl::cat(std::vector<std::string>(conf::uint_bits - 1, "0"), ", ") + ", 1") >> docs;
+  tests << bits(binmaxminus1) =
+      (utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1"), ", ") + ", 0") >> docs;
 
-  auto bits_ = utl::cat(utl::alpha_base52_seq(conf::uint_bits), ", ");
-
-  def _0 = def{"0(" + bits_ + ")"} = [&](pack args) {
-    return args[0];
-  };
-
-  for (std::size_t i = 1; i < conf::uint_bits; ++i) {
-    def{"" + std::to_string(i) + "(" + bits_ + ")"} = [&](pack args) {
-      return args[i];
-    };
-  }
-
-  return def<"o(v, i)">{[&](arg v, arg i) {
-    return def<"o(i, ...)">{[&](arg i, va args) {
-      return pp::call(cat(utl::slice(_0, -1), i), args);
-    }}(decimal(i), bits(v));
-  }}(args);
+  return def<"bits(...)">{[&](va args) {
+    return def<"x(t, d, b, n)">{[&](arg, arg, arg b, arg) {
+      return esc + " " + b;
+    }}(args);
+  }}(cat(utl::slice(detail::uint_traits[0], -1), binary(args)));
 });
 
 } // namespace api

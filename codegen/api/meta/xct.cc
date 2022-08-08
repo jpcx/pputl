@@ -44,7 +44,7 @@ xct_expected(unsigned n) {
 
 decltype(xct) xct = NIFTY_DEF(xct, [&] {
   docs << "counts the number of expansions undergone after expression."
-       << "uses recursion; can track any number of expansions."
+       << "uses mutual recursion; can track any number of expansions."
        << "the number of commas indicates the number of expansions.";
 
   detail::xct_a = def{"a(...)"};

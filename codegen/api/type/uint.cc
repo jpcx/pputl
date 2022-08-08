@@ -128,7 +128,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
       detail::uint_traits[_] = def{"traits_" + std::to_string(n)} = [&] {
         return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin), impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
-                        ",");
+                        ", ");
       };
     }
     {
@@ -137,7 +137,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
         docs << "type, binary, log2, sqrt, factors";
         return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin), impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
-                        ",");
+                        ", ");
       };
     }
 
@@ -148,7 +148,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
         return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
                                    pp::tup(utl::cat(bin, ", ")),
                                    impl::binary_str(impl::bitnot(bin))},
-                        ",");
+                        ", ");
       };
     }
     {
@@ -158,7 +158,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
         return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
                                    pp::tup(utl::cat(bin, ", ")),
                                    impl::binary_str(impl::bitnot(bin))},
-                        ",");
+                        ", ");
       };
     }
   }

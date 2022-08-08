@@ -3030,6 +3030,24 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [traits.bits]
+/// -------------
+/// extracts uint bits.
+/// size of returned args is exactly PTL_UINT_BITS (10).
+///
+/// PTL_BITS(0)             // 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+/// PTL_BITS(1)             // 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+/// PTL_BITS(0b1111111110u) // 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
+#define PTL_BITS(/* v: uint */...) /* -> bool... */ \
+  PPUTLBITS_BITS(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITS_BITS(...)          PPUTLBITS_BITS_X(__VA_ARGS__)
+#define PPUTLBITS_BITS_X(t, d, b, n) PTL_ESC b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [bitwise.bitget]
 /// ----------------
 /// gets the ith bit from the uint.
@@ -3039,14 +3057,12 @@
 /// PTL_BITGET(2, 8)             // 1
 /// PTL_BITGET(2, 9)             // 0
 /// PTL_BITGET(0b1111111110u, 9) // 0
-#define PTL_BITGET(/* v: uint, i: uint */...) /* -> v[i]: bool */ \
-  PPUTLBITGET_O(                                                  \
-      PTL_CAT(PPUTLBITGET_, PTL_DECIMAL(PTL_REST(__VA_ARGS__))),  \
-      PTL_FIRST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(PTL_FIRST(__VA_ARGS__)))))))
+#define PTL_BITGET(/* v: uint, i: uint */...) /* -> v[i]: bool */ PPUTLBITGET_O(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBITGET_O(op, bits)                     op bits
+#define PPUTLBITGET_O(v, i)                         PPUTLBITGET_OO(PTL_DECIMAL(i), PTL_BITS(v))
+#define PPUTLBITGET_OO(i, ...)                      PTL_CAT(PPUTLBITGET_, i)(__VA_ARGS__)
 #define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j) j
 #define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j) i
 #define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j) h
@@ -3073,12 +3089,9 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBITSET_O(v, i, b)                              \
-  PTL_TYPEOF(v)                                             \
-  (PPUTLBITSET_OO(b, PTL_CAT(PPUTLBITSET_, PTL_DECIMAL(i)), \
-                  PTL_FIRST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(v)))))))
-#define PPUTLBITSET_OO(b, op, bits)                    PPUTLBITSET_OO_X(b, op, PTL_ITEMS(bits))
-#define PPUTLBITSET_OO_X(b, op, ...)                   op(b, __VA_ARGS__)
+#define PPUTLBITSET_O(v, i, b) \
+  PTL_TYPEOF(v)(PPUTLBITSET_OO(b, PTL_CAT(PPUTLBITSET_, PTL_DECIMAL(i)), PTL_BITS(v)))
+#define PPUTLBITSET_OO(b, op, ...)                     op(b, __VA_ARGS__)
 #define PPUTLBITSET_9(j, a, B, c, d, e, f, g, h, i, _) 0b##a##B##c##d##e##f##g##h##i##j##u
 #define PPUTLBITSET_8(i, a, B, c, d, e, f, g, h, _, j) 0b##a##B##c##d##e##f##g##h##i##j##u
 #define PPUTLBITSET_7(h, a, B, c, d, e, f, g, _, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
@@ -3119,8 +3132,41 @@
 /// PTL_BITNOT(0b0000000000u) // 0b1111111111u
 /// PTL_BITNOT(0b0000000001u) // 0b1111111110u
 #define PTL_BITNOT(/* v: uint */...) /* -> ~v: typeof(v) */ \
-  PTL_TYPEOF(__VA_ARGS__)                                   \
-  (PTL_REST(PTL_REST(PTL_REST(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(__VA_ARGS__))))))
+  PTL_TYPEOF(__VA_ARGS__)(PPUTLBITNOT_NOT(PTL_CAT(PPUTLUTRAITS_, PTL_BINARY(__VA_ARGS__))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITNOT_NOT(...)          PPUTLBITNOT_NOT_X(__VA_ARGS__)
+#define PPUTLBITNOT_NOT_X(t, d, b, n) n
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitshift_left]
+/// -----------------------
+/// TODO
+///
+/// PTL_BITSHIFT_LEFT(0b1111111111u, 1) // 0b1111111110u
+#define PTL_BITSHIFT_LEFT(/* v: uint, i: uint */...) /* -> (v << i): typeof(v) */ \
+  PPUTLBITSHIFT_LEFT_O(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITSHIFT_LEFT_O(v, i) PTL_TYPEOF(v)(PPUTLBITSHIFT_LEFT_OO(PTL_DECIMAL(i), PTL_BITS(v)))
+
+#define PPUTLBITSHIFT_LEFT_OO(i, ...)                       PTL_CAT(PPUTLBITSHIFT_LEFT_, i)(__VA_ARGS__)
+#define PPUTLBITSHIFT_LEFT_10(a, B, c, d, e, f, g, h, i, j) 0b0000000000u
+#define PPUTLBITSHIFT_LEFT_9(a, B, c, d, e, f, g, h, i, j)  0b##j##000000000u
+#define PPUTLBITSHIFT_LEFT_8(a, B, c, d, e, f, g, h, i, j)  0b##i##j##00000000u
+#define PPUTLBITSHIFT_LEFT_7(a, B, c, d, e, f, g, h, i, j)  0b##h##i##j##0000000u
+#define PPUTLBITSHIFT_LEFT_6(a, B, c, d, e, f, g, h, i, j)  0b##g##h##i##j##000000u
+#define PPUTLBITSHIFT_LEFT_5(a, B, c, d, e, f, g, h, i, j)  0b##f##g##h##i##j##00000u
+#define PPUTLBITSHIFT_LEFT_4(a, B, c, d, e, f, g, h, i, j)  0b##e##f##g##h##i##j##0000u
+#define PPUTLBITSHIFT_LEFT_3(a, B, c, d, e, f, g, h, i, j)  0b##d##e##f##g##h##i##j##000u
+#define PPUTLBITSHIFT_LEFT_2(a, B, c, d, e, f, g, h, i, j)  0b##c##d##e##f##g##h##i##j##00u
+#define PPUTLBITSHIFT_LEFT_1(a, B, c, d, e, f, g, h, i, j)  0b##B##c##d##e##f##g##h##i##j##0u
+#define PPUTLBITSHIFT_LEFT_0(a, B, c, d, e, f, g, h, i, j)  0b##a##B##c##d##e##f##g##h##i##j##u
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [meta.id]
 /// ---------
@@ -3134,7 +3180,7 @@
 /// [meta.xct]
 /// ----------
 /// counts the number of expansions undergone after expression.
-/// uses recursion; can track any number of expansions.
+/// uses mutual recursion; can track any number of expansions.
 /// the number of commas indicates the number of expansions.
 ///
 /// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
@@ -3195,6 +3241,138 @@
 
 #define PPUTLIF_1(_, t, f) PTL_REST((PTL_TUPLE(f)), PTL_ITEMS(t))
 #define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.lt]
+/// ------------
+/// uint less-than comparison.
+///
+/// PTL_LT(0, 0) // 0
+/// PTL_LT(0, 1) // 1
+/// PTL_LT(1, 0) // 0
+/// PTL_LT(1, 1) // 0
+#define PTL_LT(/* l: uint, r: uint */...) /* -> uint{l < r} */ PPUTLLT_O(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLLT_O(l, r) PPUTLLT_OO(PTL_BITS(l), PTL_BITS(r))
+#define PPUTLLT_OO(...)                                        \
+  PTL_FIRST(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R( \
+      PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(0, 0, PPUTLLT_ZIP(__VA_ARGS__))))))))))))
+#define PPUTLLT_ZIP(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) \
+  a, k, b, l, c, m, d, n, e, o, f, p, g, q, h, r, i, s, j, t
+#define PPUTLLT_R(...)                 PPUTLLT_R_O(__VA_ARGS__)
+#define PPUTLLT_R_O(fl, fg, a, b, ...) PPUTLLT_##fl##fg##a##b, PPUTLLT_##fg##fl##b##a, __VA_ARGS__
+#define PPUTLLT_1111                   1
+#define PPUTLLT_1110                   1
+#define PPUTLLT_1101                   1
+#define PPUTLLT_1100                   1
+#define PPUTLLT_1011                   1
+#define PPUTLLT_1010                   1
+#define PPUTLLT_1001                   1
+#define PPUTLLT_1000                   1
+#define PPUTLLT_0111                   0
+#define PPUTLLT_0110                   0
+#define PPUTLLT_0101                   0
+#define PPUTLLT_0100                   0
+#define PPUTLLT_0011                   0
+#define PPUTLLT_0010                   0
+#define PPUTLLT_0001                   1
+#define PPUTLLT_0000                   0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.gt]
+/// ------------
+/// uint greater-than comparison.
+///
+/// PTL_GT(0, 0) // 0
+/// PTL_GT(0, 1) // 0
+/// PTL_GT(1, 0) // 1
+/// PTL_GT(1, 1) // 0
+#define PTL_GT(/* l: uint, r: uint */...) /* -> uint{l > r} */ PPUTLGT_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLGT_X(l, r) PTL_LT(r, l)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.le]
+/// ------------
+/// uint less-than-or-equal-to comparison.
+///
+/// PTL_LE(0, 0) // 1
+/// PTL_LE(0, 1) // 1
+/// PTL_LE(1, 0) // 0
+/// PTL_LE(1, 1) // 1
+#define PTL_LE(/* l: uint, r: uint */...) /* -> uint{l <= r} */ PTL_NOT(PTL_GT(__VA_ARGS__))
+
+/// [compare.ge]
+/// ------------
+/// uint greater-than-or-equal-to comparison.
+///
+/// PTL_GE(0, 0) // 1
+/// PTL_GE(0, 1) // 0
+/// PTL_GE(1, 0) // 1
+/// PTL_GE(1, 1) // 1
+#define PTL_GE(/* l: uint, r: uint */...) /* -> uint{l >= r} */ PTL_NOT(PTL_LT(__VA_ARGS__))
+
+/// [compare.eq]
+/// ------------
+/// uint equal-to comparison.
+///
+/// PTL_EQ(0, 0) // 1
+/// PTL_EQ(0, 1) // 0
+/// PTL_EQ(1, 0) // 0
+/// PTL_EQ(1, 1) // 1
+#define PTL_EQ(/* l: uint, r: uint */...) /* -> uint{l == r} */ \
+  PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
+
+/// [compare.ne]
+/// ------------
+/// uint not-equal-to comparison.
+///
+/// PTL_EQ(0, 0) // 1
+/// PTL_EQ(0, 1) // 0
+/// PTL_EQ(1, 0) // 0
+/// PTL_EQ(1, 1) // 1
+#define PTL_NE(/* l: uint, r: uint */...) /* -> uint{l != r} */ PTL_NOT(PTL_EQ(__VA_ARGS__))
+
+/// [compare.min]
+/// -------------
+/// uint minimum operation.
+///
+/// PTL_MIN(0, 0) // 0
+/// PTL_MIN(0, 1) // 0
+/// PTL_MIN(1, 0) // 0
+/// PTL_MIN(1, 1) // 1
+#define PTL_MIN(/* a: uint, b: uint */...) /* -> uint{a < b ? a : b} */ \
+  PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMIN_1(a, b) a
+#define PPUTLMIN_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.max]
+/// -------------
+/// uint maximum operation.
+///
+/// PTL_MAX(0, 0) // 0
+/// PTL_MAX(0, 1) // 1
+/// PTL_MAX(1, 0) // 1
+/// PTL_MAX(1, 1) // 1
+#define PTL_MAX(/* a: uint, b: uint */...) /* -> uint{a > b ? a : b} */ \
+  PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMAX_1(a, b) a
+#define PPUTLMAX_0(a, b) b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

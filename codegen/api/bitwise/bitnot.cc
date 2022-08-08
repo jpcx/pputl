@@ -45,8 +45,13 @@ decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
   tests << bitnot_(binmin) = binmax >> docs;
   tests << bitnot_(binone) = binmaxminus1 >> docs;
 
-  return pp::call(typeof(args),
-                  rest(rest(rest(cat(utl::slice(detail::uint_traits[0], -1), binary(args))))));
+  def<"not(...)"> not_ = [&](va args) {
+    return def<"x(t, d, b, n)">{[&](arg, arg, arg, arg n) {
+      return n;
+    }}(args);
+  };
+
+  return pp::call(typeof(args), not_(cat(utl::slice(detail::uint_traits[0], -1), binary(args))));
 });
 
 } // namespace api

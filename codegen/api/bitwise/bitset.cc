@@ -87,13 +87,9 @@ decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
   }
 
   return def<"o(v, i, b)">{[&](arg v, arg i, arg b) {
-    return pp::call(typeof(v),
-                    def<"o(b, op, bits)">{[&](arg b, arg op, arg bits) {
-                      return def<"x(b, op, ...)">{[&](arg b, arg op, va args) {
-                        return pp::call(op, b, args);
-                      }}(b, op, items(bits));
-                    }}(b, cat(utl::slice(_0, -1), decimal(i)),
-                       first(rest(rest(cat(utl::slice(detail::uint_traits[0], -1), binary(v)))))));
+    return pp::call(typeof(v), def<"o(b, op, ...)">{[&](arg b, arg op, va args) {
+                      return pp::call(op, b, args);
+                    }}(b, cat(utl::slice(_0, -1), decimal(i)), bits(v)));
   }}(args);
 });
 

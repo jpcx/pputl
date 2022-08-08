@@ -26,39 +26,35 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "codegen.h"
-// #include "config.h"
-// #include "control.h"
-// #include "lang.h"
-// #include "logic.h"
-// #include "math.h"
-// #include "meta.h"
-// #include "numeric.h"
-// #include "traits.h"
-// #include "type.h"
-// 
-// namespace api {
-// 
-// inline codegen::category<"compare"> compare;
-// 
-// extern codegen::def<"lt(...: l: uint, r: uint) -> uint{l < r}"> const&          lt;
-// extern codegen::def<"gt(...: l: uint, r: uint) -> uint{l > r}"> const&          gt;
-// extern codegen::def<"le(...: l: uint, r: uint) -> uint{l <= r}"> const&         le;
-// extern codegen::def<"ge(...: l: uint, r: uint) -> uint{l >= r}"> const&         ge;
-// extern codegen::def<"eq(...: l: uint, r: uint) -> uint{l == r}"> const&         eq;
-// extern codegen::def<"ne(...: l: uint, r: uint) -> uint{l != r}"> const&         ne;
-// extern codegen::def<"min(...: l: uint, r: uint) -> uint{l < r ? l : r}"> const& min;
-// extern codegen::def<"max(...: l: uint, r: uint) -> uint{l > r ? l : r}"> const& max;
-// 
-// NIFTY_DECL(lt);
-// NIFTY_DECL(gt);
-// NIFTY_DECL(le);
-// NIFTY_DECL(ge);
-// NIFTY_DECL(eq);
-// NIFTY_DECL(ne);
-// NIFTY_DECL(min);
-// NIFTY_DECL(max);
-// 
-// inline codegen::end_category<"compare"> compare_end;
-// 
-// } // namespace api
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+#include "logic.h"
+#include "traits.h"
+#include "type.h"
+
+namespace api {
+
+inline codegen::category<"compare"> compare;
+
+extern codegen::def<"lt(...: l: uint, r: uint) -> uint{l < r}"> const&          lt;
+extern codegen::def<"gt(...: l: uint, r: uint) -> uint{l > r}"> const&          gt;
+extern codegen::def<"le(...: l: uint, r: uint) -> uint{l <= r}"> const&         le;
+extern codegen::def<"ge(...: l: uint, r: uint) -> uint{l >= r}"> const&         ge;
+extern codegen::def<"eq(...: l: uint, r: uint) -> uint{l == r}"> const&         eq;
+extern codegen::def<"ne(...: l: uint, r: uint) -> uint{l != r}"> const&         ne;
+extern codegen::def<"min(...: a: uint, b: uint) -> uint{a < b ? a : b}"> const& min;
+extern codegen::def<"max(...: a: uint, b: uint) -> uint{a > b ? a : b}"> const& max;
+
+NIFTY_DECL(lt);
+NIFTY_DECL(gt);
+NIFTY_DECL(le);
+NIFTY_DECL(ge);
+NIFTY_DECL(eq);
+NIFTY_DECL(ne);
+NIFTY_DECL(min);
+NIFTY_DECL(max);
+
+inline codegen::end_category<"compare"> compare_end;
+
+} // namespace api

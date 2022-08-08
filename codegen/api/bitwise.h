@@ -37,16 +37,21 @@ namespace api {
 
 inline codegen::category<"bitwise"> bitwise;
 
+// TODO: bitzip
+
 extern codegen::def<"bitget(...: v: uint, i: uint) -> v[i]: bool"> const& bitget_;
 extern codegen::def<"bitset(...: v: uint, i: uint, b: bool) -> (v[i] = b): typeof(v)"> const&
                                                                                           bitset_;
 extern codegen::def<"bitflip(...: v: uint, i: uint) -> (v[i] = !v[i]): typeof(v)"> const& bitflip_;
 extern codegen::def<"bitnot(...: v: uint) -> ~v: typeof(v)"> const&                       bitnot_;
+extern codegen::def<"bitshift_left(...: v: uint, i: uint) -> (v << i): typeof(v)"> const&
+    bitshift_left_;
 
 NIFTY_DECL(bitget_);
 NIFTY_DECL(bitset_);
 NIFTY_DECL(bitflip_);
 NIFTY_DECL(bitnot_);
+NIFTY_DECL(bitshift_left_);
 
 inline codegen::end_category<"bitwise"> bitwise_end;
 
