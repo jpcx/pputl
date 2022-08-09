@@ -39,14 +39,16 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
   auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
-  tests << is_uint()         = "0" >> docs;
-  tests << is_uint("foo")    = "0" >> docs;
-  tests << is_uint(0)        = "0" >> docs;
-  tests << is_uint("0u")     = "1" >> docs;
-  tests << is_uint(binmin)   = "1" >> docs;
-  tests << is_uint(ibinumax) = "0" >> docs;
-  tests << is_uint("0b110u") = "0" >> docs;
-  tests << is_uint("(), ()") = "0" >> docs;
+  tests << is_uint()               = "0" >> docs;
+  tests << is_uint("foo")          = "0" >> docs;
+  tests << is_uint(0)              = "0" >> docs;
+  tests << is_uint("0u")           = "1" >> docs;
+  tests << is_uint(conf::uint_max) = "0" >> docs;
+  tests << is_uint(uint_max_s)     = "1" >> docs;
+  tests << is_uint(binmin)         = "1" >> docs;
+  tests << is_uint(ibinumax)       = "0" >> docs;
+  tests << is_uint("0b110u")       = "0" >> docs;
+  tests << is_uint("(), ()")       = "0" >> docs;
 
   def ubase2_ = def{(std::string const&)ubase2} = [&] {
     return "";

@@ -41,7 +41,7 @@ decltype(ibase2) ibase2 = NIFTY_DEF(ibase2, [&](va args) {
 
   tests << ibase2(0)                                   = binmin >> docs;
   tests << ibase2(5u)                                  = binfive >> docs;
-  tests << ibase2(conf::uint_max)                      = binmax >> docs;
+  tests << ibase2(uint_max_s)                          = binmax >> docs;
   tests << ibase2(std::to_string(conf::int_max) + "u") = binimax >> docs;
 
   def<"\\DEC(n, u)"> dec = [&](arg, arg u) {

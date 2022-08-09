@@ -25,28 +25,29 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include <span>
-// 
-// #include "bitwise.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(bitflip_) bitflip_ = NIFTY_DEF(bitflip_, [&](va args) {
-//   docs << "flips the ith bit in the uint."
-//        << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
-// 
-//   auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
-//   auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
-// 
-//   tests << bitflip_(0, conf::bit_length - 1)            = "1" >> docs;
-//   tests << bitflip_(0, conf::bit_length - 3)            = "4" >> docs;
-//   tests << bitflip_(binmaxminus1, conf::bit_length - 1) = binmax >> docs;
-// 
-//   return def<"x(v, i)">{[&](arg v, arg i) {
-//     return bitset_(v, i, not_(bitget_(v, i)));
-//   }}(args);
-// });
-// 
-// } // namespace api
+#include <span>
+
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitflip_) bitflip_ = NIFTY_DEF(bitflip_, [&](va args) {
+  docs << "flips the ith bit in the uint."
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ")."
+       << "returns the same int representation as its input (unless v becomes negative).";
+
+  auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
+  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
+
+  tests << bitflip_(0, conf::bit_length - 1)            = "1" >> docs;
+  tests << bitflip_(0, conf::bit_length - 3)            = "4" >> docs;
+  tests << bitflip_(binmaxminus1, conf::bit_length - 1) = binmax >> docs;
+
+  return def<"x(v, i)">{[&](arg v, arg i) {
+    return bitset_(v, i, not_(bitget_(v, i)));
+  }}(args);
+});
+
+} // namespace api

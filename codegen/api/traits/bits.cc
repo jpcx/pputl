@@ -33,8 +33,7 @@ using namespace codegen;
 
 decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
   docs << "extracts uint bits."
-       << "size of returned args is exactly " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+       << "returns exactly " + bit_length + " (" + std::to_string(conf::bit_length) + ") args.";
 
   auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
 

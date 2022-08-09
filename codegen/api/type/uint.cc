@@ -109,20 +109,22 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
        << "uses a 'u' suffix for both representations."
        << "see fmt.paste_uint to remove suffix before pasting."
        << ""
-       << "cast from signed reinterprets bits as unsigned.";
+       << "cast from signed reinterprets bits as unsigned."
+       << "value must be a valid signed int; implicit interpretation"
+       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+              + " is not a valid integer).";
 
   auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
   auto binmax    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
   auto binmaxpop = binmax;
   binmaxpop.pop_back();
 
-  tests << uint(0)                              = "0u" >> docs;
-  tests << uint(1)                              = "1u" >> docs;
-  tests << uint("2u")                           = "2u" >> docs;
-  tests << uint(std::to_string(conf::uint_max)) = uint_max_s >> docs;
-  tests << uint(uint_max_s)                     = uint_max_s >> docs;
-  tests << uint(binmin)                         = binmin >> docs;
-  tests << uint(binmaxpop)                      = binmax >> docs;
+  tests << uint(0)          = "0u" >> docs;
+  tests << uint(1)          = "1u" >> docs;
+  tests << uint("2u")       = "2u" >> docs;
+  tests << uint(uint_max_s) = uint_max_s >> docs;
+  tests << uint(binmin)     = binmin >> docs;
+  tests << uint(binmaxpop)  = binmax >> docs;
 
   // set up traits
   {
@@ -133,7 +135,8 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     for (; _ < (detail::uint_traits.size() / 2) - 1; ++_, ++n) {
       auto bin               = impl::binary(n);
       detail::uint_traits[_] = def{"traits_" + std::to_string(n) + "\\u"} = [&] {
-        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false), impl::log2(n),
+        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false),
+                                   std::string{n > conf::int_max ? "1" : "0"}, impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
                         ",");
       };
@@ -141,8 +144,9 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     {
       auto bin                 = impl::binary(n);
       detail::uint_traits[_++] = def{"traits_" + std::to_string(n) + "\\u"} = [&] {
-        docs << "type, signed binary, log2, sqrt, factors";
-        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false), impl::log2(n),
+        docs << "type, signed binary, signed is negative, log2, sqrt, factors";
+        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false),
+                                   std::string{n > conf::int_max ? "1" : "0"}, impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
                         ",");
       };
@@ -177,41 +181,45 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   detail::uint_trait = def{"trait(...)"} = [&](va args) {
     docs << "internal traits retrieval. uint must be valid and have a suffix.";
 
-    def<"\\TYPE(t, ...)"> type = [&](arg t, va) {
+    def<"\\TYPE(t, ...) -> BIN|DEC"> type = [&](arg t, va) {
       return t;
     };
 
-    def<"\\BIN_UDEC(t, ud, id, b, bn)">{} = [&](pack args) {
+    def<"\\BIN_UDEC(t, ud, id, b, bn) -> ubase10">{} = [&](pack args) {
       return args[1];
     };
 
-    def<"\\BIN_IDEC(t, ud, id, b, bn)">{} = [&](pack args) {
+    def<"\\BIN_IDEC(t, ud, id, b, bn) -> ibase10">{} = [&](pack args) {
       return args[2];
     };
 
-    def<"\\BIN_BITS(t, ud, id, b, bn)">{} = [&](pack args) {
+    def<"\\BIN_BITS(t, ud, id, b, bn) -> tuple<bool...>">{} = [&](pack args) {
       return args[3];
     };
 
-    def<"\\BIN_BNOT(t, ud, id, b, bn)">{} = [&](pack args) {
+    def<"\\BIN_BNOT(t, ud, id, b, bn) -> ubase2">{} = [&](pack args) {
       return args[4];
     };
 
-    def<"\\DEC_IBIN(t, ib, l2, sq, f)">{} = [&](pack args) {
+    def<"\\DEC_IBIN(t, ib, in, l2, sq, f) -> ibase2">{} = [&](pack args) {
       return args[1];
     };
 
-    def<"\\DEC_LOG2(t, ib, l2, sq, f)">{} = [&](pack args) {
+    def<"\\DEC_INEG(t, ib, in, l2, sq, f) -> bool{signed<0}">{} = [&](pack args) {
       return args[2];
     };
 
-    def<"\\DEC_SQRT(t, ib, l2, sq, f)">{} = [&](pack args) {
+    def<"\\DEC_LOG2(t, ib, in, l2, sq, f) -> ubase10{log2(n)}">{} = [&](pack args) {
       return args[3];
     };
 
-    def<"\\DEC_FACT(t, ib, l2, sq, f)">{} = [&](pack args) {
+    def<"\\DEC_SQRT(t, ib, in, l2, sq, f) -> ubase10{sqrt(n)}">{} = [&](pack args) {
+      return args[4];
+    };
+
+    def<"\\DEC_FACT(t, ib, in, l2, sq, f) -> typle<ubase10{factor}...>">{} = [&](pack args) {
       docs << "uint traits. trait name follows the " + utl::slice(type, -4) + " prefix";
-      return args[4];
+      return args[5];
     };
 
     return def<"o(uint, trait)">{[&](arg uint, arg trait) {
@@ -236,37 +244,54 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
 
   def<>            oooo_upass{};
   def<"oooo(...)"> oooo = [&](va args) {
-    docs << "fourth parentheses; checks for validity with added 'u' suffix (cast from int).";
+    docs << "fourth parentheses; attempts cast from signed.";
 
-    def<"fail"> oooo_fail = [&] {
+    def<"ichk_\\DEC(u)"> ichk_dec = [&](arg u) {
+      def<"0"> _0 = [&] {
+        return detail::uint_ipass;
+      };
+
+      def<"1">{} = [&] {
+        return detail::uint_fail;
+      };
+
+      return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
+    };
+
+    def<"ichk_\\BIN(u)">{} = [&](arg) {
+      return detail::uint_ipass;
+    };
+
+    def<"fail(u)"> oooo_fail = [&](arg) {
       return detail::uint_fail;
     };
 
-    def<"no_fail"> oooo_no_fail = [&] {
-      return detail::uint_ipass;
+    def<"no_fail(u)"> oooo_no_fail = [&](arg u) {
+      return pp::call(cat(utl::slice(ichk_dec, -3), detail::uint_trait(u, "TYPE")), u);
     };
 
     oooo_upass = def{"upass(...)"} = [&](va) {
       return detail::uint_upass;
     };
 
-    return def<"res(...)">{[&](va args) {
-      return def<"o(_, ...)">{[&](arg, va) {
+    return def<"res(u, ...)">{[&](arg u, va args) {
+      return def<"o(u, _, ...)">{[&](arg u, arg, va) {
         std::string const prefix    = utl::slice(oooo_fail, -4);
         std::string const fail_s    = utl::slice(oooo_fail, prefix.size(), 0);
         std::string const no_fail_s = utl::slice(oooo_no_fail, prefix.size(), 0);
 
-        return pp::cat(
-            prefix,
-            pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-            fail_s);
-      }}(args);
-    }}(pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
+        return pp::call(pp::cat(prefix,
+                                pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2)
+                                                                     - no_fail_s.size())),
+                                fail_s),
+                        u);
+      }}(u, args);
+    }}(pp::cat(args, "u"), pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
   };
 
   def<>           ooo_fail{};
   def<"ooo(...)"> ooo = [&](va args) {
-    docs << "third parentheses; checks for validity without added 'u' suffix.";
+    docs << "third parentheses; attempts cast from unsigned.";
 
     ooo_fail = def{"fail(...)"} = [&](va) {
       return oooo;
@@ -336,7 +361,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   };
 
   return pp::call(pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args), args),
-                  istr("[" + uint + "] invalid uint : " + args), args);
+                  istr("[" + uint + "] invalid integer : " + args), args);
 });
 
 } // namespace api

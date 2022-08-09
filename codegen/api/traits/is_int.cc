@@ -39,14 +39,15 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
   auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
-  tests << is_int()         = "0" >> docs;
-  tests << is_int("foo")    = "0" >> docs;
-  tests << is_int(0)        = "1" >> docs;
-  tests << is_int("0u")     = "0" >> docs;
-  tests << is_int(binmin)   = "0" >> docs;
-  tests << is_int(ibinumax) = "1" >> docs;
-  tests << is_int("0b110u") = "0" >> docs;
-  tests << is_int("(), ()") = "0" >> docs;
+  tests << is_int()               = "0" >> docs;
+  tests << is_int("foo")          = "0" >> docs;
+  tests << is_int(0)              = "1" >> docs;
+  tests << is_int("0u")           = "0" >> docs;
+  tests << is_int(conf::uint_max) = "0" >> docs;
+  tests << is_int(binmin)         = "0" >> docs;
+  tests << is_int(ibinumax)       = "1" >> docs;
+  tests << is_int("0b110u")       = "0" >> docs;
+  tests << is_int("(), ()")       = "0" >> docs;
 
   def ibase2_ = def{(std::string const&)ibase2} = [&] {
     return "";

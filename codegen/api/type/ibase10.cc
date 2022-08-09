@@ -43,12 +43,12 @@ decltype(ibase10) ibase10 = NIFTY_DEF(ibase10, [&](va args) {
   auto binimax    = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
   auto binmin_int = "0b1" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0"));
 
-  tests << ibase10(binmin)         = "0" >> docs;
-  tests << ibase10(binfive + "u")  = "5" >> docs;
-  tests << ibase10(binimax)        = int_max_s >> docs;
-  tests << ibase10(binmin_int)     = binmin_int >> docs;
-  tests << ibase10(conf::int_max)  = int_max_s >> docs;
-  tests << ibase10(conf::uint_max) = binmax >> docs;
+  tests << ibase10(binmin)        = "0" >> docs;
+  tests << ibase10(binfive + "u") = "5" >> docs;
+  tests << ibase10(binimax)       = int_max_s >> docs;
+  tests << ibase10(binmin_int)    = binmin_int >> docs;
+  tests << ibase10(conf::int_max) = int_max_s >> docs;
+  tests << ibase10(uint_max_s)    = binmax >> docs;
 
   def<"msb(a, ...)"> msb = [&](arg a, va) {
     return a;

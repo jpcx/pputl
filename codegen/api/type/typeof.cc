@@ -43,13 +43,14 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
   auto ubinmax  = ibinneg1 + "u";
 
-  tests << typeof("(foo)")    = tuple >> docs;
-  tests << typeof(0)          = ibase10 >> docs;
-  tests << typeof("0u")       = ubase10 >> docs;
-  tests << typeof(uint_max_s) = ubase10 >> docs;
-  tests << typeof(ibinneg1)   = ibase2 >> docs;
-  tests << typeof(ubinmax)    = ubase2 >> docs;
-  tests << typeof("foo")      = any >> docs;
+  tests << typeof("(foo)")        = tuple >> docs;
+  tests << typeof(0)              = ibase10 >> docs;
+  tests << typeof("0u")           = ubase10 >> docs;
+  tests << typeof(conf::uint_max) = any >> docs;
+  tests << typeof(uint_max_s)     = ubase10 >> docs;
+  tests << typeof(ibinneg1)       = ibase2 >> docs;
+  tests << typeof(ubinmax)        = ubase2 >> docs;
+  tests << typeof("foo")          = any >> docs;
 
   def<"ooo_any(...)"> ooo_any = [&](va) {
     return any;

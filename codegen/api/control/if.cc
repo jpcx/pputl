@@ -49,7 +49,7 @@ decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
     return rest(pp::tup(tuple(f)), items(t));
   };
 
-  return pp::call(cat(utl::slice(_0, -1), bool_(first(args))), args);
+  return pp::call(cat(utl::slice(_0, -1), bool_(ifirst(args))), args);
 });
 
 } // namespace api

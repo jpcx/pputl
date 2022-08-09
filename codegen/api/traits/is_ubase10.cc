@@ -37,12 +37,13 @@ decltype(is_ubase10) is_ubase10 = NIFTY_DEF(is_ubase10, [&](va args) {
   auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
   auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
-  tests << is_ubase10("1")        = "0" >> docs;
-  tests << is_ubase10("1u")       = "1" >> docs;
-  tests << is_ubase10(uint_max_s) = "1" >> docs;
-  tests << is_ubase10(binmin)     = "0" >> docs;
-  tests << is_ubase10(ibinneg1)   = "0" >> docs;
-  tests << is_ubase10("(), ()")   = "0" >> docs;
+  tests << is_ubase10("1")            = "0" >> docs;
+  tests << is_ubase10("1u")           = "1" >> docs;
+  tests << is_ubase10(conf::uint_max) = "0" >> docs;
+  tests << is_ubase10(uint_max_s)     = "1" >> docs;
+  tests << is_ubase10(binmin)         = "0" >> docs;
+  tests << is_ubase10(ibinneg1)       = "0" >> docs;
+  tests << is_ubase10("(), ()")       = "0" >> docs;
 
   def ubase10_ = def{(std::string const&)ubase10} = [&] {
     return "";

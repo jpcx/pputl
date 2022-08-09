@@ -43,14 +43,13 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << ""
        << "cast from unsigned reinterprets bits as signed two's complement."
        << ""
-       << "decimals larger than the int maximum that lack a 'u' suffix"
-       << "are interpreted as uints and converted to binary.";
+       << "value must be a valid signed int; implicit interpretation"
+       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+              + " is not a valid integer).";
 
-  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-  auto binmax    = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
-  auto binneg1   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
-  auto iuint_max = uint_max_s;
-  iuint_max.pop_back();
+  auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  auto binmax  = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
+  auto binneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
   tests << int_(0)             = "0" >> docs;
   tests << int_("1u")          = "1" >> docs;
@@ -58,89 +57,58 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   tests << int_(conf::int_max) = std::to_string(conf::int_max) >> docs;
   tests << int_(binmax + "u")  = binmax >> docs;
   tests << int_(uint_max_s)    = binneg1 >> docs;
-  tests << int_(iuint_max)     = binneg1 >> docs;
 
   def<"fail(e, ...)"> fail_ = [&](arg e, va) {
+    docs << "final parentheses (fail)";
     return fail(e);
   };
 
-  def<"msb(a, ...)"> msb = [&](arg a, va) {
-    return a;
-  };
+  def<"upass(e, u)"> upass = [&](arg, arg u) {
+    docs << "final parentheses (cast from unsigned)";
 
-  def<"upass(e, v)"> upass = [&](arg, arg v) {
-    docs << "final parentheses (cast from explicit unsigned)";
-
-    def<"\\DEC(v)"> dec = [&](arg v) {
-      def<"0(v, ibin, ubin)"> _0 = [&](arg, arg, arg ubin) {
+    def<"\\DEC(u)"> dec = [&](arg u) {
+      def<"0(u, ibin, ubin)"> _0 = [&](arg, arg, arg ubin) {
         return detail::uint_trait(ubin, "BIN_IDEC");
       };
 
-      def<"1(v, ibin, ubin)">{} = [&](arg, arg ibin, arg) {
+      def<"1(u, ibin, ubin)">{} = [&](arg, arg ibin, arg) {
         return ibin;
       };
 
-      return def<"o(v, ibin)">{[&](arg v, arg ibin) {
-        return def<"o(v, ibin)">{[&](arg v, arg ibin) {
-          return def<"o(v, ibin, ubin)">{[&](arg v, arg ibin, arg ubin) {
+      return def<"o(u, ibin)">{[&](arg u, arg ibin) {
+        return def<"o(u_, ibin)">{[&](arg u, arg ibin) {
+          return def<"o(u, ibin, ubin)">{[&](arg u, arg ibin, arg ubin) {
             return pp::call(
-                cat(utl::slice(_0, -1), esc(msb + " " + detail::uint_trait(ubin, "BIN_BITS"))), v,
-                ibin, ubin);
-          }}(v, ibin, pp::cat(ibin, "u"));
-        }}(v, ibin);
-      }}(v, detail::uint_trait(v, "DEC_IBIN"));
+                cat(utl::slice(_0, -1), esc(ifirst + " " + detail::uint_trait(ubin, "BIN_BITS"))),
+                u, ibin, ubin);
+          }}(u, ibin, pp::cat(ibin, "u"));
+        }}(u, ibin);
+      }}(u, detail::uint_trait(u, "DEC_IBIN"));
     };
 
-    def<"\\BIN(v)">{} = [&](arg v) {
-      return detail::uint_trait(detail::uint_trait(v, "BIN_UDEC"), "DEC_IBIN");
+    def<"\\BIN(u)">{} = [&](arg u) {
+      return detail::uint_trait(detail::uint_trait(u, "BIN_UDEC"), "DEC_IBIN");
     };
 
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(v, "TYPE")), v);
+    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), u);
   };
 
-  def<"ipass(e, v)"> ipass = [&](arg, arg v) {
-    docs << "final parentheses (cast from integer or implicit unsigned)";
+  def<"ipass(e, i)"> ipass = [&](arg, arg i) {
+    docs << "final parentheses (cast from signed)";
 
-    def<"\\DEC(v, u)"> dec = [&](arg v, arg u) {
-      def<"0(v, ibin)"> _0 = [&](arg v, arg) {
-        return v;
-      };
-
-      def<"1(v, ibin)">{} = [&](arg, arg ibin) {
-        return ibin;
-      };
-
-      return def<"o(v, ibin)">{[&](arg v, arg ibin) {
-        return def<"o(v, ibin)">{[&](arg v, arg ibin) {
-          return def<"o(v, ibin, ubin)">{[&](arg v, arg ibin, arg ubin) {
-            return pp::call(
-                cat(utl::slice(_0, -1), esc(msb + " " + detail::uint_trait(ubin, "BIN_BITS"))), v,
-                ibin);
-          }}(v, ibin, pp::cat(ibin, "u"));
-        }}(v, ibin);
-      }}(v, detail::uint_trait(u, "DEC_IBIN"));
-    };
-
-    def<"\\BIN(v, u)">{} = [&](arg v, arg) {
-      return v;
-    };
-
-    return def<"o(...)">{[&](va args) {
-      return def<"o(v, u)">{[&](arg v, arg u) {
-        return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), v, u);
-      }}(args);
-    }}(v, pp::cat(v, "u"));
+    return i;
   };
 
+  def<>            oooo_fail{};
   def<>            oooo_ipass{};
   def<"oooo(...)"> oooo = [&](va args) {
-    docs << "fourth parentheses; checks for validity without added 'u' suffix (cast from uint).";
+    docs << "fourth parentheses; attempts cast from unsigned.";
 
-    def<"fail"> oooo_fail = [&] {
+    oooo_fail = def{"fail(...)"} = [&](va) {
       return fail_;
     };
 
-    def<"no_fail"> oooo_no_fail = [&] {
+    def<"no_fail(...)"> oooo_no_fail = [&](va) {
       return upass;
     };
 
@@ -154,38 +122,55 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
         std::string const fail_s    = utl::slice(oooo_fail, prefix.size(), 0);
         std::string const no_fail_s = utl::slice(oooo_no_fail, prefix.size(), 0);
 
-        return pp::cat(
+        return pp::call(pp::cat(
             prefix,
             pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-            fail_s);
+            fail_s));
       }}(args);
     }}(pp::cat(utl::slice(detail::uint_traits[0], -2), args));
   };
 
   def<>           ooo_fail{};
   def<"ooo(...)"> ooo = [&](va args) {
-    docs << "third parentheses; checks for validity with added 'u' suffix.";
+    docs << "third parentheses; attempts cast from signed.";
 
-    ooo_fail = def{"fail(...)"} = [&](va) {
-      return oooo;
+    def<"ichk_\\DEC(u)"> ichk_dec = [&](arg u) {
+      def<"0"> _0 = [&] {
+        return oooo_ipass;
+      };
+
+      def<"1">{} = [&] {
+        return oooo_fail;
+      };
+
+      return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
     };
 
-    def<"no_fail(...)"> ooo_no_fail = [&](va) {
+    def<"ichk_\\BIN(u)">{} = [&](arg) {
       return oooo_ipass;
     };
 
-    return def<"res(...)">{[&](va args) {
-      return def<"o(_, ...)">{[&](arg, va) {
+    ooo_fail = def{"fail(u)"} = [&](arg) {
+      return oooo;
+    };
+
+    def<"no_fail(u)"> ooo_no_fail = [&](arg u) {
+      return pp::call(cat(utl::slice(ichk_dec, -3), detail::uint_trait(u, "TYPE")), u);
+    };
+
+    return def<"res(u, ...)">{[&](arg u, va args) {
+      return def<"o(u, _, ...)">{[&](arg u, arg, va) {
         std::string const prefix    = utl::slice(ooo_fail, -4);
         std::string const fail_s    = utl::slice(ooo_fail, prefix.size(), 0);
         std::string const no_fail_s = utl::slice(ooo_no_fail, prefix.size(), 0);
 
-        return pp::call(pp::cat(
-            prefix,
-            pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-            fail_s));
-      }}(args);
-    }}(pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
+        return pp::call(pp::cat(prefix,
+                                pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2)
+                                                                     - no_fail_s.size())),
+                                fail_s),
+                        u);
+      }}(u, args);
+    }}(pp::cat(args, "u"), pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
   };
 
   def<>             oo_fail{};
