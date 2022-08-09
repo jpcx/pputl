@@ -74,19 +74,18 @@
 //    generic data ranges  both input and output a variadic argument list.    //
 //    Creating a tuple is trivial but extraction costs an expansion.          //
 //                                                                            //
-//    pputl defines four types: tuple, bool, uint, and int.  Features that    //
-//    use one of these types in their parameter documentation assert their    //
-//    validity by type-casting.  Type casts expand to their original value    //
-//    if successful, else they trigger a preprocessor error.                  //
+//    pputl defines several types and uses type identification and casting    //
+//    for control flow and error reporting. See the [type] section.           //
 //                                                                            //
-//    uint values are one of two subtypes: decimal or binary.  uint may be    //
-//    constructed from either of these representations.  Binary values are    //
-//    fixed-size strings of bools with a '0b' prefix and 'u' suffix.          //
-//                                                                            //
-//    int values are binary-only due to concatenation restrictions. Signed    //
-//    values may be be used to construct uints or perform two's complement    //
-//    arithmetic.  Negative decimals  may be pasted  but cannot be parsed.    //
-//    Binary values are fixed-size bool strings with a '0b' prefix.           //
+//      - tuple   : anything in parentheses                                   //
+//      - uint    : [abstract] unsigned integer                               //
+//      - int     : [abstract] signed integer                                 //
+//      - ubase2  : [uint] unsigned base 2 integer;  e.g. 0b0000101010u       //
+//      - ubase10 : [uint] unsigned base 10 integer; e.g. 42u                 //
+//      - bool    : [int]  the literal '1' or '0'                             //
+//      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //
+//      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //
+//      - any     : anything unknown; generic data                            //
 //                                                                            //
 //    pputl errors execute  an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
@@ -245,6 +244,16 @@ ASSERT_PP_EQ((PTL_IBASE10(0b0111111111)), (511));
 ASSERT_PP_EQ((PTL_IBASE10(0b1000000000)), (0b1000000000));
 ASSERT_PP_EQ((PTL_IBASE10(511)), (511));
 ASSERT_PP_EQ((PTL_IBASE10(1023)), (0b1111111111));
+
+ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
+
+ASSERT_PP_EQ((PTL_TYPEOF((foo))), (PTL_TUPLE));
+ASSERT_PP_EQ((PTL_TYPEOF(0)), (PTL_IBASE10));
+ASSERT_PP_EQ((PTL_TYPEOF(0u)), (PTL_UBASE10));
+ASSERT_PP_EQ((PTL_TYPEOF(1023u)), (PTL_UBASE10));
+ASSERT_PP_EQ((PTL_TYPEOF(0b1111111111)), (PTL_IBASE2));
+ASSERT_PP_EQ((PTL_TYPEOF(0b1111111111u)), (PTL_UBASE2));
+ASSERT_PP_EQ((PTL_TYPEOF(foo)), (PTL_ANY));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));

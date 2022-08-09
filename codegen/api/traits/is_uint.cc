@@ -68,11 +68,11 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
     return "0";
   };
 
-  def{(std::string const&)detail::uint_pass} = [&] {
+  def{(std::string const&)detail::uint_upass} = [&] {
     return "1";
   };
 
-  return cat(utl::slice(fail, -((std::string const&)detail::uint_pass).size()),
+  return cat(utl::slice(fail, -((std::string const&)detail::uint_upass).size()),
              pp::call(pp::call(detail::uint_o(args + "."), args), args));
 });
 

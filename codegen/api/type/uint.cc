@@ -32,12 +32,12 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(uint_traits)    uint_traits    = NIFTY_DEF(uint_traits);
-decltype(uint_trait)     uint_trait     = NIFTY_DEF(uint_trait);
-decltype(uint_pass)      uint_pass      = NIFTY_DEF(uint_pass);
-decltype(uint_pass_cast) uint_pass_cast = NIFTY_DEF(uint_pass_cast);
-decltype(uint_fail)      uint_fail      = NIFTY_DEF(uint_fail);
-decltype(uint_o)         uint_o         = NIFTY_DEF(uint_o);
+decltype(uint_traits) uint_traits = NIFTY_DEF(uint_traits);
+decltype(uint_trait)  uint_trait  = NIFTY_DEF(uint_trait);
+decltype(uint_upass)  uint_upass  = NIFTY_DEF(uint_upass);
+decltype(uint_ipass)  uint_ipass  = NIFTY_DEF(uint_ipass);
+decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
+decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
 
 namespace impl {
@@ -209,7 +209,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
       return args[3];
     };
 
-    def<"\\DEC_FACT(t, b, l2, sq, f)">{} = [&](pack args) {
+    def<"\\DEC_FACT(t, ib, l2, sq, f)">{} = [&](pack args) {
       docs << "uint traits. trait name follows the " + utl::slice(type, -4) + " prefix";
       return args[4];
     };
@@ -225,16 +225,16 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return fail(e);
   };
 
-  detail::uint_pass_cast = def{"pass_cast(e, v)"} = [&](arg, arg v) {
+  detail::uint_ipass = def{"ipass(e, v)"} = [&](arg, arg v) {
     return pp::cat(v, "u");
   };
 
-  detail::uint_pass = def{"pass(e, v)"} = [&](arg, arg v) {
-    docs << "fifth parentheses; returns";
+  detail::uint_upass = def{"upass(e, v)"} = [&](arg, arg v) {
+    docs << "final parentheses; returns";
     return v;
   };
 
-  def<>            oooo_passthrough{};
+  def<>            oooo_upass{};
   def<"oooo(...)"> oooo = [&](va args) {
     docs << "fourth parentheses; checks for validity with added 'u' suffix (cast from int).";
 
@@ -243,11 +243,11 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     };
 
     def<"no_fail"> oooo_no_fail = [&] {
-      return detail::uint_pass_cast;
+      return detail::uint_ipass;
     };
 
-    oooo_passthrough = def{"passthrough(...)"} = [&](va) {
-      return detail::uint_pass;
+    oooo_upass = def{"upass(...)"} = [&](va) {
+      return detail::uint_upass;
     };
 
     return def<"res(...)">{[&](va args) {
@@ -273,7 +273,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     };
 
     def<"no_fail(...)"> ooo_no_fail = [&](va) {
-      return oooo_passthrough;
+      return oooo_upass;
     };
 
     return def<"res(...)">{[&](va args) {

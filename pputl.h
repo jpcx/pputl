@@ -76,19 +76,18 @@
 //    generic data ranges  both input and output a variadic argument list.    //
 //    Creating a tuple is trivial but extraction costs an expansion.          //
 //                                                                            //
-//    pputl defines four types: tuple, bool, uint, and int.  Features that    //
-//    use one of these types in their parameter documentation assert their    //
-//    validity by type-casting.  Type casts expand to their original value    //
-//    if successful, else they trigger a preprocessor error.                  //
+//    pputl defines several types and uses type identification and casting    //
+//    for control flow and error reporting. See the [type] section.           //
 //                                                                            //
-//    uint values are one of two subtypes: decimal or binary.  uint may be    //
-//    constructed from either of these representations.  Binary values are    //
-//    fixed-size strings of bools with a '0b' prefix and 'u' suffix.          //
-//                                                                            //
-//    int values are binary-only due to concatenation restrictions. Signed    //
-//    values may be be used to construct uints or perform two's complement    //
-//    arithmetic.  Negative decimals  may be pasted  but cannot be parsed.    //
-//    Binary values are fixed-size bool strings with a '0b' prefix.           //
+//      - tuple   : anything in parentheses                                   //
+//      - uint    : [abstract] unsigned integer                               //
+//      - int     : [abstract] signed integer                                 //
+//      - ubase2  : [uint] unsigned base 2 integer;  e.g. 0b0000101010u       //
+//      - ubase10 : [uint] unsigned base 10 integer; e.g. 42u                 //
+//      - bool    : [int]  the literal '1' or '0'                             //
+//      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //
+//      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //
+//      - any     : anything unknown; generic data                            //
 //                                                                            //
 //    pputl errors execute  an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
@@ -366,21 +365,21 @@
 #define PPUTLUINT_ooo(...)          PPUTLUINT_ooo_RES(PPUTLUTRAITS_##__VA_ARGS__)
 #define PPUTLUINT_ooo_RES(...)      PPUTLUINT_ooo_RES_o(__VA_ARGS__)
 #define PPUTLUINT_ooo_RES_o(_, ...) PPUTLUINT_ooo_##__VA_OPT__(NO_)##FAIL()
-#define PPUTLUINT_ooo_NO_FAIL(...)  PPUTLUINT_oooo_PASSTHROUGH
+#define PPUTLUINT_ooo_NO_FAIL(...)  PPUTLUINT_oooo_UPASS
 #define PPUTLUINT_ooo_FAIL(...)     PPUTLUINT_oooo
 
 /// fourth parentheses; checks for validity with added 'u' suffix (cast from int).
-#define PPUTLUINT_oooo(...)             PPUTLUINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__##u)
-#define PPUTLUINT_oooo_RES(...)         PPUTLUINT_oooo_RES_o(__VA_ARGS__)
-#define PPUTLUINT_oooo_RES_o(_, ...)    PPUTLUINT_oooo_##__VA_OPT__(NO_)##FAIL
-#define PPUTLUINT_oooo_PASSTHROUGH(...) PPUTLUINT_PASS
-#define PPUTLUINT_oooo_NO_FAIL          PPUTLUINT_PASS_CAST
-#define PPUTLUINT_oooo_FAIL             PPUTLUINT_FAIL
+#define PPUTLUINT_oooo(...)          PPUTLUINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__##u)
+#define PPUTLUINT_oooo_RES(...)      PPUTLUINT_oooo_RES_o(__VA_ARGS__)
+#define PPUTLUINT_oooo_RES_o(_, ...) PPUTLUINT_oooo_##__VA_OPT__(NO_)##FAIL
+#define PPUTLUINT_oooo_UPASS(...)    PPUTLUINT_UPASS
+#define PPUTLUINT_oooo_NO_FAIL       PPUTLUINT_IPASS
+#define PPUTLUINT_oooo_FAIL          PPUTLUINT_FAIL
 
-/// fifth parentheses; returns
-#define PPUTLUINT_PASS(e, v)      v
-#define PPUTLUINT_PASS_CAST(e, v) v##u
-#define PPUTLUINT_FAIL(e, ...)    PTL_FAIL(e)
+/// final parentheses; returns
+#define PPUTLUINT_UPASS(e, v)  v
+#define PPUTLUINT_IPASS(e, v)  v##u
+#define PPUTLUINT_FAIL(e, ...) PTL_FAIL(e)
 
 /// internal traits retrieval. uint must be valid and have a suffix.
 #define PPUTLUINT_TRAIT(...)           PPUTLUINT_TRAIT_o(__VA_ARGS__)
@@ -388,7 +387,7 @@
 #define PPUTLUINT_TRAIT_oo(trait, ...) PPUTLUINT_TRAIT_##trait(__VA_ARGS__)
 
 /// uint traits. trait name follows the PPUTLUINT_TRAIT_ prefix
-#define PPUTLUINT_TRAIT_DEC_FACT(t, b, l2, sq, f)  f
+#define PPUTLUINT_TRAIT_DEC_FACT(t, ib, l2, sq, f) f
 #define PPUTLUINT_TRAIT_DEC_SQRT(t, ib, l2, sq, f) sq
 #define PPUTLUINT_TRAIT_DEC_LOG2(t, ib, l2, sq, f) l2
 #define PPUTLUINT_TRAIT_DEC_IBIN(t, ib, l2, sq, f) ib
@@ -2502,41 +2501,42 @@
 #define PPUTLINT_ooo(...)          PPUTLINT_ooo_RES(PPUTLUTRAITS_##__VA_ARGS__##u)
 #define PPUTLINT_ooo_RES(...)      PPUTLINT_ooo_RES_o(__VA_ARGS__)
 #define PPUTLINT_ooo_RES_o(_, ...) PPUTLINT_ooo_##__VA_OPT__(NO_)##FAIL()
-#define PPUTLINT_ooo_NO_FAIL(...)  PPUTLINT_oooo_PASSTHROUGH
+#define PPUTLINT_ooo_NO_FAIL(...)  PPUTLINT_oooo_IPASS
 #define PPUTLINT_ooo_FAIL(...)     PPUTLINT_oooo
 
 /// fourth parentheses; checks for validity without added 'u' suffix (cast from uint).
-#define PPUTLINT_oooo(...)             PPUTLINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__)
-#define PPUTLINT_oooo_RES(...)         PPUTLINT_oooo_RES_o(__VA_ARGS__)
-#define PPUTLINT_oooo_RES_o(_, ...)    PPUTLINT_oooo_##__VA_OPT__(NO_)##FAIL
-#define PPUTLINT_oooo_PASSTHROUGH(...) PPUTLINT_PASS
-#define PPUTLINT_oooo_NO_FAIL          PPUTLINT_PASS_CAST
-#define PPUTLINT_oooo_FAIL             PPUTLINT_FAIL
+#define PPUTLINT_oooo(...)          PPUTLINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__)
+#define PPUTLINT_oooo_RES(...)      PPUTLINT_oooo_RES_o(__VA_ARGS__)
+#define PPUTLINT_oooo_RES_o(_, ...) PPUTLINT_oooo_##__VA_OPT__(NO_)##FAIL
+#define PPUTLINT_oooo_IPASS(...)    PPUTLINT_IPASS
+#define PPUTLINT_oooo_NO_FAIL       PPUTLINT_UPASS
+#define PPUTLINT_oooo_FAIL          PPUTLINT_FAIL
 
-/// fifth parentheses; returns
-#define PPUTLINT_PASS(e, v)           PPUTLINT_PASS_o(v, v##u)
-#define PPUTLINT_PASS_o(...)          PPUTLINT_PASS_oo(__VA_ARGS__)
-#define PPUTLINT_PASS_oo(v, u)        PTL_CAT(PPUTLINT_PASS_, PPUTLUINT_TRAIT(u, TYPE))(v, u)
-#define PPUTLINT_PASS_BIN(v, u)       v
-#define PPUTLINT_PASS_DEC(v, u)       PPUTLINT_PASS_DEC_o(v, PPUTLUINT_TRAIT(u, DEC_IBIN))
-#define PPUTLINT_PASS_DEC_o(v, ibin)  PPUTLINT_PASS_DEC_oo(v, ibin)
-#define PPUTLINT_PASS_DEC_oo(v, ibin) PPUTLINT_PASS_DEC_ooo(v, ibin, ibin##u)
-#define PPUTLINT_PASS_DEC_ooo(v, ibin, ubin) \
-  PTL_CAT(PPUTLINT_PASS_DEC_, PTL_ESC(PPUTLINT_MSB PPUTLUINT_TRAIT(ubin, BIN_BITS)))(v, ibin)
-#define PPUTLINT_PASS_DEC_1(v, ibin)       ibin
-#define PPUTLINT_PASS_DEC_0(v, ibin)       v
-#define PPUTLINT_PASS_CAST(e, v)           PTL_CAT(PPUTLINT_PASS_CAST_, PPUTLUINT_TRAIT(v, TYPE))(v)
-#define PPUTLINT_PASS_CAST_BIN(v)          PPUTLUINT_TRAIT(PPUTLUINT_TRAIT(v, BIN_UDEC), DEC_IBIN)
-#define PPUTLINT_PASS_CAST_DEC(v)          PPUTLINT_PASS_CAST_DEC_o(v, PPUTLUINT_TRAIT(v, DEC_IBIN))
-#define PPUTLINT_PASS_CAST_DEC_o(v, ibin)  PPUTLINT_PASS_CAST_DEC_oo(v, ibin)
-#define PPUTLINT_PASS_CAST_DEC_oo(v, ibin) PPUTLINT_PASS_CAST_DEC_ooo(v, ibin, ibin##u)
-#define PPUTLINT_PASS_CAST_DEC_ooo(v, ibin, ubin)                                         \
-  PTL_CAT(PPUTLINT_PASS_CAST_DEC_, PTL_ESC(PPUTLINT_MSB PPUTLUINT_TRAIT(ubin, BIN_BITS))) \
-  (v, ibin, ubin)
-#define PPUTLINT_PASS_CAST_DEC_1(v, ibin, ubin) ibin
-#define PPUTLINT_PASS_CAST_DEC_0(v, ibin, ubin) PPUTLUINT_TRAIT(ubin, BIN_IDEC)
-#define PPUTLINT_MSB(a, ...)                    a
-#define PPUTLINT_FAIL(e, ...)                   PTL_FAIL(e)
+/// final parentheses (cast from integer or implicit unsigned)
+#define PPUTLINT_IPASS(e, v)           PPUTLINT_IPASS_o(v, v##u)
+#define PPUTLINT_IPASS_o(...)          PPUTLINT_IPASS_oo(__VA_ARGS__)
+#define PPUTLINT_IPASS_oo(v, u)        PTL_CAT(PPUTLINT_IPASS_, PPUTLUINT_TRAIT(u, TYPE))(v, u)
+#define PPUTLINT_IPASS_BIN(v, u)       v
+#define PPUTLINT_IPASS_DEC(v, u)       PPUTLINT_IPASS_DEC_o(v, PPUTLUINT_TRAIT(u, DEC_IBIN))
+#define PPUTLINT_IPASS_DEC_o(v, ibin)  PPUTLINT_IPASS_DEC_oo(v, ibin)
+#define PPUTLINT_IPASS_DEC_oo(v, ibin) PPUTLINT_IPASS_DEC_ooo(v, ibin, ibin##u)
+#define PPUTLINT_IPASS_DEC_ooo(v, ibin, ubin) \
+  PTL_CAT(PPUTLINT_IPASS_DEC_, PTL_ESC(PPUTLINT_MSB PPUTLUINT_TRAIT(ubin, BIN_BITS)))(v, ibin)
+#define PPUTLINT_IPASS_DEC_1(v, ibin) ibin
+#define PPUTLINT_IPASS_DEC_0(v, ibin) v
+
+/// final parentheses (cast from explicit unsigned)
+#define PPUTLINT_UPASS(e, v)           PTL_CAT(PPUTLINT_UPASS_, PPUTLUINT_TRAIT(v, TYPE))(v)
+#define PPUTLINT_UPASS_BIN(v)          PPUTLUINT_TRAIT(PPUTLUINT_TRAIT(v, BIN_UDEC), DEC_IBIN)
+#define PPUTLINT_UPASS_DEC(v)          PPUTLINT_UPASS_DEC_o(v, PPUTLUINT_TRAIT(v, DEC_IBIN))
+#define PPUTLINT_UPASS_DEC_o(v, ibin)  PPUTLINT_UPASS_DEC_oo(v, ibin)
+#define PPUTLINT_UPASS_DEC_oo(v, ibin) PPUTLINT_UPASS_DEC_ooo(v, ibin, ibin##u)
+#define PPUTLINT_UPASS_DEC_ooo(v, ibin, ubin) \
+  PTL_CAT(PPUTLINT_UPASS_DEC_, PTL_ESC(PPUTLINT_MSB PPUTLUINT_TRAIT(ubin, BIN_BITS)))(v, ibin, ubin)
+#define PPUTLINT_UPASS_DEC_1(v, ibin, ubin) ibin
+#define PPUTLINT_UPASS_DEC_0(v, ibin, ubin) PPUTLUINT_TRAIT(ubin, BIN_IDEC)
+#define PPUTLINT_MSB(a, ...)                a
+#define PPUTLINT_FAIL(e, ...)               PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2624,6 +2624,59 @@
 #define PPUTLIBASE10_BIN_0(n, u) PPUTLUINT_TRAIT(u, BIN_IDEC)
 #define PPUTLIBASE10_DEC(n, u)   n
 #define PPUTLIBASE10_MSB(a, ...) a
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.any]
+/// ----------
+/// any type (generic data). returns args.
+///
+/// PTL_ANY(foo) // foo
+#define PTL_ANY(/* v: any */...) /* -> any{v} */ __VA_ARGS__
+
+/// [type.typeof]
+/// -------------
+/// detects the value type. must be compatible with the ## operator.
+/// literal 0 and 1 are considered ibase10 rather than bool.
+/// defaults to any if a type could not be determined.
+///
+/// returns one of:
+/// - PTL_TUPLE
+/// - PTL_UBASE2
+/// - PTL_IBASE2
+/// - PTL_UBASE10
+/// - PTL_IBASE10
+/// - PTL_ANY
+///
+/// PTL_TYPEOF((foo))         // PTL_TUPLE
+/// PTL_TYPEOF(0)             // PTL_IBASE10
+/// PTL_TYPEOF(0u)            // PTL_UBASE10
+/// PTL_TYPEOF(1023u)         // PTL_UBASE10
+/// PTL_TYPEOF(0b1111111111)  // PTL_IBASE2
+/// PTL_TYPEOF(0b1111111111u) // PTL_UBASE2
+/// PTL_TYPEOF(foo)           // PTL_ANY
+#define PTL_TYPEOF(/* v: tuple|uint|int|any */...) /* -> <ctor> */ \
+  PPUTLTYPEOF_o(PTL_EAT __VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLTYPEOF_o(...) PPUTLTYPEOF_oo##__VA_OPT__(_NO)##_TUPLE
+#define PPUTLTYPEOF_oo_NO_TUPLE(...) \
+  PTL_CAT(PPUTLTYPEOF_oo_NO_TUPLE_,  \
+          PPUTLUINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__))
+#define PPUTLTYPEOF_oo_NO_TUPLE_PPUTLUINT_IPASS PPUTLTYPEOF_ooo_INT
+#define PPUTLTYPEOF_oo_NO_TUPLE_PPUTLUINT_UPASS PPUTLTYPEOF_ooo_UINT
+#define PPUTLTYPEOF_oo_NO_TUPLE_PPUTLUINT_FAIL  PPUTLTYPEOF_ooo_ANY
+#define PPUTLTYPEOF_oo_TUPLE(...)               PPUTLTYPEOF_ooo_TUPLE
+#define PPUTLTYPEOF_ooo_INT(i) \
+  PTL_CAT(PPUTLTYPEOF_ooo_INT_, PPUTLUINT_TRAIT(PTL_CAT(PTL_INT(i), u), TYPE))
+#define PPUTLTYPEOF_ooo_INT_DEC    PTL_IBASE10
+#define PPUTLTYPEOF_ooo_INT_BIN    PTL_IBASE2
+#define PPUTLTYPEOF_ooo_UINT(u)    PTL_CAT(PPUTLTYPEOF_ooo_UINT_, PPUTLUINT_TRAIT(PTL_UINT(u), TYPE))
+#define PPUTLTYPEOF_ooo_UINT_DEC   PTL_UBASE10
+#define PPUTLTYPEOF_ooo_UINT_BIN   PTL_UBASE2
+#define PPUTLTYPEOF_ooo_TUPLE(...) PTL_TUPLE
+#define PPUTLTYPEOF_ooo_ANY(...)   PTL_ANY
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3014,12 +3067,12 @@
 /// PTL_IS_UINT(0b1111111111)  // 0
 /// PTL_IS_UINT(0b110u)        // 0
 #define PTL_IS_UINT(...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UINT_, PPUTLINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
+  PTL_CAT(PPUTLIS_UINT, PPUTLUINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_UINT_PPUTLUINT_PASS 1
-#define PPUTLIS_UINT_PPUTLUINT_FAIL 0
+#define PPUTLIS_UINT_PPUTLUINT_UPASS 1
+#define PPUTLIS_UINT_PPUTLUINT_FAIL  0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

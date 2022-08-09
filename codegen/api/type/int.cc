@@ -68,7 +68,9 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     return a;
   };
 
-  def<"pass_cast(e, v)"> pass_cast = [&](arg, arg v) {
+  def<"upass(e, v)"> upass = [&](arg, arg v) {
+    docs << "final parentheses (cast from explicit unsigned)";
+
     def<"\\DEC(v)"> dec = [&](arg v) {
       def<"0(v, ibin, ubin)"> _0 = [&](arg, arg, arg ubin) {
         return detail::uint_trait(ubin, "BIN_IDEC");
@@ -96,8 +98,8 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(v, "TYPE")), v);
   };
 
-  def<"pass(e, v)"> pass = [&](arg, arg v) {
-    docs << "fifth parentheses; returns";
+  def<"ipass(e, v)"> ipass = [&](arg, arg v) {
+    docs << "final parentheses (cast from integer or implicit unsigned)";
 
     def<"\\DEC(v, u)"> dec = [&](arg v, arg u) {
       def<"0(v, ibin)"> _0 = [&](arg v, arg) {
@@ -130,7 +132,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     }}(v, pp::cat(v, "u"));
   };
 
-  def<>            oooo_passthrough{};
+  def<>            oooo_ipass{};
   def<"oooo(...)"> oooo = [&](va args) {
     docs << "fourth parentheses; checks for validity without added 'u' suffix (cast from uint).";
 
@@ -139,11 +141,11 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     };
 
     def<"no_fail"> oooo_no_fail = [&] {
-      return pass_cast;
+      return upass;
     };
 
-    oooo_passthrough = def{"passthrough(...)"} = [&](va) {
-      return pass;
+    oooo_ipass = def{"ipass(...)"} = [&](va) {
+      return ipass;
     };
 
     return def<"res(...)">{[&](va args) {
@@ -169,7 +171,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     };
 
     def<"no_fail(...)"> ooo_no_fail = [&](va) {
-      return oooo_passthrough;
+      return oooo_ipass;
     };
 
     return def<"res(...)">{[&](va args) {
@@ -210,7 +212,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     }}(eat + " " + _);
   };
 
-  detail::uint_o = def{"o(_, ...)"} = [&](arg, va) {
+  def<"o(_, ...)"> o = [&](arg, va) {
     docs << "first parentheses; asserts only one arg.";
 
     def<"pass(...)"> pass = [&](va) {
@@ -231,7 +233,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
         pass_s));
   };
 
-  return pp::call(pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args), args),
+  return pp::call(pp::call(pp::call(pp::call(o(args + "."), args), args), args),
                   istr("[" + int_ + "] invalid int : " + args), args);
 });
 
