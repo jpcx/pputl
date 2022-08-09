@@ -239,9 +239,7 @@ ASSERT_PP_EQ((PTL_UBASE10(0b1000000000)), (512u));
 ASSERT_PP_EQ((PTL_IBASE10(0b0000000000)), (0));
 ASSERT_PP_EQ((PTL_IBASE10(0b0000000101u)), (5));
 ASSERT_PP_EQ((PTL_IBASE10(0b0111111111)), (511));
-ASSERT_PP_EQ((PTL_IBASE10(0b1000000000)), (0b1000000000));
 ASSERT_PP_EQ((PTL_IBASE10(511)), (511));
-ASSERT_PP_EQ((PTL_IBASE10(1023u)), (0b1111111111));
 
 ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
 
@@ -438,48 +436,6 @@ ASSERT_PP_EQ((PTL_BITS(0)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 ASSERT_PP_EQ((PTL_BITS(1)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 1));
 ASSERT_PP_EQ((PTL_BITS(0b1111111110u)), (1, 1, 1, 1, 1, 1, 1, 1, 1, 0));
 
-ASSERT_PP_EQ((PTL_BITGET(2, 7)), (0));
-ASSERT_PP_EQ((PTL_BITGET(2, 8)), (1));
-ASSERT_PP_EQ((PTL_BITGET(2, 9)), (0));
-ASSERT_PP_EQ((PTL_BITGET(0b1111111110u, 9)), (0));
-
-ASSERT_PP_EQ((PTL_BITSET(0, 8, 1)), (2));
-ASSERT_PP_EQ((PTL_BITSET(1, 7, 1)), (5));
-ASSERT_PP_EQ((PTL_BITSET(0b1111111111u, 9, 0)), (0b1111111110u));
-
-ASSERT_PP_EQ((PTL_BITFLIP(0, 9)), (1));
-ASSERT_PP_EQ((PTL_BITFLIP(0, 7)), (4));
-ASSERT_PP_EQ((PTL_BITFLIP(0b1111111110u, 9)), (0b1111111111u));
-
-ASSERT_PP_EQ((PTL_BITNOT(0u)), (1023u));
-ASSERT_PP_EQ((PTL_BITNOT(1u)), (1022u));
-ASSERT_PP_EQ((PTL_BITNOT(0)), (0b1111111111));
-ASSERT_PP_EQ((PTL_BITNOT(1)), (0b1111111110));
-ASSERT_PP_EQ((PTL_BITNOT(0b0000000000u)), (0b1111111111u));
-ASSERT_PP_EQ((PTL_BITNOT(0b0000000001u)), (0b1111111110u));
-
-ASSERT_PP_EQ((PTL_ID()), ());
-ASSERT_PP_EQ((PTL_ID(foo)), (foo));
-ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
-
-ASSERT_PP_EQ((PTL_STR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
-
-ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_XCT)), (0u));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_XCT))), (1u));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))), (2u));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), (3u));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, ))), (1023u));
-
-ASSERT_PP_EQ((PTL_IF(1, (t), ())), (t));
-ASSERT_PP_EQ((PTL_IF(0, (t), ())), ());
-ASSERT_PP_EQ((PTL_IF(1, (t), (f))), (t));
-ASSERT_PP_EQ((PTL_IF(0, (t), (f))), (f));
-ASSERT_PP_EQ((PTL_IF(1, (a), (b, c))), (a));
-ASSERT_PP_EQ((PTL_IF(0, (a), (b, c))), (b, c));
-
 ASSERT_PP_EQ((PTL_LT(0, 0)), (0));
 ASSERT_PP_EQ((PTL_LT(0, 1)), (1));
 ASSERT_PP_EQ((PTL_LT(7u, 8u)), (1));
@@ -623,4 +579,48 @@ ASSERT_PP_EQ((PTL_MAX(511u, 512u)), (512u));
 ASSERT_PP_EQ((PTL_MAX(255, 254)), (255));
 ASSERT_PP_EQ((PTL_MAX(255, 255)), (255));
 ASSERT_PP_EQ((PTL_MAX(255, 256)), (256));
+
+ASSERT_PP_EQ((PTL_BITGET(2, 7)), (0));
+ASSERT_PP_EQ((PTL_BITGET(2, 8)), (1));
+ASSERT_PP_EQ((PTL_BITGET(2, 9)), (0));
+ASSERT_PP_EQ((PTL_BITGET(0b1111111110u, 9)), (0));
+
+ASSERT_PP_EQ((PTL_BITSET(0, 8, 1)), (2));
+ASSERT_PP_EQ((PTL_BITSET(1, 7, 1)), (5));
+ASSERT_PP_EQ((PTL_BITSET(0b1111111111u, 9, 0)), (0b1111111110u));
+
+ASSERT_PP_EQ((PTL_BITFLIP(0, 9)), (1));
+ASSERT_PP_EQ((PTL_BITFLIP(0, 7)), (4));
+ASSERT_PP_EQ((PTL_BITFLIP(0b1111111110u, 9)), (0b1111111111u));
+
+ASSERT_PP_EQ((PTL_BITNOT(0u)), (1023u));
+ASSERT_PP_EQ((PTL_BITNOT(1u)), (1022u));
+ASSERT_PP_EQ((PTL_BITNOT(0)), (0b1111111111));
+ASSERT_PP_EQ((PTL_BITNOT(1)), (0b1111111110));
+ASSERT_PP_EQ((PTL_BITNOT(0b0000000000u)), (0b1111111111u));
+ASSERT_PP_EQ((PTL_BITNOT(0b0000000001u)), (0b1111111110u));
+
+ASSERT_PP_EQ((PTL_BITSHIFT_LEFT(0b1111111111u, 1)), (0b1111111110u));
+
+ASSERT_PP_EQ((PTL_ID()), ());
+ASSERT_PP_EQ((PTL_ID(foo)), (foo));
+ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
+
+ASSERT_PP_EQ((PTL_STR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
+
+ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_XCT)), (0u));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_XCT))), (1u));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))), (2u));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), (3u));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, ))), (1023u));
+
+ASSERT_PP_EQ((PTL_IF(1, (t), ())), (t));
+ASSERT_PP_EQ((PTL_IF(0, (t), ())), ());
+ASSERT_PP_EQ((PTL_IF(1, (t), (f))), (t));
+ASSERT_PP_EQ((PTL_IF(0, (t), (f))), (f));
+ASSERT_PP_EQ((PTL_IF(1, (a), (b, c))), (a));
+ASSERT_PP_EQ((PTL_IF(0, (a), (b, c))), (b, c));
 // clang-format on

@@ -2615,29 +2615,29 @@
 
 /// [type.ibase10]
 /// --------------
-/// [positive values only] casts to the signed int decimal subtype.
+/// casts to the signed int decimal subtype.
+/// describes positive values only. fails on negative ints.
 ///
-/// value will remain as binary if negative.
 /// use fmt.paste_int to get a negative decimal.
 ///
 /// PTL_IBASE10(0b0000000000)  // 0
 /// PTL_IBASE10(0b0000000101u) // 5
 /// PTL_IBASE10(0b0111111111)  // 511
-/// PTL_IBASE10(0b1000000000)  // 0b1000000000
 /// PTL_IBASE10(511)           // 511
-/// PTL_IBASE10(1023u)         // 0b1111111111
-#define PTL_IBASE10(/* n: uint|int */...) /* -> ibase10{n} */ PPUTLIBASE10_o(PTL_INT(__VA_ARGS__))
+#define PTL_IBASE10(/* n: uint|int */...) /* -> ibase10{n} */               \
+  PPUTLIBASE10_o(PTL_ISTR([PTL_IBASE10] cannot represent negative in base10 \
+                          : __VA_ARGS__),                                   \
+                 PTL_INT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIBASE10_o(n)     PPUTLIBASE10_oo(n, PTL_CAT(n, u))
-#define PPUTLIBASE10_oo(n, u) PTL_CAT(PPUTLIBASE10_, PPUTLUINT_TRAIT(u, TYPE))(n, u)
-#define PPUTLIBASE10_BIN(n, u) \
-  PTL_CAT(PPUTLIBASE10_BIN_, PTL_ESC(PPUTLIBASE10_MSB PPUTLUINT_TRAIT(u, BIN_BITS)))(n, u)
-#define PPUTLIBASE10_BIN_1(n, u) n
-#define PPUTLIBASE10_BIN_0(n, u) PPUTLUINT_TRAIT(u, BIN_IDEC)
-#define PPUTLIBASE10_DEC(n, u)   n
-#define PPUTLIBASE10_MSB(a, ...) a
+#define PPUTLIBASE10_o(e, n)     PPUTLIBASE10_oo(e, n, PTL_CAT(n, u))
+#define PPUTLIBASE10_oo(e, n, u) PTL_CAT(PPUTLIBASE10_, PPUTLUINT_TRAIT(u, TYPE))(e, n, u)
+#define PPUTLIBASE10_BIN(e, n, u) \
+  PTL_CAT(PPUTLIBASE10_BIN_, PTL_ESC(PTL_IFIRST PPUTLUINT_TRAIT(u, BIN_BITS)))(e, n, u)
+#define PPUTLIBASE10_BIN_1(e, n, u) PTL_FAIL(e)
+#define PPUTLIBASE10_BIN_0(e, n, u) PPUTLUINT_TRAIT(u, BIN_IDEC)
+#define PPUTLIBASE10_DEC(e, n, u)   n
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3266,172 +3266,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bitget]
-/// ----------------
-/// gets the ith bit from the uint.
-/// i must be less than PTL_BIT_LENGTH (10).
-///
-/// PTL_BITGET(2, 7)             // 0
-/// PTL_BITGET(2, 8)             // 1
-/// PTL_BITGET(2, 9)             // 0
-/// PTL_BITGET(0b1111111110u, 9) // 0
-#define PTL_BITGET(/* v: uint|int, i: uint */...) /* -> v[i]: bool */ PPUTLBITGET_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITGET_o(v, i)                         PPUTLBITGET_oo(PTL_IBASE10(i), PTL_BITS(v))
-#define PPUTLBITGET_oo(i, ...)                      PTL_CAT(PPUTLBITGET_, i)(__VA_ARGS__)
-#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j) j
-#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j) i
-#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j) h
-#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j) g
-#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j) f
-#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j) e
-#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j) d
-#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j) c
-#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j) b
-#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j) a
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitset]
-/// ----------------
-/// sets the ith bit in the uint to b.
-/// i must be less than PTL_BIT_LENGTH (10).
-/// returns the same int representation as its input (unless v becomes negative).
-///
-/// PTL_BITSET(0, 8, 1)             // 2
-/// PTL_BITSET(1, 7, 1)             // 5
-/// PTL_BITSET(0b1111111111u, 9, 0) // 0b1111111110u
-#define PTL_BITSET(/* v: uint|int, i: uint, b: bool */...) /* -> (v[i] = b): typeof(v) */ \
-  PPUTLBITSET_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITSET_o(v, i, b) \
-  PTL_TYPEOF(v)(PPUTLBITSET_oo(b, PTL_CAT(PPUTLBITSET_, PTL_IBASE10(i)), PTL_BITS(v)))
-#define PPUTLBITSET_oo(b, op, ...)                     op(b, __VA_ARGS__)
-#define PPUTLBITSET_9(j, a, B, c, d, e, f, g, h, i, _) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_8(i, a, B, c, d, e, f, g, h, _, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_7(h, a, B, c, d, e, f, g, _, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_6(g, a, B, c, d, e, f, _, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_5(f, a, B, c, d, e, _, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_4(e, a, B, c, d, _, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_3(d, a, B, c, _, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_2(c, a, B, _, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_1(B, a, _, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-#define PPUTLBITSET_0(a, _, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitflip]
-/// -----------------
-/// flips the ith bit in the uint.
-/// i must be less than PTL_BIT_LENGTH (10).
-/// returns the same int representation as its input (unless v becomes negative).
-///
-/// PTL_BITFLIP(0, 9)             // 1
-/// PTL_BITFLIP(0, 7)             // 4
-/// PTL_BITFLIP(0b1111111110u, 9) // 0b1111111111u
-#define PTL_BITFLIP(/* v: uint|int, i: uint */...) /* -> (v[i] = !v[i]): typeof(v) */ \
-  PPUTLBITFLIP_X(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLBITFLIP_X(v, i) PTL_BITSET(v, i, PTL_NOT(PTL_BITGET(v, i)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [bitwise.bitnot]
-/// ----------------
-/// bitwise NOT.
-/// returns the same int representation as its input (unless v becomes negative).
-///
-/// PTL_BITNOT(0u)            // 1023u
-/// PTL_BITNOT(1u)            // 1022u
-/// PTL_BITNOT(0)             // 0b1111111111
-/// PTL_BITNOT(1)             // 0b1111111110
-/// PTL_BITNOT(0b0000000000u) // 0b1111111111u
-/// PTL_BITNOT(0b0000000001u) // 0b1111111110u
-#define PTL_BITNOT(/* v: uint|int */...) /* -> ~v: typeof(v) */ \
-  PTL_TYPEOF(__VA_ARGS__)(PPUTLUINT_TRAIT(PTL_UBASE2(__VA_ARGS__), BIN_BNOT))
-
-/// [meta.id]
-/// ---------
-/// identity function. performs one expansion.
-///
-/// PTL_ID()        // <nothing>
-/// PTL_ID(foo)     // foo
-/// PTL_ID(a, b, c) // a, b, c
-#define PTL_ID(/* v: any... */...) /* -> ...v */ __VA_ARGS__
-
-/// [meta.xct]
-/// ----------
-/// counts the number of expansions undergone after expression.
-/// uses mutual recursion; can track any number of expansions.
-/// the number of commas indicates the number of expansions.
-///
-/// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
-/// PTL_STR(PTL_ESC(PTL_XCT))                   // "PPUTLXCT_B ( ,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
-#define PTL_XCT /* -> xct */ PPUTLXCT_A PTL_LP() /**/, PTL_RP()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
-#define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [meta.xct_size]
-/// ---------------
-/// measures an xct expr to determine the number of expansions it experienced.
-/// ignores the expansion required to read the result.
-///
-/// fails if xct is not a valid xct expression.
-/// PTL_SIZE will fail if the xct expression is too large.
-///
-/// PTL_XCT_SIZE(PTL_XCT)                            // 0u
-/// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1u
-/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))          // 2u
-/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // 3u
-#define PTL_XCT_SIZE(/* xct */...) /* -> uint */                                    \
-  PTL_CAT(PPUTLXCT_SIZE_, PTL_IS_NONE(PTL_CAT(PPUTLXCT_SIZE_DETECT_, __VA_ARGS__))) \
-  (PTL_ISTR([PTL_XCT_SIZE] invalid xct expr : __VA_ARGS__), __VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLXCT_SIZE_1(err, ...)         PPUTLXCT_SIZE_##__VA_ARGS__
-#define PPUTLXCT_SIZE_0(err, ...)         PTL_FAIL(err)
-#define PPUTLXCT_SIZE_PPUTLXCT_B(__, ...) PPUTLXCT_SIZE_RES(__VA_ARGS__ _)
-#define PPUTLXCT_SIZE_PPUTLXCT_A(__, ...) PPUTLXCT_SIZE_RES(__VA_ARGS__ _)
-#define PPUTLXCT_SIZE_RES(_, ...)         PTL_SIZE(__VA_ARGS__)
-#define PPUTLXCT_SIZE_DETECT_PPUTLXCT_B(...)
-#define PPUTLXCT_SIZE_DETECT_PPUTLXCT_A(...)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [control.if]
-/// ------------
-/// conditionally expands items based on a boolean.
-///
-/// PTL_IF(1, (t), ())     // t
-/// PTL_IF(0, (t), ())     // <nothing>
-/// PTL_IF(1, (t), (f))    // t
-/// PTL_IF(0, (t), (f))    // f
-/// PTL_IF(1, (a), (b, c)) // a
-/// PTL_IF(0, (a), (b, c)) // b, c
-#define PTL_IF(/* b: bool, t: tuple, f: tuple */...) /* -> b ? ...t : ...f */ \
-  PTL_CAT(PPUTLIF_, PTL_BOOL(PTL_IFIRST(__VA_ARGS__)))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIF_1(_, t, f) PTL_REST((PTL_TUPLE(f)), PTL_ITEMS(t))
-#define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [compare.lt]
 /// ------------
 /// integral less-than comparison.
@@ -3620,6 +3454,200 @@
 
 #define PPUTLMAX_1(a, b) a
 #define PPUTLMAX_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitget]
+/// ----------------
+/// gets the ith bit from the uint.
+/// i must be less than PTL_BIT_LENGTH (10).
+///
+/// PTL_BITGET(2, 7)             // 0
+/// PTL_BITGET(2, 8)             // 1
+/// PTL_BITGET(2, 9)             // 0
+/// PTL_BITGET(0b1111111110u, 9) // 0
+#define PTL_BITGET(/* v: uint|int, i: int */...) /* -> v[i]: bool */ PPUTLBITGET_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITGET_o(v, i)                         PPUTLBITGET_oo(PTL_IBASE10(i), PTL_BITS(v))
+#define PPUTLBITGET_oo(i, ...)                      PTL_CAT(PPUTLBITGET_, i)(__VA_ARGS__)
+#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j) j
+#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j) i
+#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j) h
+#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j) g
+#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j) f
+#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j) e
+#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j) d
+#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j) c
+#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j) b
+#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j) a
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitset]
+/// ----------------
+/// sets the ith bit in the uint to b.
+/// i must be less than PTL_BIT_LENGTH (10).
+/// returns the same int representation as its input (unless v becomes negative).
+///
+/// PTL_BITSET(0, 8, 1)             // 2
+/// PTL_BITSET(1, 7, 1)             // 5
+/// PTL_BITSET(0b1111111111u, 9, 0) // 0b1111111110u
+#define PTL_BITSET(/* v: uint|int, i: int, b: bool */...) /* -> (v[i] = b): typeof(v) */ \
+  PPUTLBITSET_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITSET_o(v, i, b) \
+  PTL_TYPEOF(v)(PPUTLBITSET_oo(b, PTL_CAT(PPUTLBITSET_, PTL_IBASE10(i)), PTL_BITS(v)))
+#define PPUTLBITSET_oo(b, op, ...)                     op(b, __VA_ARGS__)
+#define PPUTLBITSET_9(j, a, B, c, d, e, f, g, h, i, _) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_8(i, a, B, c, d, e, f, g, h, _, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_7(h, a, B, c, d, e, f, g, _, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_6(g, a, B, c, d, e, f, _, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_5(f, a, B, c, d, e, _, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_4(e, a, B, c, d, _, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_3(d, a, B, c, _, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_2(c, a, B, _, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_1(B, a, _, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+#define PPUTLBITSET_0(a, _, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitflip]
+/// -----------------
+/// flips the ith bit in the uint.
+/// i must be less than PTL_BIT_LENGTH (10).
+/// returns the same int representation as its input (unless v becomes negative).
+///
+/// PTL_BITFLIP(0, 9)             // 1
+/// PTL_BITFLIP(0, 7)             // 4
+/// PTL_BITFLIP(0b1111111110u, 9) // 0b1111111111u
+#define PTL_BITFLIP(/* v: uint|int, i: int */...) /* -> (v[i] = !v[i]): typeof(v) */ \
+  PPUTLBITFLIP_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITFLIP_X(v, i) PTL_BITSET(v, i, PTL_NOT(PTL_BITGET(v, i)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitnot]
+/// ----------------
+/// bitwise NOT.
+/// returns the same int representation as its input (unless v becomes negative).
+///
+/// PTL_BITNOT(0u)            // 1023u
+/// PTL_BITNOT(1u)            // 1022u
+/// PTL_BITNOT(0)             // 0b1111111111
+/// PTL_BITNOT(1)             // 0b1111111110
+/// PTL_BITNOT(0b0000000000u) // 0b1111111111u
+/// PTL_BITNOT(0b0000000001u) // 0b1111111110u
+#define PTL_BITNOT(/* v: uint|int */...) /* -> ~v: typeof(v) */ \
+  PTL_TYPEOF(__VA_ARGS__)(PPUTLUINT_TRAIT(PTL_UBASE2(__VA_ARGS__), BIN_BNOT))
+
+/// [bitwise.bitshift_left]
+/// -----------------------
+/// TODO
+///
+/// PTL_BITSHIFT_LEFT(0b1111111111u, 1) // 0b1111111110u
+#define PTL_BITSHIFT_LEFT(/* v: uint|int, ct: ibase10 */...) /* -> (v << i): typeof(v) */ \
+  PPUTLBITSHIFT_LEFT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITSHIFT_LEFT_o(v, i)    PTL_TYPEOF(v)(PPUTLBITSHIFT_LEFT_oo(PTL_IBASE10(i), PTL_BITS(v)))
+#define PPUTLBITSHIFT_LEFT_oo(i, ...) PTL_CAT(PPUTLBITSHIFT_LEFT_oo_, PTL_LT(i, 10))(i, __VA_ARGS__)
+
+#define PPUTLBITSHIFT_LEFT_oo_1(i, ...)                    PTL_CAT(PPUTLBITSHIFT_LEFT_, i)(__VA_ARGS__)
+#define PPUTLBITSHIFT_LEFT_oo_0(i, ...)                    0
+#define PPUTLBITSHIFT_LEFT_9(a, B, c, d, e, f, g, h, i, j) 0b##j##000000000u
+#define PPUTLBITSHIFT_LEFT_8(a, B, c, d, e, f, g, h, i, j) 0b##i##j##00000000u
+#define PPUTLBITSHIFT_LEFT_7(a, B, c, d, e, f, g, h, i, j) 0b##h##i##j##0000000u
+#define PPUTLBITSHIFT_LEFT_6(a, B, c, d, e, f, g, h, i, j) 0b##g##h##i##j##000000u
+#define PPUTLBITSHIFT_LEFT_5(a, B, c, d, e, f, g, h, i, j) 0b##f##g##h##i##j##00000u
+#define PPUTLBITSHIFT_LEFT_4(a, B, c, d, e, f, g, h, i, j) 0b##e##f##g##h##i##j##0000u
+#define PPUTLBITSHIFT_LEFT_3(a, B, c, d, e, f, g, h, i, j) 0b##d##e##f##g##h##i##j##000u
+#define PPUTLBITSHIFT_LEFT_2(a, B, c, d, e, f, g, h, i, j) 0b##c##d##e##f##g##h##i##j##00u
+#define PPUTLBITSHIFT_LEFT_1(a, B, c, d, e, f, g, h, i, j) 0b##B##c##d##e##f##g##h##i##j##0u
+#define PPUTLBITSHIFT_LEFT_0(a, B, c, d, e, f, g, h, i, j) 0b##a##B##c##d##e##f##g##h##i##j##u
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [meta.id]
+/// ---------
+/// identity function. performs one expansion.
+///
+/// PTL_ID()        // <nothing>
+/// PTL_ID(foo)     // foo
+/// PTL_ID(a, b, c) // a, b, c
+#define PTL_ID(/* v: any... */...) /* -> ...v */ __VA_ARGS__
+
+/// [meta.xct]
+/// ----------
+/// counts the number of expansions undergone after expression.
+/// uses mutual recursion; can track any number of expansions.
+/// the number of commas indicates the number of expansions.
+///
+/// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
+/// PTL_STR(PTL_ESC(PTL_XCT))                   // "PPUTLXCT_B ( ,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
+#define PTL_XCT /* -> xct */ PPUTLXCT_A PTL_LP() /**/, PTL_RP()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
+#define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [meta.xct_size]
+/// ---------------
+/// measures an xct expr to determine the number of expansions it experienced.
+/// ignores the expansion required to read the result.
+///
+/// fails if xct is not a valid xct expression.
+/// PTL_SIZE will fail if the xct expression is too large.
+///
+/// PTL_XCT_SIZE(PTL_XCT)                            // 0u
+/// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1u
+/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))          // 2u
+/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // 3u
+#define PTL_XCT_SIZE(/* xct */...) /* -> uint */                                    \
+  PTL_CAT(PPUTLXCT_SIZE_, PTL_IS_NONE(PTL_CAT(PPUTLXCT_SIZE_DETECT_, __VA_ARGS__))) \
+  (PTL_ISTR([PTL_XCT_SIZE] invalid xct expr : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXCT_SIZE_1(err, ...)         PPUTLXCT_SIZE_##__VA_ARGS__
+#define PPUTLXCT_SIZE_0(err, ...)         PTL_FAIL(err)
+#define PPUTLXCT_SIZE_PPUTLXCT_B(__, ...) PPUTLXCT_SIZE_RES(__VA_ARGS__ _)
+#define PPUTLXCT_SIZE_PPUTLXCT_A(__, ...) PPUTLXCT_SIZE_RES(__VA_ARGS__ _)
+#define PPUTLXCT_SIZE_RES(_, ...)         PTL_SIZE(__VA_ARGS__)
+#define PPUTLXCT_SIZE_DETECT_PPUTLXCT_B(...)
+#define PPUTLXCT_SIZE_DETECT_PPUTLXCT_A(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [control.if]
+/// ------------
+/// conditionally expands items based on a boolean.
+///
+/// PTL_IF(1, (t), ())     // t
+/// PTL_IF(0, (t), ())     // <nothing>
+/// PTL_IF(1, (t), (f))    // t
+/// PTL_IF(0, (t), (f))    // f
+/// PTL_IF(1, (a), (b, c)) // a
+/// PTL_IF(0, (a), (b, c)) // b, c
+#define PTL_IF(/* b: bool, t: tuple, f: tuple */...) /* -> b ? ...t : ...f */ \
+  PTL_CAT(PPUTLIF_, PTL_BOOL(PTL_IFIRST(__VA_ARGS__)))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIF_1(_, t, f) PTL_REST((PTL_TUPLE(f)), PTL_ITEMS(t))
+#define PPUTLIF_0(_, t, f) PTL_REST((PTL_TUPLE(t)), PTL_ITEMS(f))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

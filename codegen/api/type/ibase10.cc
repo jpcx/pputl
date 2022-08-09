@@ -32,50 +32,42 @@ namespace api {
 using namespace codegen;
 
 decltype(ibase10) ibase10 = NIFTY_DEF(ibase10, [&](va args) {
-  docs << "[positive values only] casts to the signed int decimal subtype."
+  docs << "casts to the signed int decimal subtype."
+       << "describes positive values only. fails on negative ints."
        << ""
-       << "value will remain as binary if negative."
        << "use fmt.paste_int to get a negative decimal.";
 
-  auto binmin     = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-  auto binfive    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 3, "0")) + "101";
-  auto binmax     = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
-  auto binimax    = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
-  auto binmin_int = "0b1" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0"));
+  auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  auto binfive = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 3, "0")) + "101";
+  auto binimax = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
 
   tests << ibase10(binmin)        = "0" >> docs;
   tests << ibase10(binfive + "u") = "5" >> docs;
   tests << ibase10(binimax)       = int_max_s >> docs;
-  tests << ibase10(binmin_int)    = binmin_int >> docs;
   tests << ibase10(conf::int_max) = int_max_s >> docs;
-  tests << ibase10(uint_max_s)    = binmax >> docs;
 
-  def<"msb(a, ...)"> msb = [&](arg a, va) {
-    return a;
-  };
-
-  def<"\\DEC(n, u)"> dec = [&](arg n, arg) {
+  def<"\\DEC(e, n, u)"> dec = [&](arg, arg n, arg) {
     return n;
   };
 
-  def<"\\BIN(n, u)">{} = [&](arg n, arg u) {
-    def<"0(n, u)"> _0 = [&](arg, arg u) {
+  def<"\\BIN(e, n, u)">{} = [&](arg e, arg n, arg u) {
+    def<"0(e, n, u)"> _0 = [&](arg, arg, arg u) {
       return detail::uint_trait(u, "BIN_IDEC");
     };
 
-    def<"1(n, u)">{} = [&](arg n, arg) {
-      return n;
+    def<"1(e, n, u)">{} = [&](arg e, arg, arg) {
+      return fail(e);
     };
 
-    return pp::call(cat(utl::slice(_0, -1), esc(msb + " " + detail::uint_trait(u, "BIN_BITS"))), n,
-                    u);
+    return pp::call(cat(utl::slice(_0, -1), esc(ifirst + " " + detail::uint_trait(u, "BIN_BITS"))),
+                    e, n, u);
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return def<"o(n, u)">{[&](arg n, arg u) {
-      return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), n, u);
-    }}(n, cat(n, "u"));
-  }}(int_(args));
+  return def<"o(e, n)">{[&](arg e, arg n) {
+    return def<"o(e, n, u)">{[&](arg e, arg n, arg u) {
+      return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), e, n, u);
+    }}(e, n, cat(n, "u"));
+  }}(istr("[" + ibase10 + "] cannot represent negative in base10 : " + args), int_(args));
 });
 
 } // namespace api
