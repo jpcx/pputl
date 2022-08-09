@@ -41,11 +41,16 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << "attempts to preserve binary/decimal representation, but will"
        << "output binary if casting the input yields a negative number"
        << ""
-       << "cast from unsigned reinterprets bits as signed two's complement.";
+       << "cast from unsigned reinterprets bits as signed two's complement."
+       << ""
+       << "decimals larger than the int maximum that lack a 'u' suffix"
+       << "are interpreted as uints and converted to binary.";
 
-  auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-  auto binmax  = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
-  auto binneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  auto binmax    = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
+  auto binneg1   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto iuint_max = uint_max_s;
+  iuint_max.pop_back();
 
   tests << int_(0)             = "0" >> docs;
   tests << int_("1u")          = "1" >> docs;
@@ -53,6 +58,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   tests << int_(conf::int_max) = std::to_string(conf::int_max) >> docs;
   tests << int_(binmax + "u")  = binmax >> docs;
   tests << int_(uint_max_s)    = binneg1 >> docs;
+  tests << int_(iuint_max)     = binneg1 >> docs;
 
   def<"fail(e, ...)"> fail_ = [&](arg e, va) {
     return fail(e);
@@ -73,7 +79,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
       };
 
       return def<"o(v, ibin)">{[&](arg v, arg ibin) {
-        return def<"O(v, ibin)">{[&](arg v, arg ibin) {
+        return def<"o(v, ibin)">{[&](arg v, arg ibin) {
           return def<"o(v, ibin, ubin)">{[&](arg v, arg ibin, arg ubin) {
             return pp::call(
                 cat(utl::slice(_0, -1), esc(msb + " " + detail::uint_trait(ubin, "BIN_BITS"))), v,
@@ -92,12 +98,41 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
 
   def<"pass(e, v)"> pass = [&](arg, arg v) {
     docs << "fifth parentheses; returns";
-    return v;
+
+    def<"\\DEC(v, u)"> dec = [&](arg v, arg u) {
+      def<"0(v, ibin)"> _0 = [&](arg v, arg) {
+        return v;
+      };
+
+      def<"1(v, ibin)">{} = [&](arg, arg ibin) {
+        return ibin;
+      };
+
+      return def<"o(v, ibin)">{[&](arg v, arg ibin) {
+        return def<"o(v, ibin)">{[&](arg v, arg ibin) {
+          return def<"o(v, ibin, ubin)">{[&](arg v, arg ibin, arg ubin) {
+            return pp::call(
+                cat(utl::slice(_0, -1), esc(msb + " " + detail::uint_trait(ubin, "BIN_BITS"))), v,
+                ibin);
+          }}(v, ibin, pp::cat(ibin, "u"));
+        }}(v, ibin);
+      }}(v, detail::uint_trait(u, "DEC_IBIN"));
+    };
+
+    def<"\\BIN(v, u)">{} = [&](arg v, arg) {
+      return v;
+    };
+
+    return def<"o(...)">{[&](va args) {
+      return def<"o(v, u)">{[&](arg v, arg u) {
+        return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), v, u);
+      }}(args);
+    }}(v, pp::cat(v, "u"));
   };
 
   def<>            oooo_passthrough{};
   def<"oooo(...)"> oooo = [&](va args) {
-    docs << "fourth parentheses; checks for validity with added 'u' suffix (cast from uint).";
+    docs << "fourth parentheses; checks for validity without added 'u' suffix (cast from uint).";
 
     def<"fail"> oooo_fail = [&] {
       return fail_;
@@ -107,7 +142,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
       return pass_cast;
     };
 
-    oooo_passthrough = def{"earlypass(...)"} = [&](va) {
+    oooo_passthrough = def{"passthrough(...)"} = [&](va) {
       return pass;
     };
 

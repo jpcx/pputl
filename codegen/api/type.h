@@ -38,10 +38,10 @@ extern codegen::def<"tuple(...: t: tuple) -> t"> const&               tuple;
 extern codegen::def<"bool(...: b: bool) -> b"> const&                 bool_;
 extern codegen::def<"uint(...: n: uint|int) -> uint{n}"> const&       uint;
 extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&         int_;
-/* extern codegen::def<"ubase2(...: n: uint|int) -> ubase2{n}"> const&   ubase2; */
-/* extern codegen::def<"ibase2(...: n: uint|int) -> ibase2{n}"> const&   ibase2; */
-/* extern codegen::def<"ubase10(...: n: uint|int) -> ubase10{n}"> const& ubase10; */
-/* extern codegen::def<"ibase10(...: n: uint|int) -> ibase10{n}"> const& ibase10; */
+extern codegen::def<"ubase2(...: n: uint|int) -> ubase2{n}"> const&   ubase2;
+extern codegen::def<"ibase2(...: n: uint|int) -> ibase2{n}"> const&   ibase2;
+extern codegen::def<"ubase10(...: n: uint|int) -> ubase10{n}"> const& ubase10;
+extern codegen::def<"ibase10(...: n: uint|int) -> ibase10{n}"> const& ibase10;
 /* extern codegen::def< */
 /*     "typeof(...: v: tuple|uint) -> <tuple|ubase2|ibase2|ubase10|ibase10 ctor>"> const& typeof; */
 
@@ -72,10 +72,10 @@ NIFTY_DECL(uint_o);
 } // namespace detail
 NIFTY_DECL(uint);
 NIFTY_DECL(int_);
-/* NIFTY_DECL(ubase2); */
-/* NIFTY_DECL(ibase2); */
-/* NIFTY_DECL(ubase10); */
-/* NIFTY_DECL(ibase10); */
+NIFTY_DECL(ubase2);
+NIFTY_DECL(ibase2);
+NIFTY_DECL(ubase10);
+NIFTY_DECL(ibase10);
 /* NIFTY_DECL(typeof); */
 
 inline codegen::end_category<"type"> type_end;

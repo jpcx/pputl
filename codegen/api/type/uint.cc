@@ -246,7 +246,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
       return detail::uint_pass_cast;
     };
 
-    oooo_passthrough = def{"earlypass(...)"} = [&](va) {
+    oooo_passthrough = def{"passthrough(...)"} = [&](va) {
       return detail::uint_pass;
     };
 

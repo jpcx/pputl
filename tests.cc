@@ -218,6 +218,33 @@ ASSERT_PP_EQ((PTL_INT(0b0000000000)), (0b0000000000));
 ASSERT_PP_EQ((PTL_INT(511)), (511));
 ASSERT_PP_EQ((PTL_INT(0b0111111111u)), (0b0111111111));
 ASSERT_PP_EQ((PTL_INT(1023u)), (0b1111111111));
+ASSERT_PP_EQ((PTL_INT(1023)), (0b1111111111));
+
+ASSERT_PP_EQ((PTL_UBASE2(0)), (0b0000000000u));
+ASSERT_PP_EQ((PTL_UBASE2(1)), (0b0000000001u));
+ASSERT_PP_EQ((PTL_UBASE2(5)), (0b0000000101u));
+ASSERT_PP_EQ((PTL_UBASE2(1023u)), (0b1111111111u));
+ASSERT_PP_EQ((PTL_UBASE2(0b0000000000u)), (0b0000000000u));
+ASSERT_PP_EQ((PTL_UBASE2(0b0000000001u)), (0b0000000001u));
+ASSERT_PP_EQ((PTL_UBASE2(0b1111111111)), (0b1111111111u));
+
+ASSERT_PP_EQ((PTL_IBASE2(0)), (0b0000000000));
+ASSERT_PP_EQ((PTL_IBASE2(5)), (0b0000000101));
+ASSERT_PP_EQ((PTL_IBASE2(1023)), (0b1111111111));
+ASSERT_PP_EQ((PTL_IBASE2(511u)), (0b0111111111));
+
+ASSERT_PP_EQ((PTL_UBASE10(0b0000000000u)), (0u));
+ASSERT_PP_EQ((PTL_UBASE10(1)), (1u));
+ASSERT_PP_EQ((PTL_UBASE10(0b0000000101)), (5u));
+ASSERT_PP_EQ((PTL_UBASE10(0b1111111111u)), (1023u));
+ASSERT_PP_EQ((PTL_UBASE10(0b1000000000)), (512u));
+
+ASSERT_PP_EQ((PTL_IBASE10(0b0000000000)), (0));
+ASSERT_PP_EQ((PTL_IBASE10(0b0000000101u)), (5));
+ASSERT_PP_EQ((PTL_IBASE10(0b0111111111)), (511));
+ASSERT_PP_EQ((PTL_IBASE10(0b1000000000)), (0b1000000000));
+ASSERT_PP_EQ((PTL_IBASE10(511)), (511));
+ASSERT_PP_EQ((PTL_IBASE10(1023)), (0b1111111111));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));
@@ -227,10 +254,10 @@ ASSERT_PP_EQ((PTL_AND(0, 1)), (0));
 ASSERT_PP_EQ((PTL_AND(1, 0)), (0));
 ASSERT_PP_EQ((PTL_AND(1, 1)), (1));
 
-ASSERT_PP_EQ((PTL_oR(0, 0)), (0));
-ASSERT_PP_EQ((PTL_oR(0, 1)), (1));
-ASSERT_PP_EQ((PTL_oR(1, 0)), (1));
-ASSERT_PP_EQ((PTL_oR(1, 1)), (1));
+ASSERT_PP_EQ((PTL_OR(0, 0)), (0));
+ASSERT_PP_EQ((PTL_OR(0, 1)), (1));
+ASSERT_PP_EQ((PTL_OR(1, 0)), (1));
+ASSERT_PP_EQ((PTL_OR(1, 1)), (1));
 
 ASSERT_PP_EQ((PTL_NAND(0, 0)), (1));
 ASSERT_PP_EQ((PTL_NAND(0, 1)), (1));
@@ -276,18 +303,18 @@ ASSERT_PP_EQ((PTL_IS_SOME(, a)), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, a, )), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, , a)), (1));
 
-ASSERT_PP_EQ((PTL_SIZE()), (0));
-ASSERT_PP_EQ((PTL_SIZE(a)), (1));
-ASSERT_PP_EQ((PTL_SIZE(a, b)), (2));
-ASSERT_PP_EQ((PTL_SIZE(, )), (2));
-ASSERT_PP_EQ((PTL_SIZE(a, b, c)), (3));
+ASSERT_PP_EQ((PTL_SIZE()), (0u));
+ASSERT_PP_EQ((PTL_SIZE(a)), (1u));
+ASSERT_PP_EQ((PTL_SIZE(a, b)), (2u));
+ASSERT_PP_EQ((PTL_SIZE(, )), (2u));
+ASSERT_PP_EQ((PTL_SIZE(a, b, c)), (3u));
 ASSERT_PP_EQ((PTL_SIZE(, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , )), (1023u));
-ASSERT_PP_EQ((PTL_SIZE(, , )), (3));
-ASSERT_PP_EQ((PTL_SIZE(a, )), (2));
-ASSERT_PP_EQ((PTL_SIZE(a, , )), (3));
-ASSERT_PP_EQ((PTL_SIZE(, a)), (2));
-ASSERT_PP_EQ((PTL_SIZE(, a, )), (3));
-ASSERT_PP_EQ((PTL_SIZE(, , a)), (3));
+ASSERT_PP_EQ((PTL_SIZE(, , )), (3u));
+ASSERT_PP_EQ((PTL_SIZE(a, )), (2u));
+ASSERT_PP_EQ((PTL_SIZE(a, , )), (3u));
+ASSERT_PP_EQ((PTL_SIZE(, a)), (2u));
+ASSERT_PP_EQ((PTL_SIZE(, a, )), (3u));
+ASSERT_PP_EQ((PTL_SIZE(, , a)), (3u));
 
 ASSERT_PP_EQ((PTL_IS_TUPLE()), (0));
 ASSERT_PP_EQ((PTL_IS_TUPLE(1, 2)), (0));
