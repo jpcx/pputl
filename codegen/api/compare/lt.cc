@@ -32,8 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
-  docs << "uint less-than comparison."
-       << "fails if l and r are differently signed.";
+  docs << "integral less-than comparison."
+       << "prohibits comparison of different signedness.";
 
   using std::to_string;
   using conf::uint_max;
@@ -42,11 +42,14 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   tests << lt("0, 0")                                                             = "0" >> docs;
   tests << lt("0, 1")                                                             = "1" >> docs;
   tests << lt("7u, 8u")                                                           = "1" >> docs;
+  tests << lt("8u, 7u")                                                           = "0";
   tests << lt(int_(uint_max_s), "0")                                              = "1" >> docs;
   tests << lt(int_max_s, int_min_s)                                               = "0" >> docs;
-  tests << lt(int_min_s, int_max_s)                                               = "1" >> docs;
-  tests << lt(int_min_s, int_(std::to_string(conf::int_max + 1) + "u"))           = "0" >> docs;
-  tests << lt(int_min_s, int_(std::to_string(conf::int_max + 2) + "u"))           = "1" >> docs;
+  tests << lt(int_min_s, int_max_s)                                               = "1";
+  tests << lt(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
+  tests << lt(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "1" >> docs;
+  tests << lt("0u", uint_max_s)                                                   = "1";
+  tests << lt(uint_max_s, "0u")                                                   = "0";
   tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "0";
   tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
   tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";

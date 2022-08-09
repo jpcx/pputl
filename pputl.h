@@ -3434,15 +3434,14 @@
 
 /// [compare.lt]
 /// ------------
-/// uint less-than comparison.
-/// fails if l and r are differently signed.
+/// integral less-than comparison.
+/// prohibits comparison of different signedness.
 ///
 /// PTL_LT(0, 0)                        // 0
 /// PTL_LT(0, 1)                        // 1
 /// PTL_LT(7u, 8u)                      // 1
 /// PTL_LT(PTL_INT(1023u), 0)           // 1
 /// PTL_LT(511, 0b1000000000)           // 0
-/// PTL_LT(0b1000000000, 511)           // 1
 /// PTL_LT(0b1000000000, PTL_INT(512u)) // 0
 /// PTL_LT(0b1000000000, PTL_INT(513u)) // 1
 #define PTL_LT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l < r} */                   \
@@ -3497,6 +3496,130 @@
 #define PPUTLLT_0010                   0
 #define PPUTLLT_0001                   1
 #define PPUTLLT_0000                   0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.gt]
+/// ------------
+/// integral greater-than comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_GT(0, 0)                        // 0
+/// PTL_GT(0, 1)                        // 0
+/// PTL_GT(7u, 8u)                      // 0
+/// PTL_GT(PTL_INT(1023u), 0)           // 0
+/// PTL_GT(511, 0b1000000000)           // 1
+/// PTL_GT(0b1000000000, PTL_INT(512u)) // 0
+/// PTL_GT(0b1000000000, PTL_INT(513u)) // 0
+#define PTL_GT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLGT_X(l, r) PTL_LT(r, l)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.le]
+/// ------------
+/// integral less-than-or-equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_LE(0, 0)                        // 1
+/// PTL_LE(0, 1)                        // 1
+/// PTL_LE(7u, 8u)                      // 1
+/// PTL_LE(PTL_INT(1023u), 0)           // 1
+/// PTL_LE(511, 0b1000000000)           // 0
+/// PTL_LE(0b1000000000, PTL_INT(512u)) // 1
+/// PTL_LE(0b1000000000, PTL_INT(513u)) // 1
+#define PTL_LE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l <= r} */ \
+  PTL_NOT(PTL_GT(__VA_ARGS__))
+
+/// [compare.ge]
+/// ------------
+/// integral greater-than-or-equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_GE(0, 0)                        // 1
+/// PTL_GE(0, 1)                        // 0
+/// PTL_GE(7u, 8u)                      // 0
+/// PTL_GE(PTL_INT(1023u), 0)           // 0
+/// PTL_GE(511, 0b1000000000)           // 1
+/// PTL_GE(0b1000000000, PTL_INT(512u)) // 1
+/// PTL_GE(0b1000000000, PTL_INT(513u)) // 0
+#define PTL_GE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l >= r} */ \
+  PTL_NOT(PTL_LT(__VA_ARGS__))
+
+/// [compare.eq]
+/// ------------
+/// integral equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_EQ(0, 0)                        // 1
+/// PTL_EQ(0, 1)                        // 0
+/// PTL_EQ(7u, 8u)                      // 0
+/// PTL_EQ(PTL_INT(1023u), 0)           // 0
+/// PTL_EQ(511, 0b1000000000)           // 0
+/// PTL_EQ(0b1000000000, PTL_INT(512u)) // 1
+/// PTL_EQ(0b1000000000, PTL_INT(513u)) // 0
+#define PTL_EQ(/* l: int|uint, r: typeof(l) */...) /* -> bool{l == r} */ \
+  PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
+
+/// [compare.ne]
+/// ------------
+/// integral not-equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_NE(0, 0)                        // 0
+/// PTL_NE(0, 1)                        // 1
+/// PTL_NE(7u, 8u)                      // 1
+/// PTL_NE(PTL_INT(1023u), 0)           // 1
+/// PTL_NE(511, 0b1000000000)           // 1
+/// PTL_NE(0b1000000000, PTL_INT(512u)) // 0
+/// PTL_NE(0b1000000000, PTL_INT(513u)) // 1
+#define PTL_NE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l != r} */ \
+  PTL_NOT(PTL_EQ(__VA_ARGS__))
+
+/// [compare.min]
+/// -------------
+/// integral minimum operation.
+/// prohibits comparison of different signedness.
+///
+/// PTL_MIN(0, 0)                        // 0
+/// PTL_MIN(0, 1)                        // 0
+/// PTL_MIN(7u, 8u)                      // 7u
+/// PTL_MIN(PTL_INT(1023u), 0)           // 0b1111111111
+/// PTL_MIN(511, 0b1000000000)           // 0b1000000000
+/// PTL_MIN(0b1000000000, PTL_INT(512u)) // 0b1000000000
+/// PTL_MIN(0b1000000000, PTL_INT(513u)) // 0b1000000000
+#define PTL_MIN(/* l: int|uint, r: typeof(l) */...) /* -> a < b ? a : b */ \
+  PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMIN_1(a, b) a
+#define PPUTLMIN_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.max]
+/// -------------
+/// integral maximum operation.
+/// prohibits comparison of different signedness.
+///
+/// PTL_MAX(0, 0)                        // 0
+/// PTL_MAX(0, 1)                        // 1
+/// PTL_MAX(7u, 8u)                      // 8u
+/// PTL_MAX(PTL_INT(1023u), 0)           // 0
+/// PTL_MAX(511, 0b1000000000)           // 511
+/// PTL_MAX(0b1000000000, PTL_INT(512u)) // 0b1000000000
+/// PTL_MAX(0b1000000000, PTL_INT(513u)) // 0b1000000001
+#define PTL_MAX(/* l: int|uint, r: typeof(l) */...) /* -> a > b ? a : b */ \
+  PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMAX_1(a, b) a
+#define PPUTLMAX_0(a, b) b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
