@@ -43,9 +43,7 @@ decltype(rest) rest = NIFTY_DEF(rest, [&](va args) {
   tests << rest("a, , ")         = "," >> docs;
   tests << rest("a, b, , ")      = "b, ," >> docs;
 
-  return pp::va_opt(def<"x(_, ...)">{[&](arg, va args) {
-    return args;
-  }}(args));
+  return pp::va_opt(irest(args));
 });
 
 } // namespace api

@@ -772,17 +772,28 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   id += name;
 
   // better nesting names
- 
-  static std::regex xx{"_([xX])_([xX])(_?)", std::regex_constants::optimize};
-  static std::regex oo{"_([oO])_([oO])(_?)", std::regex_constants::optimize};
-  id = std::regex_replace(id, xx, "_$1$2$3");
-  id = std::regex_replace(id, oo, "_$1$2$3");
+
+  static std::regex xx_xx{"_([xX]+)_([xX])(_|$)", std::regex_constants::optimize};
+  static std::regex oo_oo{"_([oO]+)_([oO])(_|$)", std::regex_constants::optimize};
+  while (std::regex_search(id, xx_xx))
+    id = std::regex_replace(id, xx_xx, "_$1$2$3");
+  while (std::regex_search(id, oo_oo))
+    id = std::regex_replace(id, oo_oo, "_$1$2$3");
 
   // apply naming scheme
   if (not _exec_stack.empty()) {
     id = implname(id);
   } else {
     id = apiname(id);
+  }
+
+  // better nesting names, cont.
+
+  static std::regex oo{"_([oO]+)(_|$)", std::regex_constants::optimize};
+  for (auto it = std::sregex_iterator{id.begin(), id.end(), oo}; it != std::sregex_iterator{};
+       ++it) {
+    for (long i = 0; i < it->length(1); ++i)
+      id[it->position(1) + i] = 'o';
   }
 
   // return the macro associated with this id if it exists

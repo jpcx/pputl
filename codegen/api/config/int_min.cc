@@ -25,21 +25,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "config.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](va args) {
-  docs << "returns the first argument.";
-
-  tests << first("")     = "" >> docs;
-  tests << first(", ")   = "" >> docs;
-  tests << first("a")    = "a" >> docs;
-  tests << first("a, b") = "a" >> docs;
-
-  return pp::va_opt(ifirst(args));
+decltype(int_min) int_min = NIFTY_DEF(int_min, [&] {
+  docs << "the minimum value of a pputl signed int."
+       << "only representable as binary. see type.int for details."
+       << "see the readme code generation section to configure.";
+  return int_min_s;
 });
 
 } // namespace api

@@ -37,14 +37,14 @@ namespace api {
 
 inline codegen::category<"compare"> compare;
 
-extern codegen::def<"lt(...: l: uint, r: uint) -> uint{l < r}"> const&          lt;
-extern codegen::def<"gt(...: l: uint, r: uint) -> uint{l > r}"> const&          gt;
-extern codegen::def<"le(...: l: uint, r: uint) -> uint{l <= r}"> const&         le;
-extern codegen::def<"ge(...: l: uint, r: uint) -> uint{l >= r}"> const&         ge;
-extern codegen::def<"eq(...: l: uint, r: uint) -> uint{l == r}"> const&         eq;
-extern codegen::def<"ne(...: l: uint, r: uint) -> uint{l != r}"> const&         ne;
-extern codegen::def<"min(...: a: uint, b: uint) -> uint{a < b ? a : b}"> const& min;
-extern codegen::def<"max(...: a: uint, b: uint) -> uint{a > b ? a : b}"> const& max;
+extern codegen::def<"lt(...: l: int|uint, r: typeof(l)) -> bool{l < r}"> const&    lt;
+extern codegen::def<"gt(...: l: int|uint, r: typeof(l)) -> bool{l > r}"> const&    gt;
+extern codegen::def<"le(...: l: int|uint, r: typeof(l)) -> bool{l <= r}"> const&   le;
+extern codegen::def<"ge(...: l: int|uint, r: typeof(l)) -> bool{l >= r}"> const&   ge;
+extern codegen::def<"eq(...: l: int|uint, r: typeof(l)) -> bool{l == r}"> const&   eq;
+extern codegen::def<"ne(...: l: int|uint, r: typeof(l)) -> bool{l != r}"> const&   ne;
+extern codegen::def<"min(...: l: int|uint, r: typeof(l)) -> a < b ? a : b"> const& min;
+extern codegen::def<"max(...: l: int|uint, r: typeof(l)) -> a > b ? a : b"> const& max;
 
 NIFTY_DECL(lt);
 NIFTY_DECL(gt);

@@ -38,10 +38,10 @@ decltype(xct_size) xct_size = NIFTY_DEF(xct_size, [&](va args) {
        << "fails if xct is not a valid xct expression."
        << size + " will fail if the xct expression is too large.";
 
-  tests << xct_size(xct)                              = "0" >> docs;
-  tests << xct_size(esc(xct))                         = "1" >> docs;
-  tests << xct_size(esc(esc(xct)))                    = "2" >> docs;
-  tests << xct_size(esc(esc(esc(xct))))               = "3" >> docs;
+  tests << xct_size(xct)                              = "0u" >> docs;
+  tests << xct_size(esc(xct))                         = "1u" >> docs;
+  tests << xct_size(esc(esc(xct)))                    = "2u" >> docs;
+  tests << xct_size(esc(esc(esc(xct))))               = "3u" >> docs;
   tests << xct_size(xct_expected(conf::uint_max - 1)) = uint_max_s;
 
   def detect_a = def{"detect_" + detail::xct_a + "(...)"} = [&] {

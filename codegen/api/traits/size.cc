@@ -35,18 +35,18 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
   docs << "O(1) variadic argument size computation."
        << "fails if too many args passed.";
 
-  tests << size()                                          = "0" >> docs;
-  tests << size("a")                                       = "1" >> docs;
-  tests << size("a, b")                                    = "2" >> docs;
-  tests << size("a, b, c")                                 = "3";
+  tests << size()                                          = "0u" >> docs;
+  tests << size("a")                                       = "1u" >> docs;
+  tests << size("a, b")                                    = "2u" >> docs;
+  tests << size("a, b, c")                                 = "3u";
   tests << size(std::array<std::string, conf::uint_max>{}) = uint_max_s;
-  tests << size(", ")                                      = "2" >> docs;
-  tests << size(", , ")                                    = "3";
-  tests << size("a, ")                                     = "2";
-  tests << size("a, , ")                                   = "3";
-  tests << size(", a")                                     = "2";
-  tests << size(", a, ")                                   = "3";
-  tests << size(", , a")                                   = "3";
+  tests << size(", ")                                      = "2u" >> docs;
+  tests << size(", , ")                                    = "3u";
+  tests << size("a, ")                                     = "2u";
+  tests << size("a, , ")                                   = "3u";
+  tests << size(", a")                                     = "2u";
+  tests << size(", a, ")                                   = "3u";
+  tests << size(", , a")                                   = "3u";
 
   def read =
       def{"read(_err, " + utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ") + ", _sz, ...)"};
@@ -80,6 +80,8 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
 
   return def<"x(_err, _, ...)">{[&](arg _err, arg _, va args) {
     auto rseq = utl::base10_seq(conf::uint_max + 1);
+    for (auto&& v : rseq)
+      v = v + "u";
     std::ranges::reverse(rseq);
     for (auto&& v : rseq)
       v = pp::call(_, v);

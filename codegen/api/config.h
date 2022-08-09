@@ -32,15 +32,22 @@ namespace api {
 
 inline codegen::category<"config"> config;
 
-inline std::string const uint_max_s{std::to_string(codegen::conf::uint_max)};
+inline std::string const uint_max_s{std::to_string(codegen::conf::uint_max) + "u"};
+inline std::string const int_max_s{std::to_string(codegen::conf::int_max)};
+inline std::string const int_min_s =
+    "0b1" + codegen::utl::cat(std::vector<std::string>(codegen::conf::bit_length - 1, "0"));
 
 extern codegen::def<"build -> <c++ int>"> const& build;
-extern codegen::def<"uint_bits -> uint"> const&  uint_bits;
+extern codegen::def<"bit_length -> uint"> const& bit_length;
 extern codegen::def<"uint_max -> uint"> const&   uint_max;
+extern codegen::def<"int_max -> int"> const&     int_max;
+extern codegen::def<"int_min -> binary"> const&  int_min;
 
 NIFTY_DECL(build);
-NIFTY_DECL(uint_bits);
+NIFTY_DECL(bit_length);
 NIFTY_DECL(uint_max);
+NIFTY_DECL(int_max);
+NIFTY_DECL(int_min);
 
 inline codegen::end_category<"config"> config_end;
 

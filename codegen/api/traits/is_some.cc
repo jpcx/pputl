@@ -46,11 +46,11 @@ decltype(is_some) is_some = NIFTY_DEF(is_some, [&](va) {
   tests << is_some(", a, ")    = "1";
   tests << is_some(", , a")    = "1";
 
-  def<"o"> o = [&] {
+  def<"\\o"> o = [&] {
     return "0";
   };
 
-  def<"o1">{} = [&] {
+  def<"\\o1">{} = [&] {
     return "1";
   };
 

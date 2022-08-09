@@ -35,16 +35,17 @@ using namespace codegen;
 
 decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
   docs << "sets the ith bit in the uint to b."
-       << "i must be less than " + uint_bits + " (" + std::to_string(conf::uint_bits) + ").";
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ")."
+       << "returns the same int representation as its input (unless v becomes negative).";
 
-  auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
-  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits - 1, "1")) + "0u";
+  auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
+  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
 
-  tests << bitset_(0, conf::uint_bits - 2, 1)      = "2" >> docs;
-  tests << bitset_(1, conf::uint_bits - 3, 1)      = "5" >> docs;
-  tests << bitset_(binmax, conf::uint_bits - 1, 0) = binmaxminus1 >> docs;
+  tests << bitset_(0, conf::bit_length - 2, 1)      = "2" >> docs;
+  tests << bitset_(1, conf::bit_length - 3, 1)      = "5" >> docs;
+  tests << bitset_(binmax, conf::bit_length - 1, 0) = binmaxminus1 >> docs;
 
-  auto params_v = utl::alpha_base52_seq(conf::uint_bits);
+  auto params_v = utl::alpha_base52_seq(conf::bit_length);
   auto params   = std::deque<std::string>{params_v.begin(), params_v.end()};
   params.push_front("a");
   for (auto&& v : params) {
@@ -72,7 +73,7 @@ decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
   {
     std::size_t i = 1;
 
-    for (; i < conf::uint_bits - 1; ++i) {
+    for (; i < conf::bit_length - 1; ++i) {
       def{std::to_string(i) + "(" + bitswapped(i) + ")"} = [&](pack args) {
         auto first_bits = std::vector<std::string>{args.begin() + 1, args.begin() + 1 + i};
         auto rest_bits  = std::vector<std::string>{args.begin() + 2 + i, args.end()};
@@ -89,7 +90,7 @@ decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
   return def<"o(v, i, b)">{[&](arg v, arg i, arg b) {
     return pp::call(typeof(v), def<"o(b, op, ...)">{[&](arg b, arg op, va args) {
                       return pp::call(op, b, args);
-                    }}(b, cat(utl::slice(_0, -1), decimal(i)), bits(v)));
+                    }}(b, cat(utl::slice(_0, -1), ibase10(i)), bits(v)));
   }}(args);
 });
 

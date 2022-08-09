@@ -32,44 +32,90 @@ namespace api {
 using namespace codegen;
 
 decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
-  docs << "detects the value type. will fail if the type is not tuple or uint."
-       << "literal 0 and 1 are considered decimal rather than bool."
+  docs << "detects the value type. must be compatible with the ## operator."
+       << "literal 0 and 1 are considered ibase10 rather than bool."
+       << "defaults to any if a type could not be determined."
        << ""
        << "returns one of:"
-       << "- " + tuple << "- " + binary << "- " + decimal;
+       << "- " + tuple << "- " + ubase2 << "- " + ibase2 << "- " + ubase10 << "- " + ibase10
+       << "- " + any;
 
-  auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto ubinmax  = ibinneg1 + "u";
 
-  tests << typeof("(foo)") = tuple >> docs;
-  tests << typeof(0)       = decimal >> docs;
-  tests << typeof(binmax)  = binary >> docs;
+  tests << typeof("(foo)")        = tuple >> docs;
+  tests << typeof(0)              = ibase10 >> docs;
+  tests << typeof("0u")           = ubase10 >> docs;
+  tests << typeof(conf::uint_max) = any >> docs;
+  tests << typeof(uint_max_s)     = ubase10 >> docs;
+  tests << typeof(ibinneg1)       = ibase2 >> docs;
+  tests << typeof(ubinmax)        = ubase2 >> docs;
+  tests << typeof("foo")          = any >> docs;
 
-  def<"oo_tuple(...)"> oo_tuple = [&](va) {
+  def<"ooo_any(...)"> ooo_any = [&](va) {
+    return any;
+  };
+
+  def<"ooo_tuple(...)"> ooo_tuple = [&](va) {
     return tuple;
   };
 
-  def<"oo_no_tuple(...)"> oo_no_tuple = [&](va args) {
-    def<"\\DEC"> dec = [&] {
-      return decimal;
+  def<"ooo_uint(u)"> ooo_uint = [&](arg u) {
+    def<"\\BIN"> bin = [&] {
+      return ubase2;
     };
 
-    def<"\\BIN">{} = [&] {
-      return binary;
+    def<"\\DEC">{} = [&] {
+      return ubase10;
     };
 
-    return cat(utl::slice(dec, -3), first(cat(utl::slice(detail::uint_traits[0], -1), uint(args))));
+    return cat(utl::slice(bin, -3), detail::uint_trait(uint(u), "TYPE"));
   };
 
-  return pp::call(def<"o(...)">{[&](va) {
-                    std::string prefix = utl::slice(oo_tuple, -5);
-                    if (prefix.back() == '_')
-                      prefix.pop_back();
-                    std::string tuple_s    = utl::slice(oo_tuple, prefix.size(), 0);
-                    std::string no_tuple_s = utl::slice(oo_no_tuple, prefix.size(), 0);
-                    std::string no_s       = utl::slice(no_tuple_s, -tuple_s.size());
+  def<"ooo_int(i)"> ooo_int = [&](arg i) {
+    def<"\\BIN"> bin = [&] {
+      return ibase2;
+    };
 
-                    return pp::cat(prefix, pp::va_opt(no_s), tuple_s);
-                  }}(eat + " " + args),
+    def<"\\DEC">{} = [&] {
+      return ibase10;
+    };
+
+    return cat(utl::slice(bin, -3), detail::uint_trait(cat(int_(i), "u"), "TYPE"));
+  };
+
+  def<"oo_tuple(...)"> oo_tuple = [&](va) {
+    return ooo_tuple;
+  };
+
+  def<"oo_no_tuple(...)"> oo_no_tuple = [&](va args) {
+    def fail_ = def{(std::string const&)detail::uint_fail} = [&] {
+      return ooo_any;
+    };
+
+    def{(std::string const&)detail::uint_upass} = [&] {
+      return ooo_uint;
+    };
+
+    def{(std::string const&)detail::uint_ipass} = [&] {
+      return ooo_int;
+    };
+
+    return cat(utl::slice(fail_, -((std::string const&)detail::uint_fail).size()),
+               pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args), args));
+  };
+
+  return pp::call(pp::call(def<"o(...)">{[&](va) {
+                             std::string prefix = utl::slice(oo_tuple, -5);
+                             if (prefix.back() == '_')
+                               prefix.pop_back();
+                             std::string tuple_s    = utl::slice(oo_tuple, prefix.size(), 0);
+                             std::string no_tuple_s = utl::slice(oo_no_tuple, prefix.size(), 0);
+                             std::string no_s       = utl::slice(no_tuple_s, -tuple_s.size());
+
+                             return pp::cat(prefix, pp::va_opt(no_s), tuple_s);
+                           }}(eat + " " + args),
+                           args),
                   args);
 });
 

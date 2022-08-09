@@ -25,21 +25,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](va args) {
-  docs << "returns the first argument.";
+decltype(any) any = NIFTY_DEF(any, [&](va args) {
+  docs << "any type (generic data). returns arg."
+       << "describes exactly one generic value.";
 
-  tests << first("")     = "" >> docs;
-  tests << first(", ")   = "" >> docs;
-  tests << first("a")    = "a" >> docs;
-  tests << first("a, b") = "a" >> docs;
+  tests << any("foo") = "foo" >> docs;
 
-  return pp::va_opt(ifirst(args));
+  return def<"o(v)">{[&](arg v) {
+    return v;
+  }}(args);
 });
 
 } // namespace api

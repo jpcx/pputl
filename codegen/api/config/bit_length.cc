@@ -25,21 +25,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "config.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](va args) {
-  docs << "returns the first argument.";
-
-  tests << first("")     = "" >> docs;
-  tests << first(", ")   = "" >> docs;
-  tests << first("a")    = "a" >> docs;
-  tests << first("a, b") = "a" >> docs;
-
-  return pp::va_opt(ifirst(args));
+decltype(bit_length) bit_length = NIFTY_DEF(bit_length, [&] {
+  docs << "the number of bits used by pputl integers."
+       << "binary representations are fixed at this length."
+       << "see the readme code generation section to configure.";
+  return std::to_string(conf::bit_length);
 });
 
 } // namespace api

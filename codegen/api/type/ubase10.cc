@@ -25,21 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](va args) {
-  docs << "returns the first argument.";
+decltype(ubase10) ubase10 = NIFTY_DEF(ubase10, [&](va args) {
+  docs << "casts to the unsigned int decimal subtype.";
 
-  tests << first("")     = "" >> docs;
-  tests << first(", ")   = "" >> docs;
-  tests << first("a")    = "a" >> docs;
-  tests << first("a, b") = "a" >> docs;
+  auto binmin     = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+  auto binone     = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0")) + "1u";
+  auto binmax     = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
+  auto binmin_int = "0b1" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0"));
+  auto ibinfive   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 3, "0")) + "101";
 
-  return pp::va_opt(ifirst(args));
+  tests << ubase10(binmin)     = "0u" >> docs;
+  tests << ubase10(1)          = "1u" >> docs;
+  tests << ubase10(ibinfive)   = "5u" >> docs;
+  tests << ubase10(binmax)     = uint_max_s >> docs;
+  tests << ubase10(binmin_int) = (std::to_string(-conf::int_min) + "u") >> docs;
+
+  def<"\\DEC(n)"> dec = [&](arg n) {
+    return n;
+  };
+
+  def<"\\BIN(n)">{} = [&](arg n) {
+    return detail::uint_trait(n, "BIN_UDEC");
+  };
+
+  return def<"o(n)">{[&](arg n) {
+    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
+  }}(uint(args));
 });
 
 } // namespace api

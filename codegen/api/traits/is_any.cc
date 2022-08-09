@@ -25,21 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](va args) {
-  docs << "returns the first argument.";
+decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
+  docs << "detects if args is exactly one generic value.";
 
-  tests << first("")     = "" >> docs;
-  tests << first(", ")   = "" >> docs;
-  tests << first("a")    = "a" >> docs;
-  tests << first("a, b") = "a" >> docs;
+  tests << is_any("")         = "0" >> docs;
+  tests << is_any(",")        = "0" >> docs;
+  tests << is_any("foo,")     = "0" >> docs;
+  tests << is_any("foo, bar") = "0" >> docs;
+  tests << is_any("foo")      = "1" >> docs;
+  tests << is_any("(42)")     = "1" >> docs;
 
-  return pp::va_opt(ifirst(args));
+  return def<"o(_, ...)">{[&](arg first, va args) {
+    return and_(is_some(first), is_none(args));
+  }}(args + " " + pp::va_opt("."));
 });
 
 } // namespace api

@@ -46,11 +46,11 @@ decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
   tests << is_none(", a, ")    = "0";
   tests << is_none(", , a")    = "0";
 
-  def<"o"> o = [] {
+  def<"\\o"> o = [] {
     return "1";
   };
 
-  def<"o0">{} = [] {
+  def<"\\o0">{} = [] {
     return "0";
   };
 

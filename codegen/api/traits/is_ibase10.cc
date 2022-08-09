@@ -25,16 +25,39 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "config.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(uint_bits) uint_bits = NIFTY_DEF(uint_bits, [&] {
-  docs << "the number of bits in a pputl unsigned int."
-       << "see the readme code generation section to configure.";
-  return std::to_string(conf::uint_bits);
+decltype(is_ibase10) is_ibase10 = NIFTY_DEF(is_ibase10, [&](va args) {
+  docs << "detects if args is a signed int in base10 form.";
+
+  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+
+  tests << is_ibase10("1")            = "1" >> docs;
+  tests << is_ibase10("1u")           = "0" >> docs;
+  tests << is_ibase10(int_max_s)      = "1" >> docs;
+  tests << is_ibase10(conf::uint_max) = "0" >> docs;
+  tests << is_ibase10(binmin)         = "0" >> docs;
+  tests << is_ibase10(ibinneg1)       = "0" >> docs;
+  tests << is_ibase10("(), ()")       = "0" >> docs;
+
+  def ibase10_ = def{(std::string const&)ibase10} = [&] {
+    return "";
+  };
+
+  def<"0(...)"> _0 = [&](va) {
+    return "0";
+  };
+
+  def<"1(...)">{} = [&](va args) {
+    return is_none(cat(utl::slice(ibase10_, -((std::string const&)ibase10).size()), typeof(args)));
+  };
+
+  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
 });
 
 } // namespace api

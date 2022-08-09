@@ -34,9 +34,13 @@ using namespace codegen;
 decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   docs << "detects if args is a bool.";
 
+  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+
   tests << is_bool()         = "0" >> docs;
   tests << is_bool(0)        = "1" >> docs;
   tests << is_bool(1)        = "1" >> docs;
+  tests << is_bool("1u")     = "0" >> docs;
+  tests << is_bool(binmin)   = "0" >> docs;
   tests << is_bool(0, 1)     = "0" >> docs;
   tests << is_bool("(0)")    = "0" >> docs;
   tests << is_bool("()")     = "0";

@@ -32,36 +32,30 @@ namespace api {
 using namespace codegen;
 
 decltype(ne) ne = NIFTY_DEF(ne, [&](va args) {
-  docs << "uint not-equal-to comparison.";
+  docs << "integral not-equal-to comparison."
+       << "prohibits comparison of different signedness.";
 
-  tests << eq("0, 0")                                 = "1" >> docs;
-  tests << eq("0, 1")                                 = "0" >> docs;
-  tests << eq("0, 2")                                 = "0";
-  tests << eq("0, 3")                                 = "0";
-  tests << eq("1, 0")                                 = "0" >> docs;
-  tests << eq("1, 1")                                 = "1" >> docs;
-  tests << eq("1, 2")                                 = "0";
-  tests << eq("1, 3")                                 = "0";
-  tests << eq("2, 0")                                 = "0";
-  tests << eq("2, 1")                                 = "0";
-  tests << eq("2, 2")                                 = "1";
-  tests << eq("2, 3")                                 = "0";
-  tests << eq("3, 0")                                 = "0";
-  tests << eq("3, 1")                                 = "0";
-  tests << eq("3, 2")                                 = "0";
-  tests << eq("3, 3")                                 = "1";
-  tests << eq(0, conf::uint_max)                      = "0";
-  tests << eq(0, conf::uint_max - 1)                  = "0";
-  tests << eq(1, conf::uint_max)                      = "0";
-  tests << eq(1, conf::uint_max - 1)                  = "0";
-  tests << eq(conf::uint_max, 0)                      = "0";
-  tests << eq(conf::uint_max - 1, 0)                  = "0";
-  tests << eq(conf::uint_max, 1)                      = "0";
-  tests << eq(conf::uint_max - 1, 1)                  = "0";
-  tests << eq(conf::uint_max, conf::uint_max)         = "1";
-  tests << eq(conf::uint_max, conf::uint_max - 1)     = "0";
-  tests << eq(conf::uint_max - 1, conf::uint_max)     = "0";
-  tests << eq(conf::uint_max - 1, conf::uint_max - 1) = "1";
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
+
+  tests << ne("0, 0")                                                             = "0" >> docs;
+  tests << ne("0, 1")                                                             = "1" >> docs;
+  tests << ne("7u, 8u")                                                           = "1" >> docs;
+  tests << ne("8u, 7u")                                                           = "1";
+  tests << ne(int_(uint_max_s), "0")                                              = "1" >> docs;
+  tests << ne(int_max_s, int_min_s)                                               = "1" >> docs;
+  tests << ne(int_min_s, int_max_s)                                               = "1";
+  tests << ne(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
+  tests << ne(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "1" >> docs;
+  tests << ne("0u", uint_max_s)                                                   = "1";
+  tests << ne(uint_max_s, "0u")                                                   = "1";
+  tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
+  tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
+  tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";
+  tests << ne(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "1";
+  tests << ne(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
+  tests << ne(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
 
   return not_(eq(args));
 });

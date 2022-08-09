@@ -25,21 +25,47 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](va args) {
-  docs << "returns the first argument.";
+decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
+  docs << "detects if args is a signed integer."
+       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
+              + ").";
 
-  tests << first("")     = "" >> docs;
-  tests << first(", ")   = "" >> docs;
-  tests << first("a")    = "a" >> docs;
-  tests << first("a, b") = "a" >> docs;
+  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
-  return pp::va_opt(ifirst(args));
+  tests << is_int()               = "0" >> docs;
+  tests << is_int("foo")          = "0" >> docs;
+  tests << is_int(0)              = "1" >> docs;
+  tests << is_int("0u")           = "0" >> docs;
+  tests << is_int(conf::uint_max) = "0" >> docs;
+  tests << is_int(binmin)         = "0" >> docs;
+  tests << is_int(ibinumax)       = "1" >> docs;
+  tests << is_int("0b110u")       = "0" >> docs;
+  tests << is_int("(), ()")       = "0" >> docs;
+
+  def ibase2_ = def{(std::string const&)ibase2} = [&] {
+    return "";
+  };
+
+  def{(std::string const&)ibase10} = [&] {
+    return "";
+  };
+
+  def<"0(...)"> _0 = [&](va) {
+    return "0";
+  };
+
+  def<"1(...)">{} = [&](va args) {
+    return is_none(cat(utl::slice(ibase2_, -((std::string const&)ibase2).size()), typeof(args)));
+  };
+
+  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
 });
 
 } // namespace api

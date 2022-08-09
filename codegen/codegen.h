@@ -70,16 +70,22 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
     {"uint_traits", "utraits"},
 };
 
-// the number of bits in a pputl uint.
-constexpr std::uint8_t uint_bits = 10;
-constexpr unsigned     uint_max  = ([] {
+// the number of bits used for signed and unsigned ints
+// binary representations are fixed at this length
+constexpr std::uint8_t bit_length = 10;
+
+constexpr unsigned uint_max = ([] {
   unsigned res{1};
-  for (unsigned i = 0; i < uint_bits; ++i)
+  for (unsigned i = 0; i < bit_length; ++i)
     res *= 2;
   return res - 1;
 })();
+
+constexpr int int_max = uint_max / 2;
+constexpr int int_min = -((uint_max + 1) / 2);
+
 // needed for documentation and tests
-static_assert(uint_bits >= 4);
+static_assert(bit_length >= 4);
 
 // set the case of pputl names.
 // ignores any chars after a backslash.
@@ -136,8 +142,8 @@ constexpr char const project_header[]{
     "//    -----                                                                   //\n"
     "//                                                                            //\n"
     "//    pputl is a powerful C++ preprocessor utilities library that provides    //\n"
-    "//    many high-level programming constructs and a 10-bit unsigned integer    //\n"
-    "//    space with binary arithmetic capabilities.                              //\n"
+    "//    many high-level programming constructs  and 10-bit binary arithmetic    //\n"
+    "//    for both unsigned and signed two's complement integers.                 //\n"
     "//                                                                            //\n"
     "//    pputl algorithms  are built using a preprocessor syntax manipulation    //\n"
     "//    technique for constructing inline recursive call stacks that execute    //\n"
@@ -153,8 +159,8 @@ constexpr char const project_header[]{
     "//    -----                                                                   //\n"
     "//    Copy pputl.h and include. The distribution is single-header.            //\n"
     "//                                                                            //\n"
-    "//    Modify the head of codegen/codegen.h  to configure the  unsigned bit    //\n"
-    "//    size or naming preferences and run `make` to regenerate.                //\n"
+    "//    Modify  the head of  codegen/codegen.h  to configure the bit size or    //\n"
+    "//    naming preferences and run `make` to regenerate.                        //\n"
     "//                                                                            //\n"
     "//    Run `make test` to validate the library on your system.                 //\n"
     "//                                                                            //\n"
@@ -169,15 +175,18 @@ constexpr char const project_header[]{
     "//    generic data ranges  both input and output a variadic argument list.    //\n"
     "//    Creating a tuple is trivial but extraction costs an expansion.          //\n"
     "//                                                                            //\n"
-    "//    pputl defines three types: tuple, bool, and uint.  Features that use    //\n"
-    "//    one of  these types  in their  parameter documentation  assert their    //\n"
-    "//    validity by type-casting.  Type casts expand to their original value    //\n"
-    "//    if successful, else they trigger a preprocessor error.                  //\n"
+    "//    pputl defines several types and uses type identification and casting    //\n"
+    "//    for control flow and error reporting. See the [type] section.           //\n"
     "//                                                                            //\n"
-    "//    uint values are one of two subtypes: decimal or binary.  uint may be    //\n"
-    "//    constructed from either of these representations.  Binary values are    //\n"
-    "//    represented using an '0b' prefix and 'u' suffix and their bit length    //\n"
-    "//    is always fixed to the configured uint bits.                            //\n"
+    "//      - tuple   : anything in parentheses                                   //\n"
+    "//      - uint    : [abstract] unsigned integer                               //\n"
+    "//      - int     : [abstract] signed integer                                 //\n"
+    "//      - ubase2  : [uint] unsigned base 2 integer;  e.g. 0b0000101010u       //\n"
+    "//      - ubase10 : [uint] unsigned base 10 integer; e.g. 42u                 //\n"
+    "//      - bool    : [int]  the literal '1' or '0'                             //\n"
+    "//      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //\n"
+    "//      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //\n"
+    "//      - any     : exactly one generic value                                 //\n"
     "//                                                                            //\n"
     "//    pputl errors execute  an invalid preprocessor operation by using the    //\n"
     "//    concatenation operator (incorrectly) on a string error message.  All    //\n"

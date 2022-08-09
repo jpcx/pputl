@@ -32,10 +32,10 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(uint_seq)    uint_seq    = NIFTY_DEF(uint_seq);
-decltype(uint_rseq)   uint_rseq   = NIFTY_DEF(uint_rseq);
 decltype(uint_traits) uint_traits = NIFTY_DEF(uint_traits);
-decltype(uint_pass)   uint_pass   = NIFTY_DEF(uint_pass);
+decltype(uint_trait)  uint_trait  = NIFTY_DEF(uint_trait);
+decltype(uint_upass)  uint_upass  = NIFTY_DEF(uint_upass);
+decltype(uint_ipass)  uint_ipass  = NIFTY_DEF(uint_ipass);
 decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
 decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
@@ -45,12 +45,12 @@ static std::string
 log2(unsigned n) {
   if (n == 0)
     return "";
-  return std::to_string(static_cast<unsigned>(std::log2(n)));
+  return std::to_string(static_cast<unsigned>(std::log2(n))) + "u";
 }
 
 static std::string
 sqrt(unsigned n) {
-  return std::to_string(static_cast<unsigned>(std::sqrt(n)));
+  return std::to_string(static_cast<unsigned>(std::sqrt(n))) + "u";
 }
 
 static std::string
@@ -58,22 +58,22 @@ factors(unsigned n) {
   auto                     facts = utl::prime_factors(n);
   std::vector<std::string> sfacts(facts.size());
   std::ranges::transform(facts, std::begin(sfacts), [](auto&& v) {
-    return std::to_string(v);
+    return std::to_string(v) + "u";
   });
   return pp::tup(utl::cat(sfacts, ", "));
 }
 
-static std::array<std::string, conf::uint_bits>
-bitnot(std::array<std::string, conf::uint_bits> const& n) {
+static std::array<std::string, conf::bit_length>
+bitnot(std::array<std::string, conf::bit_length> const& n) {
   auto res = n;
   for (auto&& v : res)
     v = v == "1" ? "0" : "1";
   return res;
 }
 
-static std::array<std::string, conf::uint_bits>
+static std::array<std::string, conf::bit_length>
 binary(unsigned n) {
-  std::array<std::string, conf::uint_bits> res{};
+  std::array<std::string, conf::bit_length> res{};
   std::ranges::fill(res, "0");
   for (unsigned i = 0; n; ++i) {
     res[res.size() - 1 - i] = std::to_string(n % 2);
@@ -83,61 +83,72 @@ binary(unsigned n) {
 }
 
 static std::string
-binary_str(std::array<std::string, conf::uint_bits> const& n) {
-  return "0b" + utl::cat(n) + "u";
+binary_str(std::array<std::string, conf::bit_length> const& n, bool uint = true) {
+  return "0b" + utl::cat(n) + (uint ? "u" : "");
+}
+
+static int
+uint_to_int(unsigned n) {
+  auto mod = (conf::uint_max + 1) / 2;
+  if (n < mod)
+    return n;
+  else
+    return -((mod * 2) - n);
 }
 } // namespace impl
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
-  docs << "uint type (0 through " + uint_max_s + ")."
-       << "expands to n if valid, else fails."
+  docs << std::to_string(conf::bit_length) + "-bit unsigned integer type."
+       << "may be constructed from either unsigned or signed ints."
+       << "cannot parse negative decimals; use math.neg instead."
        << ""
-       << "constructible from binary or decimal."
-       << "binary bit length is fixed at " + uint_bits + " (" + std::to_string(conf::uint_bits)
-              + ").";
+       << "bit length is fixed. cannot parse shorter bit lengths."
+       << ""
+       << "preserves binary/decimal representation."
+       << ""
+       << "uses a 'u' suffix for both representations."
+       << "see fmt.paste_uint to remove suffix before pasting."
+       << ""
+       << "cast from signed reinterprets bits as unsigned."
+       << "value must be a valid signed int; implicit interpretation"
+       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+              + " is not a valid integer).";
 
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
-  auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
+  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+  auto binmax    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
+  auto binmaxpop = binmax;
+  binmaxpop.pop_back();
 
-  tests << uint(0)              = "0" >> docs;
-  tests << uint(1)              = "1" >> docs;
-  tests << uint(2)              = "2" >> docs;
-  tests << uint(conf::uint_max) = uint_max_s >> docs;
-  tests << uint(binmin)         = binmin >> docs;
-  tests << uint(binmax)         = binmax >> docs;
-
-  auto seq  = utl::base10_seq(conf::uint_max + 1);
-  auto rseq = seq;
-  std::ranges::reverse(rseq);
-
-  // set up uint seqs
-  detail::uint_rseq = def{"rseq"} = [&] {
-    return utl::cat(rseq, ", ");
-  };
-  detail::uint_seq = def{"seq"} = [&] {
-    docs << "full unsigned integer sequences";
-    return utl::cat(seq, ", ");
-  };
+  tests << uint(0)          = "0u" >> docs;
+  tests << uint(1)          = "1u" >> docs;
+  tests << uint("2u")       = "2u" >> docs;
+  tests << uint(uint_max_s) = uint_max_s >> docs;
+  tests << uint(binmin)     = binmin >> docs;
+  tests << uint(binmaxpop)  = binmax >> docs;
 
   // set up traits
   {
+    clang_format = false;
+
     std::size_t _ = 0;
     std::size_t n = 0;
     for (; _ < (detail::uint_traits.size() / 2) - 1; ++_, ++n) {
       auto bin               = impl::binary(n);
-      detail::uint_traits[_] = def{"traits_" + std::to_string(n)} = [&] {
-        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin), impl::log2(n),
+      detail::uint_traits[_] = def{"traits_" + std::to_string(n) + "\\u"} = [&] {
+        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false),
+                                   std::string{n > conf::int_max ? "1" : "0"}, impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
-                        ", ");
+                        ",");
       };
     }
     {
       auto bin                 = impl::binary(n);
-      detail::uint_traits[_++] = def{"traits_" + std::to_string(n)} = [&] {
-        docs << "type, binary, log2, sqrt, factors";
-        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin), impl::log2(n),
+      detail::uint_traits[_++] = def{"traits_" + std::to_string(n) + "\\u"} = [&] {
+        docs << "type, signed binary, signed is negative, log2, sqrt, factors";
+        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false),
+                                   std::string{n > conf::int_max ? "1" : "0"}, impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
-                        ", ");
+                        ",");
       };
     }
 
@@ -145,47 +156,153 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     for (; _ < detail::uint_traits.size() - 1; ++_, ++n) {
       auto bin               = impl::binary(n);
       detail::uint_traits[_] = def{"traits_\\" + impl::binary_str(bin)} = [&] {
-        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
-                                   pp::tup(utl::cat(bin, ", ")),
+        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n) + "u",
+                                   std::to_string(impl::uint_to_int(n)),
+                                   pp::tup(utl::cat(bin, ",")),
                                    impl::binary_str(impl::bitnot(bin))},
-                        ", ");
+                        ",");
       };
     }
     {
       auto bin               = impl::binary(n);
       detail::uint_traits[_] = def{"traits_\\" + impl::binary_str(bin)} = [&] {
-        docs << "type, decimal, bits, bitnot";
-        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n),
-                                   pp::tup(utl::cat(bin, ", ")),
+        docs << "type, unsigned decimal, signed decimal, bits, bitnot";
+        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n) + "u",
+                                   std::to_string(impl::uint_to_int(n)),
+                                   pp::tup(utl::cat(bin, ",")),
                                    impl::binary_str(impl::bitnot(bin))},
-                        ", ");
+                        ",");
       };
     }
+
+    clang_format = true;
   }
 
-  detail::uint_fail = def{"fail(err, ...)"} = [&](arg err, va) {
-    return fail(err);
+  detail::uint_trait = def{"trait(...)"} = [&](va args) {
+    docs << "internal traits retrieval. uint must be valid and have a suffix.";
+
+    def<"\\TYPE(t, ...) -> BIN|DEC"> type = [&](arg t, va) {
+      return t;
+    };
+
+    def<"\\BIN_UDEC(t, ud, id, b, bn) -> ubase10">{} = [&](pack args) {
+      return args[1];
+    };
+
+    def<"\\BIN_IDEC(t, ud, id, b, bn) -> ibase10">{} = [&](pack args) {
+      return args[2];
+    };
+
+    def<"\\BIN_BITS(t, ud, id, b, bn) -> tuple<bool...>">{} = [&](pack args) {
+      return args[3];
+    };
+
+    def<"\\BIN_BNOT(t, ud, id, b, bn) -> ubase2">{} = [&](pack args) {
+      return args[4];
+    };
+
+    def<"\\DEC_IBIN(t, ib, in, l2, sq, f) -> ibase2">{} = [&](pack args) {
+      return args[1];
+    };
+
+    def<"\\DEC_INEG(t, ib, in, l2, sq, f) -> bool{signed<0}">{} = [&](pack args) {
+      return args[2];
+    };
+
+    def<"\\DEC_LOG2(t, ib, in, l2, sq, f) -> ubase10{log2(n)}">{} = [&](pack args) {
+      return args[3];
+    };
+
+    def<"\\DEC_SQRT(t, ib, in, l2, sq, f) -> ubase10{sqrt(n)}">{} = [&](pack args) {
+      return args[4];
+    };
+
+    def<"\\DEC_FACT(t, ib, in, l2, sq, f) -> typle<ubase10{factor}...>">{} = [&](pack args) {
+      docs << "uint traits. trait name follows the " + utl::slice(type, -4) + " prefix";
+      return args[5];
+    };
+
+    return def<"o(uint, trait)">{[&](arg uint, arg trait) {
+      return def<"o(trait, ...)">{[&](arg trait, va args) {
+        return pp::call(pp::cat(utl::slice(type, -4), trait), args);
+      }}(trait, cat(utl::slice(detail::uint_traits[0], -2), uint));
+    }}(args);
   };
 
-  detail::uint_pass = def{"pass(err, ...)"} = [&](arg, va args) {
-    docs << "fourth parentheses; returns";
-    return args;
+  detail::uint_fail = def{"fail(e, ...)"} = [&](arg e, va) {
+    return fail(e);
+  };
+
+  detail::uint_ipass = def{"ipass(e, v)"} = [&](arg, arg v) {
+    return pp::cat(v, "u");
+  };
+
+  detail::uint_upass = def{"upass(e, v)"} = [&](arg, arg v) {
+    docs << "final parentheses; returns";
+    return v;
+  };
+
+  def<>            oooo_upass{};
+  def<"oooo(...)"> oooo = [&](va args) {
+    docs << "fourth parentheses; attempts cast from signed.";
+
+    def<"ichk_\\DEC(u)"> ichk_dec = [&](arg u) {
+      def<"0"> _0 = [&] {
+        return detail::uint_ipass;
+      };
+
+      def<"1">{} = [&] {
+        return detail::uint_fail;
+      };
+
+      return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
+    };
+
+    def<"ichk_\\BIN(u)">{} = [&](arg) {
+      return detail::uint_ipass;
+    };
+
+    def<"fail(u)"> oooo_fail = [&](arg) {
+      return detail::uint_fail;
+    };
+
+    def<"no_fail(u)"> oooo_no_fail = [&](arg u) {
+      return pp::call(cat(utl::slice(ichk_dec, -3), detail::uint_trait(u, "TYPE")), u);
+    };
+
+    oooo_upass = def{"upass(...)"} = [&](va) {
+      return detail::uint_upass;
+    };
+
+    return def<"res(u, ...)">{[&](arg u, va args) {
+      return def<"o(u, _, ...)">{[&](arg u, arg, va) {
+        std::string const prefix    = utl::slice(oooo_fail, -4);
+        std::string const fail_s    = utl::slice(oooo_fail, prefix.size(), 0);
+        std::string const no_fail_s = utl::slice(oooo_no_fail, prefix.size(), 0);
+
+        return pp::call(pp::cat(prefix,
+                                pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2)
+                                                                     - no_fail_s.size())),
+                                fail_s),
+                        u);
+      }}(u, args);
+    }}(pp::cat(args, "u"), pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
   };
 
   def<>           ooo_fail{};
   def<"ooo(...)"> ooo = [&](va args) {
-    docs << "third parentheses; asserts one of 0 through " + uint_max_s + ".";
+    docs << "third parentheses; attempts cast from unsigned.";
 
     ooo_fail = def{"fail(...)"} = [&](va) {
-      return detail::uint_fail;
+      return oooo;
     };
 
     def<"no_fail(...)"> ooo_no_fail = [&](va) {
-      return detail::uint_pass;
+      return oooo_upass;
     };
 
     return def<"res(...)">{[&](va args) {
-      return def<"x(_, ...)">{[&](arg, va) {
+      return def<"o(_, ...)">{[&](arg, va) {
         std::string const prefix    = utl::slice(ooo_fail, -4);
         std::string const fail_s    = utl::slice(ooo_fail, prefix.size(), 0);
         std::string const no_fail_s = utl::slice(ooo_no_fail, prefix.size(), 0);
@@ -195,7 +312,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
             pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
             fail_s));
       }}(args);
-    }}(pp::cat(utl::slice(detail::uint_traits[0], -1), args));
+    }}(pp::cat(utl::slice(detail::uint_traits[0], -2), args));
   };
 
   def<>             oo_fail{};
@@ -243,8 +360,8 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
         pass_s));
   };
 
-  return pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args),
-                  istr("[" + uint + "] invalid uint : " + args), args);
+  return pp::call(pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args), args),
+                  istr("[" + uint + "] invalid integer : " + args), args);
 });
 
 } // namespace api

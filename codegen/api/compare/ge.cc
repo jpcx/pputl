@@ -32,36 +32,30 @@ namespace api {
 using namespace codegen;
 
 decltype(ge) ge = NIFTY_DEF(ge, [&](va args) {
-  docs << "uint greater-than-or-equal-to comparison.";
+  docs << "integral greater-than-or-equal-to comparison."
+       << "prohibits comparison of different signedness.";
 
-  tests << ge("0, 0")                                 = "1" >> docs;
-  tests << ge("0, 1")                                 = "0" >> docs;
-  tests << ge("0, 2")                                 = "0";
-  tests << ge("0, 3")                                 = "0";
-  tests << ge("1, 0")                                 = "1" >> docs;
-  tests << ge("1, 1")                                 = "1" >> docs;
-  tests << ge("1, 2")                                 = "0";
-  tests << ge("1, 3")                                 = "0";
-  tests << ge("2, 0")                                 = "1";
-  tests << ge("2, 1")                                 = "1";
-  tests << ge("2, 2")                                 = "1";
-  tests << ge("2, 3")                                 = "0";
-  tests << ge("3, 0")                                 = "1";
-  tests << ge("3, 1")                                 = "1";
-  tests << ge("3, 2")                                 = "1";
-  tests << ge("3, 3")                                 = "1";
-  tests << ge(0, conf::uint_max)                      = "0";
-  tests << ge(0, conf::uint_max - 1)                  = "0";
-  tests << ge(1, conf::uint_max)                      = "0";
-  tests << ge(1, conf::uint_max - 1)                  = "0";
-  tests << ge(conf::uint_max, 0)                      = "1";
-  tests << ge(conf::uint_max - 1, 0)                  = "1";
-  tests << ge(conf::uint_max, 1)                      = "1";
-  tests << ge(conf::uint_max - 1, 1)                  = "1";
-  tests << ge(conf::uint_max, conf::uint_max)         = "1";
-  tests << ge(conf::uint_max, conf::uint_max - 1)     = "1";
-  tests << ge(conf::uint_max - 1, conf::uint_max)     = "0";
-  tests << ge(conf::uint_max - 1, conf::uint_max - 1) = "1";
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
+
+  tests << ge("0, 0")                                                             = "1" >> docs;
+  tests << ge("0, 1")                                                             = "0" >> docs;
+  tests << ge("7u, 8u")                                                           = "0" >> docs;
+  tests << ge("8u, 7u")                                                           = "1";
+  tests << ge(int_(uint_max_s), "0")                                              = "0" >> docs;
+  tests << ge(int_max_s, int_min_s)                                               = "1" >> docs;
+  tests << ge(int_min_s, int_max_s)                                               = "0";
+  tests << ge(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "1" >> docs;
+  tests << ge(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "0" >> docs;
+  tests << ge("0u", uint_max_s)                                                   = "0";
+  tests << ge(uint_max_s, "0u")                                                   = "1";
+  tests << ge(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
+  tests << ge(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "1";
+  tests << ge(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "0";
+  tests << ge(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "1";
+  tests << ge(to_string(int_max / 2), to_string((int_max / 2)))                   = "1";
+  tests << ge(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "0";
 
   return not_(lt(args));
 });

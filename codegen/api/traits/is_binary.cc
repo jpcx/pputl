@@ -25,38 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(is_binary) is_binary = NIFTY_DEF(is_binary, [&](va args) {
-  docs << "detects if args is a uint represented as binary.";
-
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "0")) + "u";
-  auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::uint_bits, "1")) + "u";
-
-  tests << is_binary()               = "0" >> docs;
-  tests << is_binary(48)             = "0" >> docs;
-  tests << is_binary(conf::uint_max) = "0" >> docs;
-  tests << is_binary("foo")          = "0" >> docs;
-  tests << is_binary(binmin)         = "1" >> docs;
-  tests << is_binary(binmax)         = "1" >> docs;
-
-  def bin = def{std::string{binary}} = [&] {
-    return "";
-  };
-
-  def<"o_0(...)"> o_0 = [&](va) {
-    return "0";
-  };
-
-  def<"o_1(u)">{} = [&](arg u) {
-    return is_none(cat(utl::slice(bin, -((std::string const&)binary).size()), typeof(u)));
-  };
-
-  return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_binary) is_binary = NIFTY_DEF(is_binary, [&](va args) {
+//   docs << "detects if args is a uint represented as binary.";
+// 
+//   auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
+//   auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
+// 
+//   tests << is_binary()               = "0" >> docs;
+//   tests << is_binary(48)             = "0" >> docs;
+//   tests << is_binary(conf::uint_max) = "0" >> docs;
+//   tests << is_binary("foo")          = "0" >> docs;
+//   tests << is_binary(binmin)         = "1" >> docs;
+//   tests << is_binary(binmax)         = "1" >> docs;
+// 
+//   def bin = def{std::string{binary}} = [&] {
+//     return "";
+//   };
+// 
+//   def<"o_0(...)"> o_0 = [&](va) {
+//     return "0";
+//   };
+// 
+//   def<"o_1(u)">{} = [&](arg u) {
+//     return is_none(cat(utl::slice(bin, -((std::string const&)binary).size()), typeof(u)));
+//   };
+// 
+//   return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);
+// });
+// 
+// } // namespace api
