@@ -32,11 +32,14 @@ namespace api {
 using namespace codegen;
 
 decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "any type (generic data). returns args.";
+  docs << "any type (generic data). returns arg."
+       << "describes exactly one generic value.";
 
   tests << any("foo") = "foo" >> docs;
 
-  return args;
+  return def<"o(v)">{[&](arg v) {
+    return v;
+  }}(args);
 });
 
 } // namespace api

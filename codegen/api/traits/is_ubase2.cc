@@ -31,28 +31,21 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "detects if args is an unsigned integer."
+decltype(is_ubase2) is_ubase2 = NIFTY_DEF(is_ubase2, [&](va args) {
+  docs << "detects if args is an unsigned int in base2 form (requires 'u' suffix)."
        << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
               + ").";
 
   auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
-  tests << is_uint()         = "0" >> docs;
-  tests << is_uint("foo")    = "0" >> docs;
-  tests << is_uint(0)        = "0" >> docs;
-  tests << is_uint("0u")     = "1" >> docs;
-  tests << is_uint(binmin)   = "1" >> docs;
-  tests << is_uint(ibinumax) = "0" >> docs;
-  tests << is_uint("0b110u") = "0" >> docs;
-  tests << is_uint("(), ()") = "0" >> docs;
+  tests << is_ubase2("1")      = "0" >> docs;
+  tests << is_ubase2("1u")     = "0" >> docs;
+  tests << is_ubase2(binmin)   = "1" >> docs;
+  tests << is_ubase2(ibinneg1) = "0" >> docs;
+  tests << is_ubase2("(), ()") = "0" >> docs;
 
   def ubase2_ = def{(std::string const&)ubase2} = [&] {
-    return "";
-  };
-
-  def{(std::string const&)ubase10} = [&] {
     return "";
   };
 

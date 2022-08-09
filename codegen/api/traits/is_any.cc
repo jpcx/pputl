@@ -31,40 +31,19 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "detects if args is an unsigned integer."
-       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
+  docs << "detects if args is exactly one generic value.";
 
-  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  tests << is_any("")         = "0" >> docs;
+  tests << is_any(",")        = "0" >> docs;
+  tests << is_any("foo,")     = "0" >> docs;
+  tests << is_any("foo, bar") = "0" >> docs;
+  tests << is_any("foo")      = "1" >> docs;
+  tests << is_any("(42)")     = "1" >> docs;
 
-  tests << is_uint()         = "0" >> docs;
-  tests << is_uint("foo")    = "0" >> docs;
-  tests << is_uint(0)        = "0" >> docs;
-  tests << is_uint("0u")     = "1" >> docs;
-  tests << is_uint(binmin)   = "1" >> docs;
-  tests << is_uint(ibinumax) = "0" >> docs;
-  tests << is_uint("0b110u") = "0" >> docs;
-  tests << is_uint("(), ()") = "0" >> docs;
-
-  def ubase2_ = def{(std::string const&)ubase2} = [&] {
-    return "";
-  };
-
-  def{(std::string const&)ubase10} = [&] {
-    return "";
-  };
-
-  def<"0(...)"> _0 = [&](va) {
-    return "0";
-  };
-
-  def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ubase2_, -((std::string const&)ubase2).size()), typeof(args)));
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+  return def<"o(_, ...)">{[&](arg first, va args) {
+    return and_(is_some(first), is_none(args));
+  }}(args + " " + pp::va_opt("."));
 });
 
 } // namespace api

@@ -31,28 +31,23 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "detects if args is an unsigned integer."
+decltype(is_ibase2) is_ibase2 = NIFTY_DEF(is_ibase2, [&](va args) {
+  docs << "detects if args is a signed int in base2 form."
        << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
               + ").";
 
-  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto ubinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
 
-  tests << is_uint()         = "0" >> docs;
-  tests << is_uint("foo")    = "0" >> docs;
-  tests << is_uint(0)        = "0" >> docs;
-  tests << is_uint("0u")     = "1" >> docs;
-  tests << is_uint(binmin)   = "1" >> docs;
-  tests << is_uint(ibinumax) = "0" >> docs;
-  tests << is_uint("0b110u") = "0" >> docs;
-  tests << is_uint("(), ()") = "0" >> docs;
+  tests << is_ibase2("1")      = "0" >> docs;
+  tests << is_ibase2("1u")     = "0" >> docs;
+  tests << is_ibase2(binmin)   = "1" >> docs;
+  tests << is_ibase2(ibinneg1) = "1" >> docs;
+  tests << is_ibase2(ubinneg1) = "0" >> docs;
+  tests << is_ibase2("(), ()") = "0" >> docs;
 
-  def ubase2_ = def{(std::string const&)ubase2} = [&] {
-    return "";
-  };
-
-  def{(std::string const&)ubase10} = [&] {
+  def ibase2_ = def{(std::string const&)ibase2} = [&] {
     return "";
   };
 
@@ -61,7 +56,7 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   };
 
   def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ubase2_, -((std::string const&)ubase2).size()), typeof(args)));
+    return is_none(cat(utl::slice(ibase2_, -((std::string const&)ibase2).size()), typeof(args)));
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);

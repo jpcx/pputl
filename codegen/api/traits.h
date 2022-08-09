@@ -29,33 +29,42 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "logic.h"
 #include "type.h"
 
 namespace api {
 
 inline codegen::category<"traits"> traits;
 
-extern codegen::def<"is_none(...) -> bool"> const&          is_none;
-extern codegen::def<"is_some(...) -> bool"> const&          is_some;
-extern codegen::def<"size(...) -> uint"> const&             size;
-extern codegen::def<"is_tuple(...) -> bool"> const&         is_tuple;
-extern codegen::def<"is_bool(...) -> bool"> const&          is_bool;
-extern codegen::def<"is_uint(...) -> bool"> const&          is_uint;
-extern codegen::def<"items(...: v: tuple) -> ...v"> const&  items;
-/* extern codegen::def<"is_binary(...) -> bool"> const&        is_binary; */
-/* extern codegen::def<"is_decimal(...) -> bool"> const&       is_decimal; */
-/* extern codegen::def<"bits(...: v: uint) -> bool..."> const& bits; */
+extern codegen::def<"is_none(...: v: any...) -> bool"> const&               is_none;
+extern codegen::def<"is_some(...: v: any...) -> bool"> const&               is_some;
+extern codegen::def<"is_any(...: v: any...) -> bool{sizeof v == 1}"> const& is_any;
+extern codegen::def<"size(...: v: any...) -> uint"> const&                  size;
+extern codegen::def<"is_tuple(...: v: any...) -> bool"> const&              is_tuple;
+extern codegen::def<"is_bool(...: v: any...) -> bool"> const&               is_bool;
+extern codegen::def<"is_ubase2(...: v: any...) -> bool"> const&             is_ubase2;
+extern codegen::def<"is_ubase10(...: v: any...) -> bool"> const&            is_ubase10;
+extern codegen::def<"is_ibase2(...: v: any...) -> bool"> const&             is_ibase2;
+extern codegen::def<"is_ibase10(...: v: any...) -> bool"> const&            is_ibase10;
+extern codegen::def<"is_uint(...: v: any...) -> bool"> const&               is_uint;
+extern codegen::def<"is_int(...: v: any...) -> bool"> const&                is_int;
+extern codegen::def<"items(...: v: tuple) -> ...v"> const&                  items;
+extern codegen::def<"bits(...: v: uint|int) -> bool..."> const&                 bits;
 
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_some);
+NIFTY_DECL(is_any);
 NIFTY_DECL(size);
 NIFTY_DECL(is_tuple);
 NIFTY_DECL(is_bool);
+NIFTY_DECL(is_ubase2);
+NIFTY_DECL(is_ubase10);
+NIFTY_DECL(is_ibase2);
+NIFTY_DECL(is_ibase10);
 NIFTY_DECL(is_uint);
+NIFTY_DECL(is_int);
 NIFTY_DECL(items);
-/* NIFTY_DECL(is_binary); */
-/* NIFTY_DECL(is_decimal); */
-/* NIFTY_DECL(bits); */
+NIFTY_DECL(bits);
 
 inline codegen::end_category<"traits"> traits_end;
 

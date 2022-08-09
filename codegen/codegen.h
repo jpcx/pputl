@@ -186,7 +186,7 @@ constexpr char const project_header[]{
     "//      - bool    : [int]  the literal '1' or '0'                             //\n"
     "//      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //\n"
     "//      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //\n"
-    "//      - any     : anything unknown; generic data                            //\n"
+    "//      - any     : exactly one generic value                                 //\n"
     "//                                                                            //\n"
     "//    pputl errors execute  an invalid preprocessor operation by using the    //\n"
     "//    concatenation operator (incorrectly) on a string error message.  All    //\n"

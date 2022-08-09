@@ -31,28 +31,20 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "detects if args is an unsigned integer."
-       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+decltype(is_ibase10) is_ibase10 = NIFTY_DEF(is_ibase10, [&](va args) {
+  docs << "detects if args is a signed int in base10 form.";
 
   auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
 
-  tests << is_uint()         = "0" >> docs;
-  tests << is_uint("foo")    = "0" >> docs;
-  tests << is_uint(0)        = "0" >> docs;
-  tests << is_uint("0u")     = "1" >> docs;
-  tests << is_uint(binmin)   = "1" >> docs;
-  tests << is_uint(ibinumax) = "0" >> docs;
-  tests << is_uint("0b110u") = "0" >> docs;
-  tests << is_uint("(), ()") = "0" >> docs;
+  tests << is_ibase10("1")       = "1" >> docs;
+  tests << is_ibase10("1u")      = "0" >> docs;
+  tests << is_ibase10(int_max_s) = "1" >> docs;
+  tests << is_ibase10(binmin)    = "0" >> docs;
+  tests << is_ibase10(ibinneg1)  = "0" >> docs;
+  tests << is_ibase10("(), ()")  = "0" >> docs;
 
-  def ubase2_ = def{(std::string const&)ubase2} = [&] {
-    return "";
-  };
-
-  def{(std::string const&)ubase10} = [&] {
+  def ibase10_ = def{(std::string const&)ibase10} = [&] {
     return "";
   };
 
@@ -61,7 +53,7 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   };
 
   def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ubase2_, -((std::string const&)ubase2).size()), typeof(args)));
+    return is_none(cat(utl::slice(ibase10_, -((std::string const&)ibase10).size()), typeof(args)));
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);

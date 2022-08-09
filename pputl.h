@@ -87,7 +87,7 @@
 //      - bool    : [int]  the literal '1' or '0'                             //
 //      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //
 //      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //
-//      - any     : anything unknown; generic data                            //
+//      - any     : exactly one generic value                                 //
 //                                                                            //
 //    pputl errors execute  an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
@@ -2629,10 +2629,17 @@
 
 /// [type.any]
 /// ----------
-/// any type (generic data). returns args.
+/// any type (generic data). returns arg.
+/// describes exactly one generic value.
 ///
 /// PTL_ANY(foo) // foo
-#define PTL_ANY(/* v: any */...) /* -> any{v} */ __VA_ARGS__
+#define PTL_ANY(/* v: any */...) /* -> any{v} */ PPUTLANY_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLANY_o(v) v
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.typeof]
 /// -------------
@@ -2823,11 +2830,11 @@
 /// PTL_IS_NONE(foo)       // 0
 /// PTL_IS_NONE(foo, bar)  // 0
 /// PTL_IS_NONE(PTL_ESC()) // 1
-#define PTL_IS_NONE(...) /* -> bool */ PPUTLIS_NONE_o##__VA_OPT__(0)
+#define PTL_IS_NONE(/* v: any... */...) /* -> bool */ PPUTLIS_NONE_o##__VA_OPT__(0)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_NONE_O0 0
+#define PPUTLIS_NONE_o0 0
 #define PPUTLIS_NONE_o  1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
@@ -2840,12 +2847,31 @@
 /// PTL_IS_SOME(foo)       // 1
 /// PTL_IS_SOME(foo, bar)  // 1
 /// PTL_IS_SOME(PTL_ESC()) // 0
-#define PTL_IS_SOME(...) /* -> bool */ PPUTLIS_SOME_o##__VA_OPT__(1)
+#define PTL_IS_SOME(/* v: any... */...) /* -> bool */ PPUTLIS_SOME_o##__VA_OPT__(1)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_SOME_O1 1
+#define PPUTLIS_SOME_o1 1
 #define PPUTLIS_SOME_o  0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_any]
+/// ---------------
+/// detects if args is exactly one generic value.
+///
+/// PTL_IS_ANY()         // 0
+/// PTL_IS_ANY(,)        // 0
+/// PTL_IS_ANY(foo,)     // 0
+/// PTL_IS_ANY(foo, bar) // 0
+/// PTL_IS_ANY(foo)      // 1
+/// PTL_IS_ANY((42))     // 1
+#define PTL_IS_ANY(/* v: any... */...) /* -> bool{sizeof v == 1} */ \
+  PPUTLIS_ANY_o(__VA_ARGS__ __VA_OPT__(.))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_ANY_o(_, ...) PTL_AND(PTL_IS_SOME(_), PTL_IS_NONE(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2858,7 +2884,7 @@
 /// PTL_SIZE(a)    // 1u
 /// PTL_SIZE(a, b) // 2u
 /// PTL_SIZE(, )   // 2u
-#define PTL_SIZE(...) /* -> uint */ \
+#define PTL_SIZE(/* v: any... */...) /* -> uint */ \
   PPUTLSIZE_X(PTL_ISTR([PTL_SIZE] too many args : __VA_ARGS__), PPUTLSIZE, __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -3029,18 +3055,20 @@
 /// PTL_IS_TUPLE(1, 2)   // 0
 /// PTL_IS_TUPLE(())     // 1
 /// PTL_IS_TUPLE((1, 2)) // 1
-#define PTL_IS_TUPLE(...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
+#define PTL_IS_TUPLE(/* v: any... */...) /* -> bool */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
 
 /// [traits.is_bool]
 /// ----------------
 /// detects if args is a bool.
 ///
-/// PTL_IS_BOOL()     // 0
-/// PTL_IS_BOOL(0)    // 1
-/// PTL_IS_BOOL(1)    // 1
-/// PTL_IS_BOOL(0, 1) // 0
-/// PTL_IS_BOOL((0))  // 0
-#define PTL_IS_BOOL(...) /* -> bool */ \
+/// PTL_IS_BOOL()             // 0
+/// PTL_IS_BOOL(0)            // 1
+/// PTL_IS_BOOL(1)            // 1
+/// PTL_IS_BOOL(1u)           // 0
+/// PTL_IS_BOOL(0b0000000000) // 0
+/// PTL_IS_BOOL(0, 1)         // 0
+/// PTL_IS_BOOL((0))          // 0
+#define PTL_IS_BOOL(/* v: any... */...) /* -> bool */ \
   PTL_CAT(PPUTLIS_BOOL_, PPUTLBOOL_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -3050,29 +3078,138 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [traits.is_ubase2]
+/// ------------------
+/// detects if args is an unsigned int in base2 form (requires 'u' suffix).
+/// binary bit length is fixed at PTL_BIT_LENGTH (10).
+///
+/// PTL_IS_UBASE2(1)             // 0
+/// PTL_IS_UBASE2(1u)            // 0
+/// PTL_IS_UBASE2(0b0000000000u) // 1
+/// PTL_IS_UBASE2(0b1111111111)  // 0
+/// PTL_IS_UBASE2((), ())        // 0
+#define PTL_IS_UBASE2(/* v: any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_UBASE2_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_UBASE2_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_UBASE2_, PTL_TYPEOF(__VA_ARGS__)))
+#define PPUTLIS_UBASE2_0(...) 0
+#define PPUTLIS_UBASE2_PTL_UBASE2
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_ubase10]
+/// -------------------
+/// detects if args is an unsigned int in base10 form (requires 'u' suffix).
+///
+/// PTL_IS_UBASE10(1)             // 0
+/// PTL_IS_UBASE10(1u)            // 1
+/// PTL_IS_UBASE10(1023u)         // 1
+/// PTL_IS_UBASE10(0b0000000000u) // 0
+/// PTL_IS_UBASE10(0b1111111111)  // 0
+/// PTL_IS_UBASE10((), ())        // 0
+#define PTL_IS_UBASE10(/* v: any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_UBASE10_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_UBASE10_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_UBASE10_, PTL_TYPEOF(__VA_ARGS__)))
+#define PPUTLIS_UBASE10_0(...) 0
+#define PPUTLIS_UBASE10_PTL_UBASE10
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_ibase2]
+/// ------------------
+/// detects if args is a signed int in base2 form.
+/// binary bit length is fixed at PTL_BIT_LENGTH (10).
+///
+/// PTL_IS_IBASE2(1)             // 0
+/// PTL_IS_IBASE2(1u)            // 0
+/// PTL_IS_IBASE2(0b0000000000)  // 1
+/// PTL_IS_IBASE2(0b1111111111)  // 1
+/// PTL_IS_IBASE2(0b1111111111u) // 0
+/// PTL_IS_IBASE2((), ())        // 0
+#define PTL_IS_IBASE2(/* v: any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_IBASE2_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_IBASE2_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_IBASE2_, PTL_TYPEOF(__VA_ARGS__)))
+#define PPUTLIS_IBASE2_0(...) 0
+#define PPUTLIS_IBASE2_PTL_IBASE2
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_ibase10]
+/// -------------------
+/// detects if args is a signed int in base10 form.
+///
+/// PTL_IS_IBASE10(1)             // 1
+/// PTL_IS_IBASE10(1u)            // 0
+/// PTL_IS_IBASE10(511)           // 1
+/// PTL_IS_IBASE10(0b0000000000u) // 0
+/// PTL_IS_IBASE10(0b1111111111)  // 0
+/// PTL_IS_IBASE10((), ())        // 0
+#define PTL_IS_IBASE10(/* v: any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_IBASE10_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_IBASE10_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_IBASE10_, PTL_TYPEOF(__VA_ARGS__)))
+#define PPUTLIS_IBASE10_0(...) 0
+#define PPUTLIS_IBASE10_PTL_IBASE10
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_uint]
 /// ----------------
-/// detects if args is a uint.
+/// detects if args is an unsigned integer.
 /// binary bit length is fixed at PTL_BIT_LENGTH (10).
 ///
 /// PTL_IS_UINT()              // 0
 /// PTL_IS_UINT(foo)           // 0
-/// PTL_IS_UINT(0)             // 1
-/// PTL_IS_UINT(())            // 0
-/// PTL_IS_UINT((), ())        // 0
-/// PTL_IS_UINT(0, 1)          // 0
-/// PTL_IS_UINT(1023)          // 1
+/// PTL_IS_UINT(0)             // 0
+/// PTL_IS_UINT(0u)            // 1
 /// PTL_IS_UINT(0b0000000000u) // 1
-/// PTL_IS_UINT(0b1111111111u) // 1
 /// PTL_IS_UINT(0b1111111111)  // 0
 /// PTL_IS_UINT(0b110u)        // 0
-#define PTL_IS_UINT(...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UINT, PPUTLUINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__))
+/// PTL_IS_UINT((), ())        // 0
+#define PTL_IS_UINT(/* v: any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_UINT_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_UINT_PPUTLUINT_UPASS 1
-#define PPUTLIS_UINT_PPUTLUINT_FAIL  0
+#define PPUTLIS_UINT_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_UINT_, PTL_TYPEOF(__VA_ARGS__)))
+#define PPUTLIS_UINT_0(...) 0
+#define PPUTLIS_UINT_PTL_UBASE10
+#define PPUTLIS_UINT_PTL_UBASE2
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_int]
+/// ---------------
+/// detects if args is a signed integer.
+/// binary bit length is fixed at PTL_BIT_LENGTH (10).
+///
+/// PTL_IS_INT()              // 0
+/// PTL_IS_INT(foo)           // 0
+/// PTL_IS_INT(0)             // 1
+/// PTL_IS_INT(0u)            // 0
+/// PTL_IS_INT(0b0000000000u) // 0
+/// PTL_IS_INT(0b1111111111)  // 1
+/// PTL_IS_INT(0b110u)        // 0
+/// PTL_IS_INT((), ())        // 0
+#define PTL_IS_INT(/* v: any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_INT_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_INT_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_INT_, PTL_TYPEOF(__VA_ARGS__)))
+#define PPUTLIS_INT_0(...) 0
+#define PPUTLIS_INT_PTL_IBASE10
+#define PPUTLIS_INT_PTL_IBASE2
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3089,6 +3226,23 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLITEMS_X(...) PTL_ESC __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.bits]
+/// -------------
+/// extracts uint bits.
+/// size of returned args is exactly PTL_BIT_LENGTH (10).
+///
+/// PTL_BITS(0)             // 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+/// PTL_BITS(1)             // 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+/// PTL_BITS(0b1111111110u) // 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
+#define PTL_BITS(/* v: uint|int */...) /* -> bool... */ \
+  PTL_ESC(PPUTLBITS_X PPUTLUINT_TRAIT(PTL_UBASE2(__VA_ARGS__), BIN_BITS))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITS_X(a, b, c, d, e, f, g, h, i, j) a, b, c, d, e, f, g, h, i, j
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3128,10 +3282,10 @@
 /// fails if xct is not a valid xct expression.
 /// PTL_SIZE will fail if the xct expression is too large.
 ///
-/// PTL_XCT_SIZE(PTL_XCT)                            // 0
-/// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1
-/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))          // 2
-/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // 3
+/// PTL_XCT_SIZE(PTL_XCT)                            // 0u
+/// PTL_XCT_SIZE(PTL_ESC(PTL_XCT))                   // 1u
+/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))          // 2u
+/// PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // 3u
 #define PTL_XCT_SIZE(/* xct */...) /* -> uint */                                    \
   PTL_CAT(PPUTLXCT_SIZE_, PTL_IS_NONE(PTL_CAT(PPUTLXCT_SIZE_DETECT_, __VA_ARGS__))) \
   (PTL_ISTR([PTL_XCT_SIZE] invalid xct expr : __VA_ARGS__), __VA_ARGS__)
