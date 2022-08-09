@@ -36,10 +36,10 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << "may be constructed from either unsigned or signed ints."
        << "cannot parse negative decimals; use math.neg instead."
        << ""
-       << "bit length is fixed. cannot parse shorter bit lengths."
+       << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
-       << "attempts to preserve binary/decimal representation, but will"
-       << "output binary if casting the input yields a negative number"
+       << "attempts to preserve hex/decimal representation, but will"
+       << "output hex if casting the input yields a negative number"
        << ""
        << "cast from unsigned reinterprets bits as signed two's complement."
        << ""
@@ -47,16 +47,15 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-  auto binmax  = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
-  auto binneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto hexmin = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto hexmax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
 
   tests << int_(0)             = "0" >> docs;
   tests << int_("1u")          = "1" >> docs;
-  tests << int_(binmin)        = binmin >> docs;
+  tests << int_(hexmin)        = hexmin >> docs;
   tests << int_(conf::int_max) = std::to_string(conf::int_max) >> docs;
-  tests << int_(binmax + "u")  = binmax >> docs;
-  tests << int_(uint_max_s)    = binneg1 >> docs;
+  tests << int_(hexmax + "u")  = hexmax >> docs;
+  tests << int_(uint_max_s)    = hexmax >> docs;
 
   def<"fail(e, ...)"> fail_ = [&](arg e, va) {
     docs << "final parentheses (fail)";
@@ -68,7 +67,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
 
     def<"\\DEC(u)"> dec = [&](arg u) {
       def<"0(u, ibin, ubin)"> _0 = [&](arg, arg, arg ubin) {
-        return detail::uint_trait(ubin, "BIN_IDEC");
+        return detail::uint_trait(ubin, "HEX_IDEC");
       };
 
       def<"1(u, ibin, ubin)">{} = [&](arg, arg ibin, arg) {
@@ -79,15 +78,15 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
         return def<"o(u_, ibin)">{[&](arg u, arg ibin) {
           return def<"o(u, ibin, ubin)">{[&](arg u, arg ibin, arg ubin) {
             return pp::call(
-                cat(utl::slice(_0, -1), esc(ifirst + " " + detail::uint_trait(ubin, "BIN_BITS"))),
+                cat(utl::slice(_0, -1), esc(ifirst + " " + detail::uint_trait(ubin, "HEX_BITS"))),
                 u, ibin, ubin);
           }}(u, ibin, pp::cat(ibin, "u"));
         }}(u, ibin);
-      }}(u, detail::uint_trait(u, "DEC_IBIN"));
+      }}(u, detail::uint_trait(u, "DEC_IHEX"));
     };
 
-    def<"\\BIN(u)">{} = [&](arg u) {
-      return detail::uint_trait(detail::uint_trait(u, "BIN_UDEC"), "DEC_IBIN");
+    def<"\\HEX(u)">{} = [&](arg u) {
+      return detail::uint_trait(detail::uint_trait(u, "HEX_UDEC"), "DEC_IHEX");
     };
 
     return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), u);
@@ -146,7 +145,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
       return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
     };
 
-    def<"ichk_\\BIN(u)">{} = [&](arg) {
+    def<"ichk_\\HEX(u)">{} = [&](arg) {
       return oooo_ipass;
     };
 

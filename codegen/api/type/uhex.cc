@@ -31,32 +31,34 @@ namespace api {
 
 using namespace codegen;
 
-decltype(ibase2) ibase2 = NIFTY_DEF(ibase2, [&](va args) {
-  docs << "casts to the signed int binary subtype.";
+decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
+  docs << "casts to the unsigned int hexidecimal subtype.";
 
-  auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-  auto binfive = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 3, "0")) + "101";
-  auto binmax  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
-  auto binimax = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
+  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
+  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
+  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
+  auto imax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
 
-  tests << ibase2(0)                                   = binmin >> docs;
-  tests << ibase2(5u)                                  = binfive >> docs;
-  tests << ibase2(uint_max_s)                          = binmax >> docs;
-  tests << ibase2(std::to_string(conf::int_max) + "u") = binimax >> docs;
+  tests << uhex(0)          = min >> docs;
+  tests << uhex(1u)         = one >> docs;
+  tests << uhex(5)          = five >> docs;
+  tests << uhex(uint_max_s) = max >> docs;
+  tests << uhex(min)        = min >> docs;
+  tests << uhex(one)        = one >> docs;
+  tests << uhex(imax)       = max >> docs;
 
-  def<"\\DEC(n, u)"> dec = [&](arg, arg u) {
-    return detail::uint_trait(u, "DEC_IBIN");
+  def<"\\DEC(n)"> dec = [&](arg n) {
+    return cat(detail::uint_trait(n, "DEC_IHEX"), "u");
   };
 
-  def<"\\BIN(n, u)">{} = [&](arg n, arg) {
+  def<"\\HEX(n)">{} = [&](arg n) {
     return n;
   };
 
   return def<"o(n)">{[&](arg n) {
-    return def<"o(n, u)">{[&](arg n, arg u) {
-      return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), n, u);
-    }}(n, cat(n, "u"));
-  }}(int_(args));
+    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
+  }}(uint(args));
 });
 
 } // namespace api

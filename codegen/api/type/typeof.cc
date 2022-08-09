@@ -37,19 +37,19 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << "defaults to any if a type could not be determined."
        << ""
        << "returns one of:"
-       << "- " + tuple << "- " + ubase2 << "- " + ibase2 << "- " + ubase10 << "- " + ibase10
+       << "- " + tuple << "- " + uhex << "- " + ihex << "- " + udec << "- " + idec
        << "- " + any;
 
-  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
-  auto ubinmax  = ibinneg1 + "u";
+  auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto ubinmax  = ihexneg1 + "u";
 
   tests << typeof("(foo)")        = tuple >> docs;
-  tests << typeof(0)              = ibase10 >> docs;
-  tests << typeof("0u")           = ubase10 >> docs;
+  tests << typeof(0)              = idec >> docs;
+  tests << typeof("0u")           = udec >> docs;
   tests << typeof(conf::uint_max) = any >> docs;
-  tests << typeof(uint_max_s)     = ubase10 >> docs;
-  tests << typeof(ibinneg1)       = ibase2 >> docs;
-  tests << typeof(ubinmax)        = ubase2 >> docs;
+  tests << typeof(uint_max_s)     = udec >> docs;
+  tests << typeof(ihexneg1)       = ihex >> docs;
+  tests << typeof(ubinmax)        = uhex >> docs;
   tests << typeof("foo")          = any >> docs;
 
   def<"ooo_any(...)"> ooo_any = [&](va) {
@@ -61,27 +61,27 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   };
 
   def<"ooo_uint(u)"> ooo_uint = [&](arg u) {
-    def<"\\BIN"> bin = [&] {
-      return ubase2;
+    def<"\\HEX"> hex = [&] {
+      return uhex;
     };
 
     def<"\\DEC">{} = [&] {
-      return ubase10;
+      return udec;
     };
 
-    return cat(utl::slice(bin, -3), detail::uint_trait(uint(u), "TYPE"));
+    return cat(utl::slice(hex, -3), detail::uint_trait(uint(u), "TYPE"));
   };
 
   def<"ooo_int(i)"> ooo_int = [&](arg i) {
-    def<"\\BIN"> bin = [&] {
-      return ibase2;
+    def<"\\HEX"> hex = [&] {
+      return ihex;
     };
 
     def<"\\DEC">{} = [&] {
-      return ibase10;
+      return idec;
     };
 
-    return cat(utl::slice(bin, -3), detail::uint_trait(cat(int_(i), "u"), "TYPE"));
+    return cat(utl::slice(hex, -3), detail::uint_trait(cat(int_(i), "u"), "TYPE"));
   };
 
   def<"oo_tuple(...)"> oo_tuple = [&](va) {

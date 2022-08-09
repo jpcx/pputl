@@ -38,7 +38,7 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
   using std::to_string;
   using conf::uint_max;
   using conf::int_max;
-  using conf::bit_length;
+  using conf::hex_length;
   using std::vector;
   using std::string;
 
@@ -46,7 +46,7 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
   tests << min("0, 1")                = "0" >> docs;
   tests << min("7u, 8u")              = "7u" >> docs;
   tests << min("8u, 7u")              = "7u";
-  tests << min(int_(uint_max_s), "0") = ("0b" + utl::cat(vector<string>(bit_length, "1"))) >> docs;
+  tests << min(int_(uint_max_s), "0") = ("0x" + utl::cat(vector<string>(hex_length, "F"))) >> docs;
   tests << min(int_max_s, int_min_s)  = int_min_s >> docs;
   tests << min(int_min_s, int_max_s)  = int_min_s;
   tests << min(int_min_s, int_(to_string(int_max + 1) + "u")) = int_min_s >> docs;

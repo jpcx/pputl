@@ -33,11 +33,10 @@ using namespace codegen;
 
 decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   docs << "detects if args is an unsigned integer."
-       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
 
-  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
 
   tests << is_uint()               = "0" >> docs;
   tests << is_uint("foo")          = "0" >> docs;
@@ -45,16 +44,16 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint("0u")           = "1" >> docs;
   tests << is_uint(conf::uint_max) = "0" >> docs;
   tests << is_uint(uint_max_s)     = "1" >> docs;
-  tests << is_uint(binmin)         = "1" >> docs;
-  tests << is_uint(ibinumax)       = "0" >> docs;
+  tests << is_uint(min + "u")      = "1" >> docs;
+  tests << is_uint(max)            = "0" >> docs;
   tests << is_uint("0b110u")       = "0" >> docs;
   tests << is_uint("(), ()")       = "0" >> docs;
 
-  def ubase2_ = def{(std::string const&)ubase2} = [&] {
+  def uhex_ = def{(std::string const&)uhex} = [&] {
     return "";
   };
 
-  def{(std::string const&)ubase10} = [&] {
+  def{(std::string const&)udec} = [&] {
     return "";
   };
 
@@ -63,7 +62,7 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   };
 
   def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ubase2_, -((std::string const&)ubase2).size()), typeof(args)));
+    return is_none(cat(utl::slice(uhex_, -((std::string const&)uhex).size()), typeof(args)));
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);

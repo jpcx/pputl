@@ -35,12 +35,12 @@ decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
   docs << "extracts uint bits."
        << "returns exactly " + bit_length + " (" + std::to_string(conf::bit_length) + ") args.";
 
-  auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
+  auto hexless1 = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "F")) + "Eu";
 
   tests << bits(0) = utl::cat(std::vector<std::string>(conf::bit_length, "0"), ", ") >> docs;
   tests << bits(1) =
       (utl::cat(std::vector<std::string>(conf::bit_length - 1, "0"), ", ") + ", 1") >> docs;
-  tests << bits(binmaxminus1) =
+  tests << bits(hexless1) =
       (utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"), ", ") + ", 0") >> docs;
 
   def bits =
@@ -48,7 +48,7 @@ decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
         return utl::cat(args, ", ");
       };
 
-  return esc(bits + " " + detail::uint_trait(ubase2(args), "BIN_BITS"));
+  return esc(bits + " " + detail::uint_trait(uhex(args), "HEX_BITS"));
 });
 
 } // namespace api

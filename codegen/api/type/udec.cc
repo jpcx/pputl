@@ -25,39 +25,39 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_ubase10) is_ubase10 = NIFTY_DEF(is_ubase10, [&](va args) {
-  docs << "detects if args is an unsigned int in base10 form (requires 'u' suffix).";
+decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
+  docs << "casts to the unsigned int decimal subtype.";
 
-  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
+  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
+  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
+  auto in1  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
 
-  tests << is_ubase10("1")            = "0" >> docs;
-  tests << is_ubase10("1u")           = "1" >> docs;
-  tests << is_ubase10(conf::uint_max) = "0" >> docs;
-  tests << is_ubase10(uint_max_s)     = "1" >> docs;
-  tests << is_ubase10(binmin)         = "0" >> docs;
-  tests << is_ubase10(ibinneg1)       = "0" >> docs;
-  tests << is_ubase10("(), ()")       = "0" >> docs;
+  tests << udec(min)  = "0u" >> docs;
+  tests << udec(1)    = "1u" >> docs;
+  tests << udec(5u)   = "5u" >> docs;
+  tests << udec(five) = "5u" >> docs;
+  tests << udec(max)  = uint_max_s >> docs;
+  tests << udec(in1)  = uint_max_s >> docs;
 
-  def ubase10_ = def{(std::string const&)ubase10} = [&] {
-    return "";
+  def<"\\DEC(n)"> dec = [&](arg n) {
+    return n;
   };
 
-  def<"0(...)"> _0 = [&](va) {
-    return "0";
+  def<"\\HEX(n)">{} = [&](arg n) {
+    return detail::uint_trait(n, "HEX_UDEC");
   };
 
-  def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ubase10_, -((std::string const&)ubase10).size()), typeof(args)));
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+  return def<"o(n)">{[&](arg n) {
+    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
+  }}(uint(args));
 });
 
 } // namespace api

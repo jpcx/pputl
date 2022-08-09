@@ -83,8 +83,46 @@ binary(unsigned n) {
 }
 
 static std::string
-binary_str(std::array<std::string, conf::bit_length> const& n, bool uint = true) {
-  return "0b" + utl::cat(n) + (uint ? "u" : "");
+hex_str(std::array<std::string, conf::bit_length> const& n, bool uint = true) {
+  std::string res{"0x"};
+  for (std::size_t ofs = 0; ofs < n.size(); ofs += 4) {
+    auto grp = n[ofs + 0] + n[ofs + 1] + n[ofs + 2] + n[ofs + 3];
+    if (grp == "0000") {
+      res += "0";
+    } else if (grp == "0001") {
+      res += "1";
+    } else if (grp == "0010") {
+      res += "2";
+    } else if (grp == "0011") {
+      res += "3";
+    } else if (grp == "0100") {
+      res += "4";
+    } else if (grp == "0101") {
+      res += "5";
+    } else if (grp == "0110") {
+      res += "6";
+    } else if (grp == "0111") {
+      res += "7";
+    } else if (grp == "1000") {
+      res += "8";
+    } else if (grp == "1001") {
+      res += "9";
+    } else if (grp == "1010") {
+      res += "A";
+    } else if (grp == "1011") {
+      res += "B";
+    } else if (grp == "1100") {
+      res += "C";
+    } else if (grp == "1101") {
+      res += "D";
+    } else if (grp == "1110") {
+      res += "E";
+    } else {
+      res += "F";
+    }
+  }
+
+  return res + (uint ? "u" : "");
 }
 
 static int
@@ -102,9 +140,9 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
        << "may be constructed from either unsigned or signed ints."
        << "cannot parse negative decimals; use math.neg instead."
        << ""
-       << "bit length is fixed. cannot parse shorter bit lengths."
+       << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
-       << "preserves binary/decimal representation."
+       << "preserves hex/decimal representation."
        << ""
        << "uses a 'u' suffix for both representations."
        << "see fmt.paste_uint to remove suffix before pasting."
@@ -114,17 +152,17 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  auto binmin    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto binmax    = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
-  auto binmaxpop = binmax;
-  binmaxpop.pop_back();
+  auto hexmin    = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
+  auto hexmax    = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
+  auto hexmaxpop = hexmax;
+  hexmaxpop.pop_back();
 
   tests << uint(0)          = "0u" >> docs;
   tests << uint(1)          = "1u" >> docs;
   tests << uint("2u")       = "2u" >> docs;
   tests << uint(uint_max_s) = uint_max_s >> docs;
-  tests << uint(binmin)     = binmin >> docs;
-  tests << uint(binmaxpop)  = binmax >> docs;
+  tests << uint(hexmin)     = hexmin >> docs;
+  tests << uint(hexmaxpop)  = hexmax >> docs;
 
   // set up traits
   {
@@ -135,7 +173,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     for (; _ < (detail::uint_traits.size() / 2) - 1; ++_, ++n) {
       auto bin               = impl::binary(n);
       detail::uint_traits[_] = def{"traits_" + std::to_string(n) + "\\u"} = [&] {
-        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false),
+        return utl::cat(std::array{std::string{"DEC"}, impl::hex_str(bin, false),
                                    std::string{n > conf::int_max ? "1" : "0"}, impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
                         ",");
@@ -144,8 +182,8 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     {
       auto bin                 = impl::binary(n);
       detail::uint_traits[_++] = def{"traits_" + std::to_string(n) + "\\u"} = [&] {
-        docs << "type, signed binary, signed is negative, log2, sqrt, factors";
-        return utl::cat(std::array{std::string{"DEC"}, impl::binary_str(bin, false),
+        docs << "type, signed hex, signed is negative, log2, sqrt, factors";
+        return utl::cat(std::array{std::string{"DEC"}, impl::hex_str(bin, false),
                                    std::string{n > conf::int_max ? "1" : "0"}, impl::log2(n),
                                    impl::sqrt(n), impl::factors(n)},
                         ",");
@@ -155,22 +193,20 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     n = 0;
     for (; _ < detail::uint_traits.size() - 1; ++_, ++n) {
       auto bin               = impl::binary(n);
-      detail::uint_traits[_] = def{"traits_\\" + impl::binary_str(bin)} = [&] {
-        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n) + "u",
+      detail::uint_traits[_] = def{"traits_\\" + impl::hex_str(bin)} = [&] {
+        return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u",
                                    std::to_string(impl::uint_to_int(n)),
-                                   pp::tup(utl::cat(bin, ",")),
-                                   impl::binary_str(impl::bitnot(bin))},
+                                   pp::tup(utl::cat(bin, ",")), impl::hex_str(impl::bitnot(bin))},
                         ",");
       };
     }
     {
       auto bin               = impl::binary(n);
-      detail::uint_traits[_] = def{"traits_\\" + impl::binary_str(bin)} = [&] {
+      detail::uint_traits[_] = def{"traits_\\" + impl::hex_str(bin)} = [&] {
         docs << "type, unsigned decimal, signed decimal, bits, bitnot";
-        return utl::cat(std::array{std::string{"BIN"}, std::to_string(n) + "u",
+        return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u",
                                    std::to_string(impl::uint_to_int(n)),
-                                   pp::tup(utl::cat(bin, ",")),
-                                   impl::binary_str(impl::bitnot(bin))},
+                                   pp::tup(utl::cat(bin, ",")), impl::hex_str(impl::bitnot(bin))},
                         ",");
       };
     }
@@ -181,27 +217,27 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   detail::uint_trait = def{"trait(...)"} = [&](va args) {
     docs << "internal traits retrieval. uint must be valid and have a suffix.";
 
-    def<"\\TYPE(t, ...) -> BIN|DEC"> type = [&](arg t, va) {
+    def<"\\TYPE(t, ...) -> HEX|DEC"> type = [&](arg t, va) {
       return t;
     };
 
-    def<"\\BIN_UDEC(t, ud, id, b, bn) -> ubase10">{} = [&](pack args) {
+    def<"\\HEX_UDEC(t, ud, id, b, bn) -> ubase10">{} = [&](pack args) {
       return args[1];
     };
 
-    def<"\\BIN_IDEC(t, ud, id, b, bn) -> ibase10">{} = [&](pack args) {
+    def<"\\HEX_IDEC(t, ud, id, b, bn) -> ibase10">{} = [&](pack args) {
       return args[2];
     };
 
-    def<"\\BIN_BITS(t, ud, id, b, bn) -> tuple<bool...>">{} = [&](pack args) {
+    def<"\\HEX_BITS(t, ud, id, b, bn) -> tuple<bool...>">{} = [&](pack args) {
       return args[3];
     };
 
-    def<"\\BIN_BNOT(t, ud, id, b, bn) -> ubase2">{} = [&](pack args) {
+    def<"\\HEX_BNOT(t, ud, id, b, bn) -> ubase16">{} = [&](pack args) {
       return args[4];
     };
 
-    def<"\\DEC_IBIN(t, ib, in, l2, sq, f) -> ibase2">{} = [&](pack args) {
+    def<"\\DEC_IHEX(t, ib, in, l2, sq, f) -> ibase16">{} = [&](pack args) {
       return args[1];
     };
 
@@ -258,7 +294,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
       return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
     };
 
-    def<"ichk_\\BIN(u)">{} = [&](arg) {
+    def<"ichk_\\HEX(u)">{} = [&](arg) {
       return detail::uint_ipass;
     };
 

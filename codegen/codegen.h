@@ -70,9 +70,12 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
     {"uint_traits", "utraits"},
 };
 
+// the number of hex digits that describes integers
+// hex representations are fixed at this length
+constexpr std::uint8_t hex_length = 3;
+
 // the number of bits used for signed and unsigned ints
-// binary representations are fixed at this length
-constexpr std::uint8_t bit_length = 10;
+constexpr std::uint8_t bit_length = hex_length * 4;
 
 constexpr unsigned uint_max = ([] {
   unsigned res{1};
@@ -84,8 +87,7 @@ constexpr unsigned uint_max = ([] {
 constexpr int int_max = uint_max / 2;
 constexpr int int_min = -((uint_max + 1) / 2);
 
-// needed for documentation and tests
-static_assert(bit_length >= 4);
+static_assert(conf::bit_length == conf::hex_length * 4);
 
 // set the case of pputl names.
 // ignores any chars after a backslash.
@@ -142,7 +144,7 @@ constexpr char const project_header[]{
     "//    -----                                                                   //\n"
     "//                                                                            //\n"
     "//    pputl is a powerful C++ preprocessor utilities library that provides    //\n"
-    "//    many high-level programming constructs  and 10-bit binary arithmetic    //\n"
+    "//    many high-level programming constructs  and 12-bit binary arithmetic    //\n"
     "//    for both unsigned and signed two's complement integers.                 //\n"
     "//                                                                            //\n"
     "//    pputl algorithms  are built using a preprocessor syntax manipulation    //\n"
@@ -152,14 +154,14 @@ constexpr char const project_header[]{
     "//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //\n"
     "//    support (which are guaranteed by C++20) but has no dependencies.        //\n"
     "//                                                                            //\n"
-    "//    pputl  is completely generated and tested by a custom C++ framework.    //\n"
+    "//    pputl is completely generated and tested  by a custom C++ framework.    //\n"
     "//    See the codegen/ folder for the full source.                            //\n"
     "//                                                                            //\n"
     "//    USAGE                                                                   //\n"
     "//    -----                                                                   //\n"
     "//    Copy pputl.h and include. The distribution is single-header.            //\n"
     "//                                                                            //\n"
-    "//    Modify  the head of  codegen/codegen.h  to configure the bit size or    //\n"
+    "//    Modify the head of codegen/codegen.h  to configure the bit length or    //\n"
     "//    naming preferences and run `make` to regenerate.                        //\n"
     "//                                                                            //\n"
     "//    Run `make test` to validate the library on your system.                 //\n"
@@ -178,15 +180,24 @@ constexpr char const project_header[]{
     "//    pputl defines several types and uses type identification and casting    //\n"
     "//    for control flow and error reporting. See the [type] section.           //\n"
     "//                                                                            //\n"
-    "//      - tuple   : anything in parentheses                                   //\n"
-    "//      - uint    : [abstract] unsigned integer                               //\n"
-    "//      - int     : [abstract] signed integer                                 //\n"
-    "//      - ubase2  : [uint] unsigned base 2 integer;  e.g. 0b0000101010u       //\n"
-    "//      - ubase10 : [uint] unsigned base 10 integer; e.g. 42u                 //\n"
-    "//      - bool    : [int]  the literal '1' or '0'                             //\n"
-    "//      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //\n"
-    "//      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //\n"
-    "//      - any     : exactly one generic value                                 //\n"
+    "//      tuple : anything in parentheses                                       //\n"
+    "//            :                                                               //\n"
+    "//      int   : <abstract> signed integer                                     //\n"
+    "//      idec  :  [int]   (positive-only) 2s-complement decimal int; e.g. 353  //\n"
+    "//      bool  :   [idec] the literal '1' or '0'                               //\n"
+    "//      ihex  :  [int]   signed hexidecimal integer; e.g. 0x161               //\n"
+    "//            :                                                               //\n"
+    "//      uint  : <abstract> unsigned integer                                   //\n"
+    "//      udec  :  [uint]  unsigned decimal integer;     e.g. 42u               //\n"
+    "//      uhex  :  [uint]  unsigned hexidecimal integer; e.g. 0x02Au            //\n"
+    "//            :                                                               //\n"
+    "//      any   : exactly one generic value                                     //\n"
+    "//                                                                            //\n"
+    "//    Negative ints cannot be represented in decimal  due to concatenation    //\n"
+    "//    restrictions. Arithmetic and bitwise functions attempt to cast their    //\n"
+    "//    results in the same form as their input, but will always return ihex    //\n"
+    "//    when an idec input becomes negative.  Decimal representations can be    //\n"
+    "//    generated for pasting using fmt.paste.                                  //\n"
     "//                                                                            //\n"
     "//    pputl errors execute  an invalid preprocessor operation by using the    //\n"
     "//    concatenation operator (incorrectly) on a string error message.  All    //\n"

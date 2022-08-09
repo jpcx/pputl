@@ -25,41 +25,40 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "type.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(decimal) decimal = NIFTY_DEF(decimal, [&](va args) {
-//   docs << "casts a uint to its decimal subtype.";
-// 
-//   auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-//   auto binone = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0")) + "1u";
-//   auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
-// 
-//   tests << decimal(0)          = "0" >> docs;
-//   tests << decimal(1)          = "1" >> docs;
-//   tests << decimal(uint_max_s) = uint_max_s >> docs;
-//   tests << decimal(binmin)     = "0" >> docs;
-//   tests << decimal(binone)     = "1" >> docs;
-//   tests << decimal(binmax)     = uint_max_s >> docs;
-// 
-//   def<"\\DEC(n, dec, ...)"> dec = [&](arg n, arg, va) {
-//     return n;
-//   };
-// 
-//   def<"\\BIN(n, dec, ...)">{} = [&](arg, arg dec, va) {
-//     return dec;
-//   };
-// 
-//   return def<"o(n)">{[&](arg n) {
-//     return def<"o(...)">{[&](va args) {
-//       return def<"x(n, t, ...)">{[&](arg n, arg t, va args) {
-//         return pp::call(cat(utl::slice(dec, -3), t), n, args);
-//       }}(args);
-//     }}(n, cat(utl::slice(detail::uint_traits[0], -1), n));
-//   }}(uint(args));
-// });
-// 
-// } // namespace api
+#include "type.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
+  docs << "casts to the signed int binary subtype.";
+
+  auto zero = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1";
+  auto max  = "0x7" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "F"));
+  auto umax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5";
+
+  tests << ihex(0)                                   = zero >> docs;
+  tests << ihex(1)                                   = one >> docs;
+  tests << ihex(5u)                                  = five >> docs;
+  tests << ihex(uint_max_s)                          = umax >> docs;
+  tests << ihex(std::to_string(conf::int_max) + "u") = max >> docs;
+
+  def<"\\DEC(n, u)"> dec = [&](arg, arg u) {
+    return detail::uint_trait(u, "DEC_IHEX");
+  };
+
+  def<"\\HEX(n, u)">{} = [&](arg n, arg) {
+    return n;
+  };
+
+  return def<"o(n)">{[&](arg n) {
+    return def<"o(n, u)">{[&](arg n, arg u) {
+      return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), n, u);
+    }}(n, cat(n, "u"));
+  }}(int_(args));
+});
+
+} // namespace api

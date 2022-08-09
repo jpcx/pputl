@@ -38,7 +38,7 @@ decltype(max) max = NIFTY_DEF(max, [&](va args) {
   using std::to_string;
   using conf::uint_max;
   using conf::int_max;
-  using conf::bit_length;
+  using conf::hex_length;
   using std::vector;
   using std::string;
 
@@ -50,8 +50,10 @@ decltype(max) max = NIFTY_DEF(max, [&](va args) {
   tests << max(int_max_s, int_min_s)                          = int_max_s >> docs;
   tests << max(int_min_s, int_max_s)                          = int_max_s;
   tests << max(int_min_s, int_(to_string(int_max + 1) + "u")) = int_min_s >> docs;
-  tests << max(int_min_s, int_(to_string(int_max + 2) + "u")) =
-      ("0b1" + utl::cat(vector<string>(bit_length - 2, "0")) + "1") >> docs;
+  if constexpr (hex_length >= 2) {
+    tests << max(int_min_s, int_(to_string(int_max + 2) + "u")) =
+        ("0x8" + utl::cat(vector<string>(hex_length - 2, "0")) + "1") >> docs;
+  }
   tests << max("0u", uint_max_s) = uint_max_s;
   tests << max(uint_max_s, "0u") = uint_max_s;
   tests << max(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") =

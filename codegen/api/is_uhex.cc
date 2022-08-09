@@ -31,21 +31,20 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_ubase2) is_ubase2 = NIFTY_DEF(is_ubase2, [&](va args) {
-  docs << "detects if args is an unsigned int in base2 form (requires 'u' suffix)."
-       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
+  docs << "detects if args is an unsigned int in hex form (requires 'u' suffix)."
+       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
 
-  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
 
-  tests << is_ubase2("1")      = "0" >> docs;
-  tests << is_ubase2("1u")     = "0" >> docs;
-  tests << is_ubase2(binmin)   = "1" >> docs;
-  tests << is_ubase2(ibinneg1) = "0" >> docs;
-  tests << is_ubase2("(), ()") = "0" >> docs;
+  tests << is_uhex("1")       = "0" >> docs;
+  tests << is_uhex("1u")      = "0" >> docs;
+  tests << is_uhex(min + "u") = "1" >> docs;
+  tests << is_uhex(max)       = "0" >> docs;
+  tests << is_uhex("(), ()")  = "0" >> docs;
 
-  def ubase2_ = def{(std::string const&)ubase2} = [&] {
+  def uhex_ = def{(std::string const&)uhex} = [&] {
     return "";
   };
 
@@ -54,7 +53,7 @@ decltype(is_ubase2) is_ubase2 = NIFTY_DEF(is_ubase2, [&](va args) {
   };
 
   def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ubase2_, -((std::string const&)ubase2).size()), typeof(args)));
+    return is_none(cat(utl::slice(uhex_, -((std::string const&)uhex).size()), typeof(args)));
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);

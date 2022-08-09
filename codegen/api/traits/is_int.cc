@@ -33,27 +33,26 @@ using namespace codegen;
 
 decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   docs << "detects if args is a signed integer."
-       << "binary bit length is fixed at " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
 
-  auto binmin   = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-  auto ibinumax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
 
   tests << is_int()               = "0" >> docs;
   tests << is_int("foo")          = "0" >> docs;
   tests << is_int(0)              = "1" >> docs;
   tests << is_int("0u")           = "0" >> docs;
   tests << is_int(conf::uint_max) = "0" >> docs;
-  tests << is_int(binmin)         = "0" >> docs;
-  tests << is_int(ibinumax)       = "1" >> docs;
+  tests << is_int(min + "u")      = "0" >> docs;
+  tests << is_int(max)            = "1" >> docs;
   tests << is_int("0b110u")       = "0" >> docs;
   tests << is_int("(), ()")       = "0" >> docs;
 
-  def ibase2_ = def{(std::string const&)ibase2} = [&] {
+  def ihex_ = def{(std::string const&)ihex} = [&] {
     return "";
   };
 
-  def{(std::string const&)ibase10} = [&] {
+  def{(std::string const&)idec} = [&] {
     return "";
   };
 
@@ -62,7 +61,7 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   };
 
   def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ibase2_, -((std::string const&)ibase2).size()), typeof(args)));
+    return is_none(cat(utl::slice(ihex_, -((std::string const&)ihex).size()), typeof(args)));
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);

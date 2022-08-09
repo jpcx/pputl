@@ -41,7 +41,7 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many high-level programming constructs  and 10-bit binary arithmetic    //
+//    many high-level programming constructs  and 12-bit binary arithmetic    //
 //    for both unsigned and signed two's complement integers.                 //
 //                                                                            //
 //    pputl algorithms  are built using a preprocessor syntax manipulation    //
@@ -51,14 +51,14 @@
 //    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //
 //    support (which are guaranteed by C++20) but has no dependencies.        //
 //                                                                            //
-//    pputl  is completely generated and tested by a custom C++ framework.    //
+//    pputl is completely generated and tested  by a custom C++ framework.    //
 //    See the codegen/ folder for the full source.                            //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
 //    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    Modify  the head of  codegen/codegen.h  to configure the bit size or    //
+//    Modify the head of codegen/codegen.h  to configure the bit length or    //
 //    naming preferences and run `make` to regenerate.                        //
 //                                                                            //
 //    Run `make test` to validate the library on your system.                 //
@@ -77,15 +77,24 @@
 //    pputl defines several types and uses type identification and casting    //
 //    for control flow and error reporting. See the [type] section.           //
 //                                                                            //
-//      - tuple   : anything in parentheses                                   //
-//      - uint    : [abstract] unsigned integer                               //
-//      - int     : [abstract] signed integer                                 //
-//      - ubase2  : [uint] unsigned base 2 integer;  e.g. 0b0000101010u       //
-//      - ubase10 : [uint] unsigned base 10 integer; e.g. 42u                 //
-//      - bool    : [int]  the literal '1' or '0'                             //
-//      - ibase2  : [int]  signed base 2 integer;    e.g. 0b1100100100        //
-//      - ibase10 : [int]  signed base 10 integer;   e.g. 353                 //
-//      - any     : exactly one generic value                                 //
+//      tuple : anything in parentheses                                       //
+//            :                                                               //
+//      int   : <abstract> signed integer                                     //
+//      idec  :  [int]   (positive-only) 2s-complement decimal int; e.g. 353  //
+//      bool  :   [idec] the literal '1' or '0'                               //
+//      ihex  :  [int]   signed hexidecimal integer; e.g. 0x161               //
+//            :                                                               //
+//      uint  : <abstract> unsigned integer                                   //
+//      udec  :  [uint]  unsigned decimal integer;     e.g. 42u               //
+//      uhex  :  [uint]  unsigned hexidecimal integer; e.g. 0x02Au            //
+//            :                                                               //
+//      any   : exactly one generic value                                     //
+//                                                                            //
+//    Negative ints cannot be represented in decimal  due to concatenation    //
+//    restrictions. Arithmetic and bitwise functions attempt to cast their    //
+//    results in the same form as their input, but will always return ihex    //
+//    when an idec input becomes negative.  Decimal representations can be    //
+//    generated for pasting using fmt.paste.                                  //
 //                                                                            //
 //    pputl errors execute  an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
@@ -206,50 +215,53 @@ ASSERT_PP_EQ((PTL_BOOL(1)), (1));
 ASSERT_PP_EQ((PTL_UINT(0)), (0u));
 ASSERT_PP_EQ((PTL_UINT(1)), (1u));
 ASSERT_PP_EQ((PTL_UINT(2u)), (2u));
-ASSERT_PP_EQ((PTL_UINT(1023u)), (1023u));
-ASSERT_PP_EQ((PTL_UINT(0b0000000000u)), (0b0000000000u));
-ASSERT_PP_EQ((PTL_UINT(0b1111111111)), (0b1111111111u));
+ASSERT_PP_EQ((PTL_UINT(4095u)), (4095u));
+ASSERT_PP_EQ((PTL_UINT(0x000u)), (0x000u));
+ASSERT_PP_EQ((PTL_UINT(0xFFF)), (0xFFFu));
 
 ASSERT_PP_EQ((PTL_INT(0)), (0));
 ASSERT_PP_EQ((PTL_INT(1u)), (1));
-ASSERT_PP_EQ((PTL_INT(0b0000000000)), (0b0000000000));
-ASSERT_PP_EQ((PTL_INT(511)), (511));
-ASSERT_PP_EQ((PTL_INT(0b0111111111u)), (0b0111111111));
-ASSERT_PP_EQ((PTL_INT(1023u)), (0b1111111111));
+ASSERT_PP_EQ((PTL_INT(0x000)), (0x000));
+ASSERT_PP_EQ((PTL_INT(2047)), (2047));
+ASSERT_PP_EQ((PTL_INT(0xFFFu)), (0xFFF));
+ASSERT_PP_EQ((PTL_INT(4095u)), (0xFFF));
 
-ASSERT_PP_EQ((PTL_UBASE2(0)), (0b0000000000u));
-ASSERT_PP_EQ((PTL_UBASE2(1)), (0b0000000001u));
-ASSERT_PP_EQ((PTL_UBASE2(5)), (0b0000000101u));
-ASSERT_PP_EQ((PTL_UBASE2(1023u)), (0b1111111111u));
-ASSERT_PP_EQ((PTL_UBASE2(0b0000000000u)), (0b0000000000u));
-ASSERT_PP_EQ((PTL_UBASE2(0b0000000001u)), (0b0000000001u));
-ASSERT_PP_EQ((PTL_UBASE2(0b1111111111)), (0b1111111111u));
+ASSERT_PP_EQ((PTL_UHEX(0)), (0x000u));
+ASSERT_PP_EQ((PTL_UHEX(1)), (0x001u));
+ASSERT_PP_EQ((PTL_UHEX(5)), (0x005u));
+ASSERT_PP_EQ((PTL_UHEX(4095u)), (0xFFFu));
+ASSERT_PP_EQ((PTL_UHEX(0x000u)), (0x000u));
+ASSERT_PP_EQ((PTL_UHEX(0x001u)), (0x001u));
+ASSERT_PP_EQ((PTL_UHEX(0xFFF)), (0xFFFu));
 
-ASSERT_PP_EQ((PTL_IBASE2(0)), (0b0000000000));
-ASSERT_PP_EQ((PTL_IBASE2(5)), (0b0000000101));
-ASSERT_PP_EQ((PTL_IBASE2(1023u)), (0b1111111111));
-ASSERT_PP_EQ((PTL_IBASE2(511u)), (0b0111111111));
+ASSERT_PP_EQ((PTL_IHEX(0)), (0x000));
+ASSERT_PP_EQ((PTL_IHEX(1)), (0x001));
+ASSERT_PP_EQ((PTL_IHEX(5)), (0x005));
+ASSERT_PP_EQ((PTL_IHEX(4095u)), (0xFFF));
+ASSERT_PP_EQ((PTL_IHEX(2047u)), (0x7FF));
 
-ASSERT_PP_EQ((PTL_UBASE10(0b0000000000u)), (0u));
-ASSERT_PP_EQ((PTL_UBASE10(1)), (1u));
-ASSERT_PP_EQ((PTL_UBASE10(0b0000000101)), (5u));
-ASSERT_PP_EQ((PTL_UBASE10(0b1111111111u)), (1023u));
-ASSERT_PP_EQ((PTL_UBASE10(0b1000000000)), (512u));
+ASSERT_PP_EQ((PTL_UDEC(0x000u)), (0u));
+ASSERT_PP_EQ((PTL_UDEC(1)), (1u));
+ASSERT_PP_EQ((PTL_UDEC(5)), (5u));
+ASSERT_PP_EQ((PTL_UDEC(0x005u)), (5u));
+ASSERT_PP_EQ((PTL_UDEC(0xFFFu)), (4095u));
+ASSERT_PP_EQ((PTL_UDEC(0xFFF)), (4095u));
 
-ASSERT_PP_EQ((PTL_IBASE10(0b0000000000)), (0));
-ASSERT_PP_EQ((PTL_IBASE10(0b0000000101u)), (5));
-ASSERT_PP_EQ((PTL_IBASE10(0b0111111111)), (511));
-ASSERT_PP_EQ((PTL_IBASE10(511)), (511));
+ASSERT_PP_EQ((PTL_IDEC(0x000)), (0));
+ASSERT_PP_EQ((PTL_IDEC(0x001)), (1));
+ASSERT_PP_EQ((PTL_IDEC(0x005u)), (5));
+ASSERT_PP_EQ((PTL_IDEC(0x7FF)), (2047));
+ASSERT_PP_EQ((PTL_IDEC(2047)), (2047));
 
 ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
 
 ASSERT_PP_EQ((PTL_TYPEOF((foo))), (PTL_TUPLE));
-ASSERT_PP_EQ((PTL_TYPEOF(0)), (PTL_IBASE10));
-ASSERT_PP_EQ((PTL_TYPEOF(0u)), (PTL_UBASE10));
-ASSERT_PP_EQ((PTL_TYPEOF(1023)), (PTL_ANY));
-ASSERT_PP_EQ((PTL_TYPEOF(1023u)), (PTL_UBASE10));
-ASSERT_PP_EQ((PTL_TYPEOF(0b1111111111)), (PTL_IBASE2));
-ASSERT_PP_EQ((PTL_TYPEOF(0b1111111111u)), (PTL_UBASE2));
+ASSERT_PP_EQ((PTL_TYPEOF(0)), (PTL_IDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(0u)), (PTL_UDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(4095)), (PTL_ANY));
+ASSERT_PP_EQ((PTL_TYPEOF(4095u)), (PTL_UDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(0xFFF)), (PTL_IHEX));
+ASSERT_PP_EQ((PTL_TYPEOF(0xFFFu)), (PTL_UHEX));
 ASSERT_PP_EQ((PTL_TYPEOF(foo)), (PTL_ANY));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
@@ -321,7 +333,7 @@ ASSERT_PP_EQ((PTL_SIZE(a)), (1u));
 ASSERT_PP_EQ((PTL_SIZE(a, b)), (2u));
 ASSERT_PP_EQ((PTL_SIZE(, )), (2u));
 ASSERT_PP_EQ((PTL_SIZE(a, b, c)), (3u));
-ASSERT_PP_EQ((PTL_SIZE(, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , )), (1023u));
+ASSERT_PP_EQ((PTL_SIZE(, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , )), (4095u));
 ASSERT_PP_EQ((PTL_SIZE(, , )), (3u));
 ASSERT_PP_EQ((PTL_SIZE(a, )), (2u));
 ASSERT_PP_EQ((PTL_SIZE(a, , )), (3u));
@@ -355,7 +367,7 @@ ASSERT_PP_EQ((PTL_IS_BOOL()), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0b0000000000)), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(0b000000000000)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0, 1)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL((0))), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(())), (0));
@@ -369,43 +381,43 @@ ASSERT_PP_EQ((PTL_IS_BOOL(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, , a)), (0));
 
-ASSERT_PP_EQ((PTL_IS_UBASE2(1)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE2(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE2(0b0000000000u)), (1));
-ASSERT_PP_EQ((PTL_IS_UBASE2(0b1111111111)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE2((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(1)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(0x000u)), (1));
+ASSERT_PP_EQ((PTL_IS_UHEX(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX((), ())), (0));
 
-ASSERT_PP_EQ((PTL_IS_UBASE10(1)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE10(1u)), (1));
-ASSERT_PP_EQ((PTL_IS_UBASE10(1023)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE10(1023u)), (1));
-ASSERT_PP_EQ((PTL_IS_UBASE10(0b0000000000u)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE10(0b1111111111)), (0));
-ASSERT_PP_EQ((PTL_IS_UBASE10((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(1)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(1u)), (1));
+ASSERT_PP_EQ((PTL_IS_UDEC(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(4095u)), (1));
+ASSERT_PP_EQ((PTL_IS_UDEC(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC((), ())), (0));
 
-ASSERT_PP_EQ((PTL_IS_IBASE2(1)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE2(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE2(0b0000000000)), (1));
-ASSERT_PP_EQ((PTL_IS_IBASE2(0b1111111111)), (1));
-ASSERT_PP_EQ((PTL_IS_IBASE2(0b1111111111u)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE2((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX(1)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX(0x000)), (1));
+ASSERT_PP_EQ((PTL_IS_IHEX(0xFFF)), (1));
+ASSERT_PP_EQ((PTL_IS_IHEX(0xFFFu)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX((), ())), (0));
 
-ASSERT_PP_EQ((PTL_IS_IBASE10(1)), (1));
-ASSERT_PP_EQ((PTL_IS_IBASE10(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE10(511)), (1));
-ASSERT_PP_EQ((PTL_IS_IBASE10(1023)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE10(0b0000000000u)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE10(0b1111111111)), (0));
-ASSERT_PP_EQ((PTL_IS_IBASE10((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(2047)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC((), ())), (0));
 
 ASSERT_PP_EQ((PTL_IS_UINT()), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(0u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(1023)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(1023u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(0b0000000000u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(0b1111111111)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(4095u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0x000u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0xFFF)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
 
@@ -413,9 +425,9 @@ ASSERT_PP_EQ((PTL_IS_INT()), (0));
 ASSERT_PP_EQ((PTL_IS_INT(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_INT(0)), (1));
 ASSERT_PP_EQ((PTL_IS_INT(0u)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(1023)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0b0000000000u)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0b1111111111)), (1));
+ASSERT_PP_EQ((PTL_IS_INT(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0xFFF)), (1));
 ASSERT_PP_EQ((PTL_IS_INT(0b110u)), (0));
 ASSERT_PP_EQ((PTL_IS_INT((), ())), (0));
 
@@ -432,175 +444,9 @@ ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
 ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
 ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
 
-ASSERT_PP_EQ((PTL_BITS(0)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-ASSERT_PP_EQ((PTL_BITS(1)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 1));
-ASSERT_PP_EQ((PTL_BITS(0b1111111110u)), (1, 1, 1, 1, 1, 1, 1, 1, 1, 0));
-
-ASSERT_PP_EQ((PTL_LT(0, 0)), (0));
-ASSERT_PP_EQ((PTL_LT(0, 1)), (1));
-ASSERT_PP_EQ((PTL_LT(7u, 8u)), (1));
-ASSERT_PP_EQ((PTL_LT(PTL_INT(1023u), 0)), (1));
-ASSERT_PP_EQ((PTL_LT(511, 0b1000000000)), (0));
-ASSERT_PP_EQ((PTL_LT(0b1000000000, PTL_INT(512u))), (0));
-ASSERT_PP_EQ((PTL_LT(0b1000000000, PTL_INT(513u))), (1));
-ASSERT_PP_EQ((PTL_LT(8u, 7u)), (0));
-ASSERT_PP_EQ((PTL_LT(0b1000000000, 511)), (1));
-ASSERT_PP_EQ((PTL_LT(0u, 1023u)), (1));
-ASSERT_PP_EQ((PTL_LT(1023u, 0u)), (0));
-ASSERT_PP_EQ((PTL_LT(511u, 510u)), (0));
-ASSERT_PP_EQ((PTL_LT(511u, 511u)), (0));
-ASSERT_PP_EQ((PTL_LT(511u, 512u)), (1));
-ASSERT_PP_EQ((PTL_LT(255, 254)), (0));
-ASSERT_PP_EQ((PTL_LT(255, 255)), (0));
-ASSERT_PP_EQ((PTL_LT(255, 256)), (1));
-
-ASSERT_PP_EQ((PTL_GT(0, 0)), (0));
-ASSERT_PP_EQ((PTL_GT(0, 1)), (0));
-ASSERT_PP_EQ((PTL_GT(7u, 8u)), (0));
-ASSERT_PP_EQ((PTL_GT(PTL_INT(1023u), 0)), (0));
-ASSERT_PP_EQ((PTL_GT(511, 0b1000000000)), (1));
-ASSERT_PP_EQ((PTL_GT(0b1000000000, PTL_INT(512u))), (0));
-ASSERT_PP_EQ((PTL_GT(0b1000000000, PTL_INT(513u))), (0));
-ASSERT_PP_EQ((PTL_GT(8u, 7u)), (1));
-ASSERT_PP_EQ((PTL_GT(0b1000000000, 511)), (0));
-ASSERT_PP_EQ((PTL_GT(0u, 1023u)), (0));
-ASSERT_PP_EQ((PTL_GT(1023u, 0u)), (1));
-ASSERT_PP_EQ((PTL_GT(511u, 510u)), (1));
-ASSERT_PP_EQ((PTL_GT(511u, 511u)), (0));
-ASSERT_PP_EQ((PTL_GT(511u, 512u)), (0));
-ASSERT_PP_EQ((PTL_GT(255, 254)), (1));
-ASSERT_PP_EQ((PTL_GT(255, 255)), (0));
-ASSERT_PP_EQ((PTL_GT(255, 256)), (0));
-
-ASSERT_PP_EQ((PTL_LE(0, 0)), (1));
-ASSERT_PP_EQ((PTL_LE(0, 1)), (1));
-ASSERT_PP_EQ((PTL_LE(7u, 8u)), (1));
-ASSERT_PP_EQ((PTL_LE(PTL_INT(1023u), 0)), (1));
-ASSERT_PP_EQ((PTL_LE(511, 0b1000000000)), (0));
-ASSERT_PP_EQ((PTL_LE(0b1000000000, PTL_INT(512u))), (1));
-ASSERT_PP_EQ((PTL_LE(0b1000000000, PTL_INT(513u))), (1));
-ASSERT_PP_EQ((PTL_LE(8u, 7u)), (0));
-ASSERT_PP_EQ((PTL_LE(0b1000000000, 511)), (1));
-ASSERT_PP_EQ((PTL_LE(0u, 1023u)), (1));
-ASSERT_PP_EQ((PTL_LE(1023u, 0u)), (0));
-ASSERT_PP_EQ((PTL_LE(511u, 510u)), (0));
-ASSERT_PP_EQ((PTL_LE(511u, 511u)), (1));
-ASSERT_PP_EQ((PTL_LE(511u, 512u)), (1));
-ASSERT_PP_EQ((PTL_LE(255, 254)), (0));
-ASSERT_PP_EQ((PTL_LE(255, 255)), (1));
-ASSERT_PP_EQ((PTL_LE(255, 256)), (1));
-
-ASSERT_PP_EQ((PTL_GE(0, 0)), (1));
-ASSERT_PP_EQ((PTL_GE(0, 1)), (0));
-ASSERT_PP_EQ((PTL_GE(7u, 8u)), (0));
-ASSERT_PP_EQ((PTL_GE(PTL_INT(1023u), 0)), (0));
-ASSERT_PP_EQ((PTL_GE(511, 0b1000000000)), (1));
-ASSERT_PP_EQ((PTL_GE(0b1000000000, PTL_INT(512u))), (1));
-ASSERT_PP_EQ((PTL_GE(0b1000000000, PTL_INT(513u))), (0));
-ASSERT_PP_EQ((PTL_GE(8u, 7u)), (1));
-ASSERT_PP_EQ((PTL_GE(0b1000000000, 511)), (0));
-ASSERT_PP_EQ((PTL_GE(0u, 1023u)), (0));
-ASSERT_PP_EQ((PTL_GE(1023u, 0u)), (1));
-ASSERT_PP_EQ((PTL_GE(511u, 510u)), (1));
-ASSERT_PP_EQ((PTL_GE(511u, 511u)), (1));
-ASSERT_PP_EQ((PTL_GE(511u, 512u)), (0));
-ASSERT_PP_EQ((PTL_GE(255, 254)), (1));
-ASSERT_PP_EQ((PTL_GE(255, 255)), (1));
-ASSERT_PP_EQ((PTL_GE(255, 256)), (0));
-
-ASSERT_PP_EQ((PTL_EQ(0, 0)), (1));
-ASSERT_PP_EQ((PTL_EQ(0, 1)), (0));
-ASSERT_PP_EQ((PTL_EQ(7u, 8u)), (0));
-ASSERT_PP_EQ((PTL_EQ(PTL_INT(1023u), 0)), (0));
-ASSERT_PP_EQ((PTL_EQ(511, 0b1000000000)), (0));
-ASSERT_PP_EQ((PTL_EQ(0b1000000000, PTL_INT(512u))), (1));
-ASSERT_PP_EQ((PTL_EQ(0b1000000000, PTL_INT(513u))), (0));
-ASSERT_PP_EQ((PTL_EQ(8u, 7u)), (0));
-ASSERT_PP_EQ((PTL_EQ(0b1000000000, 511)), (0));
-ASSERT_PP_EQ((PTL_EQ(0u, 1023u)), (0));
-ASSERT_PP_EQ((PTL_EQ(1023u, 0u)), (0));
-ASSERT_PP_EQ((PTL_EQ(511u, 510u)), (0));
-ASSERT_PP_EQ((PTL_EQ(511u, 511u)), (1));
-ASSERT_PP_EQ((PTL_EQ(511u, 512u)), (0));
-ASSERT_PP_EQ((PTL_EQ(255, 254)), (0));
-ASSERT_PP_EQ((PTL_EQ(255, 255)), (1));
-ASSERT_PP_EQ((PTL_EQ(255, 256)), (0));
-
-ASSERT_PP_EQ((PTL_NE(0, 0)), (0));
-ASSERT_PP_EQ((PTL_NE(0, 1)), (1));
-ASSERT_PP_EQ((PTL_NE(7u, 8u)), (1));
-ASSERT_PP_EQ((PTL_NE(PTL_INT(1023u), 0)), (1));
-ASSERT_PP_EQ((PTL_NE(511, 0b1000000000)), (1));
-ASSERT_PP_EQ((PTL_NE(0b1000000000, PTL_INT(512u))), (0));
-ASSERT_PP_EQ((PTL_NE(0b1000000000, PTL_INT(513u))), (1));
-ASSERT_PP_EQ((PTL_NE(8u, 7u)), (1));
-ASSERT_PP_EQ((PTL_NE(0b1000000000, 511)), (1));
-ASSERT_PP_EQ((PTL_NE(0u, 1023u)), (1));
-ASSERT_PP_EQ((PTL_NE(1023u, 0u)), (1));
-ASSERT_PP_EQ((PTL_NE(511u, 510u)), (1));
-ASSERT_PP_EQ((PTL_NE(511u, 511u)), (0));
-ASSERT_PP_EQ((PTL_NE(511u, 512u)), (1));
-ASSERT_PP_EQ((PTL_NE(255, 254)), (1));
-ASSERT_PP_EQ((PTL_NE(255, 255)), (0));
-ASSERT_PP_EQ((PTL_NE(255, 256)), (1));
-
-ASSERT_PP_EQ((PTL_MIN(0, 0)), (0));
-ASSERT_PP_EQ((PTL_MIN(0, 1)), (0));
-ASSERT_PP_EQ((PTL_MIN(7u, 8u)), (7u));
-ASSERT_PP_EQ((PTL_MIN(PTL_INT(1023u), 0)), (0b1111111111));
-ASSERT_PP_EQ((PTL_MIN(511, 0b1000000000)), (0b1000000000));
-ASSERT_PP_EQ((PTL_MIN(0b1000000000, PTL_INT(512u))), (0b1000000000));
-ASSERT_PP_EQ((PTL_MIN(0b1000000000, PTL_INT(513u))), (0b1000000000));
-ASSERT_PP_EQ((PTL_MIN(8u, 7u)), (7u));
-ASSERT_PP_EQ((PTL_MIN(0b1000000000, 511)), (0b1000000000));
-ASSERT_PP_EQ((PTL_MIN(0u, 1023u)), (0u));
-ASSERT_PP_EQ((PTL_MIN(1023u, 0u)), (0u));
-ASSERT_PP_EQ((PTL_MIN(511u, 510u)), (510u));
-ASSERT_PP_EQ((PTL_MIN(511u, 511u)), (511u));
-ASSERT_PP_EQ((PTL_MIN(511u, 512u)), (511u));
-ASSERT_PP_EQ((PTL_MIN(255, 254)), (254));
-ASSERT_PP_EQ((PTL_MIN(255, 255)), (255));
-ASSERT_PP_EQ((PTL_MIN(255, 256)), (255));
-
-ASSERT_PP_EQ((PTL_MAX(0, 0)), (0));
-ASSERT_PP_EQ((PTL_MAX(0, 1)), (1));
-ASSERT_PP_EQ((PTL_MAX(7u, 8u)), (8u));
-ASSERT_PP_EQ((PTL_MAX(PTL_INT(1023u), 0)), (0));
-ASSERT_PP_EQ((PTL_MAX(511, 0b1000000000)), (511));
-ASSERT_PP_EQ((PTL_MAX(0b1000000000, PTL_INT(512u))), (0b1000000000));
-ASSERT_PP_EQ((PTL_MAX(0b1000000000, PTL_INT(513u))), (0b1000000001));
-ASSERT_PP_EQ((PTL_MAX(8u, 7u)), (8u));
-ASSERT_PP_EQ((PTL_MAX(0b1000000000, 511)), (511));
-ASSERT_PP_EQ((PTL_MAX(0u, 1023u)), (1023u));
-ASSERT_PP_EQ((PTL_MAX(1023u, 0u)), (1023u));
-ASSERT_PP_EQ((PTL_MAX(511u, 510u)), (511u));
-ASSERT_PP_EQ((PTL_MAX(511u, 511u)), (511u));
-ASSERT_PP_EQ((PTL_MAX(511u, 512u)), (512u));
-ASSERT_PP_EQ((PTL_MAX(255, 254)), (255));
-ASSERT_PP_EQ((PTL_MAX(255, 255)), (255));
-ASSERT_PP_EQ((PTL_MAX(255, 256)), (256));
-
-ASSERT_PP_EQ((PTL_BITGET(2, 7)), (0));
-ASSERT_PP_EQ((PTL_BITGET(2, 8)), (1));
-ASSERT_PP_EQ((PTL_BITGET(2, 9)), (0));
-ASSERT_PP_EQ((PTL_BITGET(0b1111111110u, 9)), (0));
-
-ASSERT_PP_EQ((PTL_BITSET(0, 8, 1)), (2));
-ASSERT_PP_EQ((PTL_BITSET(1, 7, 1)), (5));
-ASSERT_PP_EQ((PTL_BITSET(0b1111111111u, 9, 0)), (0b1111111110u));
-
-ASSERT_PP_EQ((PTL_BITFLIP(0, 9)), (1));
-ASSERT_PP_EQ((PTL_BITFLIP(0, 7)), (4));
-ASSERT_PP_EQ((PTL_BITFLIP(0b1111111110u, 9)), (0b1111111111u));
-
-ASSERT_PP_EQ((PTL_BITNOT(0u)), (1023u));
-ASSERT_PP_EQ((PTL_BITNOT(1u)), (1022u));
-ASSERT_PP_EQ((PTL_BITNOT(0)), (0b1111111111));
-ASSERT_PP_EQ((PTL_BITNOT(1)), (0b1111111110));
-ASSERT_PP_EQ((PTL_BITNOT(0b0000000000u)), (0b1111111111u));
-ASSERT_PP_EQ((PTL_BITNOT(0b0000000001u)), (0b1111111110u));
-
-ASSERT_PP_EQ((PTL_BITSHIFT_LEFT(0b1111111111u, 1)), (0b1111111110u));
+ASSERT_PP_EQ((PTL_BITS(0)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+ASSERT_PP_EQ((PTL_BITS(1)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1));
+ASSERT_PP_EQ((PTL_BITS(0xFFEu)), (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0));
 
 ASSERT_PP_EQ((PTL_ID()), ());
 ASSERT_PP_EQ((PTL_ID(foo)), (foo));
@@ -615,7 +461,7 @@ ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_XCT)), (0u));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_XCT))), (1u));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_XCT)))), (2u));
 ASSERT_PP_EQ((PTL_XCT_SIZE(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), (3u));
-ASSERT_PP_EQ((PTL_XCT_SIZE(PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, ))), (1023u));
+ASSERT_PP_EQ((PTL_XCT_SIZE(PPUTLXCT_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, ))), (4095u));
 
 ASSERT_PP_EQ((PTL_IF(1, (t), ())), (t));
 ASSERT_PP_EQ((PTL_IF(0, (t), ())), ());
@@ -623,4 +469,148 @@ ASSERT_PP_EQ((PTL_IF(1, (t), (f))), (t));
 ASSERT_PP_EQ((PTL_IF(0, (t), (f))), (f));
 ASSERT_PP_EQ((PTL_IF(1, (a), (b, c))), (a));
 ASSERT_PP_EQ((PTL_IF(0, (a), (b, c))), (b, c));
+
+ASSERT_PP_EQ((PTL_LT(0, 0)), (0));
+ASSERT_PP_EQ((PTL_LT(0, 1)), (1));
+ASSERT_PP_EQ((PTL_LT(7u, 8u)), (1));
+ASSERT_PP_EQ((PTL_LT(PTL_INT(4095u), 0)), (1));
+ASSERT_PP_EQ((PTL_LT(2047, 0x800)), (0));
+ASSERT_PP_EQ((PTL_LT(0x800, PTL_INT(2048u))), (0));
+ASSERT_PP_EQ((PTL_LT(0x800, PTL_INT(2049u))), (1));
+ASSERT_PP_EQ((PTL_LT(8u, 7u)), (0));
+ASSERT_PP_EQ((PTL_LT(0x800, 2047)), (1));
+ASSERT_PP_EQ((PTL_LT(0u, 4095u)), (1));
+ASSERT_PP_EQ((PTL_LT(4095u, 0u)), (0));
+ASSERT_PP_EQ((PTL_LT(2047u, 2046u)), (0));
+ASSERT_PP_EQ((PTL_LT(2047u, 2047u)), (0));
+ASSERT_PP_EQ((PTL_LT(2047u, 2048u)), (1));
+ASSERT_PP_EQ((PTL_LT(1023, 1022)), (0));
+ASSERT_PP_EQ((PTL_LT(1023, 1023)), (0));
+ASSERT_PP_EQ((PTL_LT(1023, 1024)), (1));
+
+ASSERT_PP_EQ((PTL_GT(0, 0)), (0));
+ASSERT_PP_EQ((PTL_GT(0, 1)), (0));
+ASSERT_PP_EQ((PTL_GT(7u, 8u)), (0));
+ASSERT_PP_EQ((PTL_GT(PTL_INT(4095u), 0)), (0));
+ASSERT_PP_EQ((PTL_GT(2047, 0x800)), (1));
+ASSERT_PP_EQ((PTL_GT(0x800, PTL_INT(2048u))), (0));
+ASSERT_PP_EQ((PTL_GT(0x800, PTL_INT(2049u))), (0));
+ASSERT_PP_EQ((PTL_GT(8u, 7u)), (1));
+ASSERT_PP_EQ((PTL_GT(0x800, 2047)), (0));
+ASSERT_PP_EQ((PTL_GT(0u, 4095u)), (0));
+ASSERT_PP_EQ((PTL_GT(4095u, 0u)), (1));
+ASSERT_PP_EQ((PTL_GT(2047u, 2046u)), (1));
+ASSERT_PP_EQ((PTL_GT(2047u, 2047u)), (0));
+ASSERT_PP_EQ((PTL_GT(2047u, 2048u)), (0));
+ASSERT_PP_EQ((PTL_GT(1023, 1022)), (1));
+ASSERT_PP_EQ((PTL_GT(1023, 1023)), (0));
+ASSERT_PP_EQ((PTL_GT(1023, 1024)), (0));
+
+ASSERT_PP_EQ((PTL_LE(0, 0)), (1));
+ASSERT_PP_EQ((PTL_LE(0, 1)), (1));
+ASSERT_PP_EQ((PTL_LE(7u, 8u)), (1));
+ASSERT_PP_EQ((PTL_LE(PTL_INT(4095u), 0)), (1));
+ASSERT_PP_EQ((PTL_LE(2047, 0x800)), (0));
+ASSERT_PP_EQ((PTL_LE(0x800, PTL_INT(2048u))), (1));
+ASSERT_PP_EQ((PTL_LE(0x800, PTL_INT(2049u))), (1));
+ASSERT_PP_EQ((PTL_LE(8u, 7u)), (0));
+ASSERT_PP_EQ((PTL_LE(0x800, 2047)), (1));
+ASSERT_PP_EQ((PTL_LE(0u, 4095u)), (1));
+ASSERT_PP_EQ((PTL_LE(4095u, 0u)), (0));
+ASSERT_PP_EQ((PTL_LE(2047u, 2046u)), (0));
+ASSERT_PP_EQ((PTL_LE(2047u, 2047u)), (1));
+ASSERT_PP_EQ((PTL_LE(2047u, 2048u)), (1));
+ASSERT_PP_EQ((PTL_LE(1023, 1022)), (0));
+ASSERT_PP_EQ((PTL_LE(1023, 1023)), (1));
+ASSERT_PP_EQ((PTL_LE(1023, 1024)), (1));
+
+ASSERT_PP_EQ((PTL_GE(0, 0)), (1));
+ASSERT_PP_EQ((PTL_GE(0, 1)), (0));
+ASSERT_PP_EQ((PTL_GE(7u, 8u)), (0));
+ASSERT_PP_EQ((PTL_GE(PTL_INT(4095u), 0)), (0));
+ASSERT_PP_EQ((PTL_GE(2047, 0x800)), (1));
+ASSERT_PP_EQ((PTL_GE(0x800, PTL_INT(2048u))), (1));
+ASSERT_PP_EQ((PTL_GE(0x800, PTL_INT(2049u))), (0));
+ASSERT_PP_EQ((PTL_GE(8u, 7u)), (1));
+ASSERT_PP_EQ((PTL_GE(0x800, 2047)), (0));
+ASSERT_PP_EQ((PTL_GE(0u, 4095u)), (0));
+ASSERT_PP_EQ((PTL_GE(4095u, 0u)), (1));
+ASSERT_PP_EQ((PTL_GE(2047u, 2046u)), (1));
+ASSERT_PP_EQ((PTL_GE(2047u, 2047u)), (1));
+ASSERT_PP_EQ((PTL_GE(2047u, 2048u)), (0));
+ASSERT_PP_EQ((PTL_GE(1023, 1022)), (1));
+ASSERT_PP_EQ((PTL_GE(1023, 1023)), (1));
+ASSERT_PP_EQ((PTL_GE(1023, 1024)), (0));
+
+ASSERT_PP_EQ((PTL_EQ(0, 0)), (1));
+ASSERT_PP_EQ((PTL_EQ(0, 1)), (0));
+ASSERT_PP_EQ((PTL_EQ(7u, 8u)), (0));
+ASSERT_PP_EQ((PTL_EQ(PTL_INT(4095u), 0)), (0));
+ASSERT_PP_EQ((PTL_EQ(2047, 0x800)), (0));
+ASSERT_PP_EQ((PTL_EQ(0x800, PTL_INT(2048u))), (1));
+ASSERT_PP_EQ((PTL_EQ(0x800, PTL_INT(2049u))), (0));
+ASSERT_PP_EQ((PTL_EQ(8u, 7u)), (0));
+ASSERT_PP_EQ((PTL_EQ(0x800, 2047)), (0));
+ASSERT_PP_EQ((PTL_EQ(0u, 4095u)), (0));
+ASSERT_PP_EQ((PTL_EQ(4095u, 0u)), (0));
+ASSERT_PP_EQ((PTL_EQ(2047u, 2046u)), (0));
+ASSERT_PP_EQ((PTL_EQ(2047u, 2047u)), (1));
+ASSERT_PP_EQ((PTL_EQ(2047u, 2048u)), (0));
+ASSERT_PP_EQ((PTL_EQ(1023, 1022)), (0));
+ASSERT_PP_EQ((PTL_EQ(1023, 1023)), (1));
+ASSERT_PP_EQ((PTL_EQ(1023, 1024)), (0));
+
+ASSERT_PP_EQ((PTL_NE(0, 0)), (0));
+ASSERT_PP_EQ((PTL_NE(0, 1)), (1));
+ASSERT_PP_EQ((PTL_NE(7u, 8u)), (1));
+ASSERT_PP_EQ((PTL_NE(PTL_INT(4095u), 0)), (1));
+ASSERT_PP_EQ((PTL_NE(2047, 0x800)), (1));
+ASSERT_PP_EQ((PTL_NE(0x800, PTL_INT(2048u))), (0));
+ASSERT_PP_EQ((PTL_NE(0x800, PTL_INT(2049u))), (1));
+ASSERT_PP_EQ((PTL_NE(8u, 7u)), (1));
+ASSERT_PP_EQ((PTL_NE(0x800, 2047)), (1));
+ASSERT_PP_EQ((PTL_NE(0u, 4095u)), (1));
+ASSERT_PP_EQ((PTL_NE(4095u, 0u)), (1));
+ASSERT_PP_EQ((PTL_NE(2047u, 2046u)), (1));
+ASSERT_PP_EQ((PTL_NE(2047u, 2047u)), (0));
+ASSERT_PP_EQ((PTL_NE(2047u, 2048u)), (1));
+ASSERT_PP_EQ((PTL_NE(1023, 1022)), (1));
+ASSERT_PP_EQ((PTL_NE(1023, 1023)), (0));
+ASSERT_PP_EQ((PTL_NE(1023, 1024)), (1));
+
+ASSERT_PP_EQ((PTL_MIN(0, 0)), (0));
+ASSERT_PP_EQ((PTL_MIN(0, 1)), (0));
+ASSERT_PP_EQ((PTL_MIN(7u, 8u)), (7u));
+ASSERT_PP_EQ((PTL_MIN(PTL_INT(4095u), 0)), (0xFFF));
+ASSERT_PP_EQ((PTL_MIN(2047, 0x800)), (0x800));
+ASSERT_PP_EQ((PTL_MIN(0x800, PTL_INT(2048u))), (0x800));
+ASSERT_PP_EQ((PTL_MIN(0x800, PTL_INT(2049u))), (0x800));
+ASSERT_PP_EQ((PTL_MIN(8u, 7u)), (7u));
+ASSERT_PP_EQ((PTL_MIN(0x800, 2047)), (0x800));
+ASSERT_PP_EQ((PTL_MIN(0u, 4095u)), (0u));
+ASSERT_PP_EQ((PTL_MIN(4095u, 0u)), (0u));
+ASSERT_PP_EQ((PTL_MIN(2047u, 2046u)), (2046u));
+ASSERT_PP_EQ((PTL_MIN(2047u, 2047u)), (2047u));
+ASSERT_PP_EQ((PTL_MIN(2047u, 2048u)), (2047u));
+ASSERT_PP_EQ((PTL_MIN(1023, 1022)), (1022));
+ASSERT_PP_EQ((PTL_MIN(1023, 1023)), (1023));
+ASSERT_PP_EQ((PTL_MIN(1023, 1024)), (1023));
+
+ASSERT_PP_EQ((PTL_MAX(0, 0)), (0));
+ASSERT_PP_EQ((PTL_MAX(0, 1)), (1));
+ASSERT_PP_EQ((PTL_MAX(7u, 8u)), (8u));
+ASSERT_PP_EQ((PTL_MAX(PTL_INT(4095u), 0)), (0));
+ASSERT_PP_EQ((PTL_MAX(2047, 0x800)), (2047));
+ASSERT_PP_EQ((PTL_MAX(0x800, PTL_INT(2048u))), (0x800));
+ASSERT_PP_EQ((PTL_MAX(0x800, PTL_INT(2049u))), (0x801));
+ASSERT_PP_EQ((PTL_MAX(8u, 7u)), (8u));
+ASSERT_PP_EQ((PTL_MAX(0x800, 2047)), (2047));
+ASSERT_PP_EQ((PTL_MAX(0u, 4095u)), (4095u));
+ASSERT_PP_EQ((PTL_MAX(4095u, 0u)), (4095u));
+ASSERT_PP_EQ((PTL_MAX(2047u, 2046u)), (2047u));
+ASSERT_PP_EQ((PTL_MAX(2047u, 2047u)), (2047u));
+ASSERT_PP_EQ((PTL_MAX(2047u, 2048u)), (2048u));
+ASSERT_PP_EQ((PTL_MAX(1023, 1022)), (1023));
+ASSERT_PP_EQ((PTL_MAX(1023, 1023)), (1023));
+ASSERT_PP_EQ((PTL_MAX(1023, 1024)), (1024));
 // clang-format on

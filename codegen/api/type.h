@@ -34,15 +34,15 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tuple(...: t: tuple) -> t"> const&               tuple;
-extern codegen::def<"bool(...: b: bool) -> b"> const&                 bool_;
-extern codegen::def<"uint(...: n: uint|int) -> uint{n}"> const&       uint;
-extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&         int_;
-extern codegen::def<"ubase2(...: n: uint|int) -> ubase2{n}"> const&   ubase2;
-extern codegen::def<"ibase2(...: n: uint|int) -> ibase2{n}"> const&   ibase2;
-extern codegen::def<"ubase10(...: n: uint|int) -> ubase10{n}"> const& ubase10;
-extern codegen::def<"ibase10(...: n: uint|int) -> ibase10{n}"> const& ibase10;
-extern codegen::def<"any(...: v: any) -> any{v}"> const&              any;
+extern codegen::def<"tuple(...: t: tuple) -> t"> const&         tuple;
+extern codegen::def<"bool(...: b: bool) -> b"> const&           bool_;
+extern codegen::def<"uint(...: n: uint|int) -> uint{n}"> const& uint;
+extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&   int_;
+extern codegen::def<"uhex(...: n: uint|int) -> uhex{n}"> const& uhex;
+extern codegen::def<"ihex(...: n: uint|int) -> ihex{n}"> const& ihex;
+extern codegen::def<"udec(...: n: uint|int) -> udec{n}"> const& udec;
+extern codegen::def<"idec(...: n: uint|int) -> idec{n}"> const& idec;
+extern codegen::def<"any(...: v: any) -> any{v}"> const&        any;
 extern codegen::def<"typeof(...: v: tuple|uint|int|any) -> <ctor>"> const& typeof;
 
 NIFTY_DECL(tuple);
@@ -72,10 +72,10 @@ NIFTY_DECL(uint_o);
 } // namespace detail
 NIFTY_DECL(uint);
 NIFTY_DECL(int_);
-NIFTY_DECL(ubase2);
-NIFTY_DECL(ibase2);
-NIFTY_DECL(ubase10);
-NIFTY_DECL(ibase10);
+NIFTY_DECL(uhex);
+NIFTY_DECL(ihex);
+NIFTY_DECL(udec);
+NIFTY_DECL(idec);
 NIFTY_DECL(any);
 NIFTY_DECL(typeof);
 
