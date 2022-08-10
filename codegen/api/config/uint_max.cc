@@ -33,8 +33,7 @@ using namespace codegen;
 
 decltype(uint_max) uint_max = NIFTY_DEF(uint_max, [&] {
   docs << "the maximum value of a pputl unsigned int."
-       << "upper bound on the number of args for many pputl functions."
-       << "see the readme code generation section to configure.";
+       << "upper bound on the number of args for many pputl functions.";
   return uint_max_s;
 });
 

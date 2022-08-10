@@ -38,25 +38,16 @@ decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
   tests << tup(pp::tup())     = "()" >> docs;
   tests << tup(pp::tup(1, 2)) = "(1, 2)" >> docs;
 
-  def<"oo_pass(err, ...)"> oo_pass = [&](arg, va args) {
+  def<"0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+
+  def<"1(e, ...)">{} = [](arg, va args) {
     return args;
   };
 
-  def<"oo_no_pass(err, ...)"> oo_no_pass = [&](arg err, va) {
-    return fail(err);
-  };
-
-  return pp::call(def<"o(...)">{[&](va) {
-                    std::string prefix = utl::slice(oo_pass, -4);
-                    if (prefix.back() == '_')
-                      prefix.pop_back();
-                    std::string pass_s    = utl::slice(oo_pass, prefix.size(), 0);
-                    std::string no_pass_s = utl::slice(oo_no_pass, prefix.size(), 0);
-                    std::string no_s      = utl::slice(no_pass_s, -pass_s.size());
-
-                    return pp::cat(prefix, pp::va_opt(no_s), pass_s);
-                  }}(eat + " " + args),
-                  istr("[" + tup + "] invalid tuple : " + args), args);
+  return pp::call(cat(utl::slice(_0, -1), is_tup(args)),
+                  istr("[" + tup + "] tuple must be wrapped in parentheses : " + args), args);
 });
 
 } // namespace api

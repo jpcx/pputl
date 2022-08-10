@@ -31,8 +31,8 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
-  docs << "[inherits from " + atom + "] bool type (0 or 1)."
+decltype(bit) bit = NIFTY_DEF(bit, [&](va args) {
+  docs << "[aliases " + bool_ + "] bit type (0 or 1)."
        << "expands to b if valid, else fails.";
 
   tests << bool_(0) = "0" >> docs;
@@ -48,7 +48,7 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
 
   return pp::call(
       cat(utl::slice(_0, -1), is_atom(args)),
-      istr("[" + bool_ + "] bool cannot describe anything but the literal '1' and '0' : " + args),
+      istr("[" + bit + "] bit cannot describe anything but the literal '1' and '0' : " + args),
       args);
 });
 

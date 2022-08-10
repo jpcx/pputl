@@ -136,6 +136,57 @@ main() {
 
       system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
     }
+
+    { // fix clang format close on next section
+      std::ifstream lin{conf::lib_output, std::ios::in | std::ios::binary};
+      auto          sz = fs::file_size(conf::lib_output);
+      std::string   lib(sz, '\0');
+      lin.read(lib.data(), sz);
+      lin.close();
+      std::vector<std::string> formatted{};
+      std::string const        close_section{
+          "// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}"};
+      std::size_t i = 0;
+      for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+        formatted.push_back(line);
+        if (i > 2 and line == "// clang-format on" and formatted[i - 2] == close_section) {
+          if (i > 3 and formatted[i - 3].empty()) {
+            std::swap(formatted[i - 3], formatted[i]);
+            std::swap(formatted[i - 2], formatted[i - 1]);
+            formatted.pop_back();
+            --i;
+          } else {
+            std::swap(formatted[i - 2], formatted[i]);
+          }
+        }
+        ++i;
+      }
+
+      {
+        std::ofstream lout{conf::lib_output};
+        lout << utl::cat(formatted, "\n");
+      }
+    }
+
+    { // one final pass to remove double newlines
+      std::ifstream lin{conf::lib_output, std::ios::in | std::ios::binary};
+      auto          sz = fs::file_size(conf::lib_output);
+      std::string   lib(sz, '\0');
+      lin.read(lib.data(), sz);
+      lin.close();
+      std::vector<std::string> formatted{};
+      std::size_t              i = 0;
+      for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+        if (not(i > 0 and formatted[i - 1].empty() and line.empty()))
+          formatted.push_back(line);
+        ++i;
+      }
+
+      {
+        std::ofstream lout{conf::lib_output};
+        lout << utl::cat(formatted, "\n");
+      }
+    }
   }
 
   system(std::string{"clang-format -i " + std::string{conf::tests_output}}.c_str());

@@ -110,10 +110,10 @@ cat(Args&& args) {
   return utl::cat(std::forward<Args>(args), "##");
 }
 
-template<detail::forward_iterable_for<std::string const> Args>
+template<bool Space, detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string
 tup(Args&& args) {
-  return "(" + utl::cat(std::forward<Args>(args), ", ") + ")";
+  return "(" + utl::cat(std::forward<Args>(args), (Space ? ", " : ",")) + ")";
 }
 
 template<detail::forward_iterable_for<std::string const> Args>
@@ -140,10 +140,10 @@ cat(Args&&... args) {
   return cat(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
 }
 
-template<utl::string_representable... Args>
+template<bool Space, utl::string_representable... Args>
 [[nodiscard]] std::string
 tup(Args&&... args) {
-  return tup(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+  return tup<Space>(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
 }
 
 template<utl::string_representable... Args>

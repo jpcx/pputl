@@ -63,8 +63,10 @@ constexpr char const api_prefix[]{"PTL_"};
 // no trailing underscore by default to improve code completion.
 constexpr char const impl_prefix[]{"PPUTL"};
 
-// replacements for implementation names that are too long.
+// replacements for implementation names for clarity and generalized impl macros.
 constexpr std::array<char const*, 2> impl_shortnames[]{
+    {"is_nybl_digits", "nybl_digits"},
+    {"is_nybl_pairs", "nybl_pairs"},
     {"ropen", "ro"},
     {"rclose", "rc"},
     {"uint_traits", "utraits"},
@@ -354,7 +356,7 @@ template<detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string va_opt(Args&& args);
 template<detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string cat(Args&& args);
-template<detail::forward_iterable_for<std::string const> Args>
+template<bool Space = true, detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string tup(Args&& args);
 template<std::convertible_to<std::string> Fn, detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string call(Fn&& fn, Args&& args);
@@ -363,7 +365,7 @@ template<utl::string_representable... Args>
 [[nodiscard]] std::string va_opt(Args&&... args);
 template<utl::string_representable... Args>
 [[nodiscard]] std::string cat(Args&&... args);
-template<utl::string_representable... Args>
+template<bool Space = true, utl::string_representable... Args>
 [[nodiscard]] std::string tup(Args&&... args);
 template<utl::string_representable... Args>
 [[nodiscard]] std::string str(Args&&... args);

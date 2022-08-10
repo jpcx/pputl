@@ -31,46 +31,46 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is a bool (literal '1' or '0').";
+decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
+  docs << "[extends " + is_any + "] detects if args is a generic, non-tuple, singular value.";
 
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  tests << is_atom()                 = "0" >> docs;
+  tests << is_atom("foo")            = "1" >> docs;
+  tests << is_atom("0")              = "1" >> docs;
+  tests << is_atom("1, 2")           = "0" >> docs;
+  tests << is_atom("()")             = "0" >> docs;
+  tests << is_atom("(1, 2)")         = "0" >> docs;
+  tests << is_atom("(), ()")         = "0";
+  tests << is_atom(esc + "(())")     = "0";
+  tests << is_atom(esc + "((1, 2))") = "0";
+  tests << is_atom(", ")             = "0";
+  tests << is_atom(", , ")           = "0";
+  tests << is_atom("a, ")            = "0";
+  tests << is_atom("a, , ")          = "0";
+  tests << is_atom(", a")            = "0";
+  tests << is_atom(", a, ")          = "0";
+  tests << is_atom(", , a")          = "0";
+  tests << is_atom("(, )")           = "0";
+  tests << is_atom("(, , )")         = "0";
+  tests << is_atom("(a, )")          = "0";
+  tests << is_atom("(a, , )")        = "0";
+  tests << is_atom("(, a)")          = "0";
+  tests << is_atom("(, a, )")        = "0";
+  tests << is_atom("(, , a)")        = "0";
 
-  tests << is_bool()         = "0" >> docs;
-  tests << is_bool(0)        = "1" >> docs;
-  tests << is_bool(1)        = "1" >> docs;
-  tests << is_bool("1u")     = "0" >> docs;
-  tests << is_bool(binmin)   = "0" >> docs;
-  tests << is_bool(0, 1)     = "0" >> docs;
-  tests << is_bool("(0)")    = "0" >> docs;
-  tests << is_bool("()")     = "0";
-  tests << is_bool("(), ()") = "0";
-  tests << is_bool("0, ")    = "0";
-  tests << is_bool(", ")     = "0";
-  tests << is_bool(", , ")   = "0";
-  tests << is_bool("a, ")    = "0";
-  tests << is_bool("a, , ")  = "0";
-  tests << is_bool(", a")    = "0";
-  tests << is_bool(", a, ")  = "0";
-  tests << is_bool(", , a")  = "0";
-
-  def<"0(...)"> _0 = [&](va) {
+  def<"00"> _00 = [] {
     return "0";
   };
 
-  def<"1(...)">{} = [&](va args) {
-    def<"0"> _0 = [&] {
-      return "";
-    };
-
-    def<"1">{} = [&] {
-      return "";
-    };
-
-    return is_none(cat(utl::slice(_0, -1), args));
+  def<"10">{} = [] {
+    return "1";
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+  def<"11">{} = [] {
+    return "0";
+  };
+
+  return cat(utl::slice(_00, -2), cat(is_any(args), is_tup(args)));
 });
 
 } // namespace api

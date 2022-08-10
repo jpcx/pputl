@@ -39,49 +39,16 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
 
   tests << any("foo") = "foo" >> docs;
 
-  def<"ooo_fail_first(e0, e1, ...)"> ooo_fail_first = [&](arg e0, arg, va) {
-    return fail(e0);
+  def<"0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
   };
 
-  def<"ooo_no_fail_first(e0, e1, any)"> ooo_no_fail_first = [&](arg, arg, arg any) {
-    return any;
+  def<"1(e, ...)">{} = [](arg, va args) {
+    return args;
   };
 
-  def<"ooo_fail_rest(e0, e1, ...)"> ooo_fail_rest = [&](arg, arg e1, va) {
-    return fail(e1);
-  };
-
-  def<"oo_pass(...)"> oo_pass = [&](va) {
-    std::string prefix = utl::slice(ooo_fail_first, -5);
-    if (prefix.back() == '_')
-      prefix.pop_back();
-    prefix = utl::slice(prefix, -4);
-
-    std::string fail_first_s    = utl::slice(ooo_fail_first, prefix.size(), 0);
-    std::string no_fail_first_s = utl::slice(ooo_no_fail_first, prefix.size(), 0);
-    std::string no_s            = utl::slice(no_fail_first_s, -fail_first_s.size());
-
-    return pp::cat(prefix, pp::va_opt(no_s), fail_first_s);
-  };
-
-  def<"oo_no_pass(...)"> oo_no_pass = [&](va) {
-    return ooo_fail_rest;
-  };
-
-  return pp::call(pp::call(def<"o(_, ...)">{[&](arg, va) {
-                             std::string prefix = utl::slice(oo_pass, -4);
-                             if (prefix.back() == '_')
-                               prefix.pop_back();
-
-                             std::string pass_s    = utl::slice(oo_pass, prefix.size(), 0);
-                             std::string no_pass_s = utl::slice(oo_no_pass, prefix.size(), 0);
-                             std::string no_s      = utl::slice(no_pass_s, -pass_s.size());
-
-                             return pp::cat(prefix, pp::va_opt(no_s), pass_s);
-                           }}(args + "."),
-                           args),
-                  istr("[" + any + "] any cannot describe nothing : " + args),
-                  istr("[" + any + "] any cannot describe more than one generic value : " + args),
+  return pp::call(cat(utl::slice(_0, -1), is_any(args)),
+                  istr("[" + any + "] any cannot describe nothing or multiple args : " + args),
                   args);
 });
 

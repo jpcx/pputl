@@ -32,31 +32,20 @@ namespace api {
 using namespace codegen;
 
 decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
-  docs << "[inherits from " + any + "] a generic, non-tuple, singular value."
-       << "must not be a deferred expression."
-       << "fails if tuple.";
+  docs << "[inherits from " + any + "] a generic, non-tuple, singular value.";
 
   tests << atom("foo") = "foo" >> docs;
 
-  def<"oo_fail(err, ...)"> oo_fail = [&](arg err, va) {
-    return fail(err);
+  def<"0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
   };
 
-  def<"oo_no_fail(err, ...)"> oo_no_fail = [&](arg, va args) {
+  def<"1(e, ...)">{} = [](arg, va args) {
     return args;
   };
 
-  return pp::call(def<"o(...)">{[&](va) {
-                    std::string prefix = utl::slice(oo_fail, -4);
-                    if (prefix.back() == '_')
-                      prefix.pop_back();
-                    std::string fail_s    = utl::slice(oo_fail, prefix.size(), 0);
-                    std::string no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
-                    std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
-
-                    return pp::cat(prefix, pp::va_opt(no_s), fail_s);
-                  }}(esc(eat + " " + any(args))),
-                  istr("[" + atom + "] atom cannot describe a tuple : " + args), args);
+  return pp::call(cat(utl::slice(_0, -1), is_atom(args)),
+                  istr("[" + atom + "] atom cannot describe tuples : " + args), args);
 });
 
 } // namespace api

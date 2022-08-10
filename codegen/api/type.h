@@ -29,6 +29,7 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "traits.h"
 
 namespace api {
 
@@ -40,8 +41,8 @@ extern codegen::def<"any(...: v: any) -> any{v}"> const&                       a
 extern codegen::def<"tup(...: t: tup) -> t"> const&                            tup;
 extern codegen::def<"atom(...: v: any) -> v"> const&                           atom;
 extern codegen::def<"bool(...: b: 0|1) -> b"> const&                           bool_;
-// extern codegen::def<
-//     "nybl(...: {n: 0-F|b0: bool, b1: bool, b2: bool, b3: bool}) -> nybl{n}: <0-F>"> const& nybl;
+extern codegen::def<"bit(...: b: 0|1) -> b"> const&                            bit;
+// extern codegen::def<"nybl(...: n: 0-F) -> nybl{n}: <0-F>"> const&              nybl;
 extern codegen::def<"uint(...: n: uint|int|nybl) -> uint{n}"> const&           uint;
 extern codegen::def<"int(...: n: uint|int|nybl) -> int{n}"> const&             int_;
 extern codegen::def<"uhex(...: n: uint|int|nybl) -> uhex{n}"> const&           uhex;
@@ -56,14 +57,7 @@ NIFTY_DECL(any);
 NIFTY_DECL(tup);
 NIFTY_DECL(atom);
 NIFTY_DECL(bool_);
-// namespace detail {
-// extern codegen::def<>& nybl_pass;
-// extern codegen::def<>& nybl_fail;
-// extern codegen::def<>& nybl_o;
-// NIFTY_DECL(nybl_pass);
-// NIFTY_DECL(nybl_fail);
-// NIFTY_DECL(nybl_o);
-// } // namespace detail
+NIFTY_DECL(bit);
 // NIFTY_DECL(nybl);
 namespace detail {
 using uint_traits_array = std::array<codegen::def<>, (codegen::conf::uint_max + 1) * 2>;

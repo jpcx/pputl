@@ -25,31 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
-  docs << "[inherits from " + atom + "] bool type (0 or 1)."
-       << "expands to b if valid, else fails.";
+decltype(is_bit) is_bit = NIFTY_DEF(is_bit, [&] {
+  docs << "[aliases " + is_bool + "] detects if args is a bit (bool).";
 
-  tests << bool_(0) = "0" >> docs;
-  tests << bool_(1) = "1" >> docs;
+  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
+  tests << pp::call(is_bit)           = "0" >> docs;
+  tests << pp::call(is_bit, 0)        = "1" >> docs;
+  tests << pp::call(is_bit, 1)        = "1" >> docs;
+  tests << pp::call(is_bit, "1u")     = "0" >> docs;
+  tests << pp::call(is_bit, binmin)   = "0" >> docs;
+  tests << pp::call(is_bit, 0, 1)     = "0" >> docs;
+  tests << pp::call(is_bit, "(0)")    = "0" >> docs;
+  tests << pp::call(is_bit, "()")     = "0";
+  tests << pp::call(is_bit, "(), ()") = "0";
+  tests << pp::call(is_bit, "0, ")    = "0";
+  tests << pp::call(is_bit, ", ")     = "0";
+  tests << pp::call(is_bit, ", , ")   = "0";
+  tests << pp::call(is_bit, "a, ")    = "0";
+  tests << pp::call(is_bit, "a, , ")  = "0";
+  tests << pp::call(is_bit, ", a")    = "0";
+  tests << pp::call(is_bit, ", a, ")  = "0";
+  tests << pp::call(is_bit, ", , a")  = "0";
 
-  def<"1(e, ...)">{} = [](arg, va args) {
-    return args;
-  };
-
-  return pp::call(
-      cat(utl::slice(_0, -1), is_atom(args)),
-      istr("[" + bool_ + "] bool cannot describe anything but the literal '1' and '0' : " + args),
-      args);
+  return is_bool;
 });
 
 } // namespace api

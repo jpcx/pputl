@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(bit_length) bit_length = NIFTY_DEF(bit_length, [&] {
   docs << "the number of bits used by pputl integers."
-       << "see the readme code generation section to configure.";
+       << "based on the configured hex length.";
   return std::to_string(conf::bit_length);
 });
 

@@ -34,11 +34,22 @@ using namespace codegen;
 decltype(nibble) nibble = NIFTY_DEF(nibble, [&](va args) {
   docs << "translates four bits to a hexadecimal digit.";
 
-  tests << nibble(0, 0, 0, 0) = "0";
-  tests << nibble(0, 0, 1, 0) = "2";
-  tests << nibble(1, 0, 0, 1) = "9";
-  tests << nibble(1, 1, 0, 1) = "D";
-  tests << nibble(1, 1, 1, 1) = "F";
+  tests << nibble(0, 0, 0, 0) = "0" >> docs;
+  tests << nibble(0, 0, 0, 1) = "1";
+  tests << nibble(0, 0, 1, 0) = "2" >> docs;
+  tests << nibble(0, 0, 1, 1) = "3";
+  tests << nibble(0, 1, 0, 0) = "4";
+  tests << nibble(0, 1, 0, 1) = "5";
+  tests << nibble(0, 1, 1, 0) = "6";
+  tests << nibble(0, 1, 1, 1) = "7";
+  tests << nibble(1, 0, 0, 0) = "8";
+  tests << nibble(1, 0, 0, 1) = "9" >> docs;
+  tests << nibble(1, 0, 1, 0) = "A";
+  tests << nibble(1, 0, 1, 1) = "B";
+  tests << nibble(1, 1, 0, 0) = "C";
+  tests << nibble(1, 1, 0, 1) = "D" >> docs;
+  tests << nibble(1, 1, 1, 0) = "E";
+  tests << nibble(1, 1, 1, 1) = "F" >> docs;
 
   def<"0000"> _0000 = [&] {
     return "0";

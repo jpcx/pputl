@@ -123,27 +123,24 @@
 /// [config.bit_length]
 /// -------------------
 /// the number of bits used by pputl integers.
-/// see the readme code generation section to configure.
+/// based on the configured hex length.
 #define PTL_BIT_LENGTH /* -> uint */ 8
 
 /// [config.uint_max]
 /// -----------------
 /// the maximum value of a pputl unsigned int.
 /// upper bound on the number of args for many pputl functions.
-/// see the readme code generation section to configure.
 #define PTL_UINT_MAX /* -> uint */ 255u
 
 /// [config.int_max]
 /// ----------------
 /// the maximum value of a pputl signed int.
-/// see the readme code generation section to configure.
 #define PTL_INT_MAX /* -> int */ 127
 
 /// [config.int_min]
 /// ----------------
 /// the minimum value of a pputl signed int.
-/// only representable as binary. see type.int for details.
-/// see the readme code generation section to configure.
+/// only representable as hex. see type.int for details.
 #define PTL_INT_MIN /* -> binary */ 0x80
 
 /// [lang.lp]
@@ -293,6 +290,12 @@
 /// [lang.nibble]
 /// -------------
 /// translates four bits to a hexadecimal digit.
+///
+/// PTL_NIBBLE(0, 0, 0, 0) // 0
+/// PTL_NIBBLE(0, 0, 1, 0) // 2
+/// PTL_NIBBLE(1, 0, 0, 1) // 9
+/// PTL_NIBBLE(1, 1, 0, 1) // D
+/// PTL_NIBBLE(1, 1, 1, 1) // F
 #define PTL_NIBBLE(/* b0: bool, b1: bool, b2: bool, b3: bool */...) /* -> <0-F> */ \
   PPUTLNIBBLE_o(__VA_ARGS__)
 
@@ -318,20 +321,443 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [traits.is_none]
+/// ----------------
+/// detects if args is nothing.
+///
+/// PTL_IS_NONE()          // 1
+/// PTL_IS_NONE(foo)       // 0
+/// PTL_IS_NONE(foo, bar)  // 0
+/// PTL_IS_NONE(PTL_ESC()) // 1
+#define PTL_IS_NONE(/* v: <unknown>... */...) /* -> 0|1 */ PPUTLIS_NONE_0##__VA_OPT__(1)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_NONE_01 0
+#define PPUTLIS_NONE_0  1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_some]
+/// ----------------
+/// detects if args is something.
+///
+/// PTL_IS_SOME()          // 0
+/// PTL_IS_SOME(foo)       // 1
+/// PTL_IS_SOME(foo, bar)  // 1
+/// PTL_IS_SOME(PTL_ESC()) // 0
+#define PTL_IS_SOME(/* v: <unknown>... */...) /* -> 0|1 */ PPUTLIS_SOME_0##__VA_OPT__(1)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_SOME_01 1
+#define PPUTLIS_SOME_0  0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_any]
+/// ---------------
+/// [extends PTL_IS_SOME] detects if args is exactly one generic value.
+///
+/// PTL_IS_ANY()         // 0
+/// PTL_IS_ANY(,)        // 0
+/// PTL_IS_ANY(foo,)     // 0
+/// PTL_IS_ANY(foo, bar) // 0
+/// PTL_IS_ANY(foo)      // 1
+/// PTL_IS_ANY((42))     // 1
+#define PTL_IS_ANY(/* v: <unknown>... */...) /* -> 0|1 */ PPUTLIS_ANY_o(__VA_ARGS__ __VA_OPT__(.))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_ANY_o(_, ...) \
+  PTL_CAT(PPUTLIS_ANY_, PTL_CAT(PTL_IS_SOME(_), PTL_IS_SOME(__VA_ARGS__)))
+#define PPUTLIS_ANY_11 0
+#define PPUTLIS_ANY_10 1
+#define PPUTLIS_ANY_01 0
+#define PPUTLIS_ANY_00 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_tup]
+/// ---------------
+/// [extends PTL_IS_ANY] detects if args is a tuple (any...).
+///
+/// PTL_IS_TUP()       // 0
+/// PTL_IS_TUP(1, 2)   // 0
+/// PTL_IS_TUP(())     // 1
+/// PTL_IS_TUP((1, 2)) // 1
+#define PTL_IS_TUP(/* v: <unknown>... */...) /* -> 0|1 */ PTL_IS_NONE(PTL_EAT __VA_ARGS__)
+
+/// [traits.is_atom]
+/// ----------------
+/// [extends PTL_IS_ANY] detects if args is a generic, non-tuple, singular value.
+///
+/// PTL_IS_ATOM()       // 0
+/// PTL_IS_ATOM(foo)    // 1
+/// PTL_IS_ATOM(0)      // 1
+/// PTL_IS_ATOM(1, 2)   // 0
+/// PTL_IS_ATOM(())     // 0
+/// PTL_IS_ATOM((1, 2)) // 0
+#define PTL_IS_ATOM(/* v: <unknown>... */...) /* -> 0|1 */ \
+  PTL_CAT(PPUTLIS_ATOM_, PTL_CAT(PTL_IS_ANY(__VA_ARGS__), PTL_IS_TUP(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_ATOM_11 0
+#define PPUTLIS_ATOM_10 1
+#define PPUTLIS_ATOM_00 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_bool]
+/// ----------------
+/// [extends PTL_IS_ATOM] detects if args is a bool (literal '1' or '0').
+///
+/// PTL_IS_BOOL()           // 0
+/// PTL_IS_BOOL(0)          // 1
+/// PTL_IS_BOOL(1)          // 1
+/// PTL_IS_BOOL(1u)         // 0
+/// PTL_IS_BOOL(0b00000000) // 0
+/// PTL_IS_BOOL(0, 1)       // 0
+/// PTL_IS_BOOL((0))        // 0
+#define PTL_IS_BOOL(/* v: <unknown>... */...) /* -> 0|1 */ \
+  PTL_CAT(PPUTLIS_BOOL_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_BOOL_1(...) PTL_IS_NONE(PTL_CAT(PPUTLIS_BOOL_1_, __VA_ARGS__))
+#define PPUTLIS_BOOL_1_1
+#define PPUTLIS_BOOL_1_0
+#define PPUTLIS_BOOL_0(...) 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_bit]
+/// ---------------
+/// [aliases PTL_IS_BOOL] detects if args is a bit (bool).
+///
+/// PTL_IS_BIT()           // 0
+/// PTL_IS_BIT(0)          // 1
+/// PTL_IS_BIT(1)          // 1
+/// PTL_IS_BIT(1u)         // 0
+/// PTL_IS_BIT(0b00000000) // 0
+/// PTL_IS_BIT(0, 1)       // 0
+/// PTL_IS_BIT((0))        // 0
+#define PTL_IS_BIT /* -> is_bool */ PTL_IS_BOOL
+
+/// [traits.is_nybl]
+/// ----------------
+/// [extends PTL_IS_ATOM] detects if args is a nybl (capital hex digit).
+///
+/// PTL_IS_NYBL()    // 0
+/// PTL_IS_NYBL(0)   // 1
+/// PTL_IS_NYBL(Q)   // 0
+/// PTL_IS_NYBL(foo) // 0
+/// PTL_IS_NYBL(B)   // 1
+/// PTL_IS_NYBL(b)   // 0
+/// PTL_IS_NYBL(F)   // 1
+#define PTL_IS_NYBL(/* v: <unknown>... */...) /* -> 0|1 */ \
+  PTL_CAT(PPUTLIS_NYBL_o_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_NYBL_o_1(a)   PTL_IS_SOME(PTL_REST(PTL_CAT(PPUTLNYBL_DIGITS_, a)))
+#define PPUTLIS_NYBL_o_0(...) 0
+
+// clang-format off
+
+/// lt, and, or, xor, (sub carry, sub), (add carry, add), (...bin)
+#define PPUTLNYBL_PAIRS_FF 0,F,F,0,(0,0),(1,E),(1,1,1,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_FE 0,E,F,1,(0,1),(1,D),(1,1,1,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_FD 0,D,F,2,(0,2),(1,C),(1,1,1,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_FC 0,C,F,3,(0,3),(1,B),(1,1,1,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_FB 0,B,F,4,(0,4),(1,A),(1,1,1,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_FA 0,A,F,5,(0,5),(1,9),(1,1,1,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_F9 0,9,F,6,(0,6),(1,8),(1,1,1,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_F8 0,8,F,7,(0,7),(1,7),(1,1,1,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_F7 0,7,F,8,(0,8),(1,6),(1,1,1,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_F6 0,6,F,9,(0,9),(1,5),(1,1,1,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_F5 0,5,F,A,(0,A),(1,4),(1,1,1,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_F4 0,4,F,B,(0,B),(1,3),(1,1,1,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_F3 0,3,F,C,(0,C),(1,2),(1,1,1,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_F2 0,2,F,D,(0,D),(1,1),(1,1,1,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_F1 0,1,F,E,(0,E),(1,0),(1,1,1,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_F0 0,0,F,F,(0,F),(0,F),(1,1,1,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_EF 1,E,F,1,(1,F),(1,D),(1,1,1,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_EE 0,E,E,0,(0,0),(1,C),(1,1,1,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_ED 0,C,F,3,(0,1),(1,B),(1,1,1,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_EC 0,C,E,2,(0,2),(1,A),(1,1,1,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_EB 0,A,F,5,(0,3),(1,9),(1,1,1,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_EA 0,A,E,4,(0,4),(1,8),(1,1,1,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_E9 0,8,F,7,(0,5),(1,7),(1,1,1,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_E8 0,8,E,6,(0,6),(1,6),(1,1,1,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_E7 0,6,F,9,(0,7),(1,5),(1,1,1,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_E6 0,6,E,8,(0,8),(1,4),(1,1,1,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_E5 0,4,F,B,(0,9),(1,3),(1,1,1,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_E4 0,4,E,A,(0,A),(1,2),(1,1,1,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_E3 0,2,F,D,(0,B),(1,1),(1,1,1,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_E2 0,2,E,C,(0,C),(1,0),(1,1,1,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_E1 0,0,F,F,(0,D),(0,F),(1,1,1,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_E0 0,0,E,E,(0,E),(0,E),(1,1,1,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_DF 1,D,F,2,(1,E),(1,C),(1,1,0,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_DE 1,C,F,3,(1,F),(1,B),(1,1,0,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_DD 0,D,D,0,(0,0),(1,A),(1,1,0,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_DC 0,C,D,1,(0,1),(1,9),(1,1,0,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_DB 0,9,F,6,(0,2),(1,8),(1,1,0,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_DA 0,8,F,7,(0,3),(1,7),(1,1,0,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_D9 0,9,D,4,(0,4),(1,6),(1,1,0,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_D8 0,8,D,5,(0,5),(1,5),(1,1,0,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_D7 0,5,F,A,(0,6),(1,4),(1,1,0,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_D6 0,4,F,B,(0,7),(1,3),(1,1,0,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_D5 0,5,D,8,(0,8),(1,2),(1,1,0,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_D4 0,4,D,9,(0,9),(1,1),(1,1,0,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_D3 0,1,F,E,(0,A),(1,0),(1,1,0,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_D2 0,0,F,F,(0,B),(0,F),(1,1,0,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_D1 0,1,D,C,(0,C),(0,E),(1,1,0,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_D0 0,0,D,D,(0,D),(0,D),(1,1,0,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_CF 1,C,F,3,(1,D),(1,B),(1,1,0,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_CE 1,C,E,2,(1,E),(1,A),(1,1,0,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_CD 1,C,D,1,(1,F),(1,9),(1,1,0,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_CC 0,C,C,0,(0,0),(1,8),(1,1,0,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_CB 0,8,F,7,(0,1),(1,7),(1,1,0,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_CA 0,8,E,6,(0,2),(1,6),(1,1,0,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_C9 0,8,D,5,(0,3),(1,5),(1,1,0,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_C8 0,8,C,4,(0,4),(1,4),(1,1,0,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_C7 0,4,F,B,(0,5),(1,3),(1,1,0,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_C6 0,4,E,A,(0,6),(1,2),(1,1,0,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_C5 0,4,D,9,(0,7),(1,1),(1,1,0,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_C4 0,4,C,8,(0,8),(1,0),(1,1,0,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_C3 0,0,F,F,(0,9),(0,F),(1,1,0,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_C2 0,0,E,E,(0,A),(0,E),(1,1,0,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_C1 0,0,D,D,(0,B),(0,D),(1,1,0,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_C0 0,0,C,C,(0,C),(0,C),(1,1,0,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_BF 1,B,F,4,(1,C),(1,A),(1,0,1,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_BE 1,A,F,5,(1,D),(1,9),(1,0,1,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_BD 1,9,F,6,(1,E),(1,8),(1,0,1,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_BC 1,8,F,7,(1,F),(1,7),(1,0,1,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_BB 0,B,B,0,(0,0),(1,6),(1,0,1,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_BA 0,A,B,1,(0,1),(1,5),(1,0,1,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_B9 0,9,B,2,(0,2),(1,4),(1,0,1,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_B8 0,8,B,3,(0,3),(1,3),(1,0,1,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_B7 0,3,F,C,(0,4),(1,2),(1,0,1,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_B6 0,2,F,D,(0,5),(1,1),(1,0,1,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_B5 0,1,F,E,(0,6),(1,0),(1,0,1,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_B4 0,0,F,F,(0,7),(0,F),(1,0,1,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_B3 0,3,B,8,(0,8),(0,E),(1,0,1,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_B2 0,2,B,9,(0,9),(0,D),(1,0,1,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_B1 0,1,B,A,(0,A),(0,C),(1,0,1,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_B0 0,0,B,B,(0,B),(0,B),(1,0,1,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_AF 1,A,F,5,(1,B),(1,9),(1,0,1,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_AE 1,A,E,4,(1,C),(1,8),(1,0,1,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_AD 1,8,F,7,(1,D),(1,7),(1,0,1,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_AC 1,8,E,6,(1,E),(1,6),(1,0,1,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_AB 1,A,B,1,(1,F),(1,5),(1,0,1,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_AA 0,A,A,0,(0,0),(1,4),(1,0,1,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_A9 0,8,B,3,(0,1),(1,3),(1,0,1,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_A8 0,8,A,2,(0,2),(1,2),(1,0,1,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_A7 0,2,F,D,(0,3),(1,1),(1,0,1,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_A6 0,2,E,C,(0,4),(1,0),(1,0,1,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_A5 0,0,F,F,(0,5),(0,F),(1,0,1,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_A4 0,0,E,E,(0,6),(0,E),(1,0,1,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_A3 0,2,B,9,(0,7),(0,D),(1,0,1,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_A2 0,2,A,8,(0,8),(0,C),(1,0,1,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_A1 0,0,B,B,(0,9),(0,B),(1,0,1,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_A0 0,0,A,A,(0,A),(0,A),(1,0,1,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_9F 1,9,F,6,(1,A),(1,8),(1,0,0,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_9E 1,8,F,7,(1,B),(1,7),(1,0,0,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_9D 1,9,D,4,(1,C),(1,6),(1,0,0,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_9C 1,8,D,5,(1,D),(1,5),(1,0,0,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_9B 1,9,B,2,(1,E),(1,4),(1,0,0,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_9A 1,8,B,3,(1,F),(1,3),(1,0,0,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_99 0,9,9,0,(0,0),(1,2),(1,0,0,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_98 0,8,9,1,(0,1),(1,1),(1,0,0,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_97 0,1,F,E,(0,2),(1,0),(1,0,0,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_96 0,0,F,F,(0,3),(0,F),(1,0,0,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_95 0,1,D,C,(0,4),(0,E),(1,0,0,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_94 0,0,D,D,(0,5),(0,D),(1,0,0,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_93 0,1,B,A,(0,6),(0,C),(1,0,0,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_92 0,0,B,B,(0,7),(0,B),(1,0,0,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_91 0,1,9,8,(0,8),(0,A),(1,0,0,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_90 0,0,9,9,(0,9),(0,9),(1,0,0,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_8F 1,8,F,7,(1,9),(1,7),(1,0,0,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_8E 1,8,E,6,(1,A),(1,6),(1,0,0,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_8D 1,8,D,5,(1,B),(1,5),(1,0,0,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_8C 1,8,C,4,(1,C),(1,4),(1,0,0,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_8B 1,8,B,3,(1,D),(1,3),(1,0,0,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_8A 1,8,A,2,(1,E),(1,2),(1,0,0,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_89 1,8,9,1,(1,F),(1,1),(1,0,0,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_88 0,8,8,0,(0,0),(1,0),(1,0,0,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_87 0,0,F,F,(0,1),(0,F),(1,0,0,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_86 0,0,E,E,(0,2),(0,E),(1,0,0,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_85 0,0,D,D,(0,3),(0,D),(1,0,0,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_84 0,0,C,C,(0,4),(0,C),(1,0,0,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_83 0,0,B,B,(0,5),(0,B),(1,0,0,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_82 0,0,A,A,(0,6),(0,A),(1,0,0,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_81 0,0,9,9,(0,7),(0,9),(1,0,0,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_80 0,0,8,8,(0,8),(0,8),(1,0,0,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_7F 1,7,F,8,(1,8),(1,6),(0,1,1,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_7E 1,6,F,9,(1,9),(1,5),(0,1,1,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_7D 1,5,F,A,(1,A),(1,4),(0,1,1,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_7C 1,4,F,B,(1,B),(1,3),(0,1,1,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_7B 1,3,F,C,(1,C),(1,2),(0,1,1,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_7A 1,2,F,D,(1,D),(1,1),(0,1,1,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_79 1,1,F,E,(1,E),(1,0),(0,1,1,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_78 1,0,F,F,(1,F),(0,F),(0,1,1,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_77 0,7,7,0,(0,0),(0,E),(0,1,1,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_76 0,6,7,1,(0,1),(0,D),(0,1,1,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_75 0,5,7,2,(0,2),(0,C),(0,1,1,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_74 0,4,7,3,(0,3),(0,B),(0,1,1,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_73 0,3,7,4,(0,4),(0,A),(0,1,1,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_72 0,2,7,5,(0,5),(0,9),(0,1,1,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_71 0,1,7,6,(0,6),(0,8),(0,1,1,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_70 0,0,7,7,(0,7),(0,7),(0,1,1,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_6F 1,6,F,9,(1,7),(1,5),(0,1,1,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_6E 1,6,E,8,(1,8),(1,4),(0,1,1,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_6D 1,4,F,B,(1,9),(1,3),(0,1,1,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_6C 1,4,E,A,(1,A),(1,2),(0,1,1,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_6B 1,2,F,D,(1,B),(1,1),(0,1,1,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_6A 1,2,E,C,(1,C),(1,0),(0,1,1,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_69 1,0,F,F,(1,D),(0,F),(0,1,1,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_68 1,0,E,E,(1,E),(0,E),(0,1,1,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_67 1,6,7,1,(1,F),(0,D),(0,1,1,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_66 0,6,6,0,(0,0),(0,C),(0,1,1,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_65 0,4,7,3,(0,1),(0,B),(0,1,1,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_64 0,4,6,2,(0,2),(0,A),(0,1,1,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_63 0,2,7,5,(0,3),(0,9),(0,1,1,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_62 0,2,6,4,(0,4),(0,8),(0,1,1,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_61 0,0,7,7,(0,5),(0,7),(0,1,1,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_60 0,0,6,6,(0,6),(0,6),(0,1,1,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_5F 1,5,F,A,(1,6),(1,4),(0,1,0,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_5E 1,4,F,B,(1,7),(1,3),(0,1,0,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_5D 1,5,D,8,(1,8),(1,2),(0,1,0,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_5C 1,4,D,9,(1,9),(1,1),(0,1,0,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_5B 1,1,F,E,(1,A),(1,0),(0,1,0,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_5A 1,0,F,F,(1,B),(0,F),(0,1,0,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_59 1,1,D,C,(1,C),(0,E),(0,1,0,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_58 1,0,D,D,(1,D),(0,D),(0,1,0,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_57 1,5,7,2,(1,E),(0,C),(0,1,0,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_56 1,4,7,3,(1,F),(0,B),(0,1,0,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_55 0,5,5,0,(0,0),(0,A),(0,1,0,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_54 0,4,5,1,(0,1),(0,9),(0,1,0,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_53 0,1,7,6,(0,2),(0,8),(0,1,0,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_52 0,0,7,7,(0,3),(0,7),(0,1,0,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_51 0,1,5,4,(0,4),(0,6),(0,1,0,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_50 0,0,5,5,(0,5),(0,5),(0,1,0,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_4F 1,4,F,B,(1,5),(1,3),(0,1,0,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_4E 1,4,E,A,(1,6),(1,2),(0,1,0,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_4D 1,4,D,9,(1,7),(1,1),(0,1,0,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_4C 1,4,C,8,(1,8),(1,0),(0,1,0,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_4B 1,0,F,F,(1,9),(0,F),(0,1,0,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_4A 1,0,E,E,(1,A),(0,E),(0,1,0,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_49 1,0,D,D,(1,B),(0,D),(0,1,0,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_48 1,0,C,C,(1,C),(0,C),(0,1,0,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_47 1,4,7,3,(1,D),(0,B),(0,1,0,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_46 1,4,6,2,(1,E),(0,A),(0,1,0,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_45 1,4,5,1,(1,F),(0,9),(0,1,0,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_44 0,4,4,0,(0,0),(0,8),(0,1,0,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_43 0,0,7,7,(0,1),(0,7),(0,1,0,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_42 0,0,6,6,(0,2),(0,6),(0,1,0,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_41 0,0,5,5,(0,3),(0,5),(0,1,0,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_40 0,0,4,4,(0,4),(0,4),(0,1,0,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_3F 1,3,F,C,(1,4),(1,2),(0,0,1,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_3E 1,2,F,D,(1,5),(1,1),(0,0,1,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_3D 1,1,F,E,(1,6),(1,0),(0,0,1,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_3C 1,0,F,F,(1,7),(0,F),(0,0,1,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_3B 1,3,B,8,(1,8),(0,E),(0,0,1,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_3A 1,2,B,9,(1,9),(0,D),(0,0,1,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_39 1,1,B,A,(1,A),(0,C),(0,0,1,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_38 1,0,B,B,(1,B),(0,B),(0,0,1,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_37 1,3,7,4,(1,C),(0,A),(0,0,1,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_36 1,2,7,5,(1,D),(0,9),(0,0,1,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_35 1,1,7,6,(1,E),(0,8),(0,0,1,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_34 1,0,7,7,(1,F),(0,7),(0,0,1,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_33 0,3,3,0,(0,0),(0,6),(0,0,1,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_32 0,2,3,1,(0,1),(0,5),(0,0,1,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_31 0,1,3,2,(0,2),(0,4),(0,0,1,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_30 0,0,3,3,(0,3),(0,3),(0,0,1,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_2F 1,2,F,D,(1,3),(1,1),(0,0,1,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_2E 1,2,E,C,(1,4),(1,0),(0,0,1,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_2D 1,0,F,F,(1,5),(0,F),(0,0,1,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_2C 1,0,E,E,(1,6),(0,E),(0,0,1,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_2B 1,2,B,9,(1,7),(0,D),(0,0,1,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_2A 1,2,A,8,(1,8),(0,C),(0,0,1,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_29 1,0,B,B,(1,9),(0,B),(0,0,1,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_28 1,0,A,A,(1,A),(0,A),(0,0,1,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_27 1,2,7,5,(1,B),(0,9),(0,0,1,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_26 1,2,6,4,(1,C),(0,8),(0,0,1,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_25 1,0,7,7,(1,D),(0,7),(0,0,1,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_24 1,0,6,6,(1,E),(0,6),(0,0,1,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_23 1,2,3,1,(1,F),(0,5),(0,0,1,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_22 0,2,2,0,(0,0),(0,4),(0,0,1,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_21 0,0,3,3,(0,1),(0,3),(0,0,1,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_20 0,0,2,2,(0,2),(0,2),(0,0,1,0,0,0,0,0)
+#define PPUTLNYBL_PAIRS_1F 1,1,F,E,(1,2),(1,0),(0,0,0,1,1,1,1,1)
+#define PPUTLNYBL_PAIRS_1E 1,0,F,F,(1,3),(0,F),(0,0,0,1,1,1,1,0)
+#define PPUTLNYBL_PAIRS_1D 1,1,D,C,(1,4),(0,E),(0,0,0,1,1,1,0,1)
+#define PPUTLNYBL_PAIRS_1C 1,0,D,D,(1,5),(0,D),(0,0,0,1,1,1,0,0)
+#define PPUTLNYBL_PAIRS_1B 1,1,B,A,(1,6),(0,C),(0,0,0,1,1,0,1,1)
+#define PPUTLNYBL_PAIRS_1A 1,0,B,B,(1,7),(0,B),(0,0,0,1,1,0,1,0)
+#define PPUTLNYBL_PAIRS_19 1,1,9,8,(1,8),(0,A),(0,0,0,1,1,0,0,1)
+#define PPUTLNYBL_PAIRS_18 1,0,9,9,(1,9),(0,9),(0,0,0,1,1,0,0,0)
+#define PPUTLNYBL_PAIRS_17 1,1,7,6,(1,A),(0,8),(0,0,0,1,0,1,1,1)
+#define PPUTLNYBL_PAIRS_16 1,0,7,7,(1,B),(0,7),(0,0,0,1,0,1,1,0)
+#define PPUTLNYBL_PAIRS_15 1,1,5,4,(1,C),(0,6),(0,0,0,1,0,1,0,1)
+#define PPUTLNYBL_PAIRS_14 1,0,5,5,(1,D),(0,5),(0,0,0,1,0,1,0,0)
+#define PPUTLNYBL_PAIRS_13 1,1,3,2,(1,E),(0,4),(0,0,0,1,0,0,1,1)
+#define PPUTLNYBL_PAIRS_12 1,0,3,3,(1,F),(0,3),(0,0,0,1,0,0,1,0)
+#define PPUTLNYBL_PAIRS_11 0,1,1,0,(0,0),(0,2),(0,0,0,1,0,0,0,1)
+#define PPUTLNYBL_PAIRS_10 0,0,1,1,(0,1),(0,1),(0,0,0,1,0,0,0,0)
+#define PPUTLNYBL_PAIRS_0F 1,0,F,F,(1,1),(0,F),(0,0,0,0,1,1,1,1)
+#define PPUTLNYBL_PAIRS_0E 1,0,E,E,(1,2),(0,E),(0,0,0,0,1,1,1,0)
+#define PPUTLNYBL_PAIRS_0D 1,0,D,D,(1,3),(0,D),(0,0,0,0,1,1,0,1)
+#define PPUTLNYBL_PAIRS_0C 1,0,C,C,(1,4),(0,C),(0,0,0,0,1,1,0,0)
+#define PPUTLNYBL_PAIRS_0B 1,0,B,B,(1,5),(0,B),(0,0,0,0,1,0,1,1)
+#define PPUTLNYBL_PAIRS_0A 1,0,A,A,(1,6),(0,A),(0,0,0,0,1,0,1,0)
+#define PPUTLNYBL_PAIRS_09 1,0,9,9,(1,7),(0,9),(0,0,0,0,1,0,0,1)
+#define PPUTLNYBL_PAIRS_08 1,0,8,8,(1,8),(0,8),(0,0,0,0,1,0,0,0)
+#define PPUTLNYBL_PAIRS_07 1,0,7,7,(1,9),(0,7),(0,0,0,0,0,1,1,1)
+#define PPUTLNYBL_PAIRS_06 1,0,6,6,(1,A),(0,6),(0,0,0,0,0,1,1,0)
+#define PPUTLNYBL_PAIRS_05 1,0,5,5,(1,B),(0,5),(0,0,0,0,0,1,0,1)
+#define PPUTLNYBL_PAIRS_04 1,0,4,4,(1,C),(0,4),(0,0,0,0,0,1,0,0)
+#define PPUTLNYBL_PAIRS_03 1,0,3,3,(1,D),(0,3),(0,0,0,0,0,0,1,1)
+#define PPUTLNYBL_PAIRS_02 1,0,2,2,(1,E),(0,2),(0,0,0,0,0,0,1,0)
+#define PPUTLNYBL_PAIRS_01 1,0,1,1,(1,F),(0,1),(0,0,0,0,0,0,0,1)
+#define PPUTLNYBL_PAIRS_00 0,0,0,0,(0,0),(0,0),(0,0,0,0,0,0,0,0)
+
+/// not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), (...bin)
+#define PPUTLNYBL_DIGITS_F 0,(0,E),(1,0),(1,E),(1,7),(1,1,1,1)
+#define PPUTLNYBL_DIGITS_E 1,(0,D),(0,F),(1,C),(0,7),(1,1,1,0)
+#define PPUTLNYBL_DIGITS_D 2,(0,C),(0,E),(1,A),(1,6),(1,1,0,1)
+#define PPUTLNYBL_DIGITS_C 3,(0,B),(0,D),(1,8),(0,6),(1,1,0,0)
+#define PPUTLNYBL_DIGITS_B 4,(0,A),(0,C),(1,6),(1,5),(1,0,1,1)
+#define PPUTLNYBL_DIGITS_A 5,(0,9),(0,B),(1,4),(0,5),(1,0,1,0)
+#define PPUTLNYBL_DIGITS_9 6,(0,8),(0,A),(1,2),(1,4),(1,0,0,1)
+#define PPUTLNYBL_DIGITS_8 7,(0,7),(0,9),(1,0),(0,4),(1,0,0,0)
+#define PPUTLNYBL_DIGITS_7 8,(0,6),(0,8),(0,E),(1,3),(0,1,1,1)
+#define PPUTLNYBL_DIGITS_6 9,(0,5),(0,7),(0,C),(0,3),(0,1,1,0)
+#define PPUTLNYBL_DIGITS_5 A,(0,4),(0,6),(0,A),(1,2),(0,1,0,1)
+#define PPUTLNYBL_DIGITS_4 B,(0,3),(0,5),(0,8),(0,2),(0,1,0,0)
+#define PPUTLNYBL_DIGITS_3 C,(0,2),(0,4),(0,6),(1,1),(0,0,1,1)
+#define PPUTLNYBL_DIGITS_2 D,(0,1),(0,3),(0,4),(0,1),(0,0,1,0)
+#define PPUTLNYBL_DIGITS_1 E,(0,0),(0,2),(0,2),(1,0),(0,0,0,1)
+#define PPUTLNYBL_DIGITS_0 F,(1,F),(0,1),(0,0),(0,0),(0,0,0,0)
+
+// clang-format on
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [type.none]
 /// -----------
 /// nothing. fails if something.
 ///
 /// PTL_NONE() // <nothing>
-#define PTL_NONE(/* <nothing> */...) /* -> none */                                     \
-  PPUTLNONE##__VA_OPT__(_NO)##_PASS(PTL_ISTR([PTL_NONE] none cannot describe something \
-                                             : __VA_ARGS__))
-
+#define PTL_NONE(/* <nothing> */...) /* -> none */ \
+  PTL_CAT(PPUTLNONE_, PTL_IS_NONE(__VA_ARGS__))    \
+  (PTL_ISTR([PTL_NONE] none cannot describe something : __VA_ARGS__))
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLNONE_NO_PASS(e) PTL_FAIL(e)
-#define PPUTLNONE_PASS(e)
-
+#define PPUTLNONE_1(e)
+#define PPUTLNONE_0(e) PTL_FAIL(e)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.some]
@@ -342,15 +768,14 @@
 /// PTL_SOME(foo, bar)        // foo, bar
 /// PTL_SOME(foo, 42, (, , )) // foo, 42, (, , )
 /// PTL_SOME(, )              // ,
-#define PTL_SOME(/* args: <something>... */...) /* -> some{...args} */               \
-  PPUTLSOME##__VA_OPT__(_NO)##_FAIL(PTL_ISTR([PTL_SOME] some cannot describe nothing \
-                                             : __VA_ARGS__),                         \
-                                    __VA_ARGS__)
+#define PTL_SOME(/* args: <something>... */...) /* -> some{...args} */ \
+  PTL_CAT(PPUTLSOME_, PTL_IS_SOME(__VA_ARGS__))                        \
+  (PTL_ISTR([PTL_SOME] some cannot describe nothing : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSOME_NO_FAIL(e, ...) __VA_ARGS__
-#define PPUTLSOME_FAIL(e, ...)    PTL_FAIL(e)
+#define PPUTLSOME_1(e, ...) __VA_ARGS__
+#define PPUTLSOME_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -362,22 +787,14 @@
 /// fails if not exactly one arg.
 ///
 /// PTL_ANY(foo) // foo
-#define PTL_ANY(/* v: any */...) /* -> any{v} */                         \
-  PPUTLANY_o(__VA_ARGS__.)(__VA_ARGS__)(                                 \
-      PTL_ISTR([PTL_ANY] any cannot describe nothing                     \
-               : __VA_ARGS__),                                           \
-      PTL_ISTR([PTL_ANY] any cannot describe more than one generic value \
-               : __VA_ARGS__),                                           \
-      __VA_ARGS__)
+#define PTL_ANY(/* v: any */...) /* -> any{v} */ \
+  PTL_CAT(PPUTLANY_, PTL_IS_ANY(__VA_ARGS__))    \
+  (PTL_ISTR([PTL_ANY] any cannot describe nothing or multiple args : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLANY_o(_, ...)                      PPUTLANY_oo##__VA_OPT__(_NO)##_PASS
-#define PPUTLANY_oo_NO_PASS(...)                PPUTLANY_ooo_FAIL_REST
-#define PPUTLANY_oo_PASS(...)                   PPUTLANY_ooo_##__VA_OPT__(NO_)##FAIL_FIRST
-#define PPUTLANY_ooo_FAIL_REST(e0, e1, ...)     PTL_FAIL(e1)
-#define PPUTLANY_ooo_NO_FAIL_FIRST(e0, e1, any) any
-#define PPUTLANY_ooo_FAIL_FIRST(e0, e1, ...)    PTL_FAIL(e0)
+#define PPUTLANY_1(e, ...) __VA_ARGS__
+#define PPUTLANY_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -388,35 +805,30 @@
 ///
 /// PTL_TUP(())     // ()
 /// PTL_TUP((1, 2)) // (1, 2)
-#define PTL_TUP(/* t: tup */...) /* -> t */ \
-  PPUTLTUP_o(PTL_EAT __VA_ARGS__)(PTL_ISTR([PTL_TUP] invalid tuple : __VA_ARGS__), __VA_ARGS__)
+#define PTL_TUP(/* t: tup */...) /* -> t */   \
+  PTL_CAT(PPUTLTUP_, PTL_IS_TUP(__VA_ARGS__)) \
+  (PTL_ISTR([PTL_TUP] tuple must be wrapped in parentheses : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLTUP_o(...)               PPUTLTUP_oo##__VA_OPT__(_NO)##_PASS
-#define PPUTLTUP_oo_NO_PASS(err, ...) PTL_FAIL(err)
-#define PPUTLTUP_oo_PASS(err, ...)    __VA_ARGS__
+#define PPUTLTUP_1(e, ...) __VA_ARGS__
+#define PPUTLTUP_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.atom]
 /// -----------
 /// [inherits from PTL_ANY] a generic, non-tuple, singular value.
-/// must not be a deferred expression.
-/// fails if tuple.
 ///
 /// PTL_ATOM(foo) // foo
-#define PTL_ATOM(/* v: any */...) /* -> v */           \
-  PPUTLATOM_o(PTL_ESC(PTL_EAT PTL_ANY(__VA_ARGS__)))(  \
-      PTL_ISTR([PTL_ATOM] atom cannot describe a tuple \
-               : __VA_ARGS__),                         \
-      __VA_ARGS__)
+#define PTL_ATOM(/* v: any */...) /* -> v */    \
+  PTL_CAT(PPUTLATOM_, PTL_IS_ATOM(__VA_ARGS__)) \
+  (PTL_ISTR([PTL_ATOM] atom cannot describe tuples : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLATOM_o(...)               PPUTLATOM_oo##__VA_OPT__(_NO)##_FAIL
-#define PPUTLATOM_oo_NO_FAIL(err, ...) __VA_ARGS__
-#define PPUTLATOM_oo_FAIL(err, ...)    PTL_FAIL(err)
+#define PPUTLATOM_1(e, ...) __VA_ARGS__
+#define PPUTLATOM_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -427,18 +839,35 @@
 ///
 /// PTL_BOOL(0) // 0
 /// PTL_BOOL(1) // 1
-#define PTL_BOOL(/* b: 0|1 */...) /* -> b */                                               \
-  PPUTLBOOL_o(PTL_CAT(PPUTLBOOL_, PTL_ATOM(__VA_ARGS__)))(PTL_ISTR([PTL_BOOL] invalid bool \
-                                                                   : __VA_ARGS__),         \
-                                                          __VA_ARGS__)
+#define PTL_BOOL(/* b: 0|1 */...) /* -> b */                                     \
+  PTL_CAT(PPUTLBOOL_, PTL_IS_ATOM(__VA_ARGS__))                                  \
+  (PTL_ISTR([PTL_BOOL] bool cannot describe anything but the literal '1' and '0' \
+            : __VA_ARGS__),                                                      \
+   __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBOOL_o(...)          PPUTLBOOL##__VA_OPT__(_NO)##_PASS
-#define PPUTLBOOL_PASS(e, b)      b
-#define PPUTLBOOL_NO_PASS(e, ...) PTL_FAIL(e)
-#define PPUTLBOOL_1
-#define PPUTLBOOL_0
+#define PPUTLBOOL_1(e, ...) __VA_ARGS__
+#define PPUTLBOOL_0(e, ...) PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+/// [type.bit]
+/// ----------
+/// [aliases PTL_BOOL] bit type (0 or 1).
+/// expands to b if valid, else fails.
+///
+/// PTL_BOOL(0) // 0
+/// PTL_BOOL(1) // 1
+#define PTL_BIT(/* b: 0|1 */...) /* -> b */                                    \
+  PTL_CAT(PPUTLBIT_, PTL_IS_ATOM(__VA_ARGS__))                                 \
+  (PTL_ISTR([PTL_BIT] bit cannot describe anything but the literal '1' and '0' \
+            : __VA_ARGS__),                                                    \
+   __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBIT_1(e, ...) __VA_ARGS__
+#define PPUTLBIT_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -478,7 +907,6 @@
 #define PPUTLUINT_o_RES_o(_, ...)      PPUTLUINT_o_RES_o##__VA_OPT__(_NO)##_FAIL()
 #define PPUTLUINT_o_RES_o_NO_FAIL(...) PPUTLUINT_oo_UPASS
 #define PPUTLUINT_o_RES_o_FAIL(...)    PPUTLUINT_oo
-
 /// fourth parentheses; attempts cast from signed.
 #define PPUTLUINT_oo(...)             PPUTLUINT_oo_RES(__VA_ARGS__##u, PPUTLUTRAITS_##__VA_ARGS__##u)
 #define PPUTLUINT_oo_RES(u, ...)      PPUTLUINT_oo_RES_o(u, __VA_ARGS__)
@@ -514,6 +942,7 @@
 #define PPUTLUINT_TRAIT_TYPE(t, ...)                   /* -> HEX|DEC */ t
 
 // clang-format off
+
 
 /// type, unsigned decimal, signed decimal, bits, bitnot
 #define PPUTLUTRAITS_0xFFu HEX,255u,-1,(1,1,1,1,1,1,1,1),0x00u
@@ -772,7 +1201,6 @@
 #define PPUTLUTRAITS_0x02u HEX,2u,2,(0,0,0,0,0,0,1,0),0xFDu
 #define PPUTLUTRAITS_0x01u HEX,1u,1,(0,0,0,0,0,0,0,1),0xFEu
 #define PPUTLUTRAITS_0x00u HEX,0u,0,(0,0,0,0,0,0,0,0),0xFFu
-
 /// type, signed hex, signed is negative, log2, sqrt, factors
 #define PPUTLUTRAITS_255u DEC,0xFF,1,7u,15u,(3u, 5u, 17u)
 #define PPUTLUTRAITS_254u DEC,0xFE,1,7u,15u,(2u, 127u)
@@ -1030,12 +1458,8 @@
 #define PPUTLUTRAITS_2u DEC,0x02,0,1u,1u,()
 #define PPUTLUTRAITS_1u DEC,0x01,0,0u,1u,()
 #define PPUTLUTRAITS_0u DEC,0x00,0,,0u,()
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 // clang-format on
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 /// [type.int]
 /// ----------
 /// 8-bit signed integer type.
@@ -1062,20 +1486,16 @@
   PPUTLINT_o(__VA_ARGS__.)(__VA_ARGS__)(__VA_ARGS__)(__VA_ARGS__)(PTL_ISTR([PTL_INT] invalid int \
                                                                            : __VA_ARGS__),       \
                                                                   __VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 /// first parentheses; asserts only one arg.
 #define PPUTLINT_o(_, ...)      PPUTLINT_o_##__VA_OPT__(NO_)##PASS()
 #define PPUTLINT_o_NO_PASS(...) PPUTLINT_oo_FAIL
 #define PPUTLINT_o_PASS(...)    PPUTLINT_oo
-
 /// second parentheses; asserts non-tuple.
 #define PPUTLINT_oo(_, ...)      PPUTLINT_oo_RES(PTL_EAT _)
 #define PPUTLINT_oo_RES(...)     PPUTLINT_oo_##__VA_OPT__(NO_)##FAIL()
 #define PPUTLINT_oo_NO_FAIL(...) PPUTLINT_ooo
 #define PPUTLINT_oo_FAIL(...)    PPUTLINT_ooo_FAIL
-
 /// third parentheses; attempts cast from signed.
 #define PPUTLINT_ooo(...)             PPUTLINT_ooo_RES(__VA_ARGS__##u, PPUTLUTRAITS_##__VA_ARGS__##u)
 #define PPUTLINT_ooo_RES(u, ...)      PPUTLINT_ooo_RES_o(u, __VA_ARGS__)
@@ -1086,7 +1506,6 @@
 #define PPUTLINT_ooo_ICHK_DEC(u)      PTL_CAT(PPUTLINT_ooo_ICHK_DEC_, PPUTLUINT_TRAIT(u, DEC_INEG))
 #define PPUTLINT_ooo_ICHK_DEC_1       PPUTLINT_oooo_FAIL
 #define PPUTLINT_ooo_ICHK_DEC_0       PPUTLINT_oooo_IPASS
-
 /// fourth parentheses; attempts cast from unsigned.
 #define PPUTLINT_oooo(...)          PPUTLINT_oooo_RES(PPUTLUTRAITS_##__VA_ARGS__)
 #define PPUTLINT_oooo_RES(...)      PPUTLINT_oooo_RES_o(__VA_ARGS__)
@@ -1094,10 +1513,8 @@
 #define PPUTLINT_oooo_IPASS(...)    PPUTLINT_IPASS
 #define PPUTLINT_oooo_NO_FAIL(...)  PPUTLINT_UPASS
 #define PPUTLINT_oooo_FAIL(...)     PPUTLINT_FAIL
-
 /// final parentheses (cast from signed)
 #define PPUTLINT_IPASS(e, i) i
-
 /// final parentheses (cast from unsigned)
 #define PPUTLINT_UPASS(e, u)            PTL_CAT(PPUTLINT_UPASS_, PPUTLUINT_TRAIT(u, TYPE))(u)
 #define PPUTLINT_UPASS_HEX(u)           PPUTLUINT_TRAIT(PPUTLUINT_TRAIT(u, HEX_UDEC), DEC_IHEX)
@@ -1108,12 +1525,9 @@
   PTL_CAT(PPUTLINT_UPASS_DEC_, PTL_ESC(PTL_IFIRST PPUTLUINT_TRAIT(ubin, HEX_BITS)))(u, ibin, ubin)
 #define PPUTLINT_UPASS_DEC_1(u, ibin, ubin) ibin
 #define PPUTLINT_UPASS_DEC_0(u, ibin, ubin) PPUTLUINT_TRAIT(ubin, HEX_IDEC)
-
 /// final parentheses (fail)
 #define PPUTLINT_FAIL(e, ...) PTL_FAIL(e)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [type.uhex]
 /// -----------
 /// casts to the unsigned int hexadecimal subtype.
@@ -1126,15 +1540,11 @@
 /// PTL_UHEX(0x01u) // 0x01u
 /// PTL_UHEX(0xFF)  // 0xFFu
 #define PTL_UHEX(/* n: uint|int|nybl */...) /* -> uhex{n} */ PPUTLUHEX_o(PTL_UINT(__VA_ARGS__))
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLUHEX_o(n)   PTL_CAT(PPUTLUHEX_, PPUTLUINT_TRAIT(n, TYPE))(n)
 #define PPUTLUHEX_HEX(n) n
 #define PPUTLUHEX_DEC(n) PTL_CAT(PPUTLUINT_TRAIT(n, DEC_IHEX), u)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [type.ihex]
 /// -----------
 /// casts to the signed int binary subtype.
@@ -1145,16 +1555,12 @@
 /// PTL_IHEX(255u) // 0xFF
 /// PTL_IHEX(127u) // 0x7F
 #define PTL_IHEX(/* n: uint|int|nybl */...) /* -> ihex{n} */ PPUTLIHEX_o(PTL_INT(__VA_ARGS__))
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLIHEX_o(n)      PPUTLIHEX_oo(n, PTL_CAT(n, u))
 #define PPUTLIHEX_oo(n, u)  PTL_CAT(PPUTLIHEX_, PPUTLUINT_TRAIT(u, TYPE))(n, u)
 #define PPUTLIHEX_HEX(n, u) n
 #define PPUTLIHEX_DEC(n, u) PPUTLUINT_TRAIT(u, DEC_IHEX)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [type.udec]
 /// -----------
 /// casts to the unsigned int decimal subtype.
@@ -1166,15 +1572,11 @@
 /// PTL_UDEC(0xFFu) // 255u
 /// PTL_UDEC(0xFF)  // 255u
 #define PTL_UDEC(/* n: uint|int|nybl */...) /* -> udec{n} */ PPUTLUDEC_o(PTL_UINT(__VA_ARGS__))
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLUDEC_o(n)   PTL_CAT(PPUTLUDEC_, PPUTLUINT_TRAIT(n, TYPE))(n)
 #define PPUTLUDEC_HEX(n) PPUTLUINT_TRAIT(n, HEX_UDEC)
 #define PPUTLUDEC_DEC(n) n
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [type.idec]
 /// -----------
 /// [positive-only] casts to the signed int decimal subtype.
@@ -1191,9 +1593,7 @@
   PPUTLIDEC_o(PTL_ISTR([PTL_IDEC] cannot represent negative in base10 \
                        : __VA_ARGS__),                                \
               PTL_INT(__VA_ARGS__))
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLIDEC_o(e, n)     PPUTLIDEC_oo(e, n, PTL_CAT(n, u))
 #define PPUTLIDEC_oo(e, n, u) PTL_CAT(PPUTLIDEC_, PPUTLUINT_TRAIT(u, TYPE))(e, n, u)
 #define PPUTLIDEC_HEX(e, n, u) \
@@ -1201,9 +1601,7 @@
 #define PPUTLIDEC_HEX_1(e, n, u) PTL_FAIL(e)
 #define PPUTLIDEC_HEX_0(e, n, u) PPUTLUINT_TRAIT(u, HEX_IDEC)
 #define PPUTLIDEC_DEC(e, n, u)   n
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.not]
 /// -----------
 /// logical NOT.
@@ -1211,14 +1609,10 @@
 /// PTL_NOT(0) // 1
 /// PTL_NOT(1) // 0
 #define PTL_NOT(/* v: bool */...) /* -> bool{!v} */ PTL_CAT(PPUTLNOT_, PTL_BOOL(__VA_ARGS__))
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLNOT_1 0
 #define PPUTLNOT_0 1
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.and]
 /// -----------
 /// logical AND.
@@ -1228,17 +1622,13 @@
 /// PTL_AND(1, 0) // 0
 /// PTL_AND(1, 1) // 1
 #define PTL_AND(/* a: bool, b: bool */...) /* -> bool{a and b} */ PPUTLAND_X(__VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLAND_X(a, b) PTL_CAT(PPUTLAND_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLAND_11      1
 #define PPUTLAND_10      0
 #define PPUTLAND_01      0
 #define PPUTLAND_00      0
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.or]
 /// ----------
 /// logical OR.
@@ -1248,17 +1638,13 @@
 /// PTL_OR(1, 0) // 1
 /// PTL_OR(1, 1) // 1
 #define PTL_OR(/* a: bool, b: bool */...) /* -> bool{a or b} */ PPUTLOR_X(__VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLOR_X(a, b) PTL_CAT(PPUTLOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLOR_11      1
 #define PPUTLOR_10      1
 #define PPUTLOR_01      1
 #define PPUTLOR_00      0
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.nand]
 /// ------------
 /// logical NAND.
@@ -1268,17 +1654,13 @@
 /// PTL_NAND(1, 0) // 1
 /// PTL_NAND(1, 1) // 0
 #define PTL_NAND(/* a: bool, b: bool */...) /* -> bool{!(a and b)} */ PPUTLNAND_X(__VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLNAND_X(a, b) PTL_CAT(PPUTLNAND_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLNAND_11      0
 #define PPUTLNAND_10      1
 #define PPUTLNAND_01      1
 #define PPUTLNAND_00      1
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.nor]
 /// -----------
 /// logical NOR.
@@ -1288,17 +1670,13 @@
 /// PTL_NOR(1, 0) // 0
 /// PTL_NOR(1, 1) // 0
 #define PTL_NOR(/* a: bool, b: bool */...) /* -> bool{!(a or b)} */ PPUTLNOR_X(__VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLNOR_X(a, b) PTL_CAT(PPUTLNOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLNOR_11      0
 #define PPUTLNOR_10      0
 #define PPUTLNOR_01      0
 #define PPUTLNOR_00      1
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.xor]
 /// -----------
 /// logical XOR.
@@ -1308,17 +1686,13 @@
 /// PTL_XOR(1, 0) // 1
 /// PTL_XOR(1, 1) // 0
 #define PTL_XOR(/* a: bool, b: bool */...) /* -> bool{a xor b} */ PPUTLXOR_X(__VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLXOR_X(a, b) PTL_CAT(PPUTLXOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLXOR_11      0
 #define PPUTLXOR_10      1
 #define PPUTLXOR_01      1
 #define PPUTLXOR_00      0
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [logic.xnor]
 /// ------------
 /// logical XNOR.
@@ -1328,17 +1702,13 @@
 /// PTL_XNOR(1, 0) // 0
 /// PTL_XNOR(1, 1) // 1
 #define PTL_XNOR(/* a: bool, b: bool */...) /* -> bool{!(a xor b)} */ PPUTLXNOR_X(__VA_ARGS__)
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLXNOR_X(a, b) PTL_CAT(PPUTLXNOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLXNOR_11      1
 #define PPUTLXNOR_10      0
 #define PPUTLXNOR_01      0
 #define PPUTLXNOR_00      1
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [meta.id]
 /// ---------
 /// identity function. performs one expansion.
@@ -1347,7 +1717,6 @@
 /// PTL_ID(foo)     // foo
 /// PTL_ID(a, b, c) // a, b, c
 #define PTL_ID(/* v: any... */...) /* -> ...v */ __VA_ARGS__
-
 /// [meta.xct]
 /// ----------
 /// counts the number of expansions undergone after expression.
@@ -1359,14 +1728,9 @@
 /// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
 /// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
 #define PTL_XCT /* -> xct */ PPUTLXCT_A PTL_LP() /**/, PTL_RP()
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
 #define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
 #define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 // vim: fdm=marker:fmr={{{,}}}
-
 #endif

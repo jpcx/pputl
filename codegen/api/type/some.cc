@@ -39,23 +39,15 @@ decltype(some) some = NIFTY_DEF(some, [&](va args) {
   tests << some("foo", 42, pp::tup("", "", "")) = "foo, 42, (, , )" >> docs;
   tests << some("", "")                         = "," >> docs;
 
-  def<"fail(e, ...)"> fail_ = [&](arg e, va) {
+  def<"0(e, ...)"> _0 = [](arg e, va) {
     return fail(e);
   };
 
-  def<"no_fail(e, ...)"> no_fail = [&](arg, va args) {
+  def<"1(e, ...)">{} = [](arg, va args) {
     return args;
   };
 
-  std::string prefix = utl::slice(fail_, -4);
-  if (prefix.back() == '_')
-    prefix.pop_back();
-
-  std::string fail_s    = utl::slice(fail_, prefix.size(), 0);
-  std::string no_fail_s = utl::slice(no_fail, prefix.size(), 0);
-  std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
-
-  return pp::call(pp::cat(prefix, pp::va_opt(no_s), fail_s),
+  return pp::call(cat(utl::slice(_0, -1), is_some(args)),
                   istr("[" + some + "] some cannot describe nothing : " + args), args);
 });
 

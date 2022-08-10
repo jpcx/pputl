@@ -966,9 +966,9 @@ def_base::definitions() {
 
     {
       if (last_clang_format and not v.clang_format)
-        res += "\n// clang-format off\n";
+        res += "\n\n// clang-format off\n\n";
       else if (not last_clang_format and v.clang_format)
-        res += "\n// clang-format on\n";
+        res += "\n\n// clang-format on\n\n";
       last_clang_format = v.clang_format;
 
       res += *v.definition + "\n";

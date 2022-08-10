@@ -36,23 +36,15 @@ decltype(none) none = NIFTY_DEF(none, [&](va args) {
 
   tests << none() = "" >> docs;
 
-  def<"pass(e)"> pass = [&](arg) {
-    return "";
-  };
-
-  def<"no_pass(e)"> no_pass = [&](arg e) {
+  def<"0(e)"> _0 = [](arg e) {
     return fail(e);
   };
 
-  std::string prefix = utl::slice(pass, -4);
-  if (prefix.back() == '_')
-    prefix.pop_back();
+  def<"1(e)">{} = [](arg) {
+    return "";
+  };
 
-  std::string pass_s    = utl::slice(pass, prefix.size(), 0);
-  std::string no_pass_s = utl::slice(no_pass, prefix.size(), 0);
-  std::string no_s      = utl::slice(no_pass_s, -pass_s.size());
-
-  return pp::call(pp::cat(prefix, pp::va_opt(no_s), pass_s),
+  return pp::call(cat(utl::slice(_0, -1), is_none(args)),
                   istr("[" + none + "] none cannot describe something : " + args));
 });
 

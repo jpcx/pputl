@@ -25,38 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "traits.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(is_tuple) is_tuple = NIFTY_DEF(is_tuple, [&](va args) {
-//   docs << "detects if args is a tuple.";
-// 
-//   tests << is_tuple()                 = "0" >> docs;
-//   tests << is_tuple("1, 2")           = "0" >> docs;
-//   tests << is_tuple("()")             = "1" >> docs;
-//   tests << is_tuple("(1, 2)")         = "1" >> docs;
-//   tests << is_tuple("(), ()")         = "0";
-//   tests << is_tuple(esc + "(())")     = "1";
-//   tests << is_tuple(esc + "((1, 2))") = "1";
-//   tests << is_tuple(", ")             = "0";
-//   tests << is_tuple(", , ")           = "0";
-//   tests << is_tuple("a, ")            = "0";
-//   tests << is_tuple("a, , ")          = "0";
-//   tests << is_tuple(", a")            = "0";
-//   tests << is_tuple(", a, ")          = "0";
-//   tests << is_tuple(", , a")          = "0";
-//   tests << is_tuple("(, )")           = "1";
-//   tests << is_tuple("(, , )")         = "1";
-//   tests << is_tuple("(a, )")          = "1";
-//   tests << is_tuple("(a, , )")        = "1";
-//   tests << is_tuple("(, a)")          = "1";
-//   tests << is_tuple("(, a, )")        = "1";
-//   tests << is_tuple("(, , a)")        = "1";
-// 
-//   return is_none(eat + " " + args);
-// });
-// 
-// } // namespace api
+#include "traits.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
+  docs << "[extends " + is_any + "] detects if args is a tuple (any...).";
+
+  tests << is_tup()                 = "0" >> docs;
+  tests << is_tup("1, 2")           = "0" >> docs;
+  tests << is_tup("()")             = "1" >> docs;
+  tests << is_tup("(1, 2)")         = "1" >> docs;
+  tests << is_tup("(), ()")         = "0";
+  tests << is_tup(esc + "(())")     = "1";
+  tests << is_tup(esc + "((1, 2))") = "1";
+  tests << is_tup(", ")             = "0";
+  tests << is_tup(", , ")           = "0";
+  tests << is_tup("a, ")            = "0";
+  tests << is_tup("a, , ")          = "0";
+  tests << is_tup(", a")            = "0";
+  tests << is_tup(", a, ")          = "0";
+  tests << is_tup(", , a")          = "0";
+  tests << is_tup("(, )")           = "1";
+  tests << is_tup("(, , )")         = "1";
+  tests << is_tup("(a, )")          = "1";
+  tests << is_tup("(a, , )")        = "1";
+  tests << is_tup("(, a)")          = "1";
+  tests << is_tup("(, a, )")        = "1";
+  tests << is_tup("(, , a)")        = "1";
+
+  return is_none(eat + " " + args);
+});
+
+} // namespace api
