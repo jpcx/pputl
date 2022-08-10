@@ -25,45 +25,45 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+//decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
+//  docs << "detects if args is a bool.";
+//
+//  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+//
+//  tests << is_bool()         = "0" >> docs;
+//  tests << is_bool(0)        = "1" >> docs;
+//  tests << is_bool(1)        = "1" >> docs;
+//  tests << is_bool("1u")     = "0" >> docs;
+//  tests << is_bool(binmin)   = "0" >> docs;
+//  tests << is_bool(0, 1)     = "0" >> docs;
+//  tests << is_bool("(0)")    = "0" >> docs;
+//  tests << is_bool("()")     = "0";
+//  tests << is_bool("(), ()") = "0";
+//  tests << is_bool("0, ")    = "0";
+//  tests << is_bool(", ")     = "0";
+//  tests << is_bool(", , ")   = "0";
+//  tests << is_bool("a, ")    = "0";
+//  tests << is_bool("a, , ")  = "0";
+//  tests << is_bool(", a")    = "0";
+//  tests << is_bool(", a, ")  = "0";
+//  tests << is_bool(", , a")  = "0";
+//
+//  def fail = def{(std::string const&)detail::bool_fail} = [&] {
+//    return "0";
+//  };
+//
+//  def{(std::string const&)detail::bool_pass} = [&] {
+//    return "1";
+//  };
+//
+//  return cat(utl::slice(fail, -((std::string const&)detail::bool_pass).size()),
+//             detail::bool_o(cat(utl::slice(_0, -1), atom(args))));
+//});
 
-namespace api {
-
-using namespace codegen;
-
-decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "detects if args is a bool.";
-
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-
-  tests << is_bool()         = "0" >> docs;
-  tests << is_bool(0)        = "1" >> docs;
-  tests << is_bool(1)        = "1" >> docs;
-  tests << is_bool("1u")     = "0" >> docs;
-  tests << is_bool(binmin)   = "0" >> docs;
-  tests << is_bool(0, 1)     = "0" >> docs;
-  tests << is_bool("(0)")    = "0" >> docs;
-  tests << is_bool("()")     = "0";
-  tests << is_bool("(), ()") = "0";
-  tests << is_bool("0, ")    = "0";
-  tests << is_bool(", ")     = "0";
-  tests << is_bool(", , ")   = "0";
-  tests << is_bool("a, ")    = "0";
-  tests << is_bool("a, , ")  = "0";
-  tests << is_bool(", a")    = "0";
-  tests << is_bool(", a, ")  = "0";
-  tests << is_bool(", , a")  = "0";
-
-  def fail = def{(std::string const&)detail::bool_fail} = [&] {
-    return "0";
-  };
-
-  def{(std::string const&)detail::bool_pass} = [&] {
-    return "1";
-  };
-
-  return cat(utl::slice(fail, -((std::string const&)detail::bool_pass).size()),
-             pp::call(pp::call(detail::bool_o(args + "."), args), args));
-});
-
-} // namespace api
+// } // namespace api

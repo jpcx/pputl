@@ -34,41 +34,43 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tuple(...: t: tuple) -> t"> const&         tuple;
-extern codegen::def<"bool(...: b: bool) -> b"> const&           bool_;
-extern codegen::def<"uint(...: n: uint|int) -> uint{n}"> const& uint;
-extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&   int_;
-extern codegen::def<"uhex(...: n: uint|int) -> uhex{n}"> const& uhex;
-extern codegen::def<"ihex(...: n: uint|int) -> ihex{n}"> const& ihex;
-extern codegen::def<"udec(...: n: uint|int) -> udec{n}"> const& udec;
-extern codegen::def<"idec(...: n: uint|int) -> idec{n}"> const& idec;
-extern codegen::def<"any(...: v: any) -> any{v}"> const&        any;
-extern codegen::def<"typeof(...: v: tuple|uint|int|any) -> <ctor>"> const& typeof;
+extern codegen::def<"none(...: <nothing>) -> none"> const&                     none;
+extern codegen::def<"some(...: args: <something>...) -> some{...args}"> const& some;
+extern codegen::def<"any(...: v: any) -> any{v}"> const&                       any;
+extern codegen::def<"tup(...: t: tup) -> t"> const&                            tup;
+extern codegen::def<"atom(...: v: any) -> v"> const&                           atom;
+extern codegen::def<"bool(...: b: 0|1) -> b"> const&                           bool_;
+// extern codegen::def<
+//     "nybl(...: {n: 0-F|b0: bool, b1: bool, b2: bool, b3: bool}) -> nybl{n}: <0-F>"> const& nybl;
+extern codegen::def<"uint(...: n: uint|int|nybl) -> uint{n}"> const&           uint;
+extern codegen::def<"int(...: n: uint|int|nybl) -> int{n}"> const&             int_;
+extern codegen::def<"uhex(...: n: uint|int|nybl) -> uhex{n}"> const&           uhex;
+extern codegen::def<"ihex(...: n: uint|int|nybl) -> ihex{n}"> const&           ihex;
+extern codegen::def<"udec(...: n: uint|int|nybl) -> udec{n}"> const&           udec;
+extern codegen::def<"idec(...: n: uint|int|nybl) -> idec{n}"> const&           idec;
+// extern codegen::def<"typeof(...: v: tuple|uint|int|any) -> <ctor>"> const& typeof;
 
-NIFTY_DECL(tuple);
-namespace detail {
-extern codegen::def<>& bool_pass;
-extern codegen::def<>& bool_fail;
-extern codegen::def<>& bool_o;
-NIFTY_DECL(bool_pass);
-NIFTY_DECL(bool_fail);
-NIFTY_DECL(bool_o);
-} // namespace detail
+NIFTY_DECL(none);
+NIFTY_DECL(some);
+NIFTY_DECL(any);
+NIFTY_DECL(tup);
+NIFTY_DECL(atom);
 NIFTY_DECL(bool_);
+// namespace detail {
+// extern codegen::def<>& nybl_pass;
+// extern codegen::def<>& nybl_fail;
+// extern codegen::def<>& nybl_o;
+// NIFTY_DECL(nybl_pass);
+// NIFTY_DECL(nybl_fail);
+// NIFTY_DECL(nybl_o);
+// } // namespace detail
+// NIFTY_DECL(nybl);
 namespace detail {
 using uint_traits_array = std::array<codegen::def<>, (codegen::conf::uint_max + 1) * 2>;
 extern uint_traits_array& uint_traits;
 extern codegen::def<>&    uint_trait;
-extern codegen::def<>&    uint_upass;
-extern codegen::def<>&    uint_ipass;
-extern codegen::def<>&    uint_fail;
-extern codegen::def<>&    uint_o;
 NIFTY_DECL(uint_traits);
 NIFTY_DECL(uint_trait);
-NIFTY_DECL(uint_upass);
-NIFTY_DECL(uint_ipass);
-NIFTY_DECL(uint_fail);
-NIFTY_DECL(uint_o);
 } // namespace detail
 NIFTY_DECL(uint);
 NIFTY_DECL(int_);
@@ -76,8 +78,7 @@ NIFTY_DECL(uhex);
 NIFTY_DECL(ihex);
 NIFTY_DECL(udec);
 NIFTY_DECL(idec);
-NIFTY_DECL(any);
-NIFTY_DECL(typeof);
+// NIFTY_DECL(typeof);
 
 inline codegen::end_category<"type"> type_end;
 

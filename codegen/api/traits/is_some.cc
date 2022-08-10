@@ -25,36 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(is_some) is_some = NIFTY_DEF(is_some, [&](va) {
-  docs << "detects if args is something.";
-
-  tests << is_some("")         = "0" >> docs;
-  tests << is_some("foo")      = "1" >> docs;
-  tests << is_some("foo, bar") = "1" >> docs;
-  tests << is_some(esc())      = "0" >> docs;
-  tests << is_some(", ")       = "1";
-  tests << is_some(", , ")     = "1";
-  tests << is_some("a, ")      = "1";
-  tests << is_some("a, , ")    = "1";
-  tests << is_some(", a")      = "1";
-  tests << is_some(", a, ")    = "1";
-  tests << is_some(", , a")    = "1";
-
-  def<"\\o"> o = [&] {
-    return "0";
-  };
-
-  def<"\\o1">{} = [&] {
-    return "1";
-  };
-
-  return pp::cat(o, pp::va_opt("1"));
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_some) is_some = NIFTY_DEF(is_some, [&](va) {
+//   docs << "detects if args is something.";
+// 
+//   tests << is_some("")         = "0" >> docs;
+//   tests << is_some("foo")      = "1" >> docs;
+//   tests << is_some("foo, bar") = "1" >> docs;
+//   tests << is_some(esc())      = "0" >> docs;
+//   tests << is_some(", ")       = "1";
+//   tests << is_some(", , ")     = "1";
+//   tests << is_some("a, ")      = "1";
+//   tests << is_some("a, , ")    = "1";
+//   tests << is_some(", a")      = "1";
+//   tests << is_some(", a, ")    = "1";
+//   tests << is_some(", , a")    = "1";
+// 
+//   def<"\\o"> o = [&] {
+//     return "0";
+//   };
+// 
+//   def<"\\o1">{} = [&] {
+//     return "1";
+//   };
+// 
+//   return pp::cat(o, pp::va_opt("1"));
+// });
+// 
+// } // namespace api

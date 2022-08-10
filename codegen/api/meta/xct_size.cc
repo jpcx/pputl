@@ -25,57 +25,57 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "meta.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(xct_size) xct_size = NIFTY_DEF(xct_size, [&](va args) {
-  docs << "measures an xct expr to determine the number of expansions it experienced."
-       << "ignores the expansion required to read the result."
-       << ""
-       << "fails if xct is not a valid xct expression."
-       << size + " will fail if the xct expression is too large.";
-
-  tests << xct_size(xct)                              = "0u" >> docs;
-  tests << xct_size(esc(xct))                         = "1u" >> docs;
-  tests << xct_size(esc(esc(xct)))                    = "2u" >> docs;
-  tests << xct_size(esc(esc(esc(xct))))               = "3u" >> docs;
-  tests << xct_size(xct_expected(conf::uint_max - 1)) = uint_max_s;
-
-  def detect_a = def{"detect_" + detail::xct_a + "(...)"} = [&] {
-    return "";
-  };
-
-  def{"detect_" + detail::xct_b + "(...)"} = [&] {
-    return "";
-  };
-
-  def<"res(_, ...)"> res = [&](arg, va args) {
-    return size(args);
-  };
-
-  def a = def{detail::xct_a + "(__, ...)"} = [&](arg, va args) {
-    return res(args + " _");
-  };
-
-  def{detail::xct_b + "(__, ...)"} = [&](arg, va args) {
-    return res(args + " _");
-  };
-
-  def<"0(err, ...)"> _0 = [&](arg err, va) {
-    return fail(err);
-  };
-
-  def<"1(err, ...)">{} = [&](arg, va args) {
-    return pp::cat(utl::slice(a, -((std::string const&)detail::xct_a).size()), args);
-  };
-
-  return pp::call(
-      cat(utl::slice(_0, -1),
-          is_none(cat(utl::slice(detect_a, -((std::string const&)detail::xct_a).size()), args))),
-      istr("[" + xct_size + "] invalid xct expr : " + args), args);
-});
-
-} // namespace api
+// #include "meta.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(xct_size) xct_size = NIFTY_DEF(xct_size, [&](va args) {
+//   docs << "measures an xct expr to determine the number of expansions it experienced."
+//        << "ignores the expansion required to read the result."
+//        << ""
+//        << "fails if xct is not a valid xct expression."
+//        << size + " will fail if the xct expression is too large.";
+// 
+//   tests << xct_size(xct)                              = "0u" >> docs;
+//   tests << xct_size(esc(xct))                         = "1u" >> docs;
+//   tests << xct_size(esc(esc(xct)))                    = "2u" >> docs;
+//   tests << xct_size(esc(esc(esc(xct))))               = "3u" >> docs;
+//   tests << xct_size(xct_expected(conf::uint_max - 1)) = uint_max_s;
+// 
+//   def detect_a = def{"detect_" + detail::xct_a + "(...)"} = [&] {
+//     return "";
+//   };
+// 
+//   def{"detect_" + detail::xct_b + "(...)"} = [&] {
+//     return "";
+//   };
+// 
+//   def<"res(_, ...)"> res = [&](arg, va args) {
+//     return size(args);
+//   };
+// 
+//   def a = def{detail::xct_a + "(__, ...)"} = [&](arg, va args) {
+//     return res(args + " _");
+//   };
+// 
+//   def{detail::xct_b + "(__, ...)"} = [&](arg, va args) {
+//     return res(args + " _");
+//   };
+// 
+//   def<"0(err, ...)"> _0 = [&](arg err, va) {
+//     return fail(err);
+//   };
+// 
+//   def<"1(err, ...)">{} = [&](arg, va args) {
+//     return pp::cat(utl::slice(a, -((std::string const&)detail::xct_a).size()), args);
+//   };
+// 
+//   return pp::call(
+//       cat(utl::slice(_0, -1),
+//           is_none(cat(utl::slice(detect_a, -((std::string const&)detail::xct_a).size()), args))),
+//       istr("[" + xct_size + "] invalid xct expr : " + args), args);
+// });
+// 
+// } // namespace api

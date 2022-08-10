@@ -72,7 +72,7 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
 
 // the number of hex digits that describes integers
 // hex representations are fixed at this length
-constexpr std::uint8_t hex_length = 3;
+constexpr std::uint8_t hex_length = 2;
 
 // the number of bits used for signed and unsigned ints
 constexpr std::uint8_t bit_length = hex_length * 4;
@@ -180,19 +180,22 @@ constexpr char const project_header[]{
     "//    pputl defines several types and uses type identification and casting    //\n"
     "//    for control flow and error reporting. See the [type] section.           //\n"
     "//                                                                            //\n"
-    "//      tuple : anything in parentheses                                       //\n"
-    "//            :                                                               //\n"
-    "//      int   : <abstract> signed integer                                     //\n"
-    "//      idec  :  [int]   (positive-only) 2s-complement decimal int; e.g. 353  //\n"
-    "//      bool  :   [idec] the literal '1' or '0'                               //\n"
-    "//      ihex  :  [int]   signed hexidecimal integer; e.g. 0x161               //\n"
-    "//            :                                                               //\n"
-    "//      uint  : <abstract> unsigned integer                                   //\n"
-    "//      udec  :  [uint]  unsigned decimal integer;     e.g. 42u               //\n"
-    "//      uhex  :  [uint]  unsigned hexidecimal integer; e.g. 0x02Au            //\n"
-    "//            :                                                               //\n"
-    "//      any   : exactly one generic value                                     //\n"
+    "//     none: nothing                                                          //\n"
+    "//     some: <abstract> anything                                              //\n"
+    "//      |-any: exactly one generic value                                      //\n"
+    "//         |-tup: anything in parentheses                                     //\n"
+    "//         |-atom: a generic non-tuple value                                  //\n"
+    "//            |- bool: a literal '1' or '0'                                   //\n"
+    "//            |- bit: an alias for bool                                       //\n"
+    "//            |- nybl: a literal uppercase hexadecimal digit (e.g. B)         //\n"
+    "//            |- uint: <abstract> an unsigned integer                         //\n"
+    "//            |   |- udec: an unsigned decimal integer (e.g. 42u)             //\n"
+    "//            |   |- uhex: an unsigned hex integer (e.g. 0x02Au)              //\n"
+    "//            |- int: <abstract> a signed integer                             //\n"
+    "//                |- idec: a positive 2s-complement decimal int (e.g. 353)    //\n"
+    "//                |- ihex: a signed hex integer (e.g. 0x161)                  //\n"
     "//                                                                            //\n"
+    "//    Hexadecimal integers are always represented by fixed-length strings.    //\n"
     "//    Negative ints cannot be represented in decimal  due to concatenation    //\n"
     "//    restrictions. Arithmetic and bitwise functions attempt to cast their    //\n"
     "//    results in the same form as their input, but will always return ihex    //\n"

@@ -25,46 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
-  docs << "detects if args is a signed integer."
-       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
-
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-
-  tests << is_int()               = "0" >> docs;
-  tests << is_int("foo")          = "0" >> docs;
-  tests << is_int(0)              = "1" >> docs;
-  tests << is_int("0u")           = "0" >> docs;
-  tests << is_int(conf::uint_max) = "0" >> docs;
-  tests << is_int(min + "u")      = "0" >> docs;
-  tests << is_int(max)            = "1" >> docs;
-  tests << is_int("0b110u")       = "0" >> docs;
-  tests << is_int("(), ()")       = "0" >> docs;
-
-  def ihex_ = def{(std::string const&)ihex} = [&] {
-    return "";
-  };
-
-  def{(std::string const&)idec} = [&] {
-    return "";
-  };
-
-  def<"0(...)"> _0 = [&](va) {
-    return "0";
-  };
-
-  def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ihex_, -((std::string const&)ihex).size()), typeof(args)));
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
+//   docs << "detects if args is a signed integer."
+//        << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+// 
+//   auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+//   auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+// 
+//   tests << is_int()               = "0" >> docs;
+//   tests << is_int("foo")          = "0" >> docs;
+//   tests << is_int(0)              = "1" >> docs;
+//   tests << is_int("0u")           = "0" >> docs;
+//   tests << is_int(conf::uint_max) = "0" >> docs;
+//   tests << is_int(min + "u")      = "0" >> docs;
+//   tests << is_int(max)            = "1" >> docs;
+//   tests << is_int("0b110u")       = "0" >> docs;
+//   tests << is_int("(), ()")       = "0" >> docs;
+// 
+//   def ihex_ = def{(std::string const&)ihex} = [&] {
+//     return "";
+//   };
+// 
+//   def{(std::string const&)idec} = [&] {
+//     return "";
+//   };
+// 
+//   def<"0(...)"> _0 = [&](va) {
+//     return "0";
+//   };
+// 
+//   def<"1(...)">{} = [&](va args) {
+//     return is_none(cat(utl::slice(ihex_, -((std::string const&)ihex).size()), typeof(args)));
+//   };
+// 
+//   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+// });
+// 
+// } // namespace api

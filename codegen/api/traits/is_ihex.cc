@@ -25,39 +25,39 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
-  docs << "detects if args is a signed int in hex form."
-       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
-
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-
-  tests << is_ihex("1")       = "0" >> docs;
-  tests << is_ihex("1u")      = "0" >> docs;
-  tests << is_ihex(min)       = "1" >> docs;
-  tests << is_ihex(max)       = "1" >> docs;
-  tests << is_ihex(max + "u") = "0" >> docs;
-  tests << is_ihex("(), ()")  = "0" >> docs;
-
-  def ihex_ = def{(std::string const&)ihex} = [&] {
-    return "";
-  };
-
-  def<"0(...)"> _0 = [&](va) {
-    return "0";
-  };
-
-  def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(ihex_, -((std::string const&)ihex).size()), typeof(args)));
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
+//   docs << "detects if args is a signed int in hex form."
+//        << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+// 
+//   auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+//   auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+// 
+//   tests << is_ihex("1")       = "0" >> docs;
+//   tests << is_ihex("1u")      = "0" >> docs;
+//   tests << is_ihex(min)       = "1" >> docs;
+//   tests << is_ihex(max)       = "1" >> docs;
+//   tests << is_ihex(max + "u") = "0" >> docs;
+//   tests << is_ihex("(), ()")  = "0" >> docs;
+// 
+//   def ihex_ = def{(std::string const&)ihex} = [&] {
+//     return "";
+//   };
+// 
+//   def<"0(...)"> _0 = [&](va) {
+//     return "0";
+//   };
+// 
+//   def<"1(...)">{} = [&](va args) {
+//     return is_none(cat(utl::slice(ihex_, -((std::string const&)ihex).size()), typeof(args)));
+//   };
+// 
+//   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+// });
+// 
+// } // namespace api

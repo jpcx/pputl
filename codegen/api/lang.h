@@ -46,6 +46,9 @@ extern codegen::def<"irest(_, ...: first: any, rest: any...) -> ...rest"> const&
 extern codegen::def<"rest(...:  v: any...) -> ...v"> const&                      rest;
 extern codegen::def<"trim(...: v: any...) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
 extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&        fail;
+extern codegen::def<"nibble(...: b0: bool, b1: bool, b2: bool, b3: bool) -> <0-F>"> const& nibble;
+
+// TODO fmt.hex
 
 NIFTY_DECL(lp);
 NIFTY_DECL(rp);
@@ -60,6 +63,7 @@ NIFTY_DECL(irest);
 NIFTY_DECL(rest);
 NIFTY_DECL(trim);
 NIFTY_DECL(fail);
+NIFTY_DECL(nibble);
 
 inline codegen::end_category<"lang"> lang_end;
 

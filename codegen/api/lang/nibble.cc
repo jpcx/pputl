@@ -25,40 +25,88 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(tuple) tuple = NIFTY_DEF(tuple, [&](va args) {
-  docs << "tuple type (any...)."
-       << "expands to t if valid, else fails.";
+decltype(nibble) nibble = NIFTY_DEF(nibble, [&](va args) {
+  docs << "translates four bits to a hexadecimal digit.";
 
-  tests << tuple(pp::tup())     = "()" >> docs;
-  tests << tuple(pp::tup(1, 2)) = "(1, 2)" >> docs;
+  tests << nibble(0, 0, 0, 0) = "0";
+  tests << nibble(0, 0, 1, 0) = "2";
+  tests << nibble(1, 0, 0, 1) = "9";
+  tests << nibble(1, 1, 0, 1) = "D";
+  tests << nibble(1, 1, 1, 1) = "F";
 
-  def<"oo_pass(err, ...)"> oo_pass = [&](arg, va args) {
-    return args;
+  def<"0000"> _0000 = [&] {
+    return "0";
   };
 
-  def<"oo_no_pass(err, ...)"> oo_no_pass = [&](arg err, va) {
-    docs << "second parentheses; returns or fails";
-    return fail(err);
+  def<"0001">{} = [&] {
+    return "1";
   };
 
-  return pp::call(def<"o(...)">{[&](va) {
-                    docs << "first parentheses; detects tuple";
-                    std::string prefix = utl::slice(oo_pass, -4);
-                    if (prefix.back() == '_')
-                      prefix.pop_back();
-                    std::string pass_s    = utl::slice(oo_pass, prefix.size(), 0);
-                    std::string no_pass_s = utl::slice(oo_no_pass, prefix.size(), 0);
-                    std::string no_s      = utl::slice(no_pass_s, -pass_s.size());
+  def<"0010">{} = [&] {
+    return "2";
+  };
 
-                    return pp::cat(prefix, pp::va_opt(no_s), pass_s);
-                  }}(eat + " " + args),
-                  istr("[" + tuple + "] invalid tuple : " + args), args);
+  def<"0011">{} = [&] {
+    return "3";
+  };
+
+  def<"0100">{} = [&] {
+    return "4";
+  };
+
+  def<"0101">{} = [&] {
+    return "5";
+  };
+
+  def<"0110">{} = [&] {
+    return "6";
+  };
+
+  def<"0111">{} = [&] {
+    return "7";
+  };
+
+  def<"1000">{} = [&] {
+    return "8";
+  };
+
+  def<"1001">{} = [&] {
+    return "9";
+  };
+
+  def<"1010">{} = [&] {
+    return "A";
+  };
+
+  def<"1011">{} = [&] {
+    return "B";
+  };
+
+  def<"1100">{} = [&] {
+    return "C";
+  };
+
+  def<"1101">{} = [&] {
+    return "D";
+  };
+
+  def<"1110">{} = [&] {
+    return "E";
+  };
+
+  def<"1111">{} = [&] {
+    return "F";
+  };
+
+  return def<"o(b0, b1, b2, b3)">{[&](pack args) {
+    return pp::cat(utl::slice(_0000, -4), pp::cat(args));
+  }}(args);
 });
 
 } // namespace api

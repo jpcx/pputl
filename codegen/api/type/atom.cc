@@ -31,34 +31,32 @@ namespace api {
 
 using namespace codegen;
 
-decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
-  docs << "casts to the unsigned int hexadecimal subtype.";
+decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
+  docs << "[inherits from " + any + "] a generic, non-tuple, singular value."
+       << "must not be a deferred expression."
+       << "fails if tuple.";
 
-  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
-  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
-  auto imax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
+  tests << atom("foo") = "foo" >> docs;
 
-  tests << uhex(0)          = min >> docs;
-  tests << uhex(1u)         = one >> docs;
-  tests << uhex(5)          = five >> docs;
-  tests << uhex(uint_max_s) = max >> docs;
-  tests << uhex(min)        = min >> docs;
-  tests << uhex(one)        = one >> docs;
-  tests << uhex(imax)       = max >> docs;
-
-  def<"\\DEC(n)"> dec = [&](arg n) {
-    return cat(detail::uint_trait(n, "DEC_IHEX"), "u");
+  def<"oo_fail(err, ...)"> oo_fail = [&](arg err, va) {
+    return fail(err);
   };
 
-  def<"\\HEX(n)">{} = [&](arg n) {
-    return n;
+  def<"oo_no_fail(err, ...)"> oo_no_fail = [&](arg, va args) {
+    return args;
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
-  }}(uint(args));
+  return pp::call(def<"o(...)">{[&](va) {
+                    std::string prefix = utl::slice(oo_fail, -4);
+                    if (prefix.back() == '_')
+                      prefix.pop_back();
+                    std::string fail_s    = utl::slice(oo_fail, prefix.size(), 0);
+                    std::string no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
+                    std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
+
+                    return pp::cat(prefix, pp::va_opt(no_s), fail_s);
+                  }}(esc(eat + " " + any(args))),
+                  istr("[" + atom + "] atom cannot describe a tuple : " + args), args);
 });
 
 } // namespace api

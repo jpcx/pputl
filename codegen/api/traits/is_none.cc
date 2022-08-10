@@ -25,36 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
-  docs << "detects if args is nothing.";
-
-  tests << is_none("")         = "1" >> docs;
-  tests << is_none("foo")      = "0" >> docs;
-  tests << is_none("foo, bar") = "0" >> docs;
-  tests << is_none(esc())      = "1" >> docs;
-  tests << is_none(", ")       = "0";
-  tests << is_none(", , ")     = "0";
-  tests << is_none("a, ")      = "0";
-  tests << is_none("a, , ")    = "0";
-  tests << is_none(", a")      = "0";
-  tests << is_none(", a, ")    = "0";
-  tests << is_none(", , a")    = "0";
-
-  def<"\\o"> o = [] {
-    return "1";
-  };
-
-  def<"\\o0">{} = [] {
-    return "0";
-  };
-
-  return pp::cat(o, pp::va_opt("0"));
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
+//   docs << "detects if args is nothing.";
+// 
+//   tests << is_none("")         = "1" >> docs;
+//   tests << is_none("foo")      = "0" >> docs;
+//   tests << is_none("foo, bar") = "0" >> docs;
+//   tests << is_none(esc())      = "1" >> docs;
+//   tests << is_none(", ")       = "0";
+//   tests << is_none(", , ")     = "0";
+//   tests << is_none("a, ")      = "0";
+//   tests << is_none("a, , ")    = "0";
+//   tests << is_none(", a")      = "0";
+//   tests << is_none(", a, ")    = "0";
+//   tests << is_none(", , a")    = "0";
+// 
+//   def<"\\o"> o = [] {
+//     return "1";
+//   };
+// 
+//   def<"\\o0">{} = [] {
+//     return "0";
+//   };
+// 
+//   return pp::cat(o, pp::va_opt("0"));
+// });
+// 
+// } // namespace api

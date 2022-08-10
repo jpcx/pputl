@@ -25,31 +25,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(items) items = NIFTY_DEF(items, [&](va args) {
-  docs << "extracts tuple items.";
-
-  tests << items("()")              = "" >> docs;
-  tests << items("(a)")             = "a" >> docs;
-  tests << items("(a, b)")          = "a, b" >> docs;
-  tests << items("(a, b, c)")       = "a, b, c" >> docs;
-  tests << items("((a), (b), (c))") = "(a), (b), (c)";
-  tests << items("(, )")            = ",";
-  tests << items("(, , )")          = ", ,";
-  tests << items("(a, )")           = "a,";
-  tests << items("(a, , )")         = "a, ,";
-  tests << items("(, a)")           = ", a";
-  tests << items("(, a, )")         = ", a,";
-  tests << items("(, , a)")         = ", , a";
-
-  return def<"x(...)">{[&](va args) {
-    return esc + " " + args;
-  }}(tuple(args));
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(items) items = NIFTY_DEF(items, [&](va args) {
+//   docs << "extracts tuple items.";
+// 
+//   tests << items("()")              = "" >> docs;
+//   tests << items("(a)")             = "a" >> docs;
+//   tests << items("(a, b)")          = "a, b" >> docs;
+//   tests << items("(a, b, c)")       = "a, b, c" >> docs;
+//   tests << items("((a), (b), (c))") = "(a), (b), (c)";
+//   tests << items("(, )")            = ",";
+//   tests << items("(, , )")          = ", ,";
+//   tests << items("(a, )")           = "a,";
+//   tests << items("(a, , )")         = "a, ,";
+//   tests << items("(, a)")           = ", a";
+//   tests << items("(, a, )")         = ", a,";
+//   tests << items("(, , a)")         = ", , a";
+// 
+//   return def<"x(...)">{[&](va args) {
+//     return esc + " " + args;
+//   }}(tup(args));
+// });
+// 
+// } // namespace api

@@ -25,40 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
-  docs << "casts to the unsigned int hexadecimal subtype.";
-
-  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
-  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
-  auto imax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
-
-  tests << uhex(0)          = min >> docs;
-  tests << uhex(1u)         = one >> docs;
-  tests << uhex(5)          = five >> docs;
-  tests << uhex(uint_max_s) = max >> docs;
-  tests << uhex(min)        = min >> docs;
-  tests << uhex(one)        = one >> docs;
-  tests << uhex(imax)       = max >> docs;
-
-  def<"\\DEC(n)"> dec = [&](arg n) {
-    return cat(detail::uint_trait(n, "DEC_IHEX"), "u");
-  };
-
-  def<"\\HEX(n)">{} = [&](arg n) {
-    return n;
-  };
-
-  return def<"o(n)">{[&](arg n) {
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
-  }}(uint(args));
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
+//   docs << "detects if args is an unsigned int in hex form (requires 'u' suffix)."
+//        << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+// 
+//   auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+//   auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+// 
+//   tests << is_uhex("1")       = "0" >> docs;
+//   tests << is_uhex("1u")      = "0" >> docs;
+//   tests << is_uhex(min + "u") = "1" >> docs;
+//   tests << is_uhex(max)       = "0" >> docs;
+//   tests << is_uhex("(), ()")  = "0" >> docs;
+// 
+//   def uhex_ = def{(std::string const&)uhex} = [&] {
+//     return "";
+//   };
+// 
+//   def<"0(...)"> _0 = [&](va) {
+//     return "0";
+//   };
+// 
+//   def<"1(...)">{} = [&](va args) {
+//     return is_none(cat(utl::slice(uhex_, -((std::string const&)uhex).size()), typeof(args)));
+//   };
+// 
+//   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+// });
+// 
+// } // namespace api

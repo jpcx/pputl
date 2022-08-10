@@ -34,10 +34,6 @@ using namespace codegen;
 namespace detail {
 decltype(uint_traits) uint_traits = NIFTY_DEF(uint_traits);
 decltype(uint_trait)  uint_trait  = NIFTY_DEF(uint_trait);
-decltype(uint_upass)  uint_upass  = NIFTY_DEF(uint_upass);
-decltype(uint_ipass)  uint_ipass  = NIFTY_DEF(uint_ipass);
-decltype(uint_fail)   uint_fail   = NIFTY_DEF(uint_fail);
-decltype(uint_o)      uint_o      = NIFTY_DEF(uint_o);
 } // namespace detail
 
 namespace impl {
@@ -136,7 +132,8 @@ uint_to_int(unsigned n) {
 } // namespace impl
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
-  docs << std::to_string(conf::bit_length) + "-bit unsigned integer type."
+  docs << "[inherits from " + atom + "] " + std::to_string(conf::bit_length)
+              + "-bit unsigned integer type."
        << "may be constructed from either unsigned or signed ints."
        << "cannot parse negative decimals; use math.neg instead."
        << ""
@@ -265,49 +262,49 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     }}(args);
   };
 
-  detail::uint_fail = def{"fail(e, ...)"} = [&](arg e, va) {
+  def<"fail(e, ...)"> fail = [&](arg e, va) {
     return fail(e);
   };
 
-  detail::uint_ipass = def{"ipass(e, v)"} = [&](arg, arg v) {
+  def<"ipass(e, v)"> ipass = [&](arg, arg v) {
     return pp::cat(v, "u");
   };
 
-  detail::uint_upass = def{"upass(e, v)"} = [&](arg, arg v) {
+  def<"upass(e, v)"> upass = [&](arg, arg v) {
     docs << "final parentheses; returns";
     return v;
   };
 
-  def<>            oooo_upass{};
-  def<"oooo(...)"> oooo = [&](va args) {
+  def<>          oo_upass{};
+  def<"oo(...)"> oo = [&](va args) {
     docs << "fourth parentheses; attempts cast from signed.";
 
     def<"ichk_\\DEC(u)"> ichk_dec = [&](arg u) {
       def<"0"> _0 = [&] {
-        return detail::uint_ipass;
+        return ipass;
       };
 
       def<"1">{} = [&] {
-        return detail::uint_fail;
+        return fail;
       };
 
       return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
     };
 
     def<"ichk_\\HEX(u)">{} = [&](arg) {
-      return detail::uint_ipass;
+      return ipass;
     };
 
     def<"fail(u)"> oooo_fail = [&](arg) {
-      return detail::uint_fail;
+      return fail;
     };
 
     def<"no_fail(u)"> oooo_no_fail = [&](arg u) {
       return pp::call(cat(utl::slice(ichk_dec, -3), detail::uint_trait(u, "TYPE")), u);
     };
 
-    oooo_upass = def{"upass(...)"} = [&](va) {
-      return detail::uint_upass;
+    oo_upass = def{"upass(...)"} = [&](va) {
+      return upass;
     };
 
     return def<"res(u, ...)">{[&](arg u, va args) {
@@ -325,78 +322,33 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     }}(pp::cat(args, "u"), pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
   };
 
-  def<>           ooo_fail{};
-  def<"ooo(...)"> ooo = [&](va args) {
+  def<"o(...)"> o = [&](va args) {
     docs << "third parentheses; attempts cast from unsigned.";
-
-    ooo_fail = def{"fail(...)"} = [&](va) {
-      return oooo;
-    };
-
-    def<"no_fail(...)"> ooo_no_fail = [&](va) {
-      return oooo_upass;
-    };
 
     return def<"res(...)">{[&](va args) {
       return def<"o(_, ...)">{[&](arg, va) {
-        std::string const prefix    = utl::slice(ooo_fail, -4);
-        std::string const fail_s    = utl::slice(ooo_fail, prefix.size(), 0);
-        std::string const no_fail_s = utl::slice(ooo_no_fail, prefix.size(), 0);
+        def<"fail(...)"> fail_ = [&](va) {
+          return oo;
+        };
 
-        return pp::call(pp::cat(
-            prefix,
-            pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-            fail_s));
+        def<"no_fail(...)"> no_fail = [&](va) {
+          return oo_upass;
+        };
+
+        std::string prefix = utl::slice(fail_, -4);
+        if (prefix.back() == '_')
+          prefix.pop_back();
+
+        std::string fail_s    = utl::slice(fail_, prefix.size(), 0);
+        std::string no_fail_s = utl::slice(no_fail, prefix.size(), 0);
+        std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
+
+        return pp::call(pp::cat(prefix, pp::va_opt(no_s), fail_s));
       }}(args);
-    }}(pp::cat(utl::slice(detail::uint_traits[0], -2), args));
+    }}(cat(utl::slice(detail::uint_traits[0], -2), args));
   };
 
-  def<>             oo_fail{};
-  def<"oo(_, ...)"> oo = [&](arg _, va) {
-    docs << "second parentheses; asserts non-tuple.";
-
-    oo_fail = def{"fail(...)"} = [&](va) {
-      return ooo_fail;
-    };
-
-    def<"no_fail(...)"> oo_no_fail = [&](va) {
-      return ooo;
-    };
-
-    return def<"res(...)">{[&](va) {
-      std::string const prefix    = utl::slice(oo_fail, -4);
-      std::string const fail_s    = utl::slice(oo_fail, prefix.size(), 0);
-      std::string const no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
-
-      return pp::call(pp::cat(
-          prefix,
-          pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-          fail_s));
-    }}(eat + " " + _);
-  };
-
-  detail::uint_o = def{"o(_, ...)"} = [&](arg, va) {
-    docs << "first parentheses; asserts only one arg.";
-
-    def<"pass(...)"> pass = [&](va) {
-      return oo;
-    };
-
-    def<"no_pass(...)"> no_pass = [&](va) {
-      return oo_fail;
-    };
-
-    std::string const prefix    = utl::slice(pass, -4);
-    std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
-    std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);
-
-    return pp::call(pp::cat(
-        prefix,
-        pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-        pass_s));
-  };
-
-  return pp::call(pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args), args),
+  return pp::call(pp::call(pp::call(o, atom(args)), args),
                   istr("[" + uint + "] invalid integer : " + args), args);
 });
 

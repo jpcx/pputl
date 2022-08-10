@@ -31,34 +31,32 @@ namespace api {
 
 using namespace codegen;
 
-decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
-  docs << "casts to the unsigned int hexadecimal subtype.";
+decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
+  docs << "[inherits from " + any + "] tuple type (any...)."
+       << "expands to t if valid, else fails.";
 
-  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
-  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
-  auto imax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
+  tests << tup(pp::tup())     = "()" >> docs;
+  tests << tup(pp::tup(1, 2)) = "(1, 2)" >> docs;
 
-  tests << uhex(0)          = min >> docs;
-  tests << uhex(1u)         = one >> docs;
-  tests << uhex(5)          = five >> docs;
-  tests << uhex(uint_max_s) = max >> docs;
-  tests << uhex(min)        = min >> docs;
-  tests << uhex(one)        = one >> docs;
-  tests << uhex(imax)       = max >> docs;
-
-  def<"\\DEC(n)"> dec = [&](arg n) {
-    return cat(detail::uint_trait(n, "DEC_IHEX"), "u");
+  def<"oo_pass(err, ...)"> oo_pass = [&](arg, va args) {
+    return args;
   };
 
-  def<"\\HEX(n)">{} = [&](arg n) {
-    return n;
+  def<"oo_no_pass(err, ...)"> oo_no_pass = [&](arg err, va) {
+    return fail(err);
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
-  }}(uint(args));
+  return pp::call(def<"o(...)">{[&](va) {
+                    std::string prefix = utl::slice(oo_pass, -4);
+                    if (prefix.back() == '_')
+                      prefix.pop_back();
+                    std::string pass_s    = utl::slice(oo_pass, prefix.size(), 0);
+                    std::string no_pass_s = utl::slice(oo_no_pass, prefix.size(), 0);
+                    std::string no_s      = utl::slice(no_pass_s, -pass_s.size());
+
+                    return pp::cat(prefix, pp::va_opt(no_s), pass_s);
+                  }}(eat + " " + args),
+                  istr("[" + tup + "] invalid tuple : " + args), args);
 });
 
 } // namespace api

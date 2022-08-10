@@ -25,38 +25,35 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
-  docs << "detects if args is an unsigned int in hex form (requires 'u' suffix)."
-       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+decltype(none) none = NIFTY_DEF(none, [&](va args) {
+  docs << "nothing. fails if something.";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  tests << none() = "" >> docs;
 
-  tests << is_uhex("1")       = "0" >> docs;
-  tests << is_uhex("1u")      = "0" >> docs;
-  tests << is_uhex(min + "u") = "1" >> docs;
-  tests << is_uhex(max)       = "0" >> docs;
-  tests << is_uhex("(), ()")  = "0" >> docs;
-
-  def uhex_ = def{(std::string const&)uhex} = [&] {
+  def<"pass(e)"> pass = [&](arg) {
     return "";
   };
 
-  def<"0(...)"> _0 = [&](va) {
-    return "0";
+  def<"no_pass(e)"> no_pass = [&](arg e) {
+    return fail(e);
   };
 
-  def<"1(...)">{} = [&](va args) {
-    return is_none(cat(utl::slice(uhex_, -((std::string const&)uhex).size()), typeof(args)));
-  };
+  std::string prefix = utl::slice(pass, -4);
+  if (prefix.back() == '_')
+    prefix.pop_back();
 
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+  std::string pass_s    = utl::slice(pass, prefix.size(), 0);
+  std::string no_pass_s = utl::slice(no_pass, prefix.size(), 0);
+  std::string no_s      = utl::slice(no_pass_s, -pass_s.size());
+
+  return pp::call(pp::cat(prefix, pp::va_opt(no_s), pass_s),
+                  istr("[" + none + "] none cannot describe something : " + args));
 });
 
 } // namespace api

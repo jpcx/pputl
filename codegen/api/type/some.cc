@@ -31,34 +31,32 @@ namespace api {
 
 using namespace codegen;
 
-decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
-  docs << "casts to the unsigned int hexadecimal subtype.";
+decltype(some) some = NIFTY_DEF(some, [&](va args) {
+  docs << "something. fails if nothing.";
 
-  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
-  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
-  auto imax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
+  tests << some("foo")                          = "foo" >> docs;
+  tests << some("foo", "bar")                   = "foo, bar" >> docs;
+  tests << some("foo", 42, pp::tup("", "", "")) = "foo, 42, (, , )" >> docs;
+  tests << some("", "")                         = "," >> docs;
 
-  tests << uhex(0)          = min >> docs;
-  tests << uhex(1u)         = one >> docs;
-  tests << uhex(5)          = five >> docs;
-  tests << uhex(uint_max_s) = max >> docs;
-  tests << uhex(min)        = min >> docs;
-  tests << uhex(one)        = one >> docs;
-  tests << uhex(imax)       = max >> docs;
-
-  def<"\\DEC(n)"> dec = [&](arg n) {
-    return cat(detail::uint_trait(n, "DEC_IHEX"), "u");
+  def<"fail(e, ...)"> fail_ = [&](arg e, va) {
+    return fail(e);
   };
 
-  def<"\\HEX(n)">{} = [&](arg n) {
-    return n;
+  def<"no_fail(e, ...)"> no_fail = [&](arg, va args) {
+    return args;
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
-  }}(uint(args));
+  std::string prefix = utl::slice(fail_, -4);
+  if (prefix.back() == '_')
+    prefix.pop_back();
+
+  std::string fail_s    = utl::slice(fail_, prefix.size(), 0);
+  std::string no_fail_s = utl::slice(no_fail, prefix.size(), 0);
+  std::string no_s      = utl::slice(no_fail_s, -fail_s.size());
+
+  return pp::call(pp::cat(prefix, pp::va_opt(no_s), fail_s),
+                  istr("[" + some + "] some cannot describe nothing : " + args), args);
 });
 
 } // namespace api
