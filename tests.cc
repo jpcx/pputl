@@ -83,7 +83,6 @@
 //         |-tup: anything in parentheses                                     //
 //         |-atom: a generic non-tuple value                                  //
 //            |- bool: a literal '1' or '0'                                   //
-//            |- bit: an alias for bool                                       //
 //            |- nybl: a literal uppercase hexadecimal digit (e.g. B)         //
 //            |- uint: <abstract> an unsigned integer                         //
 //            |   |- udec: an unsigned decimal integer (e.g. 42u)             //
@@ -307,7 +306,7 @@ ASSERT_PP_EQ((PTL_IS_BOOL()), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0b00000000)), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(0x00)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0, 1)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL((0))), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(())), (0));
@@ -321,24 +320,6 @@ ASSERT_PP_EQ((PTL_IS_BOOL(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, , a)), (0));
 
-ASSERT_PP_EQ((PTL_IS_BIT()), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(0)), (1));
-ASSERT_PP_EQ((PTL_IS_BIT(1)), (1));
-ASSERT_PP_EQ((PTL_IS_BIT(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(0b00000000)), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(0, 1)), (0));
-ASSERT_PP_EQ((PTL_IS_BIT((0))), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(())), (0));
-ASSERT_PP_EQ((PTL_IS_BIT((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(0, )), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(, )), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_BIT(, , a)), (0));
-
 ASSERT_PP_EQ((PTL_IS_NYBL()), (0));
 ASSERT_PP_EQ((PTL_IS_NYBL(0)), (1));
 ASSERT_PP_EQ((PTL_IS_NYBL(Q)), (0));
@@ -346,6 +327,56 @@ ASSERT_PP_EQ((PTL_IS_NYBL(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_NYBL(B)), (1));
 ASSERT_PP_EQ((PTL_IS_NYBL(b)), (0));
 ASSERT_PP_EQ((PTL_IS_NYBL(F)), (1));
+
+ASSERT_PP_EQ((PTL_IS_UINT()), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(255)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(255u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0x00u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0xFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_UDEC(1)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(1u)), (1));
+ASSERT_PP_EQ((PTL_IS_UDEC(255)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(255u)), (1));
+ASSERT_PP_EQ((PTL_IS_UDEC(0x00u)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(0xFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_UHEX(1)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(0x00u)), (1));
+ASSERT_PP_EQ((PTL_IS_UHEX(0xFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_INT()), (0));
+ASSERT_PP_EQ((PTL_IS_INT(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0)), (1));
+ASSERT_PP_EQ((PTL_IS_INT(0u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(255)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0x00u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0xFF)), (1));
+ASSERT_PP_EQ((PTL_IS_INT(0b110u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(127)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(255)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0x00u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0xFF)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_IHEX(1)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX(0x00)), (1));
+ASSERT_PP_EQ((PTL_IS_IHEX(0xFF)), (1));
+ASSERT_PP_EQ((PTL_IS_IHEX(0xFFu)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX((), ())), (0));
 
 ASSERT_PP_EQ((PTL_NONE()), ());
 
@@ -364,8 +395,22 @@ ASSERT_PP_EQ((PTL_ATOM(foo)), (foo));
 ASSERT_PP_EQ((PTL_BOOL(0)), (0));
 ASSERT_PP_EQ((PTL_BOOL(1)), (1));
 
-ASSERT_PP_EQ((PTL_BOOL(0)), (0));
-ASSERT_PP_EQ((PTL_BOOL(1)), (1));
+ASSERT_PP_EQ((PTL_NYBL(0)), (0));
+ASSERT_PP_EQ((PTL_NYBL(1)), (1));
+ASSERT_PP_EQ((PTL_NYBL(B)), (B));
+ASSERT_PP_EQ((PTL_NYBL(F)), (F));
+ASSERT_PP_EQ((PTL_NYBL(2)), (2));
+ASSERT_PP_EQ((PTL_NYBL(3)), (3));
+ASSERT_PP_EQ((PTL_NYBL(4)), (4));
+ASSERT_PP_EQ((PTL_NYBL(5)), (5));
+ASSERT_PP_EQ((PTL_NYBL(6)), (6));
+ASSERT_PP_EQ((PTL_NYBL(7)), (7));
+ASSERT_PP_EQ((PTL_NYBL(8)), (8));
+ASSERT_PP_EQ((PTL_NYBL(9)), (9));
+ASSERT_PP_EQ((PTL_NYBL(A)), (A));
+ASSERT_PP_EQ((PTL_NYBL(C)), (C));
+ASSERT_PP_EQ((PTL_NYBL(D)), (D));
+ASSERT_PP_EQ((PTL_NYBL(E)), (E));
 
 ASSERT_PP_EQ((PTL_UINT(0)), (0u));
 ASSERT_PP_EQ((PTL_UINT(1)), (1u));
@@ -374,12 +419,12 @@ ASSERT_PP_EQ((PTL_UINT(255u)), (255u));
 ASSERT_PP_EQ((PTL_UINT(0x00u)), (0x00u));
 ASSERT_PP_EQ((PTL_UINT(0xFF)), (0xFFu));
 
-ASSERT_PP_EQ((PTL_INT(0)), (0));
-ASSERT_PP_EQ((PTL_INT(1u)), (1));
-ASSERT_PP_EQ((PTL_INT(0x00)), (0x00));
-ASSERT_PP_EQ((PTL_INT(127)), (127));
-ASSERT_PP_EQ((PTL_INT(0xFFu)), (0xFF));
-ASSERT_PP_EQ((PTL_INT(255u)), (0xFF));
+ASSERT_PP_EQ((PTL_UDEC(0x00u)), (0u));
+ASSERT_PP_EQ((PTL_UDEC(1)), (1u));
+ASSERT_PP_EQ((PTL_UDEC(5)), (5u));
+ASSERT_PP_EQ((PTL_UDEC(0x05u)), (5u));
+ASSERT_PP_EQ((PTL_UDEC(0xFFu)), (255u));
+ASSERT_PP_EQ((PTL_UDEC(0xFF)), (255u));
 
 ASSERT_PP_EQ((PTL_UHEX(0)), (0x00u));
 ASSERT_PP_EQ((PTL_UHEX(1)), (0x01u));
@@ -389,24 +434,35 @@ ASSERT_PP_EQ((PTL_UHEX(0x00u)), (0x00u));
 ASSERT_PP_EQ((PTL_UHEX(0x01u)), (0x01u));
 ASSERT_PP_EQ((PTL_UHEX(0xFF)), (0xFFu));
 
-ASSERT_PP_EQ((PTL_IHEX(0)), (0x00));
-ASSERT_PP_EQ((PTL_IHEX(1)), (0x01));
-ASSERT_PP_EQ((PTL_IHEX(5)), (0x05));
-ASSERT_PP_EQ((PTL_IHEX(255u)), (0xFF));
-ASSERT_PP_EQ((PTL_IHEX(127u)), (0x7F));
-
-ASSERT_PP_EQ((PTL_UDEC(0x00u)), (0u));
-ASSERT_PP_EQ((PTL_UDEC(1)), (1u));
-ASSERT_PP_EQ((PTL_UDEC(5)), (5u));
-ASSERT_PP_EQ((PTL_UDEC(0x05u)), (5u));
-ASSERT_PP_EQ((PTL_UDEC(0xFFu)), (255u));
-ASSERT_PP_EQ((PTL_UDEC(0xFF)), (255u));
+ASSERT_PP_EQ((PTL_INT(0)), (0));
+ASSERT_PP_EQ((PTL_INT(1u)), (1));
+ASSERT_PP_EQ((PTL_INT(0x00)), (0x00));
+ASSERT_PP_EQ((PTL_INT(127)), (127));
+ASSERT_PP_EQ((PTL_INT(0xFFu)), (0xFF));
+ASSERT_PP_EQ((PTL_INT(255u)), (0xFF));
 
 ASSERT_PP_EQ((PTL_IDEC(0x00)), (0));
 ASSERT_PP_EQ((PTL_IDEC(0x01)), (1));
 ASSERT_PP_EQ((PTL_IDEC(0x05u)), (5));
 ASSERT_PP_EQ((PTL_IDEC(0x7F)), (127));
 ASSERT_PP_EQ((PTL_IDEC(127)), (127));
+
+ASSERT_PP_EQ((PTL_IHEX(0)), (0x00));
+ASSERT_PP_EQ((PTL_IHEX(1)), (0x01));
+ASSERT_PP_EQ((PTL_IHEX(5)), (0x05));
+ASSERT_PP_EQ((PTL_IHEX(255u)), (0xFF));
+ASSERT_PP_EQ((PTL_IHEX(127u)), (0x7F));
+
+ASSERT_PP_EQ((PTL_TYPEOF((foo))), (PTL_TUP));
+ASSERT_PP_EQ((PTL_TYPEOF(0)), (PTL_IDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(0u)), (PTL_UDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(255)), (PTL_ATOM));
+ASSERT_PP_EQ((PTL_TYPEOF(255u)), (PTL_UDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(0xFF)), (PTL_IHEX));
+ASSERT_PP_EQ((PTL_TYPEOF(0xFFu)), (PTL_UHEX));
+ASSERT_PP_EQ((PTL_TYPEOF(foo)), (PTL_ATOM));
+ASSERT_PP_EQ((PTL_TYPEOF(foo, bar)), (PTL_SOME));
+ASSERT_PP_EQ((PTL_TYPEOF()), (PTL_NONE));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));

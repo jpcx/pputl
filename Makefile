@@ -45,7 +45,6 @@ run: $(BIN) $(CGEN_OUT)
 	./$(BIN)
 
 clean:
-	$(RM) $(BIN)
 	$(RM) $(CGEN_OUT)
 	$(RM) $(TEST_SRC)
 	$(RM) .depend

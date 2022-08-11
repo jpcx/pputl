@@ -32,8 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
-  docs << "[positive-only] casts to the signed int decimal subtype."
-       << "fails on negative ints."
+  docs << "[inherits from " + int_ + "] casts to the signed int decimal subtype."
+       << "positive values only! fails on negative ints."
        << ""
        << "use fmt.paste with ihex to get negative decimals.";
 
@@ -48,27 +48,28 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
   tests << idec(max)           = int_max_s >> docs;
   tests << idec(conf::int_max) = int_max_s >> docs;
 
-  def<"\\DEC(e, n, u)"> dec = [&](arg, arg n, arg) {
-    return n;
+  def<"0(e, ihex)"> _0 = [&](arg e, arg ihex) {
+    return def<"o(e, uhex)">{[&](arg e, arg uhex) {
+      def<"0(e, uhex)"> _0 = [&](arg, arg uhex) {
+        return impl::uint_trait(uhex, "HIDEC");
+      };
+
+      def<"1(e, uhex)">{} = [&](arg e, arg) {
+        return fail(e);
+      };
+
+      return pp::call(
+          cat(utl::slice(_0, -1), impl::uint_trait(impl::uint_trait(uhex, "HUDEC"), "DINEG")), e,
+          uhex);
+    }}(e, pp::cat(ihex, 'u'));
   };
 
-  def<"\\HEX(e, n, u)">{} = [&](arg e, arg n, arg u) {
-    def<"0(e, n, u)"> _0 = [&](arg, arg, arg u) {
-      return detail::uint_trait(u, "HEX_IDEC");
-    };
-
-    def<"1(e, n, u)">{} = [&](arg e, arg, arg) {
-      return fail(e);
-    };
-
-    return pp::call(cat(utl::slice(_0, -1), esc(ifirst + " " + detail::uint_trait(u, "HEX_BITS"))),
-                    e, n, u);
+  def<"1(e, idec)">{} = [&](arg, arg idec) {
+    return idec;
   };
 
-  return def<"o(e, n)">{[&](arg e, arg n) {
-    return def<"o(e, n, u)">{[&](arg e, arg n, arg u) {
-      return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), e, n, u);
-    }}(e, n, cat(n, "u"));
+  return def<"o(e, int)">{[&](arg e, arg int_) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_idec_o(int_)), e, int_);
   }}(istr("[" + idec + "] cannot represent negative in base10 : " + args), int_(args));
 });
 

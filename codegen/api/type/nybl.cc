@@ -25,114 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "type.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// namespace detail {
-// decltype(nybl_pass) nybl_pass = NIFTY_DEF(nybl_pass);
-// decltype(nybl_fail) nybl_fail = NIFTY_DEF(nybl_fail);
-// decltype(nybl_o)    nybl_o    = NIFTY_DEF(nybl_o);
-// } // namespace detail
-// 
-// decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
-//   docs << "nybl type (0 or 1)."
-//        << "expands to b if valid, else fails.";
-// 
-//   tests << nybl(0) = "0" >> docs;
-//   tests << nybl(1) = "1" >> docs;
-// 
-//   def<"chk_0"> chk_0 = [&] {
-//     return "";
-//   };
-// 
-//   def<"chk_1">{} = [&] {
-//     docs << "concat existence checks";
-//     return "";
-//   };
-// 
-//   detail::nybl_fail = def{"fail(err, ...)"} = [&](arg err, va) {
-//     return fail(err);
-//   };
-// 
-//   detail::nybl_pass = def{"pass(err, ...)"} = [&](arg, va args) {
-//     docs << "fourth parentheses; returns";
-//     return args;
-//   };
-// 
-//   def<>           ooo_no_pass{};
-//   def<"ooo(...)"> ooo = [&](va args) {
-//     docs << "third parentheses; asserts either 0 or 1.";
-// 
-//     ooo_no_pass = def{"no_pass(...)"} = [&](va) {
-//       return detail::nybl_fail;
-//     };
-// 
-//     def<"pass(...)"> ooo_pass = [&](va) {
-//       return detail::nybl_pass;
-//     };
-// 
-//     return def<"res(...)">{[&](va) {
-//       std::string const prefix    = utl::slice(ooo_pass, -4);
-//       std::string const pass_s    = utl::slice(ooo_pass, prefix.size(), 0);
-//       std::string const no_pass_s = utl::slice(ooo_no_pass, prefix.size(), 0);
-// 
-//       return pp::call(pp::cat(
-//           prefix,
-//           pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-//           pass_s));
-//     }}(pp::cat(utl::slice(chk_0, -1), args));
-//   };
-// 
-//   def<>             oo_fail{};
-//   def<"oo(_, ...)"> oo = [&](arg _, va) {
-//     docs << "second parentheses; asserts non-tuple.";
-// 
-//     oo_fail = def{"fail(...)"} = [&](va) {
-//       return ooo_no_pass;
-//     };
-// 
-//     def<"no_fail(...)"> oo_no_fail = [&](va) {
-//       return ooo;
-//     };
-// 
-//     return def<"res(...)">{[&](va) {
-//       std::string const prefix    = utl::slice(oo_fail, -4);
-//       std::string const fail_s    = utl::slice(oo_fail, prefix.size(), 0);
-//       std::string const no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
-// 
-//       return pp::call(pp::cat(
-//           prefix,
-//           pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-//           fail_s));
-//     }}(eat + " " + _);
-//   };
-// 
-//   detail::nybl_o = def{"o(_, ...)"} = [&](arg, va) {
-//     docs << "first parentheses; asserts only one arg.";
-// 
-//     def<"pass(...)"> pass = [&](va) {
-//       return oo;
-//     };
-// 
-//     def<"no_pass(...)"> no_pass = [&](va) {
-//       return oo_fail;
-//     };
-// 
-//     std::string const prefix    = utl::slice(pass, -4);
-//     std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
-//     std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);
-// 
-//     return pp::call(pp::cat(
-//         prefix,
-//         pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-//         pass_s));
-//   };
-// 
-//   return pp::call(pp::call(pp::call(detail::nybl_o(args + "."), args), args),
-//                   istr("[" + nybl + "] invalid nybl : " + args), args);
-// });
-// 
-// } // namespace api
+#include "type.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
+  docs << "[inherits from " + atom + "] nybl type (capital hex digit)."
+       << "expands to n if valid, else fails.";
+
+  tests << nybl(0)   = "0" >> docs;
+  tests << nybl(1)   = "1" >> docs;
+  tests << nybl(2)   = "2";
+  tests << nybl(3)   = "3";
+  tests << nybl(4)   = "4";
+  tests << nybl(5)   = "5";
+  tests << nybl(6)   = "6";
+  tests << nybl(7)   = "7";
+  tests << nybl(8)   = "8";
+  tests << nybl(9)   = "9";
+  tests << nybl("A") = "A";
+  tests << nybl("B") = "B" >> docs;
+  tests << nybl("C") = "C";
+  tests << nybl("D") = "D";
+  tests << nybl("E") = "E";
+  tests << nybl("F") = "F" >> docs;
+
+  def<"0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+
+  def<"1(e, nybl)">{} = [](arg, arg nybl) {
+    return nybl;
+  };
+
+  return def<"o(e, atom)">{[&](arg e, arg atom) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_nybl_o(atom)), e, atom);
+  }}(istr("[" + nybl
+          + "] nybl cannot describe anything but literal, capital hex digits 0-F : " + args),
+     atom(args));
+});
+
+} // namespace api

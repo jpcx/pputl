@@ -31,6 +31,10 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_any_o) is_any_o = NIFTY_DEF(is_any_o);
+}
+
 decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
   docs << "[extends " + is_some + "] detects if args is exactly one generic value.";
 
@@ -41,25 +45,52 @@ decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
   tests << is_any("foo")      = "1" >> docs;
   tests << is_any("(42)")     = "1" >> docs;
 
-  def<"00"> _00 = [&] {
-    return "0";
+  detail::is_any_o = def{"o(_, ...)"} = [&](arg first, va) {
+    docs << "must be called with an tokens after __VA_ARGS__";
+    def<"ok"> pass = [&] {
+      def<"0"> _0 = [&] {
+        return "0";
+      };
+
+      def<"1">{} = [&] {
+        return "1";
+      };
+      return utl::slice(_0, -1);
+    };
+
+    def<"not_ok"> no_pass = [&] {
+      def<"0"> _0 = [&] {
+        return "0";
+      };
+
+      def<"1">{} = [&] {
+        return "0";
+      };
+
+      return utl::slice(_0, -1);
+    };
+
+    auto prefix = utl::slice(pass, -2);
+    if (prefix.back() == '_')
+      prefix.pop_back();
+    auto small = utl::slice(pass, prefix.size(), 0);
+    auto large = utl::slice(no_pass, prefix.size(), 0);
+    auto diff  = utl::slice(large, -small.size());
+
+    return cat(pp::cat(prefix, pp::va_opt(diff), small), is_some(first));
   };
 
-  def<"01">{} = [&] {
-    return "0";
+  def<"0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
   };
 
-  def<"10">{} = [&] {
-    return "1";
+  def<"1">{} = [&] {
+    return detail::is_any_o;
   };
 
-  def<"11">{} = [&] {
-    return "0";
-  };
-
-  return def<"o(_, ...)">{[&](arg first, va args) {
-    return cat(utl::slice(_00, -2), cat(is_some(first), is_some(args)));
-  }}(args + " " + pp::va_opt("."));
+  return pp::call(cat(utl::slice(_0, -1), is_some(args)), args + ".");
 });
 
 } // namespace api

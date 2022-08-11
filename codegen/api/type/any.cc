@@ -43,13 +43,13 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
     return fail(e);
   };
 
-  def<"1(e, ...)">{} = [](arg, va args) {
-    return args;
+  def<"1(e, any)">{} = [](arg, arg any) {
+    return any;
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)),
-                  istr("[" + any + "] any cannot describe nothing or multiple args : " + args),
-                  args);
+  return def<"o(e, ...)">{[&](arg e, va some) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_any_o(some + ".")), e, some);
+  }}(istr("[" + any + "] any cannot describe multiple args : " + args), some(args));
 });
 
 } // namespace api

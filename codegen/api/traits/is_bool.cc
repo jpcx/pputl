@@ -31,16 +31,20 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_bool_o) is_bool_o = NIFTY_DEF(is_bool_o);
+}
+
 decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   docs << "[extends " + is_atom + "] detects if args is a bool (literal '1' or '0').";
 
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
 
   tests << is_bool()         = "0" >> docs;
   tests << is_bool(0)        = "1" >> docs;
   tests << is_bool(1)        = "1" >> docs;
   tests << is_bool("1u")     = "0" >> docs;
-  tests << is_bool(binmin)   = "0" >> docs;
+  tests << is_bool(min)      = "0" >> docs;
   tests << is_bool(0, 1)     = "0" >> docs;
   tests << is_bool("(0)")    = "0" >> docs;
   tests << is_bool("()")     = "0";
@@ -54,11 +58,7 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   tests << is_bool(", a, ")  = "0";
   tests << is_bool(", , a")  = "0";
 
-  def<"0(...)"> _0 = [&](va) {
-    return "0";
-  };
-
-  def<"1(...)">{} = [&](va args) {
+  detail::is_bool_o = def{"o(atom)"} = [&](arg atom) {
     def<"0"> _0 = [&] {
       return "";
     };
@@ -67,7 +67,17 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
       return "";
     };
 
-    return is_none(cat(utl::slice(_0, -1), args));
+    return is_none(cat(utl::slice(_0, -1), atom));
+  };
+
+  def<"0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+
+  def<"1">{} = [&] {
+    return detail::is_bool_o;
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);

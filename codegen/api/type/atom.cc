@@ -40,12 +40,13 @@ decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
     return fail(e);
   };
 
-  def<"1(e, ...)">{} = [](arg, va args) {
-    return args;
+  def<"1(e, atom)">{} = [](arg, arg atom) {
+    return atom;
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_atom(args)),
-                  istr("[" + atom + "] atom cannot describe tuples : " + args), args);
+  return def<"o(e, any)">{[&](arg e, arg any) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_atom_o(any)), e, any);
+  }}(istr("[" + atom + "] atom cannot describe tuples : " + args), any(args));
 });
 
 } // namespace api

@@ -42,12 +42,13 @@ decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
     return fail(e);
   };
 
-  def<"1(e, ...)">{} = [](arg, va args) {
-    return args;
+  def<"1(e, tup)">{} = [](arg, arg tup) {
+    return tup;
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_tup(args)),
-                  istr("[" + tup + "] tuple must be wrapped in parentheses : " + args), args);
+  return def<"o(e, any)">{[&](arg e, arg any) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), e, any);
+  }}(istr("[" + tup + "] tuple must be wrapped in parentheses : " + args), any(args));
 });
 
 } // namespace api

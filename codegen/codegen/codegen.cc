@@ -766,6 +766,10 @@ struct def_base::instance*
 def_base::get_instance(std::string const& name, detail::source_location const& loc) {
   // construct id
   std::string id{};
+
+  if (_cur_category.starts_with("impl."))
+    id += "impl_";
+
   for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it)
     id += (*it)->name + "_";
 
@@ -773,15 +777,15 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
 
   // better nesting names
 
-  static std::regex xx_xx{"_([xX]+)_([xX])(_|$)", std::regex_constants::optimize};
-  static std::regex oo_oo{"_([oO]+)_([oO])(_|$)", std::regex_constants::optimize};
+  static std::regex xx_xx{"_([xX]+)_([xX]+)(_|$)", std::regex_constants::optimize};
+  static std::regex oo_oo{"_([oO]+)_([oO]+)(_|$)", std::regex_constants::optimize};
   while (std::regex_search(id, xx_xx))
     id = std::regex_replace(id, xx_xx, "_$1$2$3");
   while (std::regex_search(id, oo_oo))
     id = std::regex_replace(id, oo_oo, "_$1$2$3");
 
   // apply naming scheme
-  if (not _exec_stack.empty()) {
+  if (_cur_category.starts_with("impl.") or not _exec_stack.empty()) {
     id = implname(id);
   } else {
     id = apiname(id);
@@ -957,46 +961,54 @@ def_base::synopsis() {
 
 std::string
 def_base::definitions() {
-  std::string res{};
-  instance*   fdm_end{nullptr};
-  bool        last_clang_format = true;
+  std::vector<std::string> api{};
+  instance*                fdm_end{nullptr};
+  bool                     last_clang_format = true;
+
+  // top-level implementaton macros to be
+  // placed at the end of the file
+  std::vector<std::string> impl{};
+
+  static auto buf = utl::ii << [&] {
+    std::array<std::string, 73> dashes;
+    for (std::size_t i = 0; i < 73; ++i) {
+      if (i % 2 == 0)
+        dashes[i] = "-";
+      else
+        dashes[i] = " ";
+    }
+    return " " + utl::cat(dashes) + " ";
+  };
+
   for (auto&& v : _instances) {
     if (not v.definition)
       throw std::runtime_error{"macro " + v.id + " missing definition"};
 
+    auto&& targ = v.category.starts_with("impl.") ? impl : api;
+
     {
       if (last_clang_format and not v.clang_format)
-        res += "\n\n// clang-format off\n\n";
+        targ.push_back("\n// clang-format off\n");
       else if (not last_clang_format and v.clang_format)
-        res += "\n\n// clang-format on\n\n";
+        targ.push_back("\n// clang-format on\n");
       last_clang_format = v.clang_format;
 
-      res += *v.definition + "\n";
+      targ.push_back(*v.definition);
     }
 
-    static auto buf = utl::ii << [&] {
-      std::array<std::string, 73> dashes;
-      for (std::size_t i = 0; i < 73; ++i) {
-        if (i % 2 == 0)
-          dashes[i] = "-";
-        else
-          dashes[i] = " ";
-      }
-      return " " + utl::cat(dashes) + " ";
-    };
     if (&v == fdm_end) {
-      res += "\n\n//" + buf + "}}}\n\n";
+      targ.push_back("\n//" + buf + "}}}\n");
       fdm_end = nullptr;
     } else if (v.context.empty() and not v.children.empty()) {
       fdm_end = v.children.front();
       while (not fdm_end->children.empty())
         fdm_end = fdm_end->children.front();
-      res += "\n\n//" + buf + "{{{\n\n";
+      targ.push_back("\n//" + buf + "{{{\n");
     }
   }
-  if (not res.empty())
-    res.pop_back();
-  return res;
+
+  return utl::cat(api, "\n") + "\n\n/// [impl]\n/// ------\n\n//" + buf + "{{{\n"
+       + utl::cat(impl, "\n") + "\n//" + buf + "}}}";
 }
 
 std::string

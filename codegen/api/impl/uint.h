@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,38 +26,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "traits.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(is_decimal) is_decimal = NIFTY_DEF(is_decimal, [&](va args) {
-//   docs << "detects if args is a uint represented as decimal.";
-// 
-//   auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-//   auto binmax = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
-// 
-//   tests << is_decimal()               = "0" >> docs;
-//   tests << is_decimal(48)             = "1" >> docs;
-//   tests << is_decimal(conf::uint_max) = "1" >> docs;
-//   tests << is_decimal("foo")          = "0" >> docs;
-//   tests << is_decimal(binmin)         = "0" >> docs;
-//   tests << is_decimal(binmax)         = "0" >> docs;
-// 
-//   def dec = def{std::string{decimal}} = [&] {
-//     return "";
-//   };
-// 
-//   def<"o_0(...)"> o_0 = [&](va) {
-//     return "0";
-//   };
-// 
-//   def<"o_1(u)">{} = [&](arg u) {
-//     return is_none(cat(utl::slice(dec, -((std::string const&)decimal).size()), typeof(u)));
-//   };
-// 
-//   return pp::call(cat(utl::slice(o_0, -1), is_uint(args)), args);
-// });
-// 
-// } // namespace api
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+
+namespace api {
+namespace impl {
+
+inline codegen::category<"impl.uint"> uint;
+
+extern codegen::def<"uint_trait(v, t: v: <atom|uint>, trait: "
+                    "IS|TYPE|HUDEC|HIDEC|HNYBS|HBNOT|DHEX|DINEG|DLOG2|DSQRT|DFACT)"> const&
+    uint_trait;
+
+NIFTY_DECL(uint_trait);
+
+inline codegen::end_category<"impl.uint"> uint_end;
+
+} // namespace impl
+} // namespace api

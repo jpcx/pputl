@@ -168,7 +168,7 @@ main() {
       }
     }
 
-    { // one final pass to remove double newlines
+    { // one final pass to remove triple newlines
       std::ifstream lin{conf::lib_output, std::ios::in | std::ios::binary};
       auto          sz = fs::file_size(conf::lib_output);
       std::string   lib(sz, '\0');
@@ -177,8 +177,10 @@ main() {
       std::vector<std::string> formatted{};
       std::size_t              i = 0;
       for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
-        if (not(i > 0 and formatted[i - 1].empty() and line.empty()))
+        if (not line.empty())
           formatted.push_back(line);
+        else if (not formatted.empty() and not formatted.back().empty())
+          formatted.push_back("");
         ++i;
       }
 

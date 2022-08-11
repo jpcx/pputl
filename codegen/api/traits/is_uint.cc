@@ -25,47 +25,49 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "traits.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-//   docs << "detects if args is an unsigned integer."
-//        << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
-// 
-//   auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-//   auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-// 
-//   tests << is_uint()               = "0" >> docs;
-//   tests << is_uint("foo")          = "0" >> docs;
-//   tests << is_uint(0)              = "0" >> docs;
-//   tests << is_uint("0u")           = "1" >> docs;
-//   tests << is_uint(conf::uint_max) = "0" >> docs;
-//   tests << is_uint(uint_max_s)     = "1" >> docs;
-//   tests << is_uint(min + "u")      = "1" >> docs;
-//   tests << is_uint(max)            = "0" >> docs;
-//   tests << is_uint("0b110u")       = "0" >> docs;
-//   tests << is_uint("(), ()")       = "0" >> docs;
-// 
-//   def uhex_ = def{(std::string const&)uhex} = [&] {
-//     return "";
-//   };
-// 
-//   def{(std::string const&)udec} = [&] {
-//     return "";
-//   };
-// 
-//   def<"0(...)"> _0 = [&](va) {
-//     return "0";
-//   };
-// 
-//   def<"1(...)">{} = [&](va args) {
-//     return is_none(cat(utl::slice(uhex_, -((std::string const&)uhex).size()), typeof(args)));
-//   };
-// 
-//   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
-// });
-// 
-// } // namespace api
+#include "traits.h"
+
+namespace api {
+
+using namespace codegen;
+
+namespace detail {
+decltype(is_uint_o) is_uint_o = NIFTY_DEF(is_uint_o);
+}
+
+decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
+  docs << "[extends " + is_atom + "] detects if args is an unsigned integer."
+       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+
+  tests << is_uint()               = "0" >> docs;
+  tests << is_uint("foo")          = "0" >> docs;
+  tests << is_uint(0)              = "0" >> docs;
+  tests << is_uint("0u")           = "1" >> docs;
+  tests << is_uint(conf::uint_max) = "0" >> docs;
+  tests << is_uint(uint_max_s)     = "1" >> docs;
+  tests << is_uint(min + "u")      = "1" >> docs;
+  tests << is_uint(max)            = "0" >> docs;
+  tests << is_uint("0b110u")       = "0" >> docs;
+  tests << is_uint("(), ()")       = "0" >> docs;
+
+  detail::is_uint_o = def{"o(atom)"} = [&](arg atom) {
+    return impl::uint_trait(atom, "IS");
+  };
+
+  def<"0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+
+  def<"1">{} = [&] {
+    return detail::is_uint_o;
+  };
+
+  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+});
+
+} // namespace api

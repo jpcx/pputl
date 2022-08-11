@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
-  docs << "casts to the unsigned int decimal subtype.";
+  docs << "[inherits from " + uint + "] casts to the unsigned int decimal subtype.";
 
   auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
   auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
@@ -47,16 +47,16 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   tests << udec(max)  = uint_max_s >> docs;
   tests << udec(in1)  = uint_max_s >> docs;
 
-  def<"\\DEC(n)"> dec = [&](arg n) {
-    return n;
+  def<"0(uhex)"> _0 = [&](arg uhex) {
+    return impl::uint_trait(uhex, "HUDEC");
   };
 
-  def<"\\HEX(n)">{} = [&](arg n) {
-    return detail::uint_trait(n, "HEX_UDEC");
+  def<"1(udec)">{} = [&](arg udec) {
+    return udec;
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
+  return def<"o(uint)">{[&](arg uint) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_udec_o(uint)), uint);
   }}(uint(args));
 });
 

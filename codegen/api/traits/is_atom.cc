@@ -31,6 +31,10 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
+}
+
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   docs << "[extends " + is_any + "] detects if args is a generic, non-tuple, singular value.";
 
@@ -58,19 +62,29 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   tests << is_atom("(, a, )")        = "0";
   tests << is_atom("(, , a)")        = "0";
 
-  def<"00"> _00 = [] {
-    return "0";
+  detail::is_atom_o = def{"o(any)"} = [&](arg any) {
+    def<"0"> _0 = [] {
+      return "1";
+    };
+
+    def<"1">{} = [] {
+      return "0";
+    };
+
+    return cat(utl::slice(_0, -1), is_tup(any));
   };
 
-  def<"10">{} = [] {
-    return "1";
+  def<"0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
   };
 
-  def<"11">{} = [] {
-    return "0";
+  def<"1">{} = [&] {
+    return detail::is_atom_o;
   };
 
-  return cat(utl::slice(_00, -2), cat(is_any(args), is_tup(args)));
+  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
 });
 
 } // namespace api

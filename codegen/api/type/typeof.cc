@@ -25,98 +25,99 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "type.h"
-//
-// namespace api {
-//
-// using namespace codegen;
-//
-// decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
-//   docs << "detects the value type. must be compatible with the ## operator."
-//        << "literal 0 and 1 are considered ibase10 rather than bool."
-//        << "defaults to any if a type could not be determined."
-//        << ""
-//        << "returns one of:"
-//        << "- " + tup << "- " + uhex << "- " + ihex << "- " + udec << "- " + idec
-//        << "- " + any;
-//
-//   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-//   auto ubinmax  = ihexneg1 + "u";
-//
-//   tests << typeof("(foo)")        = tup >> docs;
-//   tests << typeof(0)              = idec >> docs;
-//   tests << typeof("0u")           = udec >> docs;
-//   tests << typeof(conf::uint_max) = any >> docs;
-//   tests << typeof(uint_max_s)     = udec >> docs;
-//   tests << typeof(ihexneg1)       = ihex >> docs;
-//   tests << typeof(ubinmax)        = uhex >> docs;
-//   tests << typeof("foo")          = any >> docs;
-//
-//   def<"ooo_any(...)"> ooo_any = [&](va) {
-//     return any;
-//   };
-//
-//   def<"ooo_tuple(...)"> ooo_tuple = [&](va) {
-//     return tup;
-//   };
-//
-//   def<"ooo_uint(u)"> ooo_uint = [&](arg u) {
-//     def<"\\HEX"> hex = [&] {
-//       return uhex;
-//     };
-//
-//     def<"\\DEC">{} = [&] {
-//       return udec;
-//     };
-//
-//     return cat(utl::slice(hex, -3), detail::uint_trait(uint(u), "TYPE"));
-//   };
-//
-//   def<"ooo_int(i)"> ooo_int = [&](arg i) {
-//     def<"\\HEX"> hex = [&] {
-//       return ihex;
-//     };
-//
-//     def<"\\DEC">{} = [&] {
-//       return idec;
-//     };
-//
-//     return cat(utl::slice(hex, -3), detail::uint_trait(cat(int_(i), "u"), "TYPE"));
-//   };
-//
-//   def<"oo_tuple(...)"> oo_tuple = [&](va) {
-//     return ooo_tuple;
-//   };
-//
-//   def<"oo_no_tuple(...)"> oo_no_tuple = [&](va args) {
-//     def fail_ = def{(std::string const&)detail::uint_fail} = [&] {
-//       return ooo_any;
-//     };
-//
-//     def{(std::string const&)detail::uint_upass} = [&] {
-//       return ooo_uint;
-//     };
-//
-//     def{(std::string const&)detail::uint_ipass} = [&] {
-//       return ooo_int;
-//     };
-//
-//     return cat(utl::slice(fail_, -((std::string const&)detail::uint_fail).size()),
-//                pp::call(pp::call(pp::call(detail::uint_o(args + "."), args), args), args));
-//   };
-//
-//   return pp::call(pp::call(def<"o(...)">{[&](va) {
-//                              std::string prefix = utl::slice(oo_tuple, -5);
-//                              if (prefix.back() == '_')
-//                                prefix.pop_back();
-//                              std::string tuple_s    = utl::slice(oo_tuple, prefix.size(), 0);
-//                              std::string no_tuple_s = utl::slice(oo_no_tuple, prefix.size(), 0);
-//                              std::string no_s       = utl::slice(no_tuple_s, -tuple_s.size());
-//
-//                              return pp::cat(prefix, pp::va_opt(no_s), tuple_s);
-//                            }}(eat + " " + args),
-//                            args),
-//                   args);
-// });
-//
-// } // namespace api
+#include "type.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
+  docs << "detects the value type. must be compatible with the ## operator."
+       << "literal 0 through 9 are considered ibase10 rather than bool or nybl."
+       << ""
+       << "returns one of:"
+       << "- " + none << "- " + some << "- " + tup << "- " + atom << "- " + udec << "- " + uhex
+       << "- " + idec << "- " + ihex << "- " + nybl;
+
+  auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto ubinmax  = ihexneg1 + "u";
+
+  tests << typeof("(foo)")        = tup >> docs;
+  tests << typeof(0)              = idec >> docs;
+  tests << typeof("0u")           = udec >> docs;
+  tests << typeof(conf::uint_max) = atom >> docs;
+  tests << typeof(uint_max_s)     = udec >> docs;
+  tests << typeof(ihexneg1)       = ihex >> docs;
+  tests << typeof(ubinmax)        = uhex >> docs;
+  tests << typeof("foo")          = atom >> docs;
+  tests << typeof("foo, bar")     = some >> docs;
+  tests << typeof()               = none >> docs;
+
+  def<"nybl0(atom)"> nybl0 = [&](arg) {
+    return atom;
+  };
+
+  def<"nybl1(nybl)">{} = [&](arg) {
+    return nybl;
+  };
+
+  def<"ihex0(atom)"> ihex0 = [&](arg atom) {
+    return pp::call(cat(utl::slice(nybl0, -1), is_nybl(atom)), atom);
+  };
+
+  def<"ihex1(ihex)">{} = [&](arg) {
+    return ihex;
+  };
+
+  def<"idec0(atom)"> idec0 = [&](arg atom) {
+    return pp::call(cat(utl::slice(ihex0, -1), is_ihex(atom)), atom);
+  };
+
+  def<"idec1(idec)">{} = [&](arg) {
+    return idec;
+  };
+
+  def<"uhex0(atom)"> uhex0 = [&](arg atom) {
+    return pp::call(cat(utl::slice(idec0, -1), is_idec(atom)), atom);
+  };
+
+  def<"uhex1(uhex)">{} = [&](arg) {
+    return uhex;
+  };
+
+  def<"udec0(atom)"> udec0 = [&](arg atom) {
+    return pp::call(cat(utl::slice(uhex0, -1), is_uhex(atom)), atom);
+  };
+
+  def<"udec1(udec)">{} = [&](arg) {
+    return udec;
+  };
+
+  def<"atom1(atom)">{} = [&](arg atom) {
+    return pp::call(cat(utl::slice(udec0, -1), is_udec(atom)), atom);
+  };
+
+  def<"atom0(...)"> atom0 = [&](va) {
+    return some;
+  };
+
+  def<"tup0(...)"> tup0 = [&](va args) {
+    return pp::call(cat(utl::slice(atom0, -1), is_atom(args)), args);
+  };
+
+  def<"tup1(tup)">{} = [&](arg) {
+    return tup;
+  };
+
+  def<"none0(...)"> none0 = [&](va args) {
+    return pp::call(cat(utl::slice(tup0, -1), is_tup(args)), args);
+  };
+
+  def<"none1(...)">{} = [&](va) {
+    return none;
+  };
+
+  return pp::call(cat(utl::slice(none0, -1), is_none(args)), args);
+});
+
+} // namespace api

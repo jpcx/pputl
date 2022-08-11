@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
-  docs << "casts to the unsigned int hexadecimal subtype.";
+  docs << "[inherits from " + uint + "] casts to the unsigned int hexadecimal subtype.";
 
   auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
   auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
@@ -48,16 +48,16 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   tests << uhex(one)        = one >> docs;
   tests << uhex(imax)       = max >> docs;
 
-  def<"\\DEC(n)"> dec = [&](arg n) {
-    return cat(detail::uint_trait(n, "DEC_IHEX"), "u");
+  def<"0(udec)"> _0 = [&](arg udec) {
+    return cat(impl::uint_trait(udec, "DIHEX"), 'u');
   };
 
-  def<"\\HEX(n)">{} = [&](arg n) {
-    return n;
+  def<"1(uhex)">{} = [&](arg uhex) {
+    return uhex;
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(n, "TYPE")), n);
+  return def<"o(uint)">{[&](arg uint) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_uhex_o(uint)), uint);
   }}(uint(args));
 });
 

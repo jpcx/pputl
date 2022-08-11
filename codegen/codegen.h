@@ -65,8 +65,6 @@ constexpr char const impl_prefix[]{"PPUTL"};
 
 // replacements for implementation names for clarity and generalized impl macros.
 constexpr std::array<char const*, 2> impl_shortnames[]{
-    {"is_nybl_digits", "nybl_digits"},
-    {"is_nybl_pairs", "nybl_pairs"},
     {"ropen", "ro"},
     {"rclose", "rc"},
     {"uint_traits", "utraits"},
@@ -188,7 +186,6 @@ constexpr char const project_header[]{
     "//         |-tup: anything in parentheses                                     //\n"
     "//         |-atom: a generic non-tuple value                                  //\n"
     "//            |- bool: a literal '1' or '0'                                   //\n"
-    "//            |- bit: an alias for bool                                       //\n"
     "//            |- nybl: a literal uppercase hexadecimal digit (e.g. B)         //\n"
     "//            |- uint: <abstract> an unsigned integer                         //\n"
     "//            |   |- udec: an unsigned decimal integer (e.g. 42u)             //\n"

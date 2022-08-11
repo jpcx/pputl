@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
-  docs << "casts to the signed int binary subtype.";
+  docs << "[inherits from " + int_ + "] casts to the signed int binary subtype.";
 
   auto zero = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
   auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1";
@@ -46,18 +46,18 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   tests << ihex(uint_max_s)                          = umax >> docs;
   tests << ihex(std::to_string(conf::int_max) + "u") = max >> docs;
 
-  def<"\\DEC(n, u)"> dec = [&](arg, arg u) {
-    return detail::uint_trait(u, "DEC_IHEX");
+  def<"0(idec)"> _0 = [&](arg idec) {
+    return def<"o(udec)">{[&](arg udec) {
+      return impl::uint_trait(udec, "DIHEX");
+    }}(pp::cat(idec, 'u'));
   };
 
-  def<"\\HEX(n, u)">{} = [&](arg n, arg) {
-    return n;
+  def<"1(ihex)">{} = [&](arg ihex) {
+    return ihex;
   };
 
-  return def<"o(n)">{[&](arg n) {
-    return def<"o(n, u)">{[&](arg n, arg u) {
-      return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), n, u);
-    }}(n, cat(n, "u"));
+  return def<"o(int)">{[&](arg int_) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_ihex_o(int_)), int_);
   }}(int_(args));
 });
 

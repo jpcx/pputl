@@ -282,7 +282,15 @@ def_base::define(Body&& body) {
     def += "\n";
 
     if (_exec_stack.empty()) { // only put category for top-level macros
-      auto catstr = "[" + _instance->category + "." + _instance->name + "]";
+      auto catstr = utl::ii << [&] {
+        if (_instance->category.starts_with("impl.")) {
+          auto catname = std::string{_instance->category.begin() + 5, _instance->category.end()};
+          auto catless_name = std::regex_replace(_instance->name, std::regex{catname + "_?"}, "");
+          return "[" + _instance->category + "." + catless_name + "]";
+        } else {
+          return "[" + _instance->category + "." + _instance->name + "]";
+        }
+      };
       def += "/// " + catstr + "\n";
       def += "/// " + utl::cat(std::vector<std::string>(catstr.size(), "-")) + "\n";
     }
