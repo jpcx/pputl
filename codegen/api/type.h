@@ -48,8 +48,8 @@ extern codegen::def<"uhex(...: n: uint|int) -> uhex{n}"> const&                u
 extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&                  int_;
 extern codegen::def<"idec(...: n: uint|int) -> idec{n}"> const&                idec;
 extern codegen::def<"ihex(...: n: uint|int) -> ihex{n}"> const&                ihex;
-extern codegen::def<
-    "typeof(...: v: none|some) -> ctor<none|some|tup|atom|udec|uhex|idec|ihex|nybl>"> const& typeof;
+extern codegen::def<"typeof(...: v: <unknown>...) -> "
+                    "ctor<none|some|tup|idec|ihex|udec|uhex|nybl|atom>"> const& typeof;
 
 NIFTY_DECL(none);
 NIFTY_DECL(some);

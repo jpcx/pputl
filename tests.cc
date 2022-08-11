@@ -78,7 +78,7 @@
 //    for control flow and error reporting. See the [type] section.           //
 //                                                                            //
 //     none: nothing                                                          //
-//     some: <abstract> anything                                              //
+//     some: <abstract> something; not nothing                                //
 //      |-any: exactly one generic value                                      //
 //         |-tup: anything in parentheses                                     //
 //         |-atom: a generic non-tuple value                                  //
@@ -456,6 +456,7 @@ ASSERT_PP_EQ((PTL_IHEX(127u)), (0x7F));
 ASSERT_PP_EQ((PTL_TYPEOF((foo))), (PTL_TUP));
 ASSERT_PP_EQ((PTL_TYPEOF(0)), (PTL_IDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0u)), (PTL_UDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(D)), (PTL_NYBL));
 ASSERT_PP_EQ((PTL_TYPEOF(255)), (PTL_ATOM));
 ASSERT_PP_EQ((PTL_TYPEOF(255u)), (PTL_UDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0xFF)), (PTL_IHEX));

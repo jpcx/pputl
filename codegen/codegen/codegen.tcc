@@ -279,7 +279,8 @@ def_base::define(Body&& body) {
     throw std::runtime_error{"missing category for " + _instance->id};
 
   if (not _instance->description.empty() or not _instance->examples.empty()) {
-    def += "\n";
+    if (_instance->description.front() != '^')
+      def += "\n";
 
     if (_exec_stack.empty()) { // only put category for top-level macros
       auto catstr = utl::ii << [&] {
@@ -295,8 +296,14 @@ def_base::define(Body&& body) {
       def += "/// " + utl::cat(std::vector<std::string>(catstr.size(), "-")) + "\n";
     }
 
-    if (not _instance->description.empty())
-      def += utl::prefix_lines("/// ", _instance->description) + "\n";
+    if (not _instance->description.empty()) {
+      if (_instance->description.front() != '^')
+        def += utl::prefix_lines("/// ", _instance->description) + "\n";
+      else
+        def += utl::prefix_lines("/// ", std::string{_instance->description.begin() + 1,
+                                                     _instance->description.end()})
+             + "\n";
+    }
     if (not _instance->examples.empty()) {
       def += "///\n";
       std::size_t max_expectedsz{0};

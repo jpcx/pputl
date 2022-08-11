@@ -181,7 +181,7 @@ constexpr char const project_header[]{
     "//    for control flow and error reporting. See the [type] section.           //\n"
     "//                                                                            //\n"
     "//     none: nothing                                                          //\n"
-    "//     some: <abstract> anything                                              //\n"
+    "//     some: <abstract> something; not nothing                                //\n"
     "//      |-any: exactly one generic value                                      //\n"
     "//         |-tup: anything in parentheses                                     //\n"
     "//         |-atom: a generic non-tuple value                                  //\n"
@@ -635,7 +635,8 @@ struct signature_literal {
       return {};
 
     return {span_literal{data->begin(), std::ranges::find_if_not(*data, [](char ch) {
-                           return detail::is_alphanum(ch) or ch == '_' or ch == '$' or ch == '\\';
+                           return detail::is_alphanum(ch) or ch == '_' or ch == '$' or ch == '\\'
+                               or ch == '<';
                          })}};
   };
 

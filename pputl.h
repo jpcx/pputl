@@ -80,7 +80,7 @@
 //    for control flow and error reporting. See the [type] section.           //
 //                                                                            //
 //     none: nothing                                                          //
-//     some: <abstract> anything                                              //
+//     some: <abstract> something; not nothing                                //
 //      |-any: exactly one generic value                                      //
 //         |-tup: anything in parentheses                                     //
 //         |-atom: a generic non-tuple value                                  //
@@ -374,7 +374,8 @@
 #define PPUTLIS_ANY_0_FAIL(...) 0
 
 /// must be called with an tokens after __VA_ARGS__
-#define PPUTLIS_ANY_o(_, ...)  PTL_CAT(PPUTLIS_ANY_o##__VA_OPT__(_NOT)##_OK, PTL_IS_SOME(_))
+#define PPUTLIS_ANY_o(/* <some + token; e.g. __VA_ARGS__.foo> */ _, ...) \
+  PTL_CAT(PPUTLIS_ANY_o##__VA_OPT__(_NOT)##_OK, PTL_IS_SOME(_))
 #define PPUTLIS_ANY_o_NOT_OK   PPUTLIS_ANY_o_NOT_OK_
 #define PPUTLIS_ANY_o_NOT_OK_1 0
 #define PPUTLIS_ANY_o_NOT_OK_0 0
@@ -951,16 +952,17 @@
 /// - PTL_NONE
 /// - PTL_SOME
 /// - PTL_TUP
-/// - PTL_ATOM
-/// - PTL_UDEC
-/// - PTL_UHEX
 /// - PTL_IDEC
 /// - PTL_IHEX
+/// - PTL_UDEC
+/// - PTL_UHEX
 /// - PTL_NYBL
+/// - PTL_ATOM
 ///
 /// PTL_TYPEOF((foo))    // PTL_TUP
 /// PTL_TYPEOF(0)        // PTL_IDEC
 /// PTL_TYPEOF(0u)       // PTL_UDEC
+/// PTL_TYPEOF(D)        // PTL_NYBL
 /// PTL_TYPEOF(255)      // PTL_ATOM
 /// PTL_TYPEOF(255u)     // PTL_UDEC
 /// PTL_TYPEOF(0xFF)     // PTL_IHEX
@@ -968,28 +970,44 @@
 /// PTL_TYPEOF(foo)      // PTL_ATOM
 /// PTL_TYPEOF(foo, bar) // PTL_SOME
 /// PTL_TYPEOF()         // PTL_NONE
-#define PTL_TYPEOF(                                                                   \
-    /* v: none|some */...) /* -> ctor<none|some|tup|atom|udec|uhex|idec|ihex|nybl> */ \
-  PTL_CAT(PPUTLTYPEOF_NONE, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_TYPEOF(                                                                      \
+    /* v: <unknown>... */...) /* -> ctor<none|some|tup|idec|ihex|udec|uhex|nybl|atom> */ \
+  PTL_CAT(PPUTLTYPEOF_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLTYPEOF_NONE1(...)  PTL_NONE
-#define PPUTLTYPEOF_NONE0(...)  PTL_CAT(PPUTLTYPEOF_TUP, PTL_IS_TUP(__VA_ARGS__))(__VA_ARGS__)
-#define PPUTLTYPEOF_TUP1(tup)   PTL_TUP
-#define PPUTLTYPEOF_TUP0(...)   PTL_CAT(PPUTLTYPEOF_ATOM, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
-#define PPUTLTYPEOF_ATOM0(...)  PTL_SOME
-#define PPUTLTYPEOF_ATOM1(atom) PTL_CAT(PPUTLTYPEOF_UDEC, PTL_IS_UDEC(atom))(atom)
-#define PPUTLTYPEOF_UDEC1(udec) PTL_UDEC
-#define PPUTLTYPEOF_UDEC0(atom) PTL_CAT(PPUTLTYPEOF_UHEX, PTL_IS_UHEX(atom))(atom)
-#define PPUTLTYPEOF_UHEX1(uhex) PTL_UHEX
-#define PPUTLTYPEOF_UHEX0(atom) PTL_CAT(PPUTLTYPEOF_IDEC, PTL_IS_IDEC(atom))(atom)
-#define PPUTLTYPEOF_IDEC1(idec) PTL_IDEC
-#define PPUTLTYPEOF_IDEC0(atom) PTL_CAT(PPUTLTYPEOF_IHEX, PTL_IS_IHEX(atom))(atom)
-#define PPUTLTYPEOF_IHEX1(ihex) PTL_IHEX
-#define PPUTLTYPEOF_IHEX0(atom) PTL_CAT(PPUTLTYPEOF_NYBL, PTL_IS_NYBL(atom))(atom)
-#define PPUTLTYPEOF_NYBL1(nybl) PTL_NYBL
-#define PPUTLTYPEOF_NYBL0(atom) PTL_ATOM
+/// none
+#define PPUTLTYPEOF_1(...)       PTL_NONE
+/// !none
+#define PPUTLTYPEOF_0(...)       PTL_CAT(PPUTLTYPEOF_0, PPUTLIS_ANY_o(__VA_ARGS__.))(__VA_ARGS__)
+/// !none → any
+#define PPUTLTYPEOF_01(any)      PTL_CAT(PPUTLTYPEOF_01, PPUTLIS_TUP_o(any))(any)
+/// !none → any → tup
+#define PPUTLTYPEOF_011(tup)     PTL_TUP
+/// !none → any → !tup
+#define PPUTLTYPEOF_010(atom)    PTL_CAT(PPUTLTYPEOF_010, PPUTLIS_INT_o(atom))(atom)
+/// !none → any → !tup → int
+#define PPUTLTYPEOF_0101(int)    PTL_CAT(PPUTLTYPEOF_0101, PPUTLIS_IDEC_o(int))(int)
+/// !none → any → !tup → int → idec
+#define PPUTLTYPEOF_01011(idec)  PTL_IDEC
+/// !none → any → !tup → int → !idec
+#define PPUTLTYPEOF_01010(ihex)  PTL_IHEX
+/// !none → any → !tup → !int
+#define PPUTLTYPEOF_0100(atom)   PTL_CAT(PPUTLTYPEOF_0100, PPUTLIS_UINT_o(atom))(atom)
+/// !none → any → !tup → !int → uint
+#define PPUTLTYPEOF_01001(uint)  PTL_CAT(PPUTLTYPEOF_01001, PPUTLIS_UDEC_o(uint))(uint)
+/// !none → any → !tup → !int → uint → udec
+#define PPUTLTYPEOF_010011(udec) PTL_UDEC
+/// !none → any → !tup → !int → uint → !udec
+#define PPUTLTYPEOF_010010(uhex) PTL_UHEX
+/// !none → any → !tup → !int → !uint
+#define PPUTLTYPEOF_01000(atom)  PTL_CAT(PPUTLTYPEOF_01000, PPUTLIS_NYBL_o(atom))(atom)
+/// !none → any → !tup → !int → !uint → nybl
+#define PPUTLTYPEOF_010001(nybl) PTL_NYBL
+/// !none → any → !tup → !int → !uint → !nybl
+#define PPUTLTYPEOF_010000(atom) PTL_ATOM
+/// !none → !any
+#define PPUTLTYPEOF_00(...)      PTL_SOME
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
