@@ -32,57 +32,26 @@ namespace api {
 using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
-  docs << "[inherits from " + some + "] a tuple of exactly " + word_size + " ("
-              + std::to_string(conf::word_size) + ") nybls."
-       << ""
-       << "fails if args is not a word, an int, or a uint.";
+  docs << "[inherits from " + any + "] a union of int|uint|hword.";
 
-  tests << word(0)          = pp::tup(std::vector<std::string>(conf::word_size, "0")) >> docs;
-  tests << word(uint_max_s) = pp::tup(std::vector<std::string>(conf::word_size, "F")) >> docs;
-  if constexpr (conf::word_size > 1) {
-    tests << word(int_min_s) =
-        pp::tup("8, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", ")) >> docs;
-    tests << word(int_max_s) =
-        pp::tup("7, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"), ", ")) >> docs;
-    auto cpy = pp::tup("1, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", "));
-    tests << word(cpy) = cpy >> docs;
-  }
+  tests << word("0")                               = "0" >> docs;
+  tests << word("0u")                              = "0u" >> docs;
+  tests << word(int_min_s)                         = int_min_s >> docs;
+  tests << word(uint_max_s)                        = uint_max_s >> docs;
+  tests << word("0x" + utl::cat(samp::hmax) + "u") = ("0x" + utl::cat(samp::hmax) + "u") >> docs;
+  tests << word(pp::tup(samp::h8))                 = pp::tup(samp::h8) >> docs;
 
-  def<"0(e, ...)"> _0 = [&](arg e, va some) {
-    def<"<0(e, ...)"> _0 = [&](arg e, va) {
-      return fail(e);
-    };
-
-    def<"<1(e, atom)">{} = [&](arg e, arg atom) {
-      def<"<0(e, atom)"> _0 = [&](arg e, arg atom) {
-        def<"<0(e, atom)"> _0 = [&](arg e, arg) {
-          return fail(e);
-        };
-
-        def<"<1(e, uint)">{} = [&](arg, arg uint) {
-          return impl::uint_trait(uhex(uint), "HWORD");
-        };
-
-        return pp::call(cat(utl::slice(_0, -1), detail::is_uint_o(atom)), e, atom);
-      };
-
-      def<"<1(e, int)">{} = [&](arg, arg int_) {
-        return impl::uint_trait(uhex(int_), "HWORD");
-      };
-
-      return pp::call(cat(utl::slice(_0, -1), detail::is_int_o(atom)), e, atom);
-    };
-
-    return pp::call(cat(utl::slice(_0, -1), is_atom(some)), e, some);
+  def<"0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
   };
 
-  def<"1(e, ...)">{} = [](arg, va word) {
+  def<"1(e, word)">{} = [](arg, arg word) {
     return word;
   };
 
-  return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(some)), e, some);
-  }}(istr("[" + word + "] invalid integer or word : " + args), some(args));
+  return def<"o(e, any)">{[&](arg e, arg any) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(any)), e, any);
+  }}(istr("[" + word + "] invalid word; must be int, uint, or hword : " + args), any(args));
 });
 
 } // namespace api

@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,24 +25,42 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
+#include "traits.h"
 
 namespace api {
-namespace impl {
 
-inline codegen::category<"impl.nybl"> nybl;
+using namespace codegen;
 
-extern codegen::def<"nybl_trait(v, t: v: <atom|nybl>, trait: IS|NOT|DEC|INC|SL|SR|BIN)"> const&
-    nybl_trait;
-extern codegen::def<"nybl_pair_trait(p, t: p: <nybl pair>, trait: LT|AND|OR|XOR|SUB|ADD)"> const&
-    nybl_pair_trait;
+namespace detail {
+decltype(is_hex_o) is_hex_o = NIFTY_DEF(is_hex_o);
+}
 
-NIFTY_DECL(nybl_trait);
-NIFTY_DECL(nybl_pair_trait);
+decltype(is_hex) is_hex = NIFTY_DEF(is_hex, [&](va args) {
+  docs << "[extends " + is_atom + "] detects if args is a capital hex digit.";
 
-inline codegen::end_category<"impl.nybl"> nybl_end;
+  tests << is_hex()      = "0" >> docs;
+  tests << is_hex(0)     = "1" >> docs;
+  tests << is_hex('Q')   = "0" >> docs;
+  tests << is_hex("foo") = "0" >> docs;
+  tests << is_hex('B')   = "1" >> docs;
+  tests << is_hex('b')   = "0" >> docs;
+  tests << is_hex('F')   = "1" >> docs;
 
-} // namespace impl
+  detail::is_hex_o = def{"o(atom)"} = [&](arg atom) {
+    return impl::hex_trait(atom, "IS");
+  };
+
+  def<"0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+
+  def<"1">{} = [&] {
+    return detail::is_hex_o;
+  };
+
+  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+});
+
 } // namespace api

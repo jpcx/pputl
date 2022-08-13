@@ -34,7 +34,7 @@ using namespace codegen;
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
               + "-bit unsigned integer type."
-       << "constructible from any integer or word. word construction returns uhex."
+       << "constructible from any word. hword construction returns uhex."
        << "cannot parse negative decimals; use math.neg instead."
        << ""
        << "hex length is fixed. cannot parse shorter hex lengths."
@@ -101,7 +101,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   };
 
   return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(some)), e, some);
+    return pp::call(cat(utl::slice(_0, -1), detail::is_hword_o(some)), e, some);
   }}(istr("[" + uint + "] invalid integer : " + args), some(args));
 });
 

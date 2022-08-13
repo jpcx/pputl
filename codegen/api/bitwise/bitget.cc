@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
-  docs << "gets the ith bit from the integer or word."
+  docs << "gets the ith bit from the word."
        << "i must be between 0 and " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
 
   auto maxless1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "Eu";
@@ -53,7 +53,7 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
       def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
         std::vector<std::string> res{};
         std::ranges::transform(args, std::back_inserter(res), [&](auto&& v) {
-          return esc + " " + impl::nybl_trait(v, "BIN");
+          return esc + " " + impl::hex_trait(v, "BIN");
         });
         return utl::cat(res, ", ");
       };
@@ -81,7 +81,7 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
 
         return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, args);
       }}(args);
-    }}(e, idec(i), and_(ge(i, 0), lt(i, conf::bit_length)), x(bin + " " + word(v)));
+    }}(e, idec(i), and_(ge(i, 0), lt(i, conf::bit_length)), x(bin + " " + hword(v)));
   }}(istr("[" + bitget + "] invalid index; args : " + args), args);
 });
 

@@ -25,7 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/nybl.h"
+#include "impl/hex.h"
 
 namespace api {
 namespace impl {
@@ -100,9 +100,9 @@ bin(std::size_t i) {
   };
 }
 
-decltype(nybl_trait) nybl_trait = NIFTY_DEF(nybl_trait, [&](arg nybl, arg trait) {
-  docs << "[internal] get a nybl digit trait."
-       << "argument must be atom for IS. all other traits require nybl.";
+decltype(hex_trait) hex_trait = NIFTY_DEF(hex_trait, [&](arg hex, arg trait) {
+  docs << "[internal] get a hex digit trait."
+       << "argument must be atom for IS. all other traits require hex.";
 
   std::array<def<>, 16> digits{};
 
@@ -164,7 +164,7 @@ decltype(nybl_trait) nybl_trait = NIFTY_DEF(nybl_trait, [&](arg nybl, arg trait)
 
   return def<"o(trait, ...)">{[&](arg trait, va args) {
     return pp::call(pp::cat(utl::slice(is, -2), trait), args);
-  }}(trait, cat(utl::slice(digits[0], -1), nybl));
+  }}(trait, cat(utl::slice(digits[0], -1), hex));
 });
 
 } // namespace impl

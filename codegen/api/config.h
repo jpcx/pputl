@@ -38,11 +38,11 @@ inline std::string const int_min_s =
     "0x8" + codegen::utl::cat(std::vector<std::string>(codegen::conf::word_size - 1, "0"));
 
 extern codegen::def<"build -> <c++ int>"> const& build;
-extern codegen::def<"word_size -> uint"> const&  word_size;
-extern codegen::def<"bit_length -> uint"> const&  bit_length;
-extern codegen::def<"int_min -> binary"> const&  int_min;
-extern codegen::def<"int_max -> int"> const&     int_max;
-extern codegen::def<"uint_max -> uint"> const&   uint_max;
+extern codegen::def<"word_size -> idec"> const&  word_size;
+extern codegen::def<"bit_length -> idec"> const& bit_length;
+extern codegen::def<"int_min -> ihex"> const&    int_min;
+extern codegen::def<"int_max -> idec"> const&    int_max;
+extern codegen::def<"uint_max -> udec"> const&   uint_max;
 
 NIFTY_DECL(build);
 NIFTY_DECL(word_size);

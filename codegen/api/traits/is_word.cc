@@ -36,83 +36,36 @@ decltype(is_word_o) is_word_o = NIFTY_DEF(is_word_o);
 }
 
 decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
-  docs << "[extends " + is_tup + "] detects if args a tup of exactly " + word_size + " ("
-              + std::to_string(conf::word_size) + ") nybls.";
+  docs << "[extends " + is_any + "] detects if args is one of int|uint|hword.";
 
-  std::string word = utl::ii << [] {
-    std::array<std::string, conf::word_size> nybls{{"9"}};
-    for (std::size_t i = 1; i < nybls.size(); ++i)
-      nybls[i] = std::string{static_cast<char>('A' + i)};
-    return utl::cat(nybls, ", ");
-  };
+  tests << is_word("0")                               = "1" >> docs;
+  tests << is_word("0u")                              = "1" >> docs;
+  tests << is_word("foo")                             = "0" >> docs;
+  tests << is_word("()")                              = "0" >> docs;
+  tests << is_word("A")                               = "0" >> docs;
+  tests << is_word(int_min_s)                         = "1" >> docs;
+  tests << is_word(uint_max_s)                        = "1" >> docs;
+  tests << is_word("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
+  tests << is_word(pp::tup(samp::h8))                 = "1" >> docs;
 
-  tests << is_word("")    = "0" >> docs;
-  tests << is_word("()")  = "0";
-  tests << is_word("foo") = "0" >> docs;
-  tests << is_word("0")   = "0" >> docs;
-  if constexpr (conf::word_size > 1)
-    tests << is_word("(0)") = "0";
-  tests << is_word(word)                  = "0" >> docs;
-  tests << is_word(pp::tup(word))         = "1" >> docs;
-  tests << is_word(pp::tup(word + ","))   = "0" >> docs;
-  tests << is_word(pp::tup(word + ", E")) = "0" >> docs;
-
-  def<> _00;
-  def<> chk;
-  def<> res;
-  def<> r;
-  if constexpr (conf::word_size > 1) {
-    _00 = def{"00"} = [&] {
-      return "0";
+  detail::is_word_o = def{"o(any)"} = [&](arg any) {
+    def<"0(any)"> _0 = [&](arg any) {
+      return is_hword(any);
     };
 
-    def<"01">{} = [&] {
-      return "0";
-    };
-
-    def<"10">{} = [&] {
-      return "0";
-    };
-
-    def<"11">{} = [&] {
-      return "1";
-    };
-
-    chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-              + ", ...)"} = [&](pack args) {
-      def verify = def{utl::cat(std::vector<std::string>(conf::word_size - 1, "1"))} = [&] {
-        return "";
+    def<"1(atom)">{} = [&](arg atom) {
+      def<"<0(atom)"> _0 = [&](arg atom) {
+        return detail::is_uint_o(atom);
       };
 
-      return pp::cat(utl::slice(verify, -(conf::word_size - 1)),
-                     pp::cat(std::vector<std::string>{args.begin(), args.end() - 1}));
+      def<"<1(int)">{} = [&](arg) {
+        return "1";
+      };
+
+      return pp::call(cat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
     };
 
-    res = def{"res(...)"} = [&](va args) {
-      return def<"o(ctup, ...)">{[&](arg ctup, va fin) {
-        return def<"<o(...)">{[&](va args) {
-          return def<"<o(c, n)">{[&](arg c, arg n) {
-            return pp::cat(utl::slice(_00, -2), c, n);
-          }}(args);
-        }}(is_none(chk + " " + ctup), is_nybl(fin));
-      }}(args);
-    };
-
-    r = def{"r(...)"} = [&](va args) {
-      return def<"o(ctup, _, ...)">{[&](arg ctup, arg first, va rest) {
-        return pp::tup(is_nybl(first), esc + " " + ctup) + ", " + rest;
-      }}(args);
-    };
-  }
-
-  detail::is_word_o = def{"o(tup)"} = [&](arg tup) {
-    if constexpr (conf::word_size > 1) {
-      auto open  = utl::cat(std::vector<std::string>(conf::word_size - 1, r + "("));
-      auto close = utl::cat(std::vector<std::string>(conf::word_size - 1, ")"));
-      return res(open + "(), " + esc + " " + tup + close);
-    } else {
-      return is_nybl(esc + " " + tup);
-    }
+    return pp::call(cat(utl::slice(_0, -1), detail::is_atom_o(any)), any);
   };
 
   def<"0"> _0 = [&] {
@@ -125,7 +78,7 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
     return detail::is_word_o;
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_tup(args)), args);
+  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
 });
 
 } // namespace api

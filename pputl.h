@@ -85,7 +85,7 @@
 //       |- any: exactly one generic value                                    //
 //          |- atom: a generic value not surrounded by parentheses            //
 //          |   |- bool: a literal '1' or '0'                                 //
-//          |   |- nybl: a (4-bit) literal uppercase hex digit [e.g. B]       //
+//          |   |- hex: a literal uppercase hex digit [e.g. B]                //
 //          |   |- int: <abstract> a word-sized signed integer                //
 //          |   |   |- idec: a positive 2s-complement decimal int [e.g. 3]    //
 //          |   |   |- ihex: a signed hex integer [e.g. 0x861]                //
@@ -93,7 +93,8 @@
 //          |       |- udec: an unsigned decimal integer [e.g. 42u]           //
 //          |       |- uhex: an unsigned hex integer [e.g. 0x02Au]            //
 //          |- tup: parenthesised items [typedocs: tup, (T...), (T, U), etc.] //
-//              |- word: a word-sized tup of nybls [e.g. (6, D, 2)]           //
+//          |   |- hword: a word-sized tup of hex [e.g. (6, D, 2)]            //
+//          |- word: <union> int|uint|hword                                   //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -126,30 +127,30 @@
 /// the number of nybls used to represent pputl integers.
 /// hex representations of integers are fixed at this length.
 /// see the readme code generation section to configure.
-#define PTL_WORD_SIZE /* -> uint */ 3
+#define PTL_WORD_SIZE /* -> idec */ 3
 
 /// [config.bit_length]
 /// -------------------
 /// the number of bits that can be used to represent pputl integers.
 /// see the readme code generation section to configure.
-#define PTL_BIT_LENGTH /* -> uint */ 12
+#define PTL_BIT_LENGTH /* -> idec */ 12
 
 /// [config.int_min]
 /// ----------------
 /// the minimum value of a pputl signed int.
 /// only representable as hex. see type.int for details.
-#define PTL_INT_MIN /* -> binary */ 0x800
+#define PTL_INT_MIN /* -> ihex */ 0x800
 
 /// [config.int_max]
 /// ----------------
 /// the maximum value of a pputl signed int.
-#define PTL_INT_MAX /* -> int */ 2047
+#define PTL_INT_MAX /* -> idec */ 2047
 
 /// [config.uint_max]
 /// -----------------
 /// the maximum value of a pputl unsigned int.
 /// upper bound on the number of args for many pputl functions.
-#define PTL_UINT_MAX /* -> uint */ 4095u
+#define PTL_UINT_MAX /* -> udec */ 4095u
 
 /// [lang.lp]
 /// ---------
@@ -295,40 +296,6 @@
 ///        PTL_FAIL(PTL_ISTR([myfun] invalid args : __VA_ARGS__))
 #define PTL_FAIL(/* msg: <string literal> */...) /* -> <preprocessor error> */ PTL_FAIL##__VA_ARGS__
 
-/// [lang.nibble]
-/// -------------
-/// translates four bits to a hexadecimal digit.
-///
-/// PTL_NIBBLE(0, 0, 0, 0) // 0
-/// PTL_NIBBLE(0, 0, 1, 0) // 2
-/// PTL_NIBBLE(1, 0, 0, 1) // 9
-/// PTL_NIBBLE(1, 1, 0, 1) // D
-/// PTL_NIBBLE(1, 1, 1, 1) // F
-#define PTL_NIBBLE(/* b0: bool, b1: bool, b2: bool, b3: bool */...) /* -> <0-F> */ \
-  PPUTLNIBBLE_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLNIBBLE_o(b0, b1, b2, b3) PPUTLNIBBLE_##b0##b1##b2##b3
-#define PPUTLNIBBLE_1111              F
-#define PPUTLNIBBLE_1110              E
-#define PPUTLNIBBLE_1101              D
-#define PPUTLNIBBLE_1100              C
-#define PPUTLNIBBLE_1011              B
-#define PPUTLNIBBLE_1010              A
-#define PPUTLNIBBLE_1001              9
-#define PPUTLNIBBLE_1000              8
-#define PPUTLNIBBLE_0111              7
-#define PPUTLNIBBLE_0110              6
-#define PPUTLNIBBLE_0101              5
-#define PPUTLNIBBLE_0100              4
-#define PPUTLNIBBLE_0011              3
-#define PPUTLNIBBLE_0010              2
-#define PPUTLNIBBLE_0001              1
-#define PPUTLNIBBLE_0000              0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [traits.is_none]
 /// ----------------
 /// detects if args is nothing.
@@ -443,26 +410,26 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_nybl]
-/// ----------------
-/// [extends PTL_IS_ATOM] detects if args is a nybl (capital hex digit).
+/// [traits.is_hex]
+/// ---------------
+/// [extends PTL_IS_ATOM] detects if args is a capital hex digit.
 ///
-/// PTL_IS_NYBL()    // 0
-/// PTL_IS_NYBL(0)   // 1
-/// PTL_IS_NYBL(Q)   // 0
-/// PTL_IS_NYBL(foo) // 0
-/// PTL_IS_NYBL(B)   // 1
-/// PTL_IS_NYBL(b)   // 0
-/// PTL_IS_NYBL(F)   // 1
-#define PTL_IS_NYBL(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_NYBL_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+/// PTL_IS_HEX()    // 0
+/// PTL_IS_HEX(0)   // 1
+/// PTL_IS_HEX(Q)   // 0
+/// PTL_IS_HEX(foo) // 0
+/// PTL_IS_HEX(B)   // 1
+/// PTL_IS_HEX(b)   // 0
+/// PTL_IS_HEX(F)   // 1
+#define PTL_IS_HEX(/* <unknown> */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_HEX_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_NYBL_1           PPUTLIS_NYBL_o
-#define PPUTLIS_NYBL_0           PPUTLIS_NYBL_0_FAIL
-#define PPUTLIS_NYBL_0_FAIL(...) 0
-#define PPUTLIS_NYBL_o(atom)     PPUTLIMPL_NYBL_TRAIT(atom, IS)
+#define PPUTLIS_HEX_1           PPUTLIS_HEX_o
+#define PPUTLIS_HEX_0           PPUTLIS_HEX_0_FAIL
+#define PPUTLIS_HEX_0_FAIL(...) 0
+#define PPUTLIS_HEX_o(atom)     PPUTLIMPL_HEX_TRAIT(atom, IS)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -480,7 +447,7 @@
 /// PTL_IS_INT(4095)   // 0
 /// PTL_IS_INT(0x000u) // 0
 /// PTL_IS_INT(0xFFF)  // 1
-/// PTL_IS_INT(0b110u) // 0
+/// PTL_IS_INT(0xF)    // 0
 /// PTL_IS_INT((), ()) // 0
 #define PTL_IS_INT(/* <unknown> */...) /* -> bool */ \
   PTL_CAT(PPUTLIS_INT_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
@@ -647,39 +614,70 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_word]
-/// ----------------
-/// [extends PTL_IS_TUP] detects if args a tup of exactly PTL_WORD_SIZE (3) nybls.
+/// [traits.is_hword]
+/// -----------------
+/// [extends PTL_IS_TUP] detects if args a tup of exactly PTL_WORD_SIZE (3) hex digits.
 ///
-/// PTL_IS_WORD()             // 0
-/// PTL_IS_WORD(foo)          // 0
-/// PTL_IS_WORD(0)            // 0
-/// PTL_IS_WORD(9, B, C)      // 0
-/// PTL_IS_WORD((9, B, C))    // 1
-/// PTL_IS_WORD((9, B, C,))   // 0
-/// PTL_IS_WORD((9, B, C, E)) // 0
-#define PTL_IS_WORD(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_WORD_, PTL_IS_TUP(__VA_ARGS__))(__VA_ARGS__)
+/// PTL_IS_HWORD()             // 0
+/// PTL_IS_HWORD(foo)          // 0
+/// PTL_IS_HWORD(0)            // 0
+/// PTL_IS_HWORD(9, B, C)      // 0
+/// PTL_IS_HWORD((9, B, C))    // 1
+/// PTL_IS_HWORD((9, B, C,))   // 0
+/// PTL_IS_HWORD((9, B, C, E)) // 0
+#define PTL_IS_HWORD(/* <unknown> */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_HWORD_, PTL_IS_TUP(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_WORD_1                 PPUTLIS_WORD_o
-#define PPUTLIS_WORD_0                 PPUTLIS_WORD_0_FAIL
-#define PPUTLIS_WORD_0_FAIL(...)       0
-#define PPUTLIS_WORD_o(tup)            PPUTLIS_WORD_RES(PPUTLIS_WORD_R(PPUTLIS_WORD_R((), PTL_ESC tup)))
-#define PPUTLIS_WORD_R(...)            PPUTLIS_WORD_R_o(__VA_ARGS__)
-#define PPUTLIS_WORD_R_o(ctup, _, ...) (PTL_IS_NYBL(_), PTL_ESC ctup), __VA_ARGS__
-#define PPUTLIS_WORD_RES(...)          PPUTLIS_WORD_RES_o(__VA_ARGS__)
-#define PPUTLIS_WORD_RES_o(ctup, ...) \
-  PPUTLIS_WORD_RES_oo(PTL_IS_NONE(PPUTLIS_WORD_CHK ctup), PTL_IS_NYBL(__VA_ARGS__))
-#define PPUTLIS_WORD_RES_oo(...)    PPUTLIS_WORD_RES_ooo(__VA_ARGS__)
-#define PPUTLIS_WORD_RES_ooo(c, n)  PPUTLIS_WORD_##c##n
-#define PPUTLIS_WORD_CHK(a, b, ...) PPUTLIS_WORD_CHK_##a##b
-#define PPUTLIS_WORD_CHK_11
-#define PPUTLIS_WORD_11 1
-#define PPUTLIS_WORD_10 0
-#define PPUTLIS_WORD_01 0
-#define PPUTLIS_WORD_00 0
+#define PPUTLIS_HWORD_1           PPUTLIS_HWORD_o
+#define PPUTLIS_HWORD_0           PPUTLIS_HWORD_0_FAIL
+#define PPUTLIS_HWORD_0_FAIL(...) 0
+
+#define PPUTLIS_HWORD_o(tup) PPUTLIS_HWORD_RES(PPUTLIS_HWORD_R(PPUTLIS_HWORD_R((), PTL_ESC tup)))
+
+#define PPUTLIS_HWORD_R(...)            PPUTLIS_HWORD_R_o(__VA_ARGS__)
+#define PPUTLIS_HWORD_R_o(ctup, _, ...) (PTL_IS_HEX(_), PTL_ESC ctup), __VA_ARGS__
+#define PPUTLIS_HWORD_RES(...)          PPUTLIS_HWORD_RES_o(__VA_ARGS__)
+#define PPUTLIS_HWORD_RES_o(ctup, ...) \
+  PPUTLIS_HWORD_RES_oo(PTL_IS_NONE(PPUTLIS_HWORD_CHK ctup), PTL_IS_HEX(__VA_ARGS__))
+#define PPUTLIS_HWORD_RES_oo(...)    PPUTLIS_HWORD_RES_ooo(__VA_ARGS__)
+#define PPUTLIS_HWORD_RES_ooo(c, n)  PPUTLIS_HWORD_##c##n
+#define PPUTLIS_HWORD_CHK(a, b, ...) PPUTLIS_HWORD_CHK_##a##b
+#define PPUTLIS_HWORD_CHK_11
+#define PPUTLIS_HWORD_11 1
+#define PPUTLIS_HWORD_10 0
+#define PPUTLIS_HWORD_01 0
+#define PPUTLIS_HWORD_00 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_word]
+/// ----------------
+/// [extends PTL_IS_ANY] detects if args is one of int|uint|hword.
+///
+/// PTL_IS_WORD(0)         // 1
+/// PTL_IS_WORD(0u)        // 1
+/// PTL_IS_WORD(foo)       // 0
+/// PTL_IS_WORD(())        // 0
+/// PTL_IS_WORD(A)         // 0
+/// PTL_IS_WORD(0x800)     // 1
+/// PTL_IS_WORD(4095u)     // 1
+/// PTL_IS_WORD(0xFFFu)    // 1
+/// PTL_IS_WORD((0, 0, 8)) // 1
+#define PTL_IS_WORD(/* <unknown> */...) /* -> bool */ \
+  PTL_CAT(PPUTLIS_WORD_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_WORD_1           PPUTLIS_WORD_o
+#define PPUTLIS_WORD_0           PPUTLIS_WORD_0_FAIL
+#define PPUTLIS_WORD_0_FAIL(...) 0
+#define PPUTLIS_WORD_o(any)      PTL_CAT(PPUTLIS_WORD_o_, PPUTLIS_ATOM_o(any))(any)
+#define PPUTLIS_WORD_o_1(atom)   PTL_CAT(PPUTLIS_WORD_o_1, PPUTLIS_INT_o(atom))(atom)
+#define PPUTLIS_WORD_o_11(int)   1
+#define PPUTLIS_WORD_o_10(atom)  PPUTLIS_UINT_o(atom)
+#define PPUTLIS_WORD_o_0(any)    PTL_IS_HWORD(any)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -775,33 +773,32 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.nybl]
-/// -----------
-/// [inherits from PTL_ATOM] nybl type (capital hex digit).
-/// expands to n if valid, else fails.
+/// [type.hex]
+/// ----------
+/// [inherits from PTL_ATOM] capital hex digit type.
+/// expands to h if valid, else fails.
 ///
-/// PTL_NYBL(0) // 0
-/// PTL_NYBL(1) // 1
-/// PTL_NYBL(B) // B
-/// PTL_NYBL(F) // F
-#define PTL_NYBL(/* n: 0-F */...) /* -> nybl{n}: <0-F> */                                     \
-  PPUTLNYBL_o(                                                                                \
-      PTL_ISTR([PTL_NYBL] nybl cannot describe anything but literal, capital hex digits 0 - F \
-               : __VA_ARGS__),                                                                \
-      PTL_ATOM(__VA_ARGS__))
+/// PTL_HEX(0) // 0
+/// PTL_HEX(1) // 1
+/// PTL_HEX(B) // B
+/// PTL_HEX(F) // F
+#define PTL_HEX(/* h: 0-F */...) /* -> hex{h}: <0-F> */                                            \
+  PPUTLHEX_o(PTL_ISTR([PTL_HEX] hex cannot describe anything but literal, capital hex digits 0 - F \
+                      : __VA_ARGS__),                                                              \
+             PTL_ATOM(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLNYBL_o(e, atom) PTL_CAT(PPUTLNYBL_, PPUTLIS_NYBL_o(atom))(e, atom)
-#define PPUTLNYBL_1(e, nybl) nybl
-#define PPUTLNYBL_0(e, ...)  PTL_FAIL(e)
+#define PPUTLHEX_o(e, atom) PTL_CAT(PPUTLHEX_, PPUTLIS_HEX_o(atom))(e, atom)
+#define PPUTLHEX_1(e, hex)  hex
+#define PPUTLHEX_0(e, ...)  PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.int]
 /// ----------
 /// [inherits from PTL_ATOM] 12-bit signed integer type.
-/// constructible from any integer or word. word construction returns ihex.
+/// constructible from any word. hword construction returns ihex.
 /// cannot parse negative decimals; use math.neg instead.
 ///
 /// hex length is fixed. cannot parse shorter hex lengths.
@@ -822,12 +819,12 @@
 /// PTL_INT(4095u)     // 0xFFF
 /// PTL_INT((8, 0, 0)) // 0x800
 /// PTL_INT((7, F, F)) // 0x7FF
-#define PTL_INT(/* n: int|uint|word */...) /* -> int{n} */ \
+#define PTL_INT(/* n: word */...) /* -> int{n} */ \
   PPUTLINT_o(PTL_ISTR([PTL_INT] invalid integer : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLINT_o(e, ...)      PTL_CAT(PPUTLINT_, PPUTLIS_WORD_o(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLINT_o(e, ...)      PTL_CAT(PPUTLINT_, PPUTLIS_HWORD_o(__VA_ARGS__))(e, __VA_ARGS__)
 #define PPUTLINT_1(e, word)     PTL_ESC(PPUTLINT_1_CAT word)
 #define PPUTLINT_1_CAT(a, b, c) 0x##a##b##c
 #define PPUTLINT_0(e, ...)      PPUTLINT_0_o(e, PTL_ATOM(__VA_ARGS__))
@@ -860,7 +857,7 @@
 /// PTL_IDEC(0x005u) // 5
 /// PTL_IDEC(0x7FF)  // 2047
 /// PTL_IDEC(2047)   // 2047
-#define PTL_IDEC(/* n: int|uint|word */...) /* -> idec{n} */          \
+#define PTL_IDEC(/* n: word */...) /* -> idec{n} */                   \
   PPUTLIDEC_o(PTL_ISTR([PTL_IDEC] cannot represent negative in base10 \
                        : __VA_ARGS__),                                \
               PTL_INT(__VA_ARGS__))
@@ -886,7 +883,7 @@
 /// PTL_IHEX(5)     // 0x005
 /// PTL_IHEX(4095u) // 0xFFF
 /// PTL_IHEX(2047u) // 0x7FF
-#define PTL_IHEX(/* n: int|uint|word */...) /* -> ihex{n} */ PPUTLIHEX_o(PTL_INT(__VA_ARGS__))
+#define PTL_IHEX(/* n: word */...) /* -> ihex{n} */ PPUTLIHEX_o(PTL_INT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -900,7 +897,7 @@
 /// [type.uint]
 /// -----------
 /// [inherits from PTL_ATOM] 12-bit unsigned integer type.
-/// constructible from any integer or word. word construction returns uhex.
+/// constructible from any word. hword construction returns uhex.
 /// cannot parse negative decimals; use math.neg instead.
 ///
 /// hex length is fixed. cannot parse shorter hex lengths.
@@ -922,12 +919,12 @@
 /// PTL_UINT(0xFFF)     // 0xFFFu
 /// PTL_UINT((0, 0, 0)) // 0x000u
 /// PTL_UINT((F, F, F)) // 0xFFFu
-#define PTL_UINT(/* n: int|uint|word */...) /* -> uint{n} */ \
+#define PTL_UINT(/* n: word */...) /* -> uint{n} */ \
   PPUTLUINT_o(PTL_ISTR([PTL_UINT] invalid integer : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLUINT_o(e, ...)      PTL_CAT(PPUTLUINT_, PPUTLIS_WORD_o(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLUINT_o(e, ...)      PTL_CAT(PPUTLUINT_, PPUTLIS_HWORD_o(__VA_ARGS__))(e, __VA_ARGS__)
 #define PPUTLUINT_1(e, word)     PTL_ESC(PPUTLUINT_1_CAT word)
 #define PPUTLUINT_1_CAT(a, b, c) 0x##a##b##c##u
 #define PPUTLUINT_0(e, ...)      PPUTLUINT_0_o(e, PTL_ATOM(__VA_ARGS__))
@@ -949,7 +946,7 @@
 /// PTL_UDEC(0x005u) // 5u
 /// PTL_UDEC(0xFFFu) // 4095u
 /// PTL_UDEC(0xFFF)  // 4095u
-#define PTL_UDEC(/* n: int|uint|word */...) /* -> udec{n} */ PPUTLUDEC_o(PTL_UINT(__VA_ARGS__))
+#define PTL_UDEC(/* n: word */...) /* -> udec{n} */ PPUTLUDEC_o(PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -970,7 +967,7 @@
 /// PTL_UHEX(0x000u) // 0x000u
 /// PTL_UHEX(0x001u) // 0x001u
 /// PTL_UHEX(0xFFF)  // 0xFFFu
-#define PTL_UHEX(/* n: int|uint|word */...) /* -> uhex{n} */ PPUTLUHEX_o(PTL_UINT(__VA_ARGS__))
+#define PTL_UHEX(/* n: word */...) /* -> uhex{n} */ PPUTLUHEX_o(PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1000,55 +997,77 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.word]
-/// -----------
+/// [type.hword]
+/// ------------
 /// [inherits from PTL_SOME] a tuple of exactly PTL_WORD_SIZE (3) nybls.
+/// constructibe from any word.
 ///
-/// fails if args is not a word, an int, or a uint.
-///
-/// PTL_WORD(0)         // (0, 0, 0)
-/// PTL_WORD(4095u)     // (F, F, F)
-/// PTL_WORD(0x800)     // (8, 0, 0)
-/// PTL_WORD(2047)      // (7, F, F)
-/// PTL_WORD((1, 0, 0)) // (1, 0, 0)
-#define PTL_WORD(/* n: int|uint|word */...) /* -> word{n} */ \
-  PPUTLWORD_o(PTL_ISTR([PTL_WORD] invalid integer or word : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
+/// PTL_HWORD(0)         // (0, 0, 0)
+/// PTL_HWORD(4095u)     // (F, F, F)
+/// PTL_HWORD(0x800)     // (8, 0, 0)
+/// PTL_HWORD(2047)      // (7, F, F)
+/// PTL_HWORD((1, 0, 0)) // (1, 0, 0)
+#define PTL_HWORD(/* n: word */...) /* -> hword{n} */ \
+  PPUTLHWORD_o(PTL_ISTR([PTL_HWORD] invalid integer or word : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLWORD_o(e, ...)     PTL_CAT(PPUTLWORD_, PPUTLIS_WORD_o(__VA_ARGS__))(e, __VA_ARGS__)
-#define PPUTLWORD_1(e, ...)     __VA_ARGS__
-#define PPUTLWORD_0(e, ...)     PTL_CAT(PPUTLWORD_0, PTL_IS_ATOM(__VA_ARGS__))(e, __VA_ARGS__)
-#define PPUTLWORD_01(e, atom)   PTL_CAT(PPUTLWORD_01, PPUTLIS_INT_o(atom))(e, atom)
-#define PPUTLWORD_011(e, int)   PPUTLIMPL_UINT_TRAIT(PTL_UHEX(int), HWORD)
-#define PPUTLWORD_010(e, atom)  PTL_CAT(PPUTLWORD_010, PPUTLIS_UINT_o(atom))(e, atom)
-#define PPUTLWORD_0101(e, uint) PPUTLIMPL_UINT_TRAIT(PTL_UHEX(uint), HWORD)
-#define PPUTLWORD_0100(e, atom) PTL_FAIL(e)
-#define PPUTLWORD_00(e, ...)    PTL_FAIL(e)
+#define PPUTLHWORD_o(e, ...)     PTL_CAT(PPUTLHWORD_, PPUTLIS_HWORD_o(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLHWORD_1(e, ...)     __VA_ARGS__
+#define PPUTLHWORD_0(e, ...)     PTL_CAT(PPUTLHWORD_0, PTL_IS_ATOM(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLHWORD_01(e, atom)   PTL_CAT(PPUTLHWORD_01, PPUTLIS_INT_o(atom))(e, atom)
+#define PPUTLHWORD_011(e, int)   PPUTLIMPL_UINT_TRAIT(PTL_UHEX(int), HWORD)
+#define PPUTLHWORD_010(e, atom)  PTL_CAT(PPUTLHWORD_010, PPUTLIS_UINT_o(atom))(e, atom)
+#define PPUTLHWORD_0101(e, uint) PPUTLIMPL_UINT_TRAIT(PTL_UHEX(uint), HWORD)
+#define PPUTLHWORD_0100(e, atom) PTL_FAIL(e)
+#define PPUTLHWORD_00(e, ...)    PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.word]
+/// -----------
+/// [inherits from PTL_ANY] a union of int|uint|hword.
+///
+/// PTL_WORD(0)         // 0
+/// PTL_WORD(0u)        // 0u
+/// PTL_WORD(0x800)     // 0x800
+/// PTL_WORD(4095u)     // 4095u
+/// PTL_WORD(0xFFFu)    // 0xFFFu
+/// PTL_WORD((0, 0, 8)) // (0, 0, 8)
+#define PTL_WORD(/* n: word */...) /* -> word{n} */                         \
+  PPUTLWORD_o(PTL_ISTR([PTL_WORD] invalid word; must be int, uint, or hword \
+                       : __VA_ARGS__),                                      \
+              PTL_ANY(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLWORD_o(e, any)  PTL_CAT(PPUTLWORD_, PPUTLIS_WORD_o(any))(e, any)
+#define PPUTLWORD_1(e, word) word
+#define PPUTLWORD_0(e, ...)  PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.typeof]
 /// -------------
 /// detects the value type. must be compatible with the ## operator.
-/// literal 0 through 9 are considered ibase10 rather than bool or nybl.
+/// literal 0 through 9 are considered ibase10 rather than bool or hex.
 ///
 /// returns one of:
 /// - PTL_NONE
 /// - PTL_SOME
-/// - PTL_WORD
+/// - PTL_HWORD
 /// - PTL_TUP
 /// - PTL_IDEC
 /// - PTL_IHEX
 /// - PTL_UDEC
 /// - PTL_UHEX
-/// - PTL_NYBL
+/// - PTL_HEX
 /// - PTL_ATOM
 ///
 /// PTL_TYPEOF((foo))     // PTL_TUP
 /// PTL_TYPEOF(0)         // PTL_IDEC
 /// PTL_TYPEOF(0u)        // PTL_UDEC
-/// PTL_TYPEOF(D)         // PTL_NYBL
+/// PTL_TYPEOF(D)         // PTL_HEX
 /// PTL_TYPEOF(4095)      // PTL_ATOM
 /// PTL_TYPEOF(4095u)     // PTL_UDEC
 /// PTL_TYPEOF(0xFFF)     // PTL_IHEX
@@ -1056,11 +1075,11 @@
 /// PTL_TYPEOF(foo)       // PTL_ATOM
 /// PTL_TYPEOF(foo, bar)  // PTL_SOME
 /// PTL_TYPEOF((A))       // PTL_TUP
-/// PTL_TYPEOF((0, 0, 0)) // PTL_WORD
-/// PTL_TYPEOF((F, F, F)) // PTL_WORD
+/// PTL_TYPEOF((0, 0, 0)) // PTL_HWORD
+/// PTL_TYPEOF((F, F, F)) // PTL_HWORD
 /// PTL_TYPEOF()          // PTL_NONE
 #define PTL_TYPEOF(                                                                     \
-    /* <unknown> */...) /* -> ctor<none|some|word|tup|idec|ihex|udec|uhex|nybl|atom> */ \
+    /* <unknown> */...) /* -> ctor<none|some|hword|tup|idec|ihex|udec|uhex|hex|atom> */ \
   PTL_CAT(PPUTLTYPEOF_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1072,10 +1091,10 @@
 /// !none → any
 #define PPUTLTYPEOF_01(any)      PTL_CAT(PPUTLTYPEOF_01, PPUTLIS_TUP_o(any))(any)
 /// !none → any → tup
-#define PPUTLTYPEOF_011(tup)     PTL_CAT(PPUTLTYPEOF_011, PPUTLIS_WORD_o(tup))(tup)
-/// !none → any → tup → word
-#define PPUTLTYPEOF_0111(word)   PTL_WORD
-/// !none → any → tup → !word
+#define PPUTLTYPEOF_011(tup)     PTL_CAT(PPUTLTYPEOF_011, PPUTLIS_HWORD_o(tup))(tup)
+/// !none → any → tup → hword
+#define PPUTLTYPEOF_0111(hword)  PTL_HWORD
+/// !none → any → tup → !hword
 #define PPUTLTYPEOF_0110(tup)    PTL_TUP
 /// !none → any → !tup
 #define PPUTLTYPEOF_010(atom)    PTL_CAT(PPUTLTYPEOF_010, PPUTLIS_INT_o(atom))(atom)
@@ -1094,10 +1113,10 @@
 /// !none → any → !tup → !int → uint → !udec
 #define PPUTLTYPEOF_010010(uhex) PTL_UHEX
 /// !none → any → !tup → !int → !uint
-#define PPUTLTYPEOF_01000(atom)  PTL_CAT(PPUTLTYPEOF_01000, PPUTLIS_NYBL_o(atom))(atom)
-/// !none → any → !tup → !int → !uint → nybl
-#define PPUTLTYPEOF_010001(nybl) PTL_NYBL
-/// !none → any → !tup → !int → !uint → !nybl
+#define PPUTLTYPEOF_01000(atom)  PTL_CAT(PPUTLTYPEOF_01000, PPUTLIS_HEX_o(atom))(atom)
+/// !none → any → !tup → !int → !uint → hex
+#define PPUTLTYPEOF_010001(hex)  PTL_HEX
+/// !none → any → !tup → !int → !uint → !hex
 #define PPUTLTYPEOF_010000(atom) PTL_ATOM
 /// !none → !any
 #define PPUTLTYPEOF_00(...)      PTL_SOME
@@ -1264,18 +1283,18 @@
 
 #define PPUTLLT_oo(...)                PPUTLLT_ooo(__VA_ARGS__)
 #define PPUTLLT_ooo(il, ir, ul, ur)    PPUTLLT_ooo_##il##ir##ul##ur
-#define PPUTLLT_ooo_1100(e0, e1, l, r) PPUTLLT_ICMP(PTL_WORD(l), PTL_WORD(r))
+#define PPUTLLT_ooo_1100(e0, e1, l, r) PPUTLLT_ICMP(PTL_HWORD(l), PTL_HWORD(r))
 #define PPUTLLT_ooo_1001(e0, e1, l, r) PTL_FAIL(e1)
 #define PPUTLLT_ooo_1000(e0, e1, l, r) PTL_FAIL(e0)
 #define PPUTLLT_ooo_0110(e0, e1, l, r) PTL_FAIL(e1)
 #define PPUTLLT_ooo_0100(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ooo_0011(e0, e1, l, r) PPUTLLT_UCMP(PTL_ESC PTL_WORD(l), PTL_ESC PTL_WORD(r))
+#define PPUTLLT_ooo_0011(e0, e1, l, r) PPUTLLT_UCMP(PTL_ESC PTL_HWORD(l), PTL_ESC PTL_HWORD(r))
 #define PPUTLLT_ooo_0010(e0, e1, l, r) PTL_FAIL(e0)
 #define PPUTLLT_ooo_0001(e0, e1, l, r) PTL_FAIL(e0)
 #define PPUTLLT_ooo_0000(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ICMP(lw, rw)                                                          \
-  PTL_CAT(PPUTLLT_ICMP_, PTL_CAT(PPUTLIMPL_NYBL_TRAIT(PTL_ESC(PTL_IFIRST lw), ILTZ),  \
-                                 PPUTLIMPL_NYBL_TRAIT(PTL_ESC(PTL_IFIRST rw), ILTZ))) \
+#define PPUTLLT_ICMP(lw, rw)                                                         \
+  PTL_CAT(PPUTLLT_ICMP_, PTL_CAT(PPUTLIMPL_HEX_TRAIT(PTL_ESC(PTL_IFIRST lw), ILTZ),  \
+                                 PPUTLIMPL_HEX_TRAIT(PTL_ESC(PTL_IFIRST rw), ILTZ))) \
   (lw, rw)
 #define PPUTLLT_ICMP_11(lw, rw) PPUTLLT_UCMP(PTL_ESC lw, PTL_ESC rw)
 #define PPUTLLT_ICMP_10(lw, rw) 1
@@ -1287,9 +1306,9 @@
 #define PPUTLLT_ZIP(...)                PPUTLLT_ZIP_o(__VA_ARGS__)
 #define PPUTLLT_ZIP_o(a, b, c, d, e, f) a, d, b, e, c, f
 #define PPUTLLT_R(...)                  PPUTLLT_R_o(__VA_ARGS__)
-#define PPUTLLT_R_o(fl, fg, a, b, ...)                            \
-  PTL_CAT(PPUTLLT_##fl##fg, PPUTLIMPL_NYBL_PAIR_TRAIT(a##b, LT)), \
-      PTL_CAT(PPUTLLT_##fg##fl, PPUTLIMPL_NYBL_PAIR_TRAIT(b##a, LT)), __VA_ARGS__
+#define PPUTLLT_R_o(fl, fg, a, b, ...)                           \
+  PTL_CAT(PPUTLLT_##fl##fg, PPUTLIMPL_HEX_PAIR_TRAIT(a##b, LT)), \
+      PTL_CAT(PPUTLLT_##fg##fl, PPUTLIMPL_HEX_PAIR_TRAIT(b##a, LT)), __VA_ARGS__
 #define PPUTLLT_111 1
 #define PPUTLLT_110 1
 #define PPUTLLT_101 1
@@ -1427,7 +1446,7 @@
 
 /// [bitwise.bitget]
 /// ----------------
-/// gets the ith bit from the integer or word.
+/// gets the ith bit from the word.
 /// i must be between 0 and PTL_BIT_LENGTH (12).
 ///
 /// PTL_BITGET(2, 9)       // 0
@@ -1442,7 +1461,7 @@
 
 #define PPUTLBITGET_o(e, v, i)                                         \
   PPUTLBITGET_oo(e, PTL_IDEC(i), PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), \
-                 PPUTLBITGET_X(PPUTLBITGET_BIN PTL_WORD(v)))
+                 PPUTLBITGET_X(PPUTLBITGET_BIN PTL_HWORD(v)))
 #define PPUTLBITGET_oo(...)                                PPUTLBITGET_ooo(__VA_ARGS__)
 #define PPUTLBITGET_ooo(e, i, gelt, ...)                   PPUTLBITGET_ooo_##gelt(e, i, __VA_ARGS__)
 #define PPUTLBITGET_ooo_1(e, i, ...)                       PPUTLBITGET_##i(__VA_ARGS__)
@@ -1459,16 +1478,16 @@
 #define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  c
 #define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  b
 #define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  a
-#define PPUTLBITGET_BIN(a, b, c)                                              \
-  PTL_ESC PPUTLIMPL_NYBL_TRAIT(a, BIN), PTL_ESC PPUTLIMPL_NYBL_TRAIT(b, BIN), \
-      PTL_ESC PPUTLIMPL_NYBL_TRAIT(c, BIN)
+#define PPUTLBITGET_BIN(a, b, c)                                            \
+  PTL_ESC PPUTLIMPL_HEX_TRAIT(a, BIN), PTL_ESC PPUTLIMPL_HEX_TRAIT(b, BIN), \
+      PTL_ESC PPUTLIMPL_HEX_TRAIT(c, BIN)
 #define PPUTLBITGET_X(...) __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [bitwise.bitset]
 /// ----------------
-/// sets the ith bit of the integer or word to b.
+/// sets the ith bit of the word to b.
 /// i must be between 0 and PTL_BIT_LENGTH (12).
 ///
 /// PTL_BITSET(0, 10, 1) // (0, 0, 2)
@@ -1481,7 +1500,7 @@
 
 #define PPUTLBITSET_o(e, v, i, b)                                                   \
   PPUTLBITSET_oo(e, PTL_IDEC(i), PTL_BOOL(b), PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), \
-                 PPUTLBITSET_X(PPUTLBITSET_BIN PTL_WORD(v)))
+                 PPUTLBITSET_X(PPUTLBITSET_BIN PTL_HWORD(v)))
 #define PPUTLBITSET_oo(...)                 PPUTLBITSET_ooo(__VA_ARGS__)
 #define PPUTLBITSET_ooo(e, i, b, gelt, ...) PPUTLBITSET_ooo_##gelt(e, i, b, __VA_ARGS__)
 #define PPUTLBITSET_ooo_1(e, i, b, ...)     PPUTLBITSET_##i(b, __VA_ARGS__)
@@ -1510,9 +1529,9 @@
   (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
 #define PPUTLBITSET_0(a, _, b, c, d, e, f, g, h, i, j, k, l) \
   (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
-#define PPUTLBITSET_BIN(a, b, c)                                              \
-  PTL_ESC PPUTLIMPL_NYBL_TRAIT(a, BIN), PTL_ESC PPUTLIMPL_NYBL_TRAIT(b, BIN), \
-      PTL_ESC PPUTLIMPL_NYBL_TRAIT(c, BIN)
+#define PPUTLBITSET_BIN(a, b, c)                                            \
+  PTL_ESC PPUTLIMPL_HEX_TRAIT(a, BIN), PTL_ESC PPUTLIMPL_HEX_TRAIT(b, BIN), \
+      PTL_ESC PPUTLIMPL_HEX_TRAIT(c, BIN)
 #define PPUTLBITSET_X(...) __VA_ARGS__
 #define PPUTLBITSET_N1111  F
 #define PPUTLBITSET_N1110  E
@@ -2245,322 +2264,322 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// [impl.nybl.trait]
-/// -----------------
-/// [internal] get a nybl digit trait.
-/// argument must be atom for IS. all other traits require nybl.
-#define PPUTLIMPL_NYBL_TRAIT(/* v: <atom|nybl>, trait: IS|NOT|DEC|INC|SL|SR|BIN */ v, t) \
-  PPUTLIMPL_NYBL_TRAIT_o(t, PTL_CAT(PPUTLIMPL_NYBL_TRAIT_, v))
+/// [impl.hex.trait]
+/// ----------------
+/// [internal] get a hex digit trait.
+/// argument must be atom for IS. all other traits require hex.
+#define PPUTLIMPL_HEX_TRAIT(/* v: <atom|hex>, trait: IS|NOT|DEC|INC|SL|SR|BIN */ v, t) \
+  PPUTLIMPL_HEX_TRAIT_o(t, PTL_CAT(PPUTLIMPL_HEX_TRAIT_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_NYBL_TRAIT_o(trait, ...)                PPUTLIMPL_NYBL_TRAIT_##trait(__VA_ARGS__)
-#define PPUTLIMPL_NYBL_TRAIT_BIN(l, n, d, i, sl, sr, bin) bin
-#define PPUTLIMPL_NYBL_TRAIT_SR(l, n, d, i, sl, sr, ...)  sr
-#define PPUTLIMPL_NYBL_TRAIT_SL(l, n, d, i, sl, ...)      sl
-#define PPUTLIMPL_NYBL_TRAIT_INC(l, n, d, i, ...)         i
-#define PPUTLIMPL_NYBL_TRAIT_DEC(l, n, d, ...)            d
-#define PPUTLIMPL_NYBL_TRAIT_NOT(l, n, ...)               n
-#define PPUTLIMPL_NYBL_TRAIT_ILTZ(l, ...)                 l
-#define PPUTLIMPL_NYBL_TRAIT_IS(_, ...)                   PPUTLIMPL_NYBL_TRAIT_IS_0##__VA_OPT__(1)
-#define PPUTLIMPL_NYBL_TRAIT_IS_01                        1
-#define PPUTLIMPL_NYBL_TRAIT_IS_0                         0
+#define PPUTLIMPL_HEX_TRAIT_o(trait, ...)                PPUTLIMPL_HEX_TRAIT_##trait(__VA_ARGS__)
+#define PPUTLIMPL_HEX_TRAIT_BIN(l, n, d, i, sl, sr, bin) bin
+#define PPUTLIMPL_HEX_TRAIT_SR(l, n, d, i, sl, sr, ...)  sr
+#define PPUTLIMPL_HEX_TRAIT_SL(l, n, d, i, sl, ...)      sl
+#define PPUTLIMPL_HEX_TRAIT_INC(l, n, d, i, ...)         i
+#define PPUTLIMPL_HEX_TRAIT_DEC(l, n, d, ...)            d
+#define PPUTLIMPL_HEX_TRAIT_NOT(l, n, ...)               n
+#define PPUTLIMPL_HEX_TRAIT_ILTZ(l, ...)                 l
+#define PPUTLIMPL_HEX_TRAIT_IS(_, ...)                   PPUTLIMPL_HEX_TRAIT_IS_0##__VA_OPT__(1)
+#define PPUTLIMPL_HEX_TRAIT_IS_01                        1
+#define PPUTLIMPL_HEX_TRAIT_IS_0                         0
 
 /// int ltz, not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), (...bin)
-#define PPUTLIMPL_NYBL_TRAIT_F 1, 0, (0, E), (1, 0), (1, E), (1, 7), (1, 1, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_E 1, 1, (0, D), (0, F), (1, C), (0, 7), (1, 1, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_D 1, 2, (0, C), (0, E), (1, A), (1, 6), (1, 1, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_C 1, 3, (0, B), (0, D), (1, 8), (0, 6), (1, 1, 0, 0)
-#define PPUTLIMPL_NYBL_TRAIT_B 1, 4, (0, A), (0, C), (1, 6), (1, 5), (1, 0, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_A 1, 5, (0, 9), (0, B), (1, 4), (0, 5), (1, 0, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_9 1, 6, (0, 8), (0, A), (1, 2), (1, 4), (1, 0, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_8 1, 7, (0, 7), (0, 9), (1, 0), (0, 4), (1, 0, 0, 0)
-#define PPUTLIMPL_NYBL_TRAIT_7 0, 8, (0, 6), (0, 8), (0, E), (1, 3), (0, 1, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_6 0, 9, (0, 5), (0, 7), (0, C), (0, 3), (0, 1, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_5 0, A, (0, 4), (0, 6), (0, A), (1, 2), (0, 1, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_4 0, B, (0, 3), (0, 5), (0, 8), (0, 2), (0, 1, 0, 0)
-#define PPUTLIMPL_NYBL_TRAIT_3 0, C, (0, 2), (0, 4), (0, 6), (1, 1), (0, 0, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_2 0, D, (0, 1), (0, 3), (0, 4), (0, 1), (0, 0, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_1 0, E, (0, 0), (0, 2), (0, 2), (1, 0), (0, 0, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_0 0, F, (1, F), (0, 1), (0, 0), (0, 0), (0, 0, 0, 0)
+#define PPUTLIMPL_HEX_TRAIT_F 1, 0, (0, E), (1, 0), (1, E), (1, 7), (1, 1, 1, 1)
+#define PPUTLIMPL_HEX_TRAIT_E 1, 1, (0, D), (0, F), (1, C), (0, 7), (1, 1, 1, 0)
+#define PPUTLIMPL_HEX_TRAIT_D 1, 2, (0, C), (0, E), (1, A), (1, 6), (1, 1, 0, 1)
+#define PPUTLIMPL_HEX_TRAIT_C 1, 3, (0, B), (0, D), (1, 8), (0, 6), (1, 1, 0, 0)
+#define PPUTLIMPL_HEX_TRAIT_B 1, 4, (0, A), (0, C), (1, 6), (1, 5), (1, 0, 1, 1)
+#define PPUTLIMPL_HEX_TRAIT_A 1, 5, (0, 9), (0, B), (1, 4), (0, 5), (1, 0, 1, 0)
+#define PPUTLIMPL_HEX_TRAIT_9 1, 6, (0, 8), (0, A), (1, 2), (1, 4), (1, 0, 0, 1)
+#define PPUTLIMPL_HEX_TRAIT_8 1, 7, (0, 7), (0, 9), (1, 0), (0, 4), (1, 0, 0, 0)
+#define PPUTLIMPL_HEX_TRAIT_7 0, 8, (0, 6), (0, 8), (0, E), (1, 3), (0, 1, 1, 1)
+#define PPUTLIMPL_HEX_TRAIT_6 0, 9, (0, 5), (0, 7), (0, C), (0, 3), (0, 1, 1, 0)
+#define PPUTLIMPL_HEX_TRAIT_5 0, A, (0, 4), (0, 6), (0, A), (1, 2), (0, 1, 0, 1)
+#define PPUTLIMPL_HEX_TRAIT_4 0, B, (0, 3), (0, 5), (0, 8), (0, 2), (0, 1, 0, 0)
+#define PPUTLIMPL_HEX_TRAIT_3 0, C, (0, 2), (0, 4), (0, 6), (1, 1), (0, 0, 1, 1)
+#define PPUTLIMPL_HEX_TRAIT_2 0, D, (0, 1), (0, 3), (0, 4), (0, 1), (0, 0, 1, 0)
+#define PPUTLIMPL_HEX_TRAIT_1 0, E, (0, 0), (0, 2), (0, 2), (1, 0), (0, 0, 0, 1)
+#define PPUTLIMPL_HEX_TRAIT_0 0, F, (1, F), (0, 1), (0, 0), (0, 0), (0, 0, 0, 0)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [impl.nybl.pair_trait]
-/// ----------------------
-/// [internal] get a nybl pair trait.
-/// p must be a nybl pair; e.g. E6.
-#define PPUTLIMPL_NYBL_PAIR_TRAIT(/* p: <nybl pair>, trait: LT|AND|OR|XOR|SUB|ADD */ p, t) \
-  PPUTLIMPL_NYBL_PAIR_TRAIT_o(t, PTL_CAT(PPUTLIMPL_NYBL_PAIR_TRAIT_, p))
+/// [impl.hex.pair_trait]
+/// ---------------------
+/// [internal] get a hex pair trait.
+/// p must be a hex pair; e.g. E6.
+#define PPUTLIMPL_HEX_PAIR_TRAIT(/* p: <hex pair>, trait: LT|AND|OR|XOR|SUB|ADD */ p, t) \
+  PPUTLIMPL_HEX_PAIR_TRAIT_o(t, PTL_CAT(PPUTLIMPL_HEX_PAIR_TRAIT_, p))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_o(trait, ...) PPUTLIMPL_NYBL_PAIR_TRAIT_##trait(__VA_ARGS__)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_o(trait, ...) PPUTLIMPL_HEX_PAIR_TRAIT_##trait(__VA_ARGS__)
 
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_ADD(l, a, o, x, s, ad, ...) ad
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_SUB(l, a, o, x, s, ...)     s
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_XOR(l, a, o, x, ...)        x
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_OR(l, a, o, ...)            o
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AND(l, a, ...)              a
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_LT(l, ...)                  l
+#define PPUTLIMPL_HEX_PAIR_TRAIT_ADD(l, a, o, x, s, ad, ...) ad
+#define PPUTLIMPL_HEX_PAIR_TRAIT_SUB(l, a, o, x, s, ...)     s
+#define PPUTLIMPL_HEX_PAIR_TRAIT_XOR(l, a, o, x, ...)        x
+#define PPUTLIMPL_HEX_PAIR_TRAIT_OR(l, a, o, ...)            o
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AND(l, a, ...)              a
+#define PPUTLIMPL_HEX_PAIR_TRAIT_LT(l, ...)                  l
 
 /// lt, and, or, xor, (sub carry, sub), (add carry, add)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_FF 0, F, F, 0, (0, 0), (1, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_FE 0, E, F, 1, (0, 1), (1, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_FD 0, D, F, 2, (0, 2), (1, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_FC 0, C, F, 3, (0, 3), (1, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_FB 0, B, F, 4, (0, 4), (1, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_FA 0, A, F, 5, (0, 5), (1, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F9 0, 9, F, 6, (0, 6), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F8 0, 8, F, 7, (0, 7), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F7 0, 7, F, 8, (0, 8), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F6 0, 6, F, 9, (0, 9), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F5 0, 5, F, A, (0, A), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F4 0, 4, F, B, (0, B), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F3 0, 3, F, C, (0, C), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F2 0, 2, F, D, (0, D), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F1 0, 1, F, E, (0, E), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_F0 0, 0, F, F, (0, F), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_EF 1, E, F, 1, (1, F), (1, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_EE 0, E, E, 0, (0, 0), (1, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_ED 0, C, F, 3, (0, 1), (1, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_EC 0, C, E, 2, (0, 2), (1, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_EB 0, A, F, 5, (0, 3), (1, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_EA 0, A, E, 4, (0, 4), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E9 0, 8, F, 7, (0, 5), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E8 0, 8, E, 6, (0, 6), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E7 0, 6, F, 9, (0, 7), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E6 0, 6, E, 8, (0, 8), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E5 0, 4, F, B, (0, 9), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E4 0, 4, E, A, (0, A), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E3 0, 2, F, D, (0, B), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E2 0, 2, E, C, (0, C), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E1 0, 0, F, F, (0, D), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_E0 0, 0, E, E, (0, E), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_DF 1, D, F, 2, (1, E), (1, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_DE 1, C, F, 3, (1, F), (1, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_DD 0, D, D, 0, (0, 0), (1, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_DC 0, C, D, 1, (0, 1), (1, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_DB 0, 9, F, 6, (0, 2), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_DA 0, 8, F, 7, (0, 3), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D9 0, 9, D, 4, (0, 4), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D8 0, 8, D, 5, (0, 5), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D7 0, 5, F, A, (0, 6), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D6 0, 4, F, B, (0, 7), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D5 0, 5, D, 8, (0, 8), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D4 0, 4, D, 9, (0, 9), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D3 0, 1, F, E, (0, A), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D2 0, 0, F, F, (0, B), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D1 0, 1, D, C, (0, C), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_D0 0, 0, D, D, (0, D), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_CF 1, C, F, 3, (1, D), (1, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_CE 1, C, E, 2, (1, E), (1, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_CD 1, C, D, 1, (1, F), (1, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_CC 0, C, C, 0, (0, 0), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_CB 0, 8, F, 7, (0, 1), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_CA 0, 8, E, 6, (0, 2), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C9 0, 8, D, 5, (0, 3), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C8 0, 8, C, 4, (0, 4), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C7 0, 4, F, B, (0, 5), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C6 0, 4, E, A, (0, 6), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C5 0, 4, D, 9, (0, 7), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C4 0, 4, C, 8, (0, 8), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C3 0, 0, F, F, (0, 9), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C2 0, 0, E, E, (0, A), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C1 0, 0, D, D, (0, B), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_C0 0, 0, C, C, (0, C), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_BF 1, B, F, 4, (1, C), (1, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_BE 1, A, F, 5, (1, D), (1, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_BD 1, 9, F, 6, (1, E), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_BC 1, 8, F, 7, (1, F), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_BB 0, B, B, 0, (0, 0), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_BA 0, A, B, 1, (0, 1), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B9 0, 9, B, 2, (0, 2), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B8 0, 8, B, 3, (0, 3), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B7 0, 3, F, C, (0, 4), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B6 0, 2, F, D, (0, 5), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B5 0, 1, F, E, (0, 6), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B4 0, 0, F, F, (0, 7), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B3 0, 3, B, 8, (0, 8), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B2 0, 2, B, 9, (0, 9), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B1 0, 1, B, A, (0, A), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_B0 0, 0, B, B, (0, B), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AF 1, A, F, 5, (1, B), (1, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AE 1, A, E, 4, (1, C), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AD 1, 8, F, 7, (1, D), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AC 1, 8, E, 6, (1, E), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AB 1, A, B, 1, (1, F), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_AA 0, A, A, 0, (0, 0), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A9 0, 8, B, 3, (0, 1), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A8 0, 8, A, 2, (0, 2), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A7 0, 2, F, D, (0, 3), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A6 0, 2, E, C, (0, 4), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A5 0, 0, F, F, (0, 5), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A4 0, 0, E, E, (0, 6), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A3 0, 2, B, 9, (0, 7), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A2 0, 2, A, 8, (0, 8), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A1 0, 0, B, B, (0, 9), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_A0 0, 0, A, A, (0, A), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_9F 1, 9, F, 6, (1, A), (1, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_9E 1, 8, F, 7, (1, B), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_9D 1, 9, D, 4, (1, C), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_9C 1, 8, D, 5, (1, D), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_9B 1, 9, B, 2, (1, E), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_9A 1, 8, B, 3, (1, F), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_99 0, 9, 9, 0, (0, 0), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_98 0, 8, 9, 1, (0, 1), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_97 0, 1, F, E, (0, 2), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_96 0, 0, F, F, (0, 3), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_95 0, 1, D, C, (0, 4), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_94 0, 0, D, D, (0, 5), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_93 0, 1, B, A, (0, 6), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_92 0, 0, B, B, (0, 7), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_91 0, 1, 9, 8, (0, 8), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_90 0, 0, 9, 9, (0, 9), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_8F 1, 8, F, 7, (1, 9), (1, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_8E 1, 8, E, 6, (1, A), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_8D 1, 8, D, 5, (1, B), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_8C 1, 8, C, 4, (1, C), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_8B 1, 8, B, 3, (1, D), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_8A 1, 8, A, 2, (1, E), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_89 1, 8, 9, 1, (1, F), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_88 0, 8, 8, 0, (0, 0), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_87 0, 0, F, F, (0, 1), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_86 0, 0, E, E, (0, 2), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_85 0, 0, D, D, (0, 3), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_84 0, 0, C, C, (0, 4), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_83 0, 0, B, B, (0, 5), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_82 0, 0, A, A, (0, 6), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_81 0, 0, 9, 9, (0, 7), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_80 0, 0, 8, 8, (0, 8), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_7F 1, 7, F, 8, (1, 8), (1, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_7E 1, 6, F, 9, (1, 9), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_7D 1, 5, F, A, (1, A), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_7C 1, 4, F, B, (1, B), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_7B 1, 3, F, C, (1, C), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_7A 1, 2, F, D, (1, D), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_79 1, 1, F, E, (1, E), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_78 1, 0, F, F, (1, F), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_77 0, 7, 7, 0, (0, 0), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_76 0, 6, 7, 1, (0, 1), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_75 0, 5, 7, 2, (0, 2), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_74 0, 4, 7, 3, (0, 3), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_73 0, 3, 7, 4, (0, 4), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_72 0, 2, 7, 5, (0, 5), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_71 0, 1, 7, 6, (0, 6), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_70 0, 0, 7, 7, (0, 7), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_6F 1, 6, F, 9, (1, 7), (1, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_6E 1, 6, E, 8, (1, 8), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_6D 1, 4, F, B, (1, 9), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_6C 1, 4, E, A, (1, A), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_6B 1, 2, F, D, (1, B), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_6A 1, 2, E, C, (1, C), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_69 1, 0, F, F, (1, D), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_68 1, 0, E, E, (1, E), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_67 1, 6, 7, 1, (1, F), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_66 0, 6, 6, 0, (0, 0), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_65 0, 4, 7, 3, (0, 1), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_64 0, 4, 6, 2, (0, 2), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_63 0, 2, 7, 5, (0, 3), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_62 0, 2, 6, 4, (0, 4), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_61 0, 0, 7, 7, (0, 5), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_60 0, 0, 6, 6, (0, 6), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_5F 1, 5, F, A, (1, 6), (1, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_5E 1, 4, F, B, (1, 7), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_5D 1, 5, D, 8, (1, 8), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_5C 1, 4, D, 9, (1, 9), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_5B 1, 1, F, E, (1, A), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_5A 1, 0, F, F, (1, B), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_59 1, 1, D, C, (1, C), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_58 1, 0, D, D, (1, D), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_57 1, 5, 7, 2, (1, E), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_56 1, 4, 7, 3, (1, F), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_55 0, 5, 5, 0, (0, 0), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_54 0, 4, 5, 1, (0, 1), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_53 0, 1, 7, 6, (0, 2), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_52 0, 0, 7, 7, (0, 3), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_51 0, 1, 5, 4, (0, 4), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_50 0, 0, 5, 5, (0, 5), (0, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_4F 1, 4, F, B, (1, 5), (1, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_4E 1, 4, E, A, (1, 6), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_4D 1, 4, D, 9, (1, 7), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_4C 1, 4, C, 8, (1, 8), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_4B 1, 0, F, F, (1, 9), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_4A 1, 0, E, E, (1, A), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_49 1, 0, D, D, (1, B), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_48 1, 0, C, C, (1, C), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_47 1, 4, 7, 3, (1, D), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_46 1, 4, 6, 2, (1, E), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_45 1, 4, 5, 1, (1, F), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_44 0, 4, 4, 0, (0, 0), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_43 0, 0, 7, 7, (0, 1), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_42 0, 0, 6, 6, (0, 2), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_41 0, 0, 5, 5, (0, 3), (0, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_40 0, 0, 4, 4, (0, 4), (0, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_3F 1, 3, F, C, (1, 4), (1, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_3E 1, 2, F, D, (1, 5), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_3D 1, 1, F, E, (1, 6), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_3C 1, 0, F, F, (1, 7), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_3B 1, 3, B, 8, (1, 8), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_3A 1, 2, B, 9, (1, 9), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_39 1, 1, B, A, (1, A), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_38 1, 0, B, B, (1, B), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_37 1, 3, 7, 4, (1, C), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_36 1, 2, 7, 5, (1, D), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_35 1, 1, 7, 6, (1, E), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_34 1, 0, 7, 7, (1, F), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_33 0, 3, 3, 0, (0, 0), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_32 0, 2, 3, 1, (0, 1), (0, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_31 0, 1, 3, 2, (0, 2), (0, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_30 0, 0, 3, 3, (0, 3), (0, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_2F 1, 2, F, D, (1, 3), (1, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_2E 1, 2, E, C, (1, 4), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_2D 1, 0, F, F, (1, 5), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_2C 1, 0, E, E, (1, 6), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_2B 1, 2, B, 9, (1, 7), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_2A 1, 2, A, 8, (1, 8), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_29 1, 0, B, B, (1, 9), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_28 1, 0, A, A, (1, A), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_27 1, 2, 7, 5, (1, B), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_26 1, 2, 6, 4, (1, C), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_25 1, 0, 7, 7, (1, D), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_24 1, 0, 6, 6, (1, E), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_23 1, 2, 3, 1, (1, F), (0, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_22 0, 2, 2, 0, (0, 0), (0, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_21 0, 0, 3, 3, (0, 1), (0, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_20 0, 0, 2, 2, (0, 2), (0, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_1F 1, 1, F, E, (1, 2), (1, 0)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_1E 1, 0, F, F, (1, 3), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_1D 1, 1, D, C, (1, 4), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_1C 1, 0, D, D, (1, 5), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_1B 1, 1, B, A, (1, 6), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_1A 1, 0, B, B, (1, 7), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_19 1, 1, 9, 8, (1, 8), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_18 1, 0, 9, 9, (1, 9), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_17 1, 1, 7, 6, (1, A), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_16 1, 0, 7, 7, (1, B), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_15 1, 1, 5, 4, (1, C), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_14 1, 0, 5, 5, (1, D), (0, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_13 1, 1, 3, 2, (1, E), (0, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_12 1, 0, 3, 3, (1, F), (0, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_11 0, 1, 1, 0, (0, 0), (0, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_10 0, 0, 1, 1, (0, 1), (0, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_0F 1, 0, F, F, (1, 1), (0, F)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_0E 1, 0, E, E, (1, 2), (0, E)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_0D 1, 0, D, D, (1, 3), (0, D)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_0C 1, 0, C, C, (1, 4), (0, C)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_0B 1, 0, B, B, (1, 5), (0, B)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_0A 1, 0, A, A, (1, 6), (0, A)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_09 1, 0, 9, 9, (1, 7), (0, 9)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_08 1, 0, 8, 8, (1, 8), (0, 8)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_07 1, 0, 7, 7, (1, 9), (0, 7)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_06 1, 0, 6, 6, (1, A), (0, 6)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_05 1, 0, 5, 5, (1, B), (0, 5)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_04 1, 0, 4, 4, (1, C), (0, 4)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_03 1, 0, 3, 3, (1, D), (0, 3)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_02 1, 0, 2, 2, (1, E), (0, 2)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_01 1, 0, 1, 1, (1, F), (0, 1)
-#define PPUTLIMPL_NYBL_PAIR_TRAIT_00 0, 0, 0, 0, (0, 0), (0, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_FF 0, F, F, 0, (0, 0), (1, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_FE 0, E, F, 1, (0, 1), (1, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_FD 0, D, F, 2, (0, 2), (1, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_FC 0, C, F, 3, (0, 3), (1, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_FB 0, B, F, 4, (0, 4), (1, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_FA 0, A, F, 5, (0, 5), (1, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F9 0, 9, F, 6, (0, 6), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F8 0, 8, F, 7, (0, 7), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F7 0, 7, F, 8, (0, 8), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F6 0, 6, F, 9, (0, 9), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F5 0, 5, F, A, (0, A), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F4 0, 4, F, B, (0, B), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F3 0, 3, F, C, (0, C), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F2 0, 2, F, D, (0, D), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F1 0, 1, F, E, (0, E), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_F0 0, 0, F, F, (0, F), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_EF 1, E, F, 1, (1, F), (1, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_EE 0, E, E, 0, (0, 0), (1, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_ED 0, C, F, 3, (0, 1), (1, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_EC 0, C, E, 2, (0, 2), (1, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_EB 0, A, F, 5, (0, 3), (1, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_EA 0, A, E, 4, (0, 4), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E9 0, 8, F, 7, (0, 5), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E8 0, 8, E, 6, (0, 6), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E7 0, 6, F, 9, (0, 7), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E6 0, 6, E, 8, (0, 8), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E5 0, 4, F, B, (0, 9), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E4 0, 4, E, A, (0, A), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E3 0, 2, F, D, (0, B), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E2 0, 2, E, C, (0, C), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E1 0, 0, F, F, (0, D), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_E0 0, 0, E, E, (0, E), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_DF 1, D, F, 2, (1, E), (1, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_DE 1, C, F, 3, (1, F), (1, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_DD 0, D, D, 0, (0, 0), (1, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_DC 0, C, D, 1, (0, 1), (1, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_DB 0, 9, F, 6, (0, 2), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_DA 0, 8, F, 7, (0, 3), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D9 0, 9, D, 4, (0, 4), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D8 0, 8, D, 5, (0, 5), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D7 0, 5, F, A, (0, 6), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D6 0, 4, F, B, (0, 7), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D5 0, 5, D, 8, (0, 8), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D4 0, 4, D, 9, (0, 9), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D3 0, 1, F, E, (0, A), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D2 0, 0, F, F, (0, B), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D1 0, 1, D, C, (0, C), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_D0 0, 0, D, D, (0, D), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_CF 1, C, F, 3, (1, D), (1, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_CE 1, C, E, 2, (1, E), (1, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_CD 1, C, D, 1, (1, F), (1, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_CC 0, C, C, 0, (0, 0), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_CB 0, 8, F, 7, (0, 1), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_CA 0, 8, E, 6, (0, 2), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C9 0, 8, D, 5, (0, 3), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C8 0, 8, C, 4, (0, 4), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C7 0, 4, F, B, (0, 5), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C6 0, 4, E, A, (0, 6), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C5 0, 4, D, 9, (0, 7), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C4 0, 4, C, 8, (0, 8), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C3 0, 0, F, F, (0, 9), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C2 0, 0, E, E, (0, A), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C1 0, 0, D, D, (0, B), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_C0 0, 0, C, C, (0, C), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_BF 1, B, F, 4, (1, C), (1, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_BE 1, A, F, 5, (1, D), (1, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_BD 1, 9, F, 6, (1, E), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_BC 1, 8, F, 7, (1, F), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_BB 0, B, B, 0, (0, 0), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_BA 0, A, B, 1, (0, 1), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B9 0, 9, B, 2, (0, 2), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B8 0, 8, B, 3, (0, 3), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B7 0, 3, F, C, (0, 4), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B6 0, 2, F, D, (0, 5), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B5 0, 1, F, E, (0, 6), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B4 0, 0, F, F, (0, 7), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B3 0, 3, B, 8, (0, 8), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B2 0, 2, B, 9, (0, 9), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B1 0, 1, B, A, (0, A), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_B0 0, 0, B, B, (0, B), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AF 1, A, F, 5, (1, B), (1, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AE 1, A, E, 4, (1, C), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AD 1, 8, F, 7, (1, D), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AC 1, 8, E, 6, (1, E), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AB 1, A, B, 1, (1, F), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_AA 0, A, A, 0, (0, 0), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A9 0, 8, B, 3, (0, 1), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A8 0, 8, A, 2, (0, 2), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A7 0, 2, F, D, (0, 3), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A6 0, 2, E, C, (0, 4), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A5 0, 0, F, F, (0, 5), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A4 0, 0, E, E, (0, 6), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A3 0, 2, B, 9, (0, 7), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A2 0, 2, A, 8, (0, 8), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A1 0, 0, B, B, (0, 9), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_A0 0, 0, A, A, (0, A), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_9F 1, 9, F, 6, (1, A), (1, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_9E 1, 8, F, 7, (1, B), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_9D 1, 9, D, 4, (1, C), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_9C 1, 8, D, 5, (1, D), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_9B 1, 9, B, 2, (1, E), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_9A 1, 8, B, 3, (1, F), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_99 0, 9, 9, 0, (0, 0), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_98 0, 8, 9, 1, (0, 1), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_97 0, 1, F, E, (0, 2), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_96 0, 0, F, F, (0, 3), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_95 0, 1, D, C, (0, 4), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_94 0, 0, D, D, (0, 5), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_93 0, 1, B, A, (0, 6), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_92 0, 0, B, B, (0, 7), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_91 0, 1, 9, 8, (0, 8), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_90 0, 0, 9, 9, (0, 9), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_8F 1, 8, F, 7, (1, 9), (1, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_8E 1, 8, E, 6, (1, A), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_8D 1, 8, D, 5, (1, B), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_8C 1, 8, C, 4, (1, C), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_8B 1, 8, B, 3, (1, D), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_8A 1, 8, A, 2, (1, E), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_89 1, 8, 9, 1, (1, F), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_88 0, 8, 8, 0, (0, 0), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_87 0, 0, F, F, (0, 1), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_86 0, 0, E, E, (0, 2), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_85 0, 0, D, D, (0, 3), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_84 0, 0, C, C, (0, 4), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_83 0, 0, B, B, (0, 5), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_82 0, 0, A, A, (0, 6), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_81 0, 0, 9, 9, (0, 7), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_80 0, 0, 8, 8, (0, 8), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_7F 1, 7, F, 8, (1, 8), (1, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_7E 1, 6, F, 9, (1, 9), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_7D 1, 5, F, A, (1, A), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_7C 1, 4, F, B, (1, B), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_7B 1, 3, F, C, (1, C), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_7A 1, 2, F, D, (1, D), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_79 1, 1, F, E, (1, E), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_78 1, 0, F, F, (1, F), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_77 0, 7, 7, 0, (0, 0), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_76 0, 6, 7, 1, (0, 1), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_75 0, 5, 7, 2, (0, 2), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_74 0, 4, 7, 3, (0, 3), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_73 0, 3, 7, 4, (0, 4), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_72 0, 2, 7, 5, (0, 5), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_71 0, 1, 7, 6, (0, 6), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_70 0, 0, 7, 7, (0, 7), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_6F 1, 6, F, 9, (1, 7), (1, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_6E 1, 6, E, 8, (1, 8), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_6D 1, 4, F, B, (1, 9), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_6C 1, 4, E, A, (1, A), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_6B 1, 2, F, D, (1, B), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_6A 1, 2, E, C, (1, C), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_69 1, 0, F, F, (1, D), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_68 1, 0, E, E, (1, E), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_67 1, 6, 7, 1, (1, F), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_66 0, 6, 6, 0, (0, 0), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_65 0, 4, 7, 3, (0, 1), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_64 0, 4, 6, 2, (0, 2), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_63 0, 2, 7, 5, (0, 3), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_62 0, 2, 6, 4, (0, 4), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_61 0, 0, 7, 7, (0, 5), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_60 0, 0, 6, 6, (0, 6), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_5F 1, 5, F, A, (1, 6), (1, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_5E 1, 4, F, B, (1, 7), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_5D 1, 5, D, 8, (1, 8), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_5C 1, 4, D, 9, (1, 9), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_5B 1, 1, F, E, (1, A), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_5A 1, 0, F, F, (1, B), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_59 1, 1, D, C, (1, C), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_58 1, 0, D, D, (1, D), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_57 1, 5, 7, 2, (1, E), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_56 1, 4, 7, 3, (1, F), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_55 0, 5, 5, 0, (0, 0), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_54 0, 4, 5, 1, (0, 1), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_53 0, 1, 7, 6, (0, 2), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_52 0, 0, 7, 7, (0, 3), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_51 0, 1, 5, 4, (0, 4), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_50 0, 0, 5, 5, (0, 5), (0, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_4F 1, 4, F, B, (1, 5), (1, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_4E 1, 4, E, A, (1, 6), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_4D 1, 4, D, 9, (1, 7), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_4C 1, 4, C, 8, (1, 8), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_4B 1, 0, F, F, (1, 9), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_4A 1, 0, E, E, (1, A), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_49 1, 0, D, D, (1, B), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_48 1, 0, C, C, (1, C), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_47 1, 4, 7, 3, (1, D), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_46 1, 4, 6, 2, (1, E), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_45 1, 4, 5, 1, (1, F), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_44 0, 4, 4, 0, (0, 0), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_43 0, 0, 7, 7, (0, 1), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_42 0, 0, 6, 6, (0, 2), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_41 0, 0, 5, 5, (0, 3), (0, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_40 0, 0, 4, 4, (0, 4), (0, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_3F 1, 3, F, C, (1, 4), (1, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_3E 1, 2, F, D, (1, 5), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_3D 1, 1, F, E, (1, 6), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_3C 1, 0, F, F, (1, 7), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_3B 1, 3, B, 8, (1, 8), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_3A 1, 2, B, 9, (1, 9), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_39 1, 1, B, A, (1, A), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_38 1, 0, B, B, (1, B), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_37 1, 3, 7, 4, (1, C), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_36 1, 2, 7, 5, (1, D), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_35 1, 1, 7, 6, (1, E), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_34 1, 0, 7, 7, (1, F), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_33 0, 3, 3, 0, (0, 0), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_32 0, 2, 3, 1, (0, 1), (0, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_31 0, 1, 3, 2, (0, 2), (0, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_30 0, 0, 3, 3, (0, 3), (0, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_2F 1, 2, F, D, (1, 3), (1, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_2E 1, 2, E, C, (1, 4), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_2D 1, 0, F, F, (1, 5), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_2C 1, 0, E, E, (1, 6), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_2B 1, 2, B, 9, (1, 7), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_2A 1, 2, A, 8, (1, 8), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_29 1, 0, B, B, (1, 9), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_28 1, 0, A, A, (1, A), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_27 1, 2, 7, 5, (1, B), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_26 1, 2, 6, 4, (1, C), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_25 1, 0, 7, 7, (1, D), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_24 1, 0, 6, 6, (1, E), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_23 1, 2, 3, 1, (1, F), (0, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_22 0, 2, 2, 0, (0, 0), (0, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_21 0, 0, 3, 3, (0, 1), (0, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_20 0, 0, 2, 2, (0, 2), (0, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_1F 1, 1, F, E, (1, 2), (1, 0)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_1E 1, 0, F, F, (1, 3), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_1D 1, 1, D, C, (1, 4), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_1C 1, 0, D, D, (1, 5), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_1B 1, 1, B, A, (1, 6), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_1A 1, 0, B, B, (1, 7), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_19 1, 1, 9, 8, (1, 8), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_18 1, 0, 9, 9, (1, 9), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_17 1, 1, 7, 6, (1, A), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_16 1, 0, 7, 7, (1, B), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_15 1, 1, 5, 4, (1, C), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_14 1, 0, 5, 5, (1, D), (0, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_13 1, 1, 3, 2, (1, E), (0, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_12 1, 0, 3, 3, (1, F), (0, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_11 0, 1, 1, 0, (0, 0), (0, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_10 0, 0, 1, 1, (0, 1), (0, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_0F 1, 0, F, F, (1, 1), (0, F)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_0E 1, 0, E, E, (1, 2), (0, E)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_0D 1, 0, D, D, (1, 3), (0, D)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_0C 1, 0, C, C, (1, 4), (0, C)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_0B 1, 0, B, B, (1, 5), (0, B)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_0A 1, 0, A, A, (1, 6), (0, A)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_09 1, 0, 9, 9, (1, 7), (0, 9)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_08 1, 0, 8, 8, (1, 8), (0, 8)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_07 1, 0, 7, 7, (1, 9), (0, 7)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_06 1, 0, 6, 6, (1, A), (0, 6)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_05 1, 0, 5, 5, (1, B), (0, 5)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_04 1, 0, 4, 4, (1, C), (0, 4)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_03 1, 0, 3, 3, (1, D), (0, 3)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_02 1, 0, 2, 2, (1, E), (0, 2)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_01 1, 0, 1, 1, (1, F), (0, 1)
+#define PPUTLIMPL_HEX_PAIR_TRAIT_00 0, 0, 0, 0, (0, 0), (0, 0)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

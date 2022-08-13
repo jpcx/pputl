@@ -30,33 +30,34 @@
 #include "config.h"
 #include "lang.h"
 //
-#include "impl/nybl.h"
+#include "impl/hex.h"
 #include "impl/uint.h"
 
 namespace api {
 
 inline codegen::category<"traits"> traits;
 
-extern codegen::def<"is_none(...: <unknown>) -> bool"> const& is_none;
-extern codegen::def<"is_some(...: <unknown>) -> bool"> const& is_some;
-extern codegen::def<"is_any(...: <unknown>) -> bool"> const&  is_any;
-extern codegen::def<"is_atom(...: <unknown>) -> bool"> const& is_atom;
-extern codegen::def<"is_bool(...: <unknown>) -> bool"> const& is_bool;
-extern codegen::def<"is_nybl(...: <unknown>) -> bool"> const& is_nybl;
-extern codegen::def<"is_int(...: <unknown>) -> bool"> const&  is_int;
-extern codegen::def<"is_idec(...: <unknown>) -> bool"> const& is_idec;
-extern codegen::def<"is_ihex(...: <unknown>) -> bool"> const& is_ihex;
-extern codegen::def<"is_uint(...: <unknown>) -> bool"> const& is_uint;
-extern codegen::def<"is_udec(...: <unknown>) -> bool"> const& is_udec;
-extern codegen::def<"is_uhex(...: <unknown>) -> bool"> const& is_uhex;
-extern codegen::def<"is_tup(...: <unknown>) -> bool"> const&  is_tup;
-extern codegen::def<"is_word(...: <unknown>) -> bool"> const& is_word;
+extern codegen::def<"is_none(...: <unknown>) -> bool"> const&  is_none;
+extern codegen::def<"is_some(...: <unknown>) -> bool"> const&  is_some;
+extern codegen::def<"is_any(...: <unknown>) -> bool"> const&   is_any;
+extern codegen::def<"is_atom(...: <unknown>) -> bool"> const&  is_atom;
+extern codegen::def<"is_bool(...: <unknown>) -> bool"> const&  is_bool;
+extern codegen::def<"is_hex(...: <unknown>) -> bool"> const&   is_hex;
+extern codegen::def<"is_int(...: <unknown>) -> bool"> const&   is_int;
+extern codegen::def<"is_idec(...: <unknown>) -> bool"> const&  is_idec;
+extern codegen::def<"is_ihex(...: <unknown>) -> bool"> const&  is_ihex;
+extern codegen::def<"is_uint(...: <unknown>) -> bool"> const&  is_uint;
+extern codegen::def<"is_udec(...: <unknown>) -> bool"> const&  is_udec;
+extern codegen::def<"is_uhex(...: <unknown>) -> bool"> const&  is_uhex;
+extern codegen::def<"is_tup(...: <unknown>) -> bool"> const&   is_tup;
+extern codegen::def<"is_hword(...: <unknown>) -> bool"> const& is_hword;
+extern codegen::def<"is_word(...: <unknown>) -> bool"> const&  is_word;
 
 namespace detail {
 extern codegen::def<>& is_any_o;
 extern codegen::def<>& is_atom_o;
 extern codegen::def<>& is_bool_o;
-extern codegen::def<>& is_nybl_o;
+extern codegen::def<>& is_hex_o;
 extern codegen::def<>& is_int_o;
 extern codegen::def<>& is_idec_o;
 extern codegen::def<>& is_ihex_o;
@@ -64,11 +65,12 @@ extern codegen::def<>& is_uint_o;
 extern codegen::def<>& is_udec_o;
 extern codegen::def<>& is_uhex_o;
 extern codegen::def<>& is_tup_o;
+extern codegen::def<>& is_hword_o;
 extern codegen::def<>& is_word_o;
 NIFTY_DECL(is_any_o);
 NIFTY_DECL(is_atom_o);
 NIFTY_DECL(is_bool_o);
-NIFTY_DECL(is_nybl_o);
+NIFTY_DECL(is_hex_o);
 NIFTY_DECL(is_int_o);
 NIFTY_DECL(is_idec_o);
 NIFTY_DECL(is_ihex_o);
@@ -76,6 +78,7 @@ NIFTY_DECL(is_uint_o);
 NIFTY_DECL(is_udec_o);
 NIFTY_DECL(is_uhex_o);
 NIFTY_DECL(is_tup_o);
+NIFTY_DECL(is_hword_o);
 NIFTY_DECL(is_word_o);
 } // namespace detail
 
@@ -84,7 +87,7 @@ NIFTY_DECL(is_some);
 NIFTY_DECL(is_any);
 NIFTY_DECL(is_atom);
 NIFTY_DECL(is_bool);
-NIFTY_DECL(is_nybl);
+NIFTY_DECL(is_hex);
 NIFTY_DECL(is_int);
 NIFTY_DECL(is_idec);
 NIFTY_DECL(is_ihex);
@@ -92,6 +95,7 @@ NIFTY_DECL(is_uint);
 NIFTY_DECL(is_udec);
 NIFTY_DECL(is_uhex);
 NIFTY_DECL(is_tup);
+NIFTY_DECL(is_hword);
 NIFTY_DECL(is_word);
 
 inline codegen::end_category<"traits"> traits_end;

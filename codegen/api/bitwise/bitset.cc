@@ -34,7 +34,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
-  docs << "sets the ith bit of the integer or word to b."
+  docs << "sets the ith bit of the word to b."
        << "i must be between 0 and " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
 
   /* auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u"; */
@@ -132,7 +132,7 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
       def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
         std::vector<std::string> res{};
         std::ranges::transform(args, std::back_inserter(res), [&](auto&& v) {
-          return esc + " " + impl::nybl_trait(v, "BIN");
+          return esc + " " + impl::hex_trait(v, "BIN");
         });
         return utl::cat(res, ", ");
       };
@@ -171,7 +171,7 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
 
         return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, b, args);
       }}(args);
-    }}(e, idec(i), bool_(b), and_(ge(i, 0), lt(i, conf::bit_length)), x(bin + " " + word(v)));
+    }}(e, idec(i), bool_(b), and_(ge(i, 0), lt(i, conf::bit_length)), x(bin + " " + hword(v)));
   }}(istr("[" + bitget + "] invalid index; args : " + args), args);
 });
 

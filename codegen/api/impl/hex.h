@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,46 +26,24 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
 
 namespace api {
+namespace impl {
 
-using namespace codegen;
+inline codegen::category<"impl.hex"> hex;
 
-decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
-  docs << "[inherits from " + atom + "] nybl type (capital hex digit)."
-       << "expands to n if valid, else fails.";
+extern codegen::def<"hex_trait(v, t: v: <atom|hex>, trait: IS|NOT|DEC|INC|SL|SR|BIN)"> const&
+    hex_trait;
+extern codegen::def<"hex_pair_trait(p, t: p: <hex pair>, trait: LT|AND|OR|XOR|SUB|ADD)"> const&
+    hex_pair_trait;
 
-  tests << nybl(0)   = "0" >> docs;
-  tests << nybl(1)   = "1" >> docs;
-  tests << nybl(2)   = "2";
-  tests << nybl(3)   = "3";
-  tests << nybl(4)   = "4";
-  tests << nybl(5)   = "5";
-  tests << nybl(6)   = "6";
-  tests << nybl(7)   = "7";
-  tests << nybl(8)   = "8";
-  tests << nybl(9)   = "9";
-  tests << nybl("A") = "A";
-  tests << nybl("B") = "B" >> docs;
-  tests << nybl("C") = "C";
-  tests << nybl("D") = "D";
-  tests << nybl("E") = "E";
-  tests << nybl("F") = "F" >> docs;
+NIFTY_DECL(hex_trait);
+NIFTY_DECL(hex_pair_trait);
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
+inline codegen::end_category<"impl.hex"> hex_end;
 
-  def<"1(e, nybl)">{} = [](arg, arg nybl) {
-    return nybl;
-  };
-
-  return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_nybl_o(atom)), e, atom);
-  }}(istr("[" + nybl
-          + "] nybl cannot describe anything but literal, capital hex digits 0-F : " + args),
-     atom(args));
-});
-
+} // namespace impl
 } // namespace api

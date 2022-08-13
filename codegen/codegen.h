@@ -70,7 +70,7 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
     {"uint_traits", "utraits"},
 };
 
-// the number of nybls used to describes integers.
+// the number of hex digits used to describes integers.
 // hex representations are fixed at this length.
 constexpr std::uint8_t word_size = 3;
 static_assert(word_size >= 1);
@@ -187,7 +187,7 @@ constexpr char const project_header[]{
     "//       |- any: exactly one generic value                                    //\n"
     "//          |- atom: a generic value not surrounded by parentheses            //\n"
     "//          |   |- bool: a literal '1' or '0'                                 //\n"
-    "//          |   |- nybl: a (4-bit) literal uppercase hex digit [e.g. B]       //\n"
+    "//          |   |- hex: a literal uppercase hex digit [e.g. B]                //\n"
     "//          |   |- int: <abstract> a word-sized signed integer                //\n"
     "//          |   |   |- idec: a positive 2s-complement decimal int [e.g. 3]    //\n"
     "//          |   |   |- ihex: a signed hex integer [e.g. 0x861]                //\n"
@@ -195,7 +195,8 @@ constexpr char const project_header[]{
     "//          |       |- udec: an unsigned decimal integer [e.g. 42u]           //\n"
     "//          |       |- uhex: an unsigned hex integer [e.g. 0x02Au]            //\n"
     "//          |- tup: parenthesised items [typedocs: tup, (T...), (T, U), etc.] //\n"
-    "//              |- word: a word-sized tup of nybls [e.g. (6, D, 2)]           //\n"
+    "//          |   |- hword: a word-sized tup of hex [e.g. (6, D, 2)]            //\n"
+    "//          |- word: <union> int|uint|hword                                   //\n"
     "//                                                                            //\n"
     "//    FUNDAMENTALS                                                            //\n"
     "//    ------------                                                            //\n"
@@ -219,6 +220,66 @@ constexpr char const project_header[]{
     "///////////////////////////////////////////////////////////////////////////// */"};
 
 } // namespace conf
+
+// samples for docs and tests
+namespace samp {
+inline auto hmin = std::vector<std::string>(conf::word_size, "0");
+inline auto hmax = std::vector<std::string>(conf::word_size, "F");
+inline auto h1   = ([] {
+  auto res   = hmin;
+  res.back() = "1";
+  return res;
+})();
+inline auto h2   = ([] {
+  auto res   = hmin;
+  res.back() = "2";
+  return res;
+})();
+inline auto h3   = ([] {
+  auto res   = hmin;
+  res.back() = "3";
+  return res;
+})();
+inline auto h4   = ([] {
+  auto res   = hmin;
+  res.back() = "4";
+  return res;
+})();
+inline auto h5   = ([] {
+  auto res   = hmin;
+  res.back() = "5";
+  return res;
+})();
+inline auto h6   = ([] {
+  auto res   = hmin;
+  res.back() = "6";
+  return res;
+})();
+inline auto h7   = ([] {
+  auto res   = hmin;
+  res.back() = "7";
+  return res;
+})();
+inline auto h8   = ([] {
+  auto res   = hmin;
+  res.back() = "8";
+  return res;
+})();
+inline auto h15  = ([] {
+  auto res   = hmin;
+  res.back() = "F";
+  return res;
+})();
+inline auto h16  = ([] {
+  if constexpr (conf::word_size > 1) {
+    auto res            = hmin;
+    *(res.rbegin() + 1) = "1";
+    return res;
+  } else {
+    return nullptr;
+  }
+})();
+} // namespace samp
 
 namespace detail {
 template<std::size_t Ext>

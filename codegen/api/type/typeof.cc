@@ -33,11 +33,11 @@ using namespace codegen;
 
 decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   docs << "detects the value type. must be compatible with the ## operator."
-       << "literal 0 through 9 are considered ibase10 rather than bool or nybl."
+       << "literal 0 through 9 are considered ibase10 rather than bool or hex."
        << ""
        << "returns one of:"
-       << "- " + none << "- " + some << "- " + word << "- " + tup << "- " + idec << "- " + ihex
-       << "- " + udec << "- " + uhex << "- " + nybl << "- " + atom;
+       << "- " + none << "- " + some << "- " + hword << "- " + tup << "- " + idec << "- " + ihex
+       << "- " + udec << "- " + uhex << "- " + hex << "- " + atom;
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -45,7 +45,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof("(foo)")        = tup >> docs;
   tests << typeof(0)              = idec >> docs;
   tests << typeof("0u")           = udec >> docs;
-  tests << typeof("D")            = nybl >> docs;
+  tests << typeof("D")            = hex >> docs;
   tests << typeof(conf::uint_max) = atom >> docs;
   tests << typeof(uint_max_s)     = udec >> docs;
   tests << typeof(ihexneg1)       = ihex >> docs;
@@ -55,9 +55,9 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   if constexpr (conf::word_size > 1)
     tests << typeof("(A)") = tup >> docs;
   tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) =
-      word >> docs;
+      hword >> docs;
   tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) =
-      word >> docs;
+      hword >> docs;
   tests << typeof() = none >> docs;
 
   // !none
@@ -86,18 +86,18 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
           def<"<0(atom)"> _0 = [&](arg atom_) {
             docs << "^!none → any → !tup → !int → !uint";
 
-            // !nybl
+            // !hex
             def<"<0(atom)"> _0 = [&](arg) {
-              docs << "^!none → any → !tup → !int → !uint → !nybl";
+              docs << "^!none → any → !tup → !int → !uint → !hex";
               return atom;
             };
 
-            def<"<1(nybl)">{} = [&](arg) {
-              docs << "^!none → any → !tup → !int → !uint → nybl";
-              return nybl;
+            def<"<1(hex)">{} = [&](arg) {
+              docs << "^!none → any → !tup → !int → !uint → hex";
+              return hex;
             };
 
-            return pp::call(cat(utl::slice(_0, -1), detail::is_nybl_o(atom_)), atom_);
+            return pp::call(cat(utl::slice(_0, -1), detail::is_hex_o(atom_)), atom_);
           };
 
           // uint
@@ -148,19 +148,19 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       def<"<1(tup)">{} = [&](arg tup_) {
         docs << "^!none → any → tup";
 
-        // !word
+        // !hword
         def<"<0(tup)"> _0 = [&](arg) {
-          docs << "^!none → any → tup → !word";
+          docs << "^!none → any → tup → !hword";
           return tup;
         };
 
-        // word
-        def<"<1(word)">{} = [&](arg) {
-          docs << "^!none → any → tup → word";
-          return word;
+        // hword
+        def<"<1(hword)">{} = [&](arg) {
+          docs << "^!none → any → tup → hword";
+          return hword;
         };
 
-        return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(tup_)), tup_);
+        return pp::call(cat(utl::slice(_0, -1), detail::is_hword_o(tup_)), tup_);
       };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), any);

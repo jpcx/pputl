@@ -91,9 +91,9 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
   def<"r(...)"> recur = [&](va args) {
     return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {
-      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::nybl_pair_trait(pp::cat(a, b), "LT"))
+      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::hex_pair_trait(pp::cat(a, b), "LT"))
            + ", "
-           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::nybl_pair_trait(pp::cat(b, a), "LT"))
+           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::hex_pair_trait(pp::cat(b, a), "LT"))
            + ", " + args;
     }}(args);
   };
@@ -132,8 +132,8 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
       return ucmp(esc + " " + lw, esc + " " + rw);
     };
 
-    return pp::call(cat(utl::slice(_00, -2), cat(impl::nybl_trait(esc(ifirst + " " + lw), "ILTZ"),
-                                                 impl::nybl_trait(esc(ifirst + " " + rw), "ILTZ"))),
+    return pp::call(cat(utl::slice(_00, -2), cat(impl::hex_trait(esc(ifirst + " " + lw), "ILTZ"),
+                                                 impl::hex_trait(esc(ifirst + " " + rw), "ILTZ"))),
                     lw, rw);
   };
 
@@ -157,7 +157,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
                         // unsigned l and r
                         def<"0011(e0, e1, l, r)">{} = [&](arg, arg, arg l, arg r) {
-                          return ucmp(esc + " " + word(l), esc + " " + word(r));
+                          return ucmp(esc + " " + hword(l), esc + " " + hword(r));
                         };
 
                         // non-integer l, signed r
@@ -182,7 +182,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
                         // signed l, signed r
                         def<"1100(e0, e1, l, r)">{} = [&](arg, arg, arg l, arg r) {
-                          return icmp(word(l), word(r));
+                          return icmp(hword(l), hword(r));
                         };
 
                         return pp::cat(utl::slice(_0000, -4), il, ir, ul, ur);

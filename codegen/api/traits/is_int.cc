@@ -51,8 +51,9 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   tests << is_int(conf::uint_max) = "0" >> docs;
   tests << is_int(min + "u")      = "0" >> docs;
   tests << is_int(max)            = "1" >> docs;
-  tests << is_int("0b110u")       = "0" >> docs;
-  tests << is_int("(), ()")       = "0" >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << is_int("0xF") = "0" >> docs;
+  tests << is_int("(), ()") = "0" >> docs;
 
   detail::is_int_o = def{"o(atom)"} = [&](arg atom) {
     def<"0(...)"> _0 = [&](va) {

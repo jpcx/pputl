@@ -25,42 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_nybl_o) is_nybl_o = NIFTY_DEF(is_nybl_o);
-}
+decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
+  docs << "[inherits from " + atom + "] capital hex digit type."
+       << "expands to h if valid, else fails.";
 
-decltype(is_nybl) is_nybl = NIFTY_DEF(is_nybl, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is a nybl (capital hex digit).";
+  tests << hex(0)   = "0" >> docs;
+  tests << hex(1)   = "1" >> docs;
+  tests << hex(2)   = "2";
+  tests << hex(3)   = "3";
+  tests << hex(4)   = "4";
+  tests << hex(5)   = "5";
+  tests << hex(6)   = "6";
+  tests << hex(7)   = "7";
+  tests << hex(8)   = "8";
+  tests << hex(9)   = "9";
+  tests << hex("A") = "A";
+  tests << hex("B") = "B" >> docs;
+  tests << hex("C") = "C";
+  tests << hex("D") = "D";
+  tests << hex("E") = "E";
+  tests << hex("F") = "F" >> docs;
 
-  tests << is_nybl()      = "0" >> docs;
-  tests << is_nybl(0)     = "1" >> docs;
-  tests << is_nybl('Q')   = "0" >> docs;
-  tests << is_nybl("foo") = "0" >> docs;
-  tests << is_nybl('B')   = "1" >> docs;
-  tests << is_nybl('b')   = "0" >> docs;
-  tests << is_nybl('F')   = "1" >> docs;
-
-  detail::is_nybl_o = def{"o(atom)"} = [&](arg atom) {
-    return impl::nybl_trait(atom, "IS");
+  def<"0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
   };
 
-  def<"0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"1(e, hex)">{} = [](arg, arg hex) {
+    return hex;
   };
 
-  def<"1">{} = [&] {
-    return detail::is_nybl_o;
-  };
-
-  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+  return def<"o(e, atom)">{[&](arg e, arg atom) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_hex_o(atom)), e, atom);
+  }}(istr("[" + hex
+          + "] hex cannot describe anything but literal, capital hex digits 0-F : " + args),
+     atom(args));
 });
 
 } // namespace api

@@ -25,7 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/nybl.h"
+#include "impl/hex.h"
 
 namespace api {
 namespace impl {
@@ -65,9 +65,9 @@ add(std::size_t i, std::size_t j) {
   return pp::tup(alpha[(i + j) / 16], alpha[(i + j) % 16]);
 }
 
-decltype(nybl_pair_trait) nybl_pair_trait = NIFTY_DEF(nybl_pair_trait, [&](arg pair, arg trait) {
-  docs << "[internal] get a nybl pair trait."
-       << "p must be a nybl pair; e.g. E6.";
+decltype(hex_pair_trait) hex_pair_trait = NIFTY_DEF(hex_pair_trait, [&](arg pair, arg trait) {
+  docs << "[internal] get a hex pair trait."
+       << "p must be a hex pair; e.g. E6.";
 
   std::array<def<>, 16 * 16> pairs{};
   {

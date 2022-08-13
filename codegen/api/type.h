@@ -40,24 +40,25 @@ extern codegen::def<"some(...: args: <something>...) -> some{...args}"> const& s
 extern codegen::def<"any(...: v: any) -> any{v}"> const&                       any;
 extern codegen::def<"atom(...: v: any) -> v"> const&                           atom;
 extern codegen::def<"bool(...: b: 0|1) -> b"> const&                           bool_;
-extern codegen::def<"nybl(...: n: 0-F) -> nybl{n}: <0-F>"> const&              nybl;
-extern codegen::def<"int(...: n: int|uint|word) -> int{n}"> const&             int_;
-extern codegen::def<"idec(...: n: int|uint|word) -> idec{n}"> const&           idec;
-extern codegen::def<"ihex(...: n: int|uint|word) -> ihex{n}"> const&           ihex;
-extern codegen::def<"uint(...: n: int|uint|word) -> uint{n}"> const&           uint;
-extern codegen::def<"udec(...: n: int|uint|word) -> udec{n}"> const&           udec;
-extern codegen::def<"uhex(...: n: int|uint|word) -> uhex{n}"> const&           uhex;
+extern codegen::def<"hex(...: h: 0-F) -> hex{h}: <0-F>"> const&                hex;
+extern codegen::def<"int(...: n: word) -> int{n}"> const&                      int_;
+extern codegen::def<"idec(...: n: word) -> idec{n}"> const&                    idec;
+extern codegen::def<"ihex(...: n: word) -> ihex{n}"> const&                    ihex;
+extern codegen::def<"uint(...: n: word) -> uint{n}"> const&                    uint;
+extern codegen::def<"udec(...: n: word) -> udec{n}"> const&                    udec;
+extern codegen::def<"uhex(...: n: word) -> uhex{n}"> const&                    uhex;
 extern codegen::def<"tup(...: t: tup) -> t"> const&                            tup;
-extern codegen::def<"word(...: n: int|uint|word) -> word{n}"> const&           word;
+extern codegen::def<"hword(...: n: word) -> hword{n}"> const&                  hword;
+extern codegen::def<"word(...: n: word) -> word{n}"> const&                    word;
 extern codegen::def<"typeof(...: <unknown>) -> "
-                    "ctor<none|some|word|tup|idec|ihex|udec|uhex|nybl|atom>"> const& typeof;
+                    "ctor<none|some|hword|tup|idec|ihex|udec|uhex|hex|atom>"> const& typeof;
 
 NIFTY_DECL(none);
 NIFTY_DECL(some);
 NIFTY_DECL(any);
 NIFTY_DECL(atom);
 NIFTY_DECL(bool_);
-NIFTY_DECL(nybl);
+NIFTY_DECL(hex);
 NIFTY_DECL(int_);
 NIFTY_DECL(idec);
 NIFTY_DECL(ihex);
@@ -65,6 +66,7 @@ NIFTY_DECL(uint);
 NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
 NIFTY_DECL(tup);
+NIFTY_DECL(hword);
 NIFTY_DECL(word);
 NIFTY_DECL(typeof);
 
