@@ -34,11 +34,11 @@ using namespace codegen;
 decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   docs << "[inherits from " + int_ + "] casts to the signed int binary subtype.";
 
-  auto zero = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1";
-  auto max  = "0x7" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "F"));
-  auto umax = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5";
+  auto zero = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "1";
+  auto max  = "0x7" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"));
+  auto umax = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
+  auto five = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "5";
 
   tests << ihex(0)                                   = zero >> docs;
   tests << ihex(1)                                   = one >> docs;

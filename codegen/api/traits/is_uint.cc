@@ -37,10 +37,10 @@ decltype(is_uint_o) is_uint_o = NIFTY_DEF(is_uint_o);
 
 decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   docs << "[extends " + is_atom + "] detects if args is an unsigned integer."
-       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size) + ").";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
   tests << is_uint()               = "0" >> docs;
   tests << is_uint("foo")          = "0" >> docs;

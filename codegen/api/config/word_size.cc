@@ -31,10 +31,11 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bit_length) bit_length = NIFTY_DEF(bit_length, [&] {
-  docs << "the number of bits used by pputl integers."
-       << "based on the configured hex length.";
-  return std::to_string(conf::bit_length);
+decltype(word_size) word_size = NIFTY_DEF(word_size, [&] {
+  docs << "the number of nybls used to represent pputl integers."
+       << "hex representations of integers are fixed at this length."
+       << "see the readme code generation section to configure.";
+  return std::to_string(conf::word_size);
 });
 
 } // namespace api

@@ -37,10 +37,10 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
        << ""
        << "use fmt.paste with ihex to get negative decimals.";
 
-  auto zero = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1";
-  auto max  = "0x7" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5";
+  auto zero = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "1";
+  auto max  = "0x7" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"));
+  auto five = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "5";
 
   tests << idec(zero)          = "0" >> docs;
   tests << idec(one)           = "1" >> docs;

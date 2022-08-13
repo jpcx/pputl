@@ -39,8 +39,8 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   docs << "[extends " + is_uint
               + "] detects if args is an unsigned int in deicmal form (requires 'u' suffix).";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
   tests << is_udec("1")            = "0" >> docs;
   tests << is_udec("1u")           = "1" >> docs;

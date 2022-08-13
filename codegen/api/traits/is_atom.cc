@@ -71,7 +71,7 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
       return "0";
     };
 
-    return cat(utl::slice(_0, -1), is_tup(any));
+    return cat(utl::slice(_0, -1), is_none(eat + " " + any));
   };
 
   def<"0"> _0 = [&] {

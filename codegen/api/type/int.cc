@@ -32,9 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
-  docs << "[inherits from " + atom + "] " + std::to_string(conf::bit_length)
+  docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
               + "-bit signed integer type."
-       << "may be constructed from either unsigned or signed ints."
+       << "constructible from any integer or word. word construction returns ihex."
        << "cannot parse negative decimals; use math.neg instead."
        << ""
        << "hex length is fixed. cannot parse shorter hex lengths."
@@ -48,8 +48,8 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
   tests << int_(0)             = "0" >> docs;
   tests << int_("1u")          = "1" >> docs;
@@ -57,6 +57,12 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   tests << int_(conf::int_max) = std::to_string(conf::int_max) >> docs;
   tests << int_(max + "u")     = max >> docs;
   tests << int_(uint_max_s)    = max >> docs;
+  tests << int_(pp::tup((conf::word_size > 1 ? "8, " : "8")
+                        + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", "))) =
+      int_min_s >> docs;
+  tests << int_(pp::tup((conf::word_size > 1 ? "7, " : "7")
+                        + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"), ", "))) =
+      ("0x7" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"))) >> docs;
 
   def<"\\HEX(uint)"> hex = [&](arg uint) {
     return impl::uint_trait(impl::uint_trait(uint, "HUDEC"), "DIHEX");
@@ -88,10 +94,32 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     return fail(e);
   };
 
-  return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(cat(utl::slice(_00, -2), cat(detail::is_int_o(atom), detail::is_uint_o(atom))),
-                    e, atom);
-  }}(istr("[" + int_ + "] invalid integer : " + args), atom(args));
+  def<"0(e, ...)"> _0 = [&](arg e, va some) {
+    return def<"o(e, atom)">{[&](arg e, arg atom) {
+      return pp::call(
+          cat(utl::slice(_00, -2), cat(detail::is_int_o(atom), detail::is_uint_o(atom))), e, atom);
+    }}(e, atom(some));
+  };
+
+  def<"1(e, word)">{} = [&](arg, arg word) {
+    auto params = utl::alpha_base52_seq(conf::word_size);
+    for (auto&& v : params) {
+      if (v == "u") {
+        v = "_u";
+      } else if (v == "x") {
+        v = "_x";
+      }
+    }
+    def cat = def{"cat(" + utl::cat(params, ", ") + ")"} = [&](pack args) {
+      return pp::cat("0x", pp::cat(args));
+    };
+
+    return esc(cat + " " + word);
+  };
+
+  return def<"o(e, ...)">{[&](arg e, va some) {
+    return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(some)), e, some);
+  }}(istr("[" + int_ + "] invalid integer : " + args), some(args));
 });
 
 } // namespace api

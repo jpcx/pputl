@@ -37,10 +37,10 @@ decltype(is_ihex_o) is_ihex_o = NIFTY_DEF(is_ihex_o);
 
 decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
   docs << "[extends " + is_int + "] detects if args is a signed int in hex form."
-       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ").";
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size) + ").";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
   tests << is_ihex("1")       = "0" >> docs;
   tests << is_ihex("1u")      = "0" >> docs;

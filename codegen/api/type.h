@@ -38,32 +38,34 @@ inline codegen::category<"type"> type;
 extern codegen::def<"none(...: <nothing>) -> none"> const&                     none;
 extern codegen::def<"some(...: args: <something>...) -> some{...args}"> const& some;
 extern codegen::def<"any(...: v: any) -> any{v}"> const&                       any;
-extern codegen::def<"tup(...: t: tup) -> t"> const&                            tup;
 extern codegen::def<"atom(...: v: any) -> v"> const&                           atom;
 extern codegen::def<"bool(...: b: 0|1) -> b"> const&                           bool_;
 extern codegen::def<"nybl(...: n: 0-F) -> nybl{n}: <0-F>"> const&              nybl;
-extern codegen::def<"uint(...: n: uint|int) -> uint{n}"> const&                uint;
-extern codegen::def<"udec(...: n: uint|int) -> udec{n}"> const&                udec;
-extern codegen::def<"uhex(...: n: uint|int) -> uhex{n}"> const&                uhex;
-extern codegen::def<"int(...: n: uint|int) -> int{n}"> const&                  int_;
-extern codegen::def<"idec(...: n: uint|int) -> idec{n}"> const&                idec;
-extern codegen::def<"ihex(...: n: uint|int) -> ihex{n}"> const&                ihex;
-extern codegen::def<"typeof(...: v: <unknown>...) -> "
-                    "ctor<none|some|tup|idec|ihex|udec|uhex|nybl|atom>"> const& typeof;
+extern codegen::def<"int(...: n: int|uint|word) -> int{n}"> const&             int_;
+extern codegen::def<"idec(...: n: int|uint|word) -> idec{n}"> const&           idec;
+extern codegen::def<"ihex(...: n: int|uint|word) -> ihex{n}"> const&           ihex;
+extern codegen::def<"uint(...: n: int|uint|word) -> uint{n}"> const&           uint;
+extern codegen::def<"udec(...: n: int|uint|word) -> udec{n}"> const&           udec;
+extern codegen::def<"uhex(...: n: int|uint|word) -> uhex{n}"> const&           uhex;
+extern codegen::def<"tup(...: t: tup) -> t"> const&                            tup;
+extern codegen::def<"word(...: n: int|uint|word) -> word{n}"> const&           word;
+extern codegen::def<"typeof(...: <unknown>) -> "
+                    "ctor<none|some|word|tup|idec|ihex|udec|uhex|nybl|atom>"> const& typeof;
 
 NIFTY_DECL(none);
 NIFTY_DECL(some);
 NIFTY_DECL(any);
-NIFTY_DECL(tup);
 NIFTY_DECL(atom);
 NIFTY_DECL(bool_);
 NIFTY_DECL(nybl);
-NIFTY_DECL(uint);
-NIFTY_DECL(udec);
-NIFTY_DECL(uhex);
 NIFTY_DECL(int_);
 NIFTY_DECL(idec);
 NIFTY_DECL(ihex);
+NIFTY_DECL(uint);
+NIFTY_DECL(udec);
+NIFTY_DECL(uhex);
+NIFTY_DECL(tup);
+NIFTY_DECL(word);
 NIFTY_DECL(typeof);
 
 inline codegen::end_category<"type"> type_end;

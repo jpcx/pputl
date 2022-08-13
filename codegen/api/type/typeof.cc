@@ -36,10 +36,10 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << "literal 0 through 9 are considered ibase10 rather than bool or nybl."
        << ""
        << "returns one of:"
-       << "- " + none << "- " + some << "- " + tup << "- " + idec << "- " + ihex << "- " + udec
-       << "- " + uhex << "- " + nybl << "- " + atom;
+       << "- " + none << "- " + some << "- " + word << "- " + tup << "- " + idec << "- " + ihex
+       << "- " + udec << "- " + uhex << "- " + nybl << "- " + atom;
 
-  auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
 
   tests << typeof("(foo)")        = tup >> docs;
@@ -52,7 +52,13 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof(ubinmax)        = uhex >> docs;
   tests << typeof("foo")          = atom >> docs;
   tests << typeof("foo, bar")     = some >> docs;
-  tests << typeof()               = none >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << typeof("(A)") = tup >> docs;
+  tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) =
+      word >> docs;
+  tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) =
+      word >> docs;
+  tests << typeof() = none >> docs;
 
   // !none
   def<"0(...)"> _0 = [&](va some_) {
@@ -139,9 +145,22 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       };
 
       // tup
-      def<"<1(tup)">{} = [&](arg) {
+      def<"<1(tup)">{} = [&](arg tup_) {
         docs << "^!none → any → tup";
-        return tup;
+
+        // !word
+        def<"<0(tup)"> _0 = [&](arg) {
+          docs << "^!none → any → tup → !word";
+          return tup;
+        };
+
+        // word
+        def<"<1(word)">{} = [&](arg) {
+          docs << "^!none → any → tup → word";
+          return word;
+        };
+
+        return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(tup_)), tup_);
       };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), any);

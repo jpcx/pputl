@@ -54,17 +54,17 @@ factors(unsigned n) {
   return pp::tup(utl::cat(sfacts, ", "));
 }
 
-static std::array<std::string, conf::bit_length>
-bitnot(std::array<std::string, conf::bit_length> const& n) {
+static std::array<std::string, conf::word_size * 4>
+bitnot(std::array<std::string, conf::word_size * 4> const& n) {
   auto res = n;
   for (auto&& v : res)
     v = v == "1" ? "0" : "1";
   return res;
 }
 
-static std::array<std::string, conf::bit_length>
+static std::array<std::string, conf::word_size * 4>
 binary(unsigned n) {
-  std::array<std::string, conf::bit_length> res{};
+  std::array<std::string, conf::word_size * 4> res{};
   std::ranges::fill(res, "0");
   for (unsigned i = 0; n; ++i) {
     res[res.size() - 1 - i] = std::to_string(n % 2);
@@ -112,7 +112,7 @@ nybl(std::string a, std::string b, std::string c, std::string d) {
 }
 
 static std::string
-hex_str(std::array<std::string, conf::bit_length> const& n, bool uint = true) {
+hex_str(std::array<std::string, conf::word_size * 4> const& n, bool uint = true) {
   std::string res{"0x"};
   for (std::size_t ofs = 0; ofs < n.size(); ofs += 4)
     res += nybl(n[ofs + 0], n[ofs + 1], n[ofs + 2], n[ofs + 3]);
@@ -121,7 +121,7 @@ hex_str(std::array<std::string, conf::bit_length> const& n, bool uint = true) {
 }
 
 static std::string
-nybls(std::array<std::string, conf::bit_length> const& n) {
+nybls(std::array<std::string, conf::word_size * 4> const& n) {
   std::vector<std::string> res{};
   for (std::size_t ofs = 0; ofs < n.size(); ofs += 4)
     res.push_back(nybl(n[ofs + 0], n[ofs + 1], n[ofs + 2], n[ofs + 3]));
@@ -179,7 +179,7 @@ decltype(uint_trait) uint_trait = NIFTY_DEF(uint_trait, [&](arg uint, arg trait)
   {
     auto bin  = binary(n);
     traits[_] = def{"\\" + hex_str(bin)} = [&] {
-      docs << "type, unsigned decimal, signed decimal, nybls, bitnot";
+      docs << "type, unsigned decimal, signed decimal, word, bitnot";
       return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u",
                                  std::to_string(uint_to_int(n)), nybls(bin), hex_str(bitnot(bin))},
                       ", ");
@@ -210,7 +210,7 @@ decltype(uint_trait) uint_trait = NIFTY_DEF(uint_trait, [&](arg uint, arg trait)
     return args[2];
   };
 
-  def<"\\HNYBS(t, ud, id, n, ...) -> tuple<nybl...>">{} = [&](pack args) {
+  def<"\\HWORD(t, ud, id, n, ...) -> word">{} = [&](pack args) {
     return args[3];
   };
 

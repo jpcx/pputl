@@ -34,11 +34,11 @@ using namespace codegen;
 decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   docs << "[inherits from " + uint + "] casts to the unsigned int decimal subtype.";
 
-  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0")) + "u";
-  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "1u";
-  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F")) + "u";
-  auto in1  = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
-  auto five = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "0")) + "5u";
+  auto min  = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0")) + "u";
+  auto one  = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "1u";
+  auto max  = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F")) + "u";
+  auto in1  = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
+  auto five = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "5u";
 
   tests << udec(min)  = "0u" >> docs;
   tests << udec(1)    = "1u" >> docs;

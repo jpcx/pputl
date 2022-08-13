@@ -37,12 +37,12 @@ decltype(is_int_o) is_int_o = NIFTY_DEF(is_int_o);
 
 decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   docs << "[extends " + is_atom + "] detects if args is a signed integer."
-       << "hex length is fixed at " + hex_length + " (" + std::to_string(conf::hex_length) + ")."
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size) + ")."
        << "decimals must be smaller than " + int_max + " (" + int_max_s + ")."
        << "negative values must be hex; concatenation with '-' is not supported.";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
   tests << is_int()               = "0" >> docs;
   tests << is_int("foo")          = "0" >> docs;

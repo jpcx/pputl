@@ -29,24 +29,30 @@
 //    PREAMBLE                                                             `////
 //    --------                                                              `///
 //                                                                           `//
-//    Caution:  macros should be used sparingly or not at all if possible.    //
-//    C++ has evolved to facilitate  countless  metaprogramming techniques    //
-//    that  should be  preferred in most cases,  as they are  predictable,    //
-//    type-safe, scoped, and easier to debug. pputl is primarily  intended    //
-//    for  research purposes and for various edge cases that still must be    //
-//    solved using  text replacement,  such as optimizations that minimize    //
-//    template specializations and syntactical boilerplate reductions.        //
+//    Macro functions are generally not advisable in production code. They    //
+//    are difficult to reason about, pollute the global namespace, and can    //
+//    hinder debugging and refactoring efforts.  C++ has evolved to enable    //
+//    countless metaprogramming techniques that are preferable.               //
+//                                                                            //
+//    This library is built to provide a strong, safe set of functionality    //
+//    for edge cases that uniquely benefit from text replacement and would   //
+//    would otherwise utilize a separate code generation script, including    //
+//    test case generation and template specialization minimizations.         //
+//                                                                            //
+//    At its core, pputl is primarily a research project that explores new    //
+//    language possibilities  regarding the reduction of terse syntax  and    //
+//    the implementation of various forms of reflection.                      //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
 //                                                                            //
-//    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many high-level programming constructs  and 12-bit binary arithmetic    //
-//    for both unsigned and signed two's complement integers.                 //
+//    pputl  is a powerful, typed C++ preprocessor utilities library  that    //
+//    implements many high-level programming constructs,  including 12-bit    //
+//    signed and unsigned integers with arithmetic and comparison support.    //
 //                                                                            //
-//    pputl algorithms  are built using a preprocessor syntax manipulation    //
-//    technique for constructing inline recursive call stacks that execute    //
-//    much faster than mutually-recursive methods.                            //
+//    pputl implements  recursive algorithms  by manipulating preprocessor    //
+//    syntax to construct inline call stacks that execute much faster than    //
+//    mutually-recursive patterns and can be nested indefinitely.             //
 //                                                                            //
 //    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //
 //    support (which are guaranteed by C++20) but has no dependencies.        //
@@ -58,50 +64,56 @@
 //    -----                                                                   //
 //    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    Modify the head of codegen/codegen.h  to configure the bit length or    //
-//    naming preferences and run `make` to regenerate.                        //
+//    Configuration of the word size and naming scheme  can be achieved by    //
+//    modifying the head of codegen/codegen.h and running `make`.             //
 //                                                                            //
 //    Run `make test` to validate the library on your system.                 //
 //                                                                            //
+//    TERMINOLOGY                                                             //
+//    -----------                                                             //
+//                                                                            //
+//    pputl defines several types  to describe different kinds of variadic    //
+//    arguments  (potentially empty,  comma-delimited tokens of any kind).    //
+//    Type identification and conversion is used extensively.                 //
+//                                                                            //
+//    Each type  is represented by  two functions:  a predicate for traits    //
+//    testing, and a constructor that validates, converts, or fails.   All    //
+//    functions that use these types in their parameter docs  assert their    //
+//    argument sanity by calling the appropriate constructor functions.       //
+//                                                                            //
+//      none: nothing                                                         //
+//      some: <abstract> something; not nothing                               //
+//       |- any: exactly one generic value                                    //
+//          |- atom: a generic value not surrounded by parentheses            //
+//          |   |- bool: a literal '1' or '0'                                 //
+//          |   |- nybl: a (4-bit) literal uppercase hex digit [e.g. B]       //
+//          |   |- int: <abstract> a word-sized signed integer                //
+//          |   |   |- idec: a positive 2s-complement decimal int [e.g. 3]    //
+//          |   |   |- ihex: a signed hex integer [e.g. 0x861]                //
+//          |   |- uint: <abstract> a word-sized unsigned integer             //
+//          |       |- udec: an unsigned decimal integer [e.g. 42u]           //
+//          |       |- uhex: an unsigned hex integer [e.g. 0x02Au]            //
+//          |- tup: parenthesised items [typedocs: tup, (T...), (T, U), etc.] //
+//              |- word: a word-sized tup of nybls [e.g. (6, D, 2)]           //
+//                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
+//                                                                            //
+//    pputl errors execute  an invalid preprocessor operation by using the    //
+//    concatenation operator (incorrectly) on a string error message.  All    //
+//    errors  triggered by  pputl functions  will include  the macro name,    //
+//    a textual description, and its primary expansion arguments.             //
 //                                                                            //
 //    Non-nullary API functions are fully variadic and chainable such that    //
 //    the outputs of one may be used as inputs to another. Parameters must    //
 //    be fully expanded and distinguishable after the primary expansion.      //
 //                                                                            //
-//    Tuples are used only when necessary.  Most functions that operate on    //
-//    generic data ranges  both input and output a variadic argument list.    //
-//    Creating a tuple is trivial but extraction costs an expansion.          //
-//                                                                            //
-//    pputl defines several types and uses type identification and casting    //
-//    for control flow and error reporting. See the [type] section.           //
-//                                                                            //
-//     none: nothing                                                          //
-//     some: <abstract> something; not nothing                                //
-//      |-any: exactly one generic value                                      //
-//         |-tup: anything in parentheses                                     //
-//         |-atom: a generic non-tuple value                                  //
-//            |- bool: a literal '1' or '0'                                   //
-//            |- nybl: a literal uppercase hexadecimal digit (e.g. B)         //
-//            |- uint: <abstract> an unsigned integer                         //
-//            |   |- udec: an unsigned decimal integer (e.g. 42u)             //
-//            |   |- uhex: an unsigned hex integer (e.g. 0x02Au)              //
-//            |- int: <abstract> a signed integer                             //
-//                |- idec: a positive 2s-complement decimal int (e.g. 353)    //
-//                |- ihex: a signed hex integer (e.g. 0x161)                  //
-//                                                                            //
 //    Hexadecimal integers are always represented by fixed-length strings.    //
 //    Negative ints cannot be represented in decimal  due to concatenation    //
 //    restrictions. Arithmetic and bitwise functions attempt to cast their    //
 //    results in the same form as their input, but will always return ihex    //
-//    when an idec input becomes negative.  Decimal representations can be    //
-//    generated for pasting using fmt.paste.                                  //
-//                                                                            //
-//    pputl errors execute  an invalid preprocessor operation by using the    //
-//    concatenation operator (incorrectly) on a string error message.  All    //
-//    errors  triggered by  pputl functions  will include  the macro name,   ///
-//    a textual description, and the primary expansion arguments.           ////
+//    when an idec input becomes negative.  Decimal representations can be   ///
+//    generated for pasting using fmt.paste.                                ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -256,28 +268,6 @@ ASSERT_PP_EQ((PTL_IS_ANY(foo, bar)), (0));
 ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
 ASSERT_PP_EQ((PTL_IS_ANY((42))), (1));
 
-ASSERT_PP_EQ((PTL_IS_TUP()), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(())), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((1, 2))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC(()))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC((1, 2)))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP((, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (1));
-
 ASSERT_PP_EQ((PTL_IS_ATOM()), (0));
 ASSERT_PP_EQ((PTL_IS_ATOM(foo)), (1));
 ASSERT_PP_EQ((PTL_IS_ATOM(0)), (1));
@@ -306,7 +296,7 @@ ASSERT_PP_EQ((PTL_IS_BOOL()), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0x00)), (0));
+ASSERT_PP_EQ((PTL_IS_BOOL(0x000)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0, 1)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL((0))), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(())), (0));
@@ -328,55 +318,87 @@ ASSERT_PP_EQ((PTL_IS_NYBL(B)), (1));
 ASSERT_PP_EQ((PTL_IS_NYBL(b)), (0));
 ASSERT_PP_EQ((PTL_IS_NYBL(F)), (1));
 
-ASSERT_PP_EQ((PTL_IS_UINT()), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(0u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(255)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(255u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(0x00u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(0xFF)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
-
-ASSERT_PP_EQ((PTL_IS_UDEC(1)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC(1u)), (1));
-ASSERT_PP_EQ((PTL_IS_UDEC(255)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC(255u)), (1));
-ASSERT_PP_EQ((PTL_IS_UDEC(0x00u)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC(0xFF)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC((), ())), (0));
-
-ASSERT_PP_EQ((PTL_IS_UHEX(1)), (0));
-ASSERT_PP_EQ((PTL_IS_UHEX(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_UHEX(0x00u)), (1));
-ASSERT_PP_EQ((PTL_IS_UHEX(0xFF)), (0));
-ASSERT_PP_EQ((PTL_IS_UHEX((), ())), (0));
-
 ASSERT_PP_EQ((PTL_IS_INT()), (0));
 ASSERT_PP_EQ((PTL_IS_INT(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_INT(0)), (1));
 ASSERT_PP_EQ((PTL_IS_INT(0u)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(255)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0x00u)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0xFF)), (1));
+ASSERT_PP_EQ((PTL_IS_INT(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0xFFF)), (1));
 ASSERT_PP_EQ((PTL_IS_INT(0b110u)), (0));
 ASSERT_PP_EQ((PTL_IS_INT((), ())), (0));
 
 ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
 ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(127)), (1));
-ASSERT_PP_EQ((PTL_IS_IDEC(255)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(0x00u)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(0xFF)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(2047)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0xFFF)), (0));
 ASSERT_PP_EQ((PTL_IS_IDEC((), ())), (0));
 
 ASSERT_PP_EQ((PTL_IS_IHEX(1)), (0));
 ASSERT_PP_EQ((PTL_IS_IHEX(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IHEX(0x00)), (1));
-ASSERT_PP_EQ((PTL_IS_IHEX(0xFF)), (1));
-ASSERT_PP_EQ((PTL_IS_IHEX(0xFFu)), (0));
+ASSERT_PP_EQ((PTL_IS_IHEX(0x000)), (1));
+ASSERT_PP_EQ((PTL_IS_IHEX(0xFFF)), (1));
+ASSERT_PP_EQ((PTL_IS_IHEX(0xFFFu)), (0));
 ASSERT_PP_EQ((PTL_IS_IHEX((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_UINT()), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(4095u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0x000u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_UDEC(1)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(1u)), (1));
+ASSERT_PP_EQ((PTL_IS_UDEC(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(4095u)), (1));
+ASSERT_PP_EQ((PTL_IS_UDEC(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UDEC((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_UHEX(1)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX(0x000u)), (1));
+ASSERT_PP_EQ((PTL_IS_UHEX(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UHEX((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_TUP()), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(())), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((1, 2))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC(()))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC((1, 2)))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP(, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, , a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUP((, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, a))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (1));
+
+ASSERT_PP_EQ((PTL_IS_WORD()), (0));
+ASSERT_PP_EQ((PTL_IS_WORD(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_WORD(0)), (0));
+ASSERT_PP_EQ((PTL_IS_WORD(9, B, C)), (0));
+ASSERT_PP_EQ((PTL_IS_WORD((9, B, C))), (1));
+ASSERT_PP_EQ((PTL_IS_WORD((9, B, C,))), (0));
+ASSERT_PP_EQ((PTL_IS_WORD((9, B, C, E))), (0));
+ASSERT_PP_EQ((PTL_IS_WORD(())), (0));
+ASSERT_PP_EQ((PTL_IS_WORD((0))), (0));
 
 ASSERT_PP_EQ((PTL_NONE()), ());
 
@@ -386,9 +408,6 @@ ASSERT_PP_EQ((PTL_SOME(foo, 42, (, , ))), (foo, 42, (, , )));
 ASSERT_PP_EQ((PTL_SOME(, )), (,));
 
 ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
-
-ASSERT_PP_EQ((PTL_TUP(())), (()));
-ASSERT_PP_EQ((PTL_TUP((1, 2))), ((1, 2)));
 
 ASSERT_PP_EQ((PTL_ATOM(foo)), (foo));
 
@@ -412,57 +431,73 @@ ASSERT_PP_EQ((PTL_NYBL(C)), (C));
 ASSERT_PP_EQ((PTL_NYBL(D)), (D));
 ASSERT_PP_EQ((PTL_NYBL(E)), (E));
 
+ASSERT_PP_EQ((PTL_INT(0)), (0));
+ASSERT_PP_EQ((PTL_INT(1u)), (1));
+ASSERT_PP_EQ((PTL_INT(0x000)), (0x000));
+ASSERT_PP_EQ((PTL_INT(2047)), (2047));
+ASSERT_PP_EQ((PTL_INT(0xFFFu)), (0xFFF));
+ASSERT_PP_EQ((PTL_INT(4095u)), (0xFFF));
+ASSERT_PP_EQ((PTL_INT((8, 0, 0))), (0x800));
+ASSERT_PP_EQ((PTL_INT((7, F, F))), (0x7FF));
+
+ASSERT_PP_EQ((PTL_IDEC(0x000)), (0));
+ASSERT_PP_EQ((PTL_IDEC(0x001)), (1));
+ASSERT_PP_EQ((PTL_IDEC(0x005u)), (5));
+ASSERT_PP_EQ((PTL_IDEC(0x7FF)), (2047));
+ASSERT_PP_EQ((PTL_IDEC(2047)), (2047));
+
+ASSERT_PP_EQ((PTL_IHEX(0)), (0x000));
+ASSERT_PP_EQ((PTL_IHEX(1)), (0x001));
+ASSERT_PP_EQ((PTL_IHEX(5)), (0x005));
+ASSERT_PP_EQ((PTL_IHEX(4095u)), (0xFFF));
+ASSERT_PP_EQ((PTL_IHEX(2047u)), (0x7FF));
+
 ASSERT_PP_EQ((PTL_UINT(0)), (0u));
 ASSERT_PP_EQ((PTL_UINT(1)), (1u));
 ASSERT_PP_EQ((PTL_UINT(2u)), (2u));
-ASSERT_PP_EQ((PTL_UINT(255u)), (255u));
-ASSERT_PP_EQ((PTL_UINT(0x00u)), (0x00u));
-ASSERT_PP_EQ((PTL_UINT(0xFF)), (0xFFu));
+ASSERT_PP_EQ((PTL_UINT(4095u)), (4095u));
+ASSERT_PP_EQ((PTL_UINT(0x000u)), (0x000u));
+ASSERT_PP_EQ((PTL_UINT(0xFFF)), (0xFFFu));
+ASSERT_PP_EQ((PTL_UINT((0, 0, 0))), (0x000u));
+ASSERT_PP_EQ((PTL_UINT((F, F, F))), (0xFFFu));
 
-ASSERT_PP_EQ((PTL_UDEC(0x00u)), (0u));
+ASSERT_PP_EQ((PTL_UDEC(0x000u)), (0u));
 ASSERT_PP_EQ((PTL_UDEC(1)), (1u));
 ASSERT_PP_EQ((PTL_UDEC(5)), (5u));
-ASSERT_PP_EQ((PTL_UDEC(0x05u)), (5u));
-ASSERT_PP_EQ((PTL_UDEC(0xFFu)), (255u));
-ASSERT_PP_EQ((PTL_UDEC(0xFF)), (255u));
+ASSERT_PP_EQ((PTL_UDEC(0x005u)), (5u));
+ASSERT_PP_EQ((PTL_UDEC(0xFFFu)), (4095u));
+ASSERT_PP_EQ((PTL_UDEC(0xFFF)), (4095u));
 
-ASSERT_PP_EQ((PTL_UHEX(0)), (0x00u));
-ASSERT_PP_EQ((PTL_UHEX(1)), (0x01u));
-ASSERT_PP_EQ((PTL_UHEX(5)), (0x05u));
-ASSERT_PP_EQ((PTL_UHEX(255u)), (0xFFu));
-ASSERT_PP_EQ((PTL_UHEX(0x00u)), (0x00u));
-ASSERT_PP_EQ((PTL_UHEX(0x01u)), (0x01u));
-ASSERT_PP_EQ((PTL_UHEX(0xFF)), (0xFFu));
+ASSERT_PP_EQ((PTL_UHEX(0)), (0x000u));
+ASSERT_PP_EQ((PTL_UHEX(1)), (0x001u));
+ASSERT_PP_EQ((PTL_UHEX(5)), (0x005u));
+ASSERT_PP_EQ((PTL_UHEX(4095u)), (0xFFFu));
+ASSERT_PP_EQ((PTL_UHEX(0x000u)), (0x000u));
+ASSERT_PP_EQ((PTL_UHEX(0x001u)), (0x001u));
+ASSERT_PP_EQ((PTL_UHEX(0xFFF)), (0xFFFu));
 
-ASSERT_PP_EQ((PTL_INT(0)), (0));
-ASSERT_PP_EQ((PTL_INT(1u)), (1));
-ASSERT_PP_EQ((PTL_INT(0x00)), (0x00));
-ASSERT_PP_EQ((PTL_INT(127)), (127));
-ASSERT_PP_EQ((PTL_INT(0xFFu)), (0xFF));
-ASSERT_PP_EQ((PTL_INT(255u)), (0xFF));
+ASSERT_PP_EQ((PTL_TUP(())), (()));
+ASSERT_PP_EQ((PTL_TUP((1, 2))), ((1, 2)));
 
-ASSERT_PP_EQ((PTL_IDEC(0x00)), (0));
-ASSERT_PP_EQ((PTL_IDEC(0x01)), (1));
-ASSERT_PP_EQ((PTL_IDEC(0x05u)), (5));
-ASSERT_PP_EQ((PTL_IDEC(0x7F)), (127));
-ASSERT_PP_EQ((PTL_IDEC(127)), (127));
-
-ASSERT_PP_EQ((PTL_IHEX(0)), (0x00));
-ASSERT_PP_EQ((PTL_IHEX(1)), (0x01));
-ASSERT_PP_EQ((PTL_IHEX(5)), (0x05));
-ASSERT_PP_EQ((PTL_IHEX(255u)), (0xFF));
-ASSERT_PP_EQ((PTL_IHEX(127u)), (0x7F));
+ASSERT_PP_EQ((PTL_WORD(0)), ((0, 0, 0)));
+ASSERT_PP_EQ((PTL_WORD(4095u)), ((F, F, F)));
+ASSERT_PP_EQ((PTL_WORD(0x800)), ((8, 0, 0)));
+ASSERT_PP_EQ((PTL_WORD(2047)), ((7, F, F)));
+ASSERT_PP_EQ((PTL_WORD((1, 0, 0))), ((1, 0, 0)));
 
 ASSERT_PP_EQ((PTL_TYPEOF((foo))), (PTL_TUP));
 ASSERT_PP_EQ((PTL_TYPEOF(0)), (PTL_IDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0u)), (PTL_UDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(D)), (PTL_NYBL));
-ASSERT_PP_EQ((PTL_TYPEOF(255)), (PTL_ATOM));
-ASSERT_PP_EQ((PTL_TYPEOF(255u)), (PTL_UDEC));
-ASSERT_PP_EQ((PTL_TYPEOF(0xFF)), (PTL_IHEX));
-ASSERT_PP_EQ((PTL_TYPEOF(0xFFu)), (PTL_UHEX));
+ASSERT_PP_EQ((PTL_TYPEOF(4095)), (PTL_ATOM));
+ASSERT_PP_EQ((PTL_TYPEOF(4095u)), (PTL_UDEC));
+ASSERT_PP_EQ((PTL_TYPEOF(0xFFF)), (PTL_IHEX));
+ASSERT_PP_EQ((PTL_TYPEOF(0xFFFu)), (PTL_UHEX));
 ASSERT_PP_EQ((PTL_TYPEOF(foo)), (PTL_ATOM));
 ASSERT_PP_EQ((PTL_TYPEOF(foo, bar)), (PTL_SOME));
+ASSERT_PP_EQ((PTL_TYPEOF((A))), (PTL_TUP));
+ASSERT_PP_EQ((PTL_TYPEOF((0, 0, 0))), (PTL_WORD));
+ASSERT_PP_EQ((PTL_TYPEOF((F, F, F))), (PTL_WORD));
 ASSERT_PP_EQ((PTL_TYPEOF()), (PTL_NONE));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
@@ -506,4 +541,30 @@ ASSERT_PP_EQ((PTL_STR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
 ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
 ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
 ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
+
+ASSERT_PP_EQ((PTL_SIZE()), (0u));
+ASSERT_PP_EQ((PTL_SIZE(a)), (1u));
+ASSERT_PP_EQ((PTL_SIZE(a, b)), (2u));
+ASSERT_PP_EQ((PTL_SIZE(, )), (2u));
+ASSERT_PP_EQ((PTL_SIZE(a, b, c)), (3u));
+ASSERT_PP_EQ((PTL_SIZE(,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,)), (4095u));
+ASSERT_PP_EQ((PTL_SIZE(, , )), (3u));
+ASSERT_PP_EQ((PTL_SIZE(a, )), (2u));
+ASSERT_PP_EQ((PTL_SIZE(a, , )), (3u));
+ASSERT_PP_EQ((PTL_SIZE(, a)), (2u));
+ASSERT_PP_EQ((PTL_SIZE(, a, )), (3u));
+ASSERT_PP_EQ((PTL_SIZE(, , a)), (3u));
+
+ASSERT_PP_EQ((PTL_ITEMS(())), ());
+ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
+ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
+ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
+ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
+ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
+ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
+ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
+ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
+ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
+ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
+ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
 // clang-format on

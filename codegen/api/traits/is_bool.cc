@@ -38,7 +38,7 @@ decltype(is_bool_o) is_bool_o = NIFTY_DEF(is_bool_o);
 decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   docs << "[extends " + is_atom + "] detects if args is a bool (literal '1' or '0').";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
 
   tests << is_bool()         = "0" >> docs;
   tests << is_bool(0)        = "1" >> docs;

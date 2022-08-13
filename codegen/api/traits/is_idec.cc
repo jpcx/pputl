@@ -40,8 +40,8 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
        << "decimals must be smaller than " + int_max + " (" + int_max_s + ")."
        << "negative values must be hex; concatenation with '-' is not supported.";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::hex_length, "F"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
   tests << is_idec("1")            = "1" >> docs;
   tests << is_idec("1u")           = "0" >> docs;

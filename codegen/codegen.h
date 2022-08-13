@@ -70,24 +70,21 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
     {"uint_traits", "utraits"},
 };
 
-// the number of hex digits that describes integers
-// hex representations are fixed at this length
-constexpr std::uint8_t hex_length = 2;
-
-// the number of bits used for signed and unsigned ints
-constexpr std::uint8_t bit_length = hex_length * 4;
+// the number of nybls used to describes integers.
+// hex representations are fixed at this length.
+constexpr std::uint8_t word_size = 3;
+static_assert(word_size >= 1);
+static_assert(word_size <= 3);
 
 constexpr unsigned uint_max = ([] {
   unsigned res{1};
-  for (unsigned i = 0; i < bit_length; ++i)
+  for (unsigned i = 0; i < word_size * 4; ++i)
     res *= 2;
   return res - 1;
 })();
 
 constexpr int int_max = uint_max / 2;
 constexpr int int_min = -((uint_max + 1) / 2);
-
-static_assert(conf::bit_length == conf::hex_length * 4);
 
 // set the case of pputl names.
 // ignores any chars after a backslash.
@@ -132,24 +129,30 @@ constexpr char const project_header[]{
     "//    PREAMBLE                                                             `////\n"
     "//    --------                                                              `///\n"
     "//                                                                           `//\n"
-    "//    Caution:  macros should be used sparingly or not at all if possible.    //\n"
-    "//    C++ has evolved to facilitate  countless  metaprogramming techniques    //\n"
-    "//    that  should be  preferred in most cases,  as they are  predictable,    //\n"
-    "//    type-safe, scoped, and easier to debug. pputl is primarily  intended    //\n"
-    "//    for  research purposes and for various edge cases that still must be    //\n"
-    "//    solved using  text replacement,  such as optimizations that minimize    //\n"
-    "//    template specializations and syntactical boilerplate reductions.        //\n"
+    "//    Macro functions are generally not advisable in production code. They    //\n"
+    "//    are difficult to reason about, pollute the global namespace, and can    //\n"
+    "//    hinder debugging and refactoring efforts.  C++ has evolved to enable    //\n"
+    "//    countless metaprogramming techniques that are preferable.               //\n"
+    "//                                                                            //\n"
+    "//    This library is built to provide a strong, safe set of functionality    //\n"
+    "//    for edge cases that uniquely benefit from text replacement and would   //\n"
+    "//    would otherwise utilize a separate code generation script, including    //\n"
+    "//    test case generation and template specialization minimizations.         //\n"
+    "//                                                                            //\n"
+    "//    At its core, pputl is primarily a research project that explores new    //\n"
+    "//    language possibilities  regarding the reduction of terse syntax  and    //\n"
+    "//    the implementation of various forms of reflection.                      //\n"
     "//                                                                            //\n"
     "//    ABOUT                                                                   //\n"
     "//    -----                                                                   //\n"
     "//                                                                            //\n"
-    "//    pputl is a powerful C++ preprocessor utilities library that provides    //\n"
-    "//    many high-level programming constructs  and 12-bit binary arithmetic    //\n"
-    "//    for both unsigned and signed two's complement integers.                 //\n"
+    "//    pputl  is a powerful, typed C++ preprocessor utilities library  that    //\n"
+    "//    implements many high-level programming constructs,  including 12-bit    //\n"
+    "//    signed and unsigned integers with arithmetic and comparison support.    //\n"
     "//                                                                            //\n"
-    "//    pputl algorithms  are built using a preprocessor syntax manipulation    //\n"
-    "//    technique for constructing inline recursive call stacks that execute    //\n"
-    "//    much faster than mutually-recursive methods.                            //\n"
+    "//    pputl implements  recursive algorithms  by manipulating preprocessor    //\n"
+    "//    syntax to construct inline call stacks that execute much faster than    //\n"
+    "//    mutually-recursive patterns and can be nested indefinitely.             //\n"
     "//                                                                            //\n"
     "//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //\n"
     "//    support (which are guaranteed by C++20) but has no dependencies.        //\n"
@@ -161,50 +164,56 @@ constexpr char const project_header[]{
     "//    -----                                                                   //\n"
     "//    Copy pputl.h and include. The distribution is single-header.            //\n"
     "//                                                                            //\n"
-    "//    Modify the head of codegen/codegen.h  to configure the bit length or    //\n"
-    "//    naming preferences and run `make` to regenerate.                        //\n"
+    "//    Configuration of the word size and naming scheme  can be achieved by    //\n"
+    "//    modifying the head of codegen/codegen.h and running `make`.             //\n"
     "//                                                                            //\n"
     "//    Run `make test` to validate the library on your system.                 //\n"
     "//                                                                            //\n"
+    "//    TERMINOLOGY                                                             //\n"
+    "//    -----------                                                             //\n"
+    "//                                                                            //\n"
+    "//    pputl defines several types  to describe different kinds of variadic    //\n"
+    "//    arguments  (potentially empty,  comma-delimited tokens of any kind).    //\n"
+    "//    Type identification and conversion is used extensively.                 //\n"
+    "//                                                                            //\n"
+    "//    Each type  is represented by  two functions:  a predicate for traits    //\n"
+    "//    testing, and a constructor that validates, converts, or fails.   All    //\n"
+    "//    functions that use these types in their parameter docs  assert their    //\n"
+    "//    argument sanity by calling the appropriate constructor functions.       //\n"
+    "//                                                                            //\n"
+    "//      none: nothing                                                         //\n"
+    "//      some: <abstract> something; not nothing                               //\n"
+    "//       |- any: exactly one generic value                                    //\n"
+    "//          |- atom: a generic value not surrounded by parentheses            //\n"
+    "//          |   |- bool: a literal '1' or '0'                                 //\n"
+    "//          |   |- nybl: a (4-bit) literal uppercase hex digit [e.g. B]       //\n"
+    "//          |   |- int: <abstract> a word-sized signed integer                //\n"
+    "//          |   |   |- idec: a positive 2s-complement decimal int [e.g. 3]    //\n"
+    "//          |   |   |- ihex: a signed hex integer [e.g. 0x861]                //\n"
+    "//          |   |- uint: <abstract> a word-sized unsigned integer             //\n"
+    "//          |       |- udec: an unsigned decimal integer [e.g. 42u]           //\n"
+    "//          |       |- uhex: an unsigned hex integer [e.g. 0x02Au]            //\n"
+    "//          |- tup: parenthesised items [typedocs: tup, (T...), (T, U), etc.] //\n"
+    "//              |- word: a word-sized tup of nybls [e.g. (6, D, 2)]           //\n"
+    "//                                                                            //\n"
     "//    FUNDAMENTALS                                                            //\n"
     "//    ------------                                                            //\n"
+    "//                                                                            //\n"
+    "//    pputl errors execute  an invalid preprocessor operation by using the    //\n"
+    "//    concatenation operator (incorrectly) on a string error message.  All    //\n"
+    "//    errors  triggered by  pputl functions  will include  the macro name,    //\n"
+    "//    a textual description, and its primary expansion arguments.             //\n"
     "//                                                                            //\n"
     "//    Non-nullary API functions are fully variadic and chainable such that    //\n"
     "//    the outputs of one may be used as inputs to another. Parameters must    //\n"
     "//    be fully expanded and distinguishable after the primary expansion.      //\n"
     "//                                                                            //\n"
-    "//    Tuples are used only when necessary.  Most functions that operate on    //\n"
-    "//    generic data ranges  both input and output a variadic argument list.    //\n"
-    "//    Creating a tuple is trivial but extraction costs an expansion.          //\n"
-    "//                                                                            //\n"
-    "//    pputl defines several types and uses type identification and casting    //\n"
-    "//    for control flow and error reporting. See the [type] section.           //\n"
-    "//                                                                            //\n"
-    "//     none: nothing                                                          //\n"
-    "//     some: <abstract> something; not nothing                                //\n"
-    "//      |-any: exactly one generic value                                      //\n"
-    "//         |-tup: anything in parentheses                                     //\n"
-    "//         |-atom: a generic non-tuple value                                  //\n"
-    "//            |- bool: a literal '1' or '0'                                   //\n"
-    "//            |- nybl: a literal uppercase hexadecimal digit (e.g. B)         //\n"
-    "//            |- uint: <abstract> an unsigned integer                         //\n"
-    "//            |   |- udec: an unsigned decimal integer (e.g. 42u)             //\n"
-    "//            |   |- uhex: an unsigned hex integer (e.g. 0x02Au)              //\n"
-    "//            |- int: <abstract> a signed integer                             //\n"
-    "//                |- idec: a positive 2s-complement decimal int (e.g. 353)    //\n"
-    "//                |- ihex: a signed hex integer (e.g. 0x161)                  //\n"
-    "//                                                                            //\n"
     "//    Hexadecimal integers are always represented by fixed-length strings.    //\n"
     "//    Negative ints cannot be represented in decimal  due to concatenation    //\n"
     "//    restrictions. Arithmetic and bitwise functions attempt to cast their    //\n"
     "//    results in the same form as their input, but will always return ihex    //\n"
-    "//    when an idec input becomes negative.  Decimal representations can be    //\n"
-    "//    generated for pasting using fmt.paste.                                  //\n"
-    "//                                                                            //\n"
-    "//    pputl errors execute  an invalid preprocessor operation by using the    //\n"
-    "//    concatenation operator (incorrectly) on a string error message.  All    //\n"
-    "//    errors  triggered by  pputl functions  will include  the macro name,   ///\n"
-    "//    a textual description, and the primary expansion arguments.           ////\n"
+    "//    when an idec input becomes negative.  Decimal representations can be   ///\n"
+    "//    generated for pasting using fmt.paste.                                ////\n"
     "//                                                                         /////\n"
     "///////////////////////////////////////////////////////////////////////////// */"};
 

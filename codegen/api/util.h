@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,30 +26,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "traits.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
-//   docs << "extracts uint bits."
-//        << "returns exactly " + bit_length + " (" + std::to_string(conf::bit_length) + ") args.";
-// 
-//   auto hexless1 = "0x" + utl::cat(std::vector<std::string>(conf::hex_length - 1, "F")) + "Eu";
-// 
-//   tests << bits(0) = utl::cat(std::vector<std::string>(conf::bit_length, "0"), ", ") >> docs;
-//   tests << bits(1) =
-//       (utl::cat(std::vector<std::string>(conf::bit_length - 1, "0"), ", ") + ", 1") >> docs;
-//   tests << bits(hexless1) =
-//       (utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"), ", ") + ", 0") >> docs;
-// 
-//   def bits =
-//       def{"x(" + utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ") + ")"} = [&](pack args) {
-//         return utl::cat(args, ", ");
-//       };
-// 
-//   return esc(bits + " " + detail::uint_trait(uhex(args), "HEX_BITS"));
-// });
-// 
-// } // namespace api
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+#include "traits.h"
+#include "type.h"
+
+namespace api {
+
+inline codegen::category<"util"> util;
+
+// TODO: read_int, read_uint
+// TODO: try_cast: attempts to cast arguments with the given ctor.
+//                 will succeed in all reasonable cases except casts from negative
+//                 ihex to idec, in which case the original ihex will be returned.
+//
+// TODO: bin
+//
+// TODO: size should measure tuples; they are easy to create
+
+extern codegen::def<"size(...: v: any...) -> udec"> const&       size;
+extern codegen::def<"items(...: v: tup) -> ...v"> const&         items;
+
+NIFTY_DECL(size);
+NIFTY_DECL(items);
+
+inline codegen::end_category<"util"> util_end;
+
+} // namespace api
