@@ -34,16 +34,13 @@
 //    Macro functions are generally not advisable in production code. They    //
 //    are difficult to reason about, pollute the global namespace, and can    //
 //    hinder debugging and refactoring efforts.  C++ has evolved to enable    //
-//    countless metaprogramming techniques that are preferable.               //
+//    countless metaprogramming techniques that should be preferred.          //
 //                                                                            //
 //    This library is built to provide a strong, safe set of functionality    //
-//    for edge cases that uniquely benefit from text replacement and would   //
-//    would otherwise utilize a separate code generation script, including    //
-//    test case generation and template specialization minimizations.         //
-//                                                                            //
-//    At its core, pputl is primarily a research project that explores new    //
-//    language possibilities  regarding the reduction of terse syntax  and    //
-//    the implementation of various forms of reflection.                      //
+//    for edge cases that uniquely benefit from text replacement and would    //
+//    would otherwise utilize  a separate code generation script,  such as    //
+//    test case generation, reflective structs,  and various optimizations    //
+//    that reduce the number of template specializations.                     //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
@@ -130,6 +127,12 @@
 /// hex representations of integers are fixed at this length.
 /// see the readme code generation section to configure.
 #define PTL_WORD_SIZE /* -> uint */ 3
+
+/// [config.bit_length]
+/// -------------------
+/// the number of bits that can be used to represent pputl integers.
+/// see the readme code generation section to configure.
+#define PTL_BIT_LENGTH /* -> uint */ 12
 
 /// [config.int_min]
 /// ----------------
@@ -1236,34 +1239,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.id]
-/// ---------
-/// identity function. performs one expansion.
-///
-/// PTL_ID()        // <nothing>
-/// PTL_ID(foo)     // foo
-/// PTL_ID(a, b, c) // a, b, c
-#define PTL_ID(/* v: any... */...) /* -> ...v */ __VA_ARGS__
-
-/// [meta.xct]
-/// ----------
-/// counts the number of expansions undergone after expression.
-/// uses mutual recursion; can track any number of expansions.
-/// the number of commas indicates the number of expansions.
-///
-/// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
-/// PTL_STR(PTL_ESC(PTL_XCT))                   // "PPUTLXCT_B ( ,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
-/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
-#define PTL_XCT /* -> xct */ PPUTLXCT_A PTL_LP() /**/, PTL_RP()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
-#define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [compare.lt]
 /// ------------
 /// integral less-than comparison.
@@ -1447,6 +1422,142 @@
 
 #define PPUTLMAX_1(a, b) a
 #define PPUTLMAX_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitget]
+/// ----------------
+/// gets the ith bit from the integer or word.
+/// i must be between 0 and PTL_BIT_LENGTH (12).
+///
+/// PTL_BITGET(2, 9)       // 0
+/// PTL_BITGET(2, 10)      // 1
+/// PTL_BITGET(2, 11)      // 0
+/// PTL_BITGET(0xFFEu, 10) // 1
+/// PTL_BITGET(0xFFEu, 11) // 0
+#define PTL_BITGET(/* v: int|uint|word, i: int|uint */...) /* -> v[i]: bool */ \
+  PPUTLBITGET_o(PTL_ISTR([PTL_BITGET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITGET_o(e, v, i)                                         \
+  PPUTLBITGET_oo(e, PTL_IDEC(i), PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), \
+                 PPUTLBITGET_X(PPUTLBITGET_BIN PTL_WORD(v)))
+#define PPUTLBITGET_oo(...)                                PPUTLBITGET_ooo(__VA_ARGS__)
+#define PPUTLBITGET_ooo(e, i, gelt, ...)                   PPUTLBITGET_ooo_##gelt(e, i, __VA_ARGS__)
+#define PPUTLBITGET_ooo_1(e, i, ...)                       PPUTLBITGET_##i(__VA_ARGS__)
+#define PPUTLBITGET_ooo_0(e, ...)                          PTL_FAIL(e)
+#define PPUTLBITGET_11(a, b, c, d, e, f, g, h, i, j, k, l) l
+#define PPUTLBITGET_10(a, b, c, d, e, f, g, h, i, j, k, l) k
+#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  j
+#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j, k, l)  i
+#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j, k, l)  h
+#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j, k, l)  g
+#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j, k, l)  f
+#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j, k, l)  e
+#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j, k, l)  d
+#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  c
+#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  b
+#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  a
+#define PPUTLBITGET_BIN(a, b, c)                                              \
+  PTL_ESC PPUTLIMPL_NYBL_TRAIT(a, BIN), PTL_ESC PPUTLIMPL_NYBL_TRAIT(b, BIN), \
+      PTL_ESC PPUTLIMPL_NYBL_TRAIT(c, BIN)
+#define PPUTLBITGET_X(...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitset]
+/// ----------------
+/// sets the ith bit of the integer or word to b.
+/// i must be between 0 and PTL_BIT_LENGTH (12).
+///
+/// PTL_BITSET(0, 10, 1) // (0, 0, 2)
+/// PTL_BITSET(1u, 9, 1) // (0, 0, 5)
+/// PTL_BITSET(5, 7, 1)  // (0, 1, 5)
+#define PTL_BITSET(/* v: int|uint|word, i: int|uint, b: bool */...) /* -> (v[i] = b): word */ \
+  PPUTLBITSET_o(PTL_ISTR([PTL_BITGET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITSET_o(e, v, i, b)                                                   \
+  PPUTLBITSET_oo(e, PTL_IDEC(i), PTL_BOOL(b), PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), \
+                 PPUTLBITSET_X(PPUTLBITSET_BIN PTL_WORD(v)))
+#define PPUTLBITSET_oo(...)                 PPUTLBITSET_ooo(__VA_ARGS__)
+#define PPUTLBITSET_ooo(e, i, b, gelt, ...) PPUTLBITSET_ooo_##gelt(e, i, b, __VA_ARGS__)
+#define PPUTLBITSET_ooo_1(e, i, b, ...)     PPUTLBITSET_##i(b, __VA_ARGS__)
+#define PPUTLBITSET_ooo_0(e, ...)           PTL_FAIL(e)
+#define PPUTLBITSET_11(l, a, b, c, d, e, f, g, h, i, j, k, _) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_10(k, a, b, c, d, e, f, g, h, i, j, _, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_9(j, a, b, c, d, e, f, g, h, i, _, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_8(i, a, b, c, d, e, f, g, h, _, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_7(h, a, b, c, d, e, f, g, _, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_6(g, a, b, c, d, e, f, _, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_5(f, a, b, c, d, e, _, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_4(e, a, b, c, d, _, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_3(d, a, b, c, _, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_2(c, a, b, _, d, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_1(b, a, _, c, d, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_0(a, _, b, c, d, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_BIN(a, b, c)                                              \
+  PTL_ESC PPUTLIMPL_NYBL_TRAIT(a, BIN), PTL_ESC PPUTLIMPL_NYBL_TRAIT(b, BIN), \
+      PTL_ESC PPUTLIMPL_NYBL_TRAIT(c, BIN)
+#define PPUTLBITSET_X(...) __VA_ARGS__
+#define PPUTLBITSET_N1111  F
+#define PPUTLBITSET_N1110  E
+#define PPUTLBITSET_N1101  D
+#define PPUTLBITSET_N1100  C
+#define PPUTLBITSET_N1011  B
+#define PPUTLBITSET_N1010  A
+#define PPUTLBITSET_N1001  9
+#define PPUTLBITSET_N1000  8
+#define PPUTLBITSET_N0111  7
+#define PPUTLBITSET_N0110  6
+#define PPUTLBITSET_N0101  5
+#define PPUTLBITSET_N0100  4
+#define PPUTLBITSET_N0011  3
+#define PPUTLBITSET_N0010  2
+#define PPUTLBITSET_N0001  1
+#define PPUTLBITSET_N0000  0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [meta.id]
+/// ---------
+/// identity function. performs one expansion.
+///
+/// PTL_ID()        // <nothing>
+/// PTL_ID(foo)     // foo
+/// PTL_ID(a, b, c) // a, b, c
+#define PTL_ID(/* v: any... */...) /* -> ...v */ __VA_ARGS__
+
+/// [meta.xct]
+/// ----------
+/// counts the number of expansions undergone after expression.
+/// uses mutual recursion; can track any number of expansions.
+/// the number of commas indicates the number of expansions.
+///
+/// PTL_STR(PTL_XCT)                            // "PPUTLXCT_A ( , )"
+/// PTL_STR(PTL_ESC(PTL_XCT))                   // "PPUTLXCT_B ( ,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))          // "PPUTLXCT_A ( ,,, )"
+/// PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT)))) // "PPUTLXCT_B ( ,,,, )"
+#define PTL_XCT /* -> xct */ PPUTLXCT_A PTL_LP() /**/, PTL_RP()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
+#define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

@@ -25,73 +25,154 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include <span>
-// 
-// #include "bitwise.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(bitset_) bitset_ = NIFTY_DEF(bitset_, [&](va args) {
-//   docs << "sets the ith bit in the uint to b."
-//        << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ")."
-//        << "returns the same int representation as its input (unless v becomes negative).";
-// 
-//   auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
-//   auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
-// 
-//   tests << bitset_(0, conf::bit_length - 2, 1)      = "2" >> docs;
-//   tests << bitset_(1, conf::bit_length - 3, 1)      = "5" >> docs;
-//   tests << bitset_(binmax, conf::bit_length - 1, 0) = binmaxminus1 >> docs;
-// 
-//   auto params_v = utl::alpha_base52_seq(conf::bit_length);
-//   auto params   = std::deque<std::string>{params_v.begin(), params_v.end()};
-//   params.push_front("a");
-//   for (auto&& v : params) {
-//     if (v == "b")
-//       v = "B";
-//     else if (v == "u")
-//       v = "U";
-//     else if (v == "B")
-//       v = "_B";
-//     else if (v == "U")
-//       v = "_U";
-//   }
-//   auto bitswapped = [&](unsigned i) -> std::string {
-//     auto cpy   = params;
-//     cpy[0]     = cpy[i + 1];
-//     cpy[i + 1] = '_';
-//     return utl::cat(cpy, ", ");
-//   };
-// 
-//   def _0 = def{"0(" + bitswapped(0) + ")"} = [&](pack args) {
-//     auto rest_bits = std::vector<std::string>{args.begin() + 2, args.end()};
-//     return pp::cat("0b", args[0], pp::cat(rest_bits), "u");
-//   };
-// 
-//   {
-//     std::size_t i = 1;
-// 
-//     for (; i < conf::bit_length - 1; ++i) {
-//       def{std::to_string(i) + "(" + bitswapped(i) + ")"} = [&](pack args) {
-//         auto first_bits = std::vector<std::string>{args.begin() + 1, args.begin() + 1 + i};
-//         auto rest_bits  = std::vector<std::string>{args.begin() + 2 + i, args.end()};
-//         return pp::cat("0b", pp::cat(first_bits), args[0], pp::cat(rest_bits), "u");
-//       };
-//     }
-// 
-//     def{std::to_string(i) + "(" + bitswapped(i) + ")"} = [&](pack args) {
-//       auto first_bits = std::vector<std::string>{args.begin() + 1, args.begin() + 1 + i};
-//       return pp::cat("0b", pp::cat(first_bits), args[0], "u");
-//     };
-//   }
-// 
-//   return def<"o(v, i, b)">{[&](arg v, arg i, arg b) {
-//     return pp::call(typeof(v), def<"o(b, op, ...)">{[&](arg b, arg op, va args) {
-//                       return pp::call(op, b, args);
-//                     }}(b, cat(utl::slice(_0, -1), ibase10(i)), bits(v)));
-//   }}(args);
-// });
-// 
-// } // namespace api
+#include <span>
+
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
+  docs << "sets the ith bit of the integer or word to b."
+       << "i must be between 0 and " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
+
+  /* auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u"; */
+  /* auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) +
+   * "0u"; */
+
+  auto zero   = std::vector<std::string>(conf::word_size, "0");
+  auto two    = zero;
+  two.back()  = "2";
+  auto five   = zero;
+  five.back() = "5";
+  auto _21    = zero;
+  if constexpr (conf::word_size > 1) {
+    *(_21.rbegin() + 1) = "1";
+    *(_21.rbegin() + 0) = "5";
+  }
+
+  tests << bitset(0, conf::bit_length - 2, 1)    = pp::tup(two) >> docs;
+  tests << bitset("1u", conf::bit_length - 3, 1) = pp::tup(five) >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << bitset(5, conf::bit_length - 5, 1) = pp::tup(_21) >> docs;
+
+  std::vector<std::string> params{"_"};
+  std::ranges::copy(utl::alpha_base52_seq(conf::bit_length), std::back_inserter(params));
+
+  def<"n0000"> n0000 = [&] {
+    return "0";
+  };
+
+  def<"n0001">{} = [&] {
+    return "1";
+  };
+
+  def<"n0010">{} = [&] {
+    return "2";
+  };
+
+  def<"n0011">{} = [&] {
+    return "3";
+  };
+
+  def<"n0100">{} = [&] {
+    return "4";
+  };
+
+  def<"n0101">{} = [&] {
+    return "5";
+  };
+
+  def<"n0110">{} = [&] {
+    return "6";
+  };
+
+  def<"n0111">{} = [&] {
+    return "7";
+  };
+
+  def<"n1000">{} = [&] {
+    return "8";
+  };
+
+  def<"n1001">{} = [&] {
+    return "9";
+  };
+
+  def<"n1010">{} = [&] {
+    return "A";
+  };
+
+  def<"n1011">{} = [&] {
+    return "B";
+  };
+
+  def<"n1100">{} = [&] {
+    return "C";
+  };
+
+  def<"n1101">{} = [&] {
+    return "D";
+  };
+
+  def<"n1110">{} = [&] {
+    return "E";
+  };
+
+  def<"n1111">{} = [&] {
+    return "F";
+  };
+
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
+
+  def bin =
+      def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
+        std::vector<std::string> res{};
+        std::ranges::transform(args, std::back_inserter(res), [&](auto&& v) {
+          return esc + " " + impl::nybl_trait(v, "BIN");
+        });
+        return utl::cat(res, ", ");
+      };
+
+  std::array<std::string, conf::word_size> res{};
+  for (std::size_t i = 0; i < res.size(); ++i) {
+    res[i] =
+        pp::cat(utl::slice(n0000, -4),
+                pp::cat(utl::alpha_base52_seq(4, std::string{static_cast<char>('a' + i * 4)})));
+  }
+
+  auto p0 = params;
+  std::swap(p0[0], p0[1]);
+  def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) {
+    return pp::tup(res);
+  };
+
+  for (std::size_t i = 1; i < conf::bit_length; ++i) {
+    auto pn = params;
+    std::swap(pn[0], pn[i + 1]);
+    def{"" + std::to_string(i) + "(" + utl::cat(pn, ", ") + ")"} = [&](pack) {
+      return pp::tup(res);
+    };
+  }
+
+  return def<"o(e, v, i, b)">{[&](arg e, arg v, arg i, arg b) {
+    return def<"<o(...)">{[&](va args) {
+      return def<"<o(e, i, b, gelt, ...)">{[&](arg e, arg i, arg b, arg gelt, va args) {
+        def<"0(e, ...)"> gelt0 = [&](arg e, va) {
+          return fail(e);
+        };
+
+        def<"1(e, i, b, ...)">{} = [&](arg, arg i, arg b, va args) {
+          return pp::call(pp::cat(utl::slice(_0, -1), i), b, args);
+        };
+
+        return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, b, args);
+      }}(args);
+    }}(e, idec(i), bool_(b), and_(ge(i, 0), lt(i, conf::bit_length)), x(bin + " " + word(v)));
+  }}(istr("[" + bitget + "] invalid index; args : " + args), args);
+});
+
+} // namespace api

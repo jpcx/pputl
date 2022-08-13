@@ -32,16 +32,13 @@
 //    Macro functions are generally not advisable in production code. They    //
 //    are difficult to reason about, pollute the global namespace, and can    //
 //    hinder debugging and refactoring efforts.  C++ has evolved to enable    //
-//    countless metaprogramming techniques that are preferable.               //
+//    countless metaprogramming techniques that should be preferred.          //
 //                                                                            //
 //    This library is built to provide a strong, safe set of functionality    //
-//    for edge cases that uniquely benefit from text replacement and would   //
-//    would otherwise utilize a separate code generation script, including    //
-//    test case generation and template specialization minimizations.         //
-//                                                                            //
-//    At its core, pputl is primarily a research project that explores new    //
-//    language possibilities  regarding the reduction of terse syntax  and    //
-//    the implementation of various forms of reflection.                      //
+//    for edge cases that uniquely benefit from text replacement and would    //
+//    would otherwise utilize  a separate code generation script,  such as    //
+//    test case generation, reflective structs,  and various optimizations    //
+//    that reduce the number of template specializations.                     //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
@@ -533,15 +530,6 @@ ASSERT_PP_EQ((PTL_XNOR(0, 1)), (0));
 ASSERT_PP_EQ((PTL_XNOR(1, 0)), (0));
 ASSERT_PP_EQ((PTL_XNOR(1, 1)), (1));
 
-ASSERT_PP_EQ((PTL_ID()), ());
-ASSERT_PP_EQ((PTL_ID(foo)), (foo));
-ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
-
-ASSERT_PP_EQ((PTL_STR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
-
 ASSERT_PP_EQ((PTL_LT(0, 0)), (0));
 ASSERT_PP_EQ((PTL_LT(0, 1)), (1));
 ASSERT_PP_EQ((PTL_LT(7u, 8u)), (1));
@@ -685,6 +673,25 @@ ASSERT_PP_EQ((PTL_MAX(2047u, 2048u)), (2048u));
 ASSERT_PP_EQ((PTL_MAX(1023, 1022)), (1023));
 ASSERT_PP_EQ((PTL_MAX(1023, 1023)), (1023));
 ASSERT_PP_EQ((PTL_MAX(1023, 1024)), (1024));
+
+ASSERT_PP_EQ((PTL_BITGET(2, 9)), (0));
+ASSERT_PP_EQ((PTL_BITGET(2, 10)), (1));
+ASSERT_PP_EQ((PTL_BITGET(2, 11)), (0));
+ASSERT_PP_EQ((PTL_BITGET(0xFFEu, 10)), (1));
+ASSERT_PP_EQ((PTL_BITGET(0xFFEu, 11)), (0));
+
+ASSERT_PP_EQ((PTL_BITSET(0, 10, 1)), ((0, 0, 2)));
+ASSERT_PP_EQ((PTL_BITSET(1u, 9, 1)), ((0, 0, 5)));
+ASSERT_PP_EQ((PTL_BITSET(5, 7, 1)), ((0, 1, 5)));
+
+ASSERT_PP_EQ((PTL_ID()), ());
+ASSERT_PP_EQ((PTL_ID(foo)), (foo));
+ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
+
+ASSERT_PP_EQ((PTL_STR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
+ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
 
 ASSERT_PP_EQ((PTL_SIZE(())), (0u));
 ASSERT_PP_EQ((PTL_SIZE((a))), (1u));
