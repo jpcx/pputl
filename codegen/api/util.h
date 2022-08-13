@@ -36,17 +36,14 @@ namespace api {
 
 inline codegen::category<"util"> util;
 
-// TODO: read_int, read_uint
 // TODO: try_cast: attempts to cast arguments with the given ctor.
 //                 will succeed in all reasonable cases except casts from negative
 //                 ihex to idec, in which case the original ihex will be returned.
 //
 // TODO: bin
-//
-// TODO: size should measure tuples; they are easy to create
 
-extern codegen::def<"size(...: v: any...) -> udec"> const&       size;
-extern codegen::def<"items(...: v: tup) -> ...v"> const&         items;
+extern codegen::def<"size(...: v: tup) -> udec"> const&  size;
+extern codegen::def<"items(...: v: tup) -> ...v"> const& items;
 
 NIFTY_DECL(size);
 NIFTY_DECL(items);

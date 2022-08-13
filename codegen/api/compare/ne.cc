@@ -25,39 +25,39 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "compare.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(ne) ne = NIFTY_DEF(ne, [&](va args) {
-//   docs << "integral not-equal-to comparison."
-//        << "prohibits comparison of different signedness.";
-// 
-//   using std::to_string;
-//   using conf::uint_max;
-//   using conf::int_max;
-// 
-//   tests << ne("0, 0")                                                             = "0" >> docs;
-//   tests << ne("0, 1")                                                             = "1" >> docs;
-//   tests << ne("7u, 8u")                                                           = "1" >> docs;
-//   tests << ne("8u, 7u")                                                           = "1";
-//   tests << ne(int_(uint_max_s), "0")                                              = "1" >> docs;
-//   tests << ne(int_max_s, int_min_s)                                               = "1" >> docs;
-//   tests << ne(int_min_s, int_max_s)                                               = "1";
-//   tests << ne(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
-//   tests << ne(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "1" >> docs;
-//   tests << ne("0u", uint_max_s)                                                   = "1";
-//   tests << ne(uint_max_s, "0u")                                                   = "1";
-//   tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
-//   tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
-//   tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";
-//   tests << ne(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "1";
-//   tests << ne(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
-//   tests << ne(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
-// 
-//   return not_(eq(args));
-// });
-// 
-// } // namespace api
+#include "compare.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(ne) ne = NIFTY_DEF(ne, [&](va args) {
+  docs << "integral not-equal-to comparison."
+       << "prohibits comparison of different signedness.";
+
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
+
+  tests << ne("0, 0")                                                             = "0" >> docs;
+  tests << ne("0, 1")                                                             = "1" >> docs;
+  tests << ne("7u, 8u")                                                           = "1" >> docs;
+  tests << ne("8u, 7u")                                                           = "1";
+  tests << ne(int_(uint_max_s), "0")                                              = "1" >> docs;
+  tests << ne(int_max_s, int_min_s)                                               = "1" >> docs;
+  tests << ne(int_min_s, int_max_s)                                               = "1";
+  tests << ne(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
+  tests << ne(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "1" >> docs;
+  tests << ne("0u", uint_max_s)                                                   = "1";
+  tests << ne(uint_max_s, "0u")                                                   = "1";
+  tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
+  tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
+  tests << ne(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";
+  tests << ne(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "1";
+  tests << ne(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
+  tests << ne(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
+
+  return not_(eq(args));
+});
+
+} // namespace api

@@ -32,21 +32,21 @@ namespace api {
 using namespace codegen;
 
 decltype(size) size = NIFTY_DEF(size, [&](va args) {
-  docs << "O(1) variadic argument size computation."
-       << "fails if too many args passed.";
+  docs << "tuple size detection."
+       << "fails if larger than " + uint_max + " (" + std::to_string(conf::uint_max) + ")";
 
-  tests << size()                                                         = "0u" >> docs;
-  tests << size("a")                                                      = "1u" >> docs;
-  tests << size("a, b")                                                   = "2u" >> docs;
-  tests << size("a, b, c")                                                = "3u";
-  tests << size(utl::cat(std::array<std::string, conf::uint_max>{}, ",")) = uint_max_s;
-  tests << size(", ")                                                     = "2u" >> docs;
-  tests << size(", , ")                                                   = "3u";
-  tests << size("a, ")                                                    = "2u";
-  tests << size("a, , ")                                                  = "3u";
-  tests << size(", a")                                                    = "2u";
-  tests << size(", a, ")                                                  = "3u";
-  tests << size(", , a")                                                  = "3u";
+  tests << size(pp::tup())                                                         = "0u" >> docs;
+  tests << size(pp::tup("a"))                                                      = "1u" >> docs;
+  tests << size(pp::tup("a, b"))                                                   = "2u" >> docs;
+  tests << size(pp::tup("a, b, c"))                                                = "3u";
+  tests << size(pp::tup(utl::cat(std::array<std::string, conf::uint_max>{}, ","))) = uint_max_s;
+  tests << size(pp::tup(", "))                                                     = "2u" >> docs;
+  tests << size(pp::tup(", , "))                                                   = "3u";
+  tests << size(pp::tup("a, "))                                                    = "2u";
+  tests << size(pp::tup("a, , "))                                                  = "3u";
+  tests << size(pp::tup(", a"))                                                    = "2u";
+  tests << size(pp::tup(", a, "))                                                  = "3u";
+  tests << size(pp::tup(", , a"))                                                  = "3u";
 
   def read =
       def{"read(_err, " + utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ") + ", _sz, ...)"};
@@ -78,15 +78,17 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
         args.front(), sz);
   };
 
-  return def<"x(_err, _, ...)">{[&](arg _err, arg _, va args) {
-    auto rseq = utl::base10_seq(conf::uint_max + 1);
-    for (auto&& v : rseq)
-      v = v + "u";
-    std::ranges::reverse(rseq);
-    for (auto&& v : rseq)
-      v = pp::call(_, v);
-    return read(_err, args + " " + pp::va_opt(", ") + " " + utl::cat(rseq, ", "));
-  }}(istr("[" + size + "] too many args : " + args), prefix, args);
+  return def<"o(...)">{[&](va args) {
+    return def<"<o(e, _, ...)">{[&](arg e, arg op, va args) {
+      auto rseq = utl::base10_seq(conf::uint_max + 1);
+      for (auto&& v : rseq)
+        v = v + "u";
+      std::ranges::reverse(rseq);
+      for (auto&& v : rseq)
+        v = pp::call(op, v);
+      return read(e, args + " " + pp::va_opt(", ") + " " + utl::cat(rseq, ", "));
+    }}(args);
+  }}(istr("[" + size + "] tuple too large : " + args), prefix, esc + " " + tup(args));
 });
 
 } // namespace api

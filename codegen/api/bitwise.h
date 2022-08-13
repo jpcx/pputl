@@ -26,21 +26,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "codegen.h"
-// #include "compare.h"
-// #include "config.h"
-// #include "lang.h"
-// #include "logic.h"
-// #include "traits.h"
-// #include "type.h"
-// 
-// namespace api {
-// 
-// inline codegen::category<"bitwise"> bitwise;
-// 
-// // TODO: bitzip
-// 
-// extern codegen::def<"bitget(...: v: uint|int, i: int) -> v[i]: bool"> const& bitget_;
+#include "codegen.h"
+#include "compare.h"
+#include "config.h"
+#include "lang.h"
+#include "logic.h"
+#include "traits.h"
+#include "type.h"
+
+namespace api {
+
+inline codegen::category<"bitwise"> bitwise;
+
+// TODO: bitzip
+
+extern codegen::def<"bitget(...: v: uint|int, i: int) -> v[i]: bool"> const& bitget;
 // extern codegen::def<"bitset(...: v: uint|int, i: int, b: bool) -> (v[i] = b): typeof(v)"> const&
 //     bitset_;
 // extern codegen::def<"bitflip(...: v: uint|int, i: int) -> (v[i] = !v[i]): typeof(v)"> const&
@@ -48,13 +48,13 @@
 // extern codegen::def<"bitnot(...: v: uint|int) -> ~v: typeof(v)"> const& bitnot_;
 // extern codegen::def<"bitshift_left(...: v: uint|int, ct: ibase10) -> (v << i): typeof(v)"> const&
 //     bitshift_left_;
-// 
-// NIFTY_DECL(bitget_);
+
+NIFTY_DECL(bitget);
 // NIFTY_DECL(bitset_);
 // NIFTY_DECL(bitflip_);
 // NIFTY_DECL(bitnot_);
 // NIFTY_DECL(bitshift_left_);
-// 
-// inline codegen::end_category<"bitwise"> bitwise_end;
-// 
-// } // namespace api
+
+inline codegen::end_category<"bitwise"> bitwise_end;
+
+} // namespace api

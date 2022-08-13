@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
-  docs << "[inherits from " + any + "] tuple type (any...)."
+  docs << "[inherits from " + any + "] tuple type (parenthesized args)."
        << "expands to t if valid, else fails.";
 
   tests << tup(pp::tup())     = "()" >> docs;

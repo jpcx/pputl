@@ -626,7 +626,7 @@
 
 /// [traits.is_tup]
 /// ---------------
-/// [extends PTL_IS_ANY] detects if args is a tuple (any...).
+/// [extends PTL_IS_ANY] detects if args is a tuple (parenthesized args).
 ///
 /// PTL_IS_TUP()       // 0
 /// PTL_IS_TUP(1, 2)   // 0
@@ -979,7 +979,7 @@
 
 /// [type.tup]
 /// ----------
-/// [inherits from PTL_ANY] tuple type (any...).
+/// [inherits from PTL_ANY] tuple type (parenthesized args).
 /// expands to t if valid, else fails.
 ///
 /// PTL_TUP(())     // ()
@@ -1264,23 +1264,212 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [util.size]
-/// -----------
-/// O(1) variadic argument size computation.
-/// fails if too many args passed.
+/// [compare.lt]
+/// ------------
+/// integral less-than comparison.
+/// prohibits comparison of different signedness.
 ///
-/// PTL_SIZE()     // 0u
-/// PTL_SIZE(a)    // 1u
-/// PTL_SIZE(a, b) // 2u
-/// PTL_SIZE(, )   // 2u
-#define PTL_SIZE(/* v: any... */...) /* -> udec */ \
-  PPUTLSIZE_X(PTL_ISTR([PTL_SIZE] too many args : __VA_ARGS__), PPUTLSIZE, __VA_ARGS__)
+/// PTL_LT(0, 0)                  // 0
+/// PTL_LT(0, 1)                  // 1
+/// PTL_LT(7u, 8u)                // 1
+/// PTL_LT(PTL_INT(4095u), 0)     // 1
+/// PTL_LT(2047, 0x800)           // 0
+/// PTL_LT(0x800, PTL_INT(2048u)) // 0
+/// PTL_LT(0x800, PTL_INT(2049u)) // 1
+#define PTL_LT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l < r} */                   \
+  PPUTLLT_o(__VA_ARGS__)(PTL_ISTR([PTL_LT] one or more invalid integer                    \
+                                  : __VA_ARGS__),                                         \
+                         PTL_ISTR([PTL_LT] comparison of different signedness not allowed \
+                                  : __VA_ARGS__),                                         \
+                         __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSIZE_X(_err, _, ...)                                                                  \
+#define PPUTLLT_o(l, r) PPUTLLT_oo(PTL_IS_INT(l), PTL_IS_INT(r), PTL_IS_UINT(l), PTL_IS_UINT(r))
+
+#define PPUTLLT_oo(...)                PPUTLLT_ooo(__VA_ARGS__)
+#define PPUTLLT_ooo(il, ir, ul, ur)    PPUTLLT_ooo_##il##ir##ul##ur
+#define PPUTLLT_ooo_1100(e0, e1, l, r) PPUTLLT_ICMP(PTL_WORD(l), PTL_WORD(r))
+#define PPUTLLT_ooo_1001(e0, e1, l, r) PTL_FAIL(e1)
+#define PPUTLLT_ooo_1000(e0, e1, l, r) PTL_FAIL(e0)
+#define PPUTLLT_ooo_0110(e0, e1, l, r) PTL_FAIL(e1)
+#define PPUTLLT_ooo_0100(e0, e1, l, r) PTL_FAIL(e0)
+#define PPUTLLT_ooo_0011(e0, e1, l, r) PPUTLLT_UCMP(PTL_ESC PTL_WORD(l), PTL_ESC PTL_WORD(r))
+#define PPUTLLT_ooo_0010(e0, e1, l, r) PTL_FAIL(e0)
+#define PPUTLLT_ooo_0001(e0, e1, l, r) PTL_FAIL(e0)
+#define PPUTLLT_ooo_0000(e0, e1, l, r) PTL_FAIL(e0)
+#define PPUTLLT_ICMP(lw, rw)                                                          \
+  PTL_CAT(PPUTLLT_ICMP_, PTL_CAT(PPUTLIMPL_NYBL_TRAIT(PTL_ESC(PTL_IFIRST lw), ILTZ),  \
+                                 PPUTLIMPL_NYBL_TRAIT(PTL_ESC(PTL_IFIRST rw), ILTZ))) \
+  (lw, rw)
+#define PPUTLLT_ICMP_11(lw, rw) PPUTLLT_UCMP(PTL_ESC lw, PTL_ESC rw)
+#define PPUTLLT_ICMP_10(lw, rw) 1
+#define PPUTLLT_ICMP_01(lw, rw) 0
+#define PPUTLLT_ICMP_00(lw, rw) PPUTLLT_UCMP(PTL_ESC lw, PTL_ESC rw)
+
+#define PPUTLLT_UCMP(...) PTL_FIRST(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(0, 0, PPUTLLT_ZIP(__VA_ARGS__)))))
+
+#define PPUTLLT_ZIP(...)                PPUTLLT_ZIP_o(__VA_ARGS__)
+#define PPUTLLT_ZIP_o(a, b, c, d, e, f) a, d, b, e, c, f
+#define PPUTLLT_R(...)                  PPUTLLT_R_o(__VA_ARGS__)
+#define PPUTLLT_R_o(fl, fg, a, b, ...)                            \
+  PTL_CAT(PPUTLLT_##fl##fg, PPUTLIMPL_NYBL_PAIR_TRAIT(a##b, LT)), \
+      PTL_CAT(PPUTLLT_##fg##fl, PPUTLIMPL_NYBL_PAIR_TRAIT(b##a, LT)), __VA_ARGS__
+#define PPUTLLT_111 1
+#define PPUTLLT_110 1
+#define PPUTLLT_101 1
+#define PPUTLLT_100 1
+#define PPUTLLT_011 0
+#define PPUTLLT_010 0
+#define PPUTLLT_001 1
+#define PPUTLLT_000 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.gt]
+/// ------------
+/// integral greater-than comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_GT(0, 0)                  // 0
+/// PTL_GT(0, 1)                  // 0
+/// PTL_GT(7u, 8u)                // 0
+/// PTL_GT(PTL_INT(4095u), 0)     // 0
+/// PTL_GT(2047, 0x800)           // 1
+/// PTL_GT(0x800, PTL_INT(2048u)) // 0
+/// PTL_GT(0x800, PTL_INT(2049u)) // 0
+#define PTL_GT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLGT_X(l, r) PTL_LT(r, l)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.le]
+/// ------------
+/// integral less-than-or-equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_LE(0, 0)                  // 1
+/// PTL_LE(0, 1)                  // 1
+/// PTL_LE(7u, 8u)                // 1
+/// PTL_LE(PTL_INT(4095u), 0)     // 1
+/// PTL_LE(2047, 0x800)           // 0
+/// PTL_LE(0x800, PTL_INT(2048u)) // 1
+/// PTL_LE(0x800, PTL_INT(2049u)) // 1
+#define PTL_LE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l <= r} */ \
+  PTL_NOT(PTL_GT(__VA_ARGS__))
+
+/// [compare.ge]
+/// ------------
+/// integral greater-than-or-equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_GE(0, 0)                  // 1
+/// PTL_GE(0, 1)                  // 0
+/// PTL_GE(7u, 8u)                // 0
+/// PTL_GE(PTL_INT(4095u), 0)     // 0
+/// PTL_GE(2047, 0x800)           // 1
+/// PTL_GE(0x800, PTL_INT(2048u)) // 1
+/// PTL_GE(0x800, PTL_INT(2049u)) // 0
+#define PTL_GE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l >= r} */ \
+  PTL_NOT(PTL_LT(__VA_ARGS__))
+
+/// [compare.eq]
+/// ------------
+/// integral equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_EQ(0, 0)                  // 1
+/// PTL_EQ(0, 1)                  // 0
+/// PTL_EQ(7u, 8u)                // 0
+/// PTL_EQ(PTL_INT(4095u), 0)     // 0
+/// PTL_EQ(2047, 0x800)           // 0
+/// PTL_EQ(0x800, PTL_INT(2048u)) // 1
+/// PTL_EQ(0x800, PTL_INT(2049u)) // 0
+#define PTL_EQ(/* l: int|uint, r: typeof(l) */...) /* -> bool{l == r} */ \
+  PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
+
+/// [compare.ne]
+/// ------------
+/// integral not-equal-to comparison.
+/// prohibits comparison of different signedness.
+///
+/// PTL_NE(0, 0)                  // 0
+/// PTL_NE(0, 1)                  // 1
+/// PTL_NE(7u, 8u)                // 1
+/// PTL_NE(PTL_INT(4095u), 0)     // 1
+/// PTL_NE(2047, 0x800)           // 1
+/// PTL_NE(0x800, PTL_INT(2048u)) // 0
+/// PTL_NE(0x800, PTL_INT(2049u)) // 1
+#define PTL_NE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l != r} */ \
+  PTL_NOT(PTL_EQ(__VA_ARGS__))
+
+/// [compare.min]
+/// -------------
+/// integral minimum operation.
+/// prohibits comparison of different signedness.
+///
+/// PTL_MIN(0, 0)                  // 0
+/// PTL_MIN(0, 1)                  // 0
+/// PTL_MIN(7u, 8u)                // 7u
+/// PTL_MIN(PTL_INT(4095u), 0)     // 0xFFF
+/// PTL_MIN(2047, 0x800)           // 0x800
+/// PTL_MIN(0x800, PTL_INT(2048u)) // 0x800
+/// PTL_MIN(0x800, PTL_INT(2049u)) // 0x800
+#define PTL_MIN(/* l: int|uint, r: typeof(l) */...) /* -> a < b ? a : b */ \
+  PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMIN_1(a, b) a
+#define PPUTLMIN_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [compare.max]
+/// -------------
+/// integral maximum operation.
+/// prohibits comparison of different signedness.
+///
+/// PTL_MAX(0, 0)                  // 0
+/// PTL_MAX(0, 1)                  // 1
+/// PTL_MAX(7u, 8u)                // 8u
+/// PTL_MAX(PTL_INT(4095u), 0)     // 0
+/// PTL_MAX(2047, 0x800)           // 2047
+/// PTL_MAX(0x800, PTL_INT(2048u)) // 0x800
+/// PTL_MAX(0x800, PTL_INT(2049u)) // 0x801
+#define PTL_MAX(/* l: int|uint, r: typeof(l) */...) /* -> a > b ? a : b */ \
+  PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMAX_1(a, b) a
+#define PPUTLMAX_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [util.size]
+/// -----------
+/// tuple size detection.
+/// fails if larger than PTL_UINT_MAX (4095)
+///
+/// PTL_SIZE(())     // 0u
+/// PTL_SIZE((a))    // 1u
+/// PTL_SIZE((a, b)) // 2u
+/// PTL_SIZE((, ))   // 2u
+#define PTL_SIZE(/* v: tup */...) /* -> udec */   \
+  PPUTLSIZE_o(PTL_ISTR([PTL_SIZE] tuple too large \
+                       : __VA_ARGS__),            \
+              PPUTLSIZE, PTL_ESC PTL_TUP(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLSIZE_o(...) PPUTLSIZE_oo(__VA_ARGS__)
+#define PPUTLSIZE_oo(e, _, ...)                                                                    \
   PPUTLSIZE_READ(                                                                                  \
-      _err, __VA_ARGS__ __VA_OPT__(, ) _(4095u), _(4094u), _(4093u), _(4092u), _(4091u), _(4090u), \
+      e, __VA_ARGS__ __VA_OPT__(, ) _(4095u), _(4094u), _(4093u), _(4092u), _(4091u), _(4090u),    \
       _(4089u), _(4088u), _(4087u), _(4086u), _(4085u), _(4084u), _(4083u), _(4082u), _(4081u),    \
       _(4080u), _(4079u), _(4078u), _(4077u), _(4076u), _(4075u), _(4074u), _(4073u), _(4072u),    \
       _(4071u), _(4070u), _(4069u), _(4068u), _(4067u), _(4066u), _(4065u), _(4064u), _(4063u),    \
@@ -1954,34 +2143,35 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_NYBL_TRAIT_o(trait, ...)             PPUTLIMPL_NYBL_TRAIT_##trait(__VA_ARGS__)
-#define PPUTLIMPL_NYBL_TRAIT_BIN(n, d, i, sl, sr, bin) bin
-#define PPUTLIMPL_NYBL_TRAIT_SR(n, d, i, sl, sr, ...)  sr
-#define PPUTLIMPL_NYBL_TRAIT_SL(n, d, i, sl, ...)      sl
-#define PPUTLIMPL_NYBL_TRAIT_INC(n, d, i, ...)         i
-#define PPUTLIMPL_NYBL_TRAIT_DEC(n, d, ...)            d
-#define PPUTLIMPL_NYBL_TRAIT_NOT(n, ...)               n
-#define PPUTLIMPL_NYBL_TRAIT_IS(_, ...)                PPUTLIMPL_NYBL_TRAIT_IS_0##__VA_OPT__(1)
-#define PPUTLIMPL_NYBL_TRAIT_IS_01                     1
-#define PPUTLIMPL_NYBL_TRAIT_IS_0                      0
+#define PPUTLIMPL_NYBL_TRAIT_o(trait, ...)                PPUTLIMPL_NYBL_TRAIT_##trait(__VA_ARGS__)
+#define PPUTLIMPL_NYBL_TRAIT_BIN(l, n, d, i, sl, sr, bin) bin
+#define PPUTLIMPL_NYBL_TRAIT_SR(l, n, d, i, sl, sr, ...)  sr
+#define PPUTLIMPL_NYBL_TRAIT_SL(l, n, d, i, sl, ...)      sl
+#define PPUTLIMPL_NYBL_TRAIT_INC(l, n, d, i, ...)         i
+#define PPUTLIMPL_NYBL_TRAIT_DEC(l, n, d, ...)            d
+#define PPUTLIMPL_NYBL_TRAIT_NOT(l, n, ...)               n
+#define PPUTLIMPL_NYBL_TRAIT_ILTZ(l, ...)                 l
+#define PPUTLIMPL_NYBL_TRAIT_IS(_, ...)                   PPUTLIMPL_NYBL_TRAIT_IS_0##__VA_OPT__(1)
+#define PPUTLIMPL_NYBL_TRAIT_IS_01                        1
+#define PPUTLIMPL_NYBL_TRAIT_IS_0                         0
 
-/// not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), (...bin)
-#define PPUTLIMPL_NYBL_TRAIT_F 0, (0, E), (1, 0), (1, E), (1, 7), (1, 1, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_E 1, (0, D), (0, F), (1, C), (0, 7), (1, 1, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_D 2, (0, C), (0, E), (1, A), (1, 6), (1, 1, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_C 3, (0, B), (0, D), (1, 8), (0, 6), (1, 1, 0, 0)
-#define PPUTLIMPL_NYBL_TRAIT_B 4, (0, A), (0, C), (1, 6), (1, 5), (1, 0, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_A 5, (0, 9), (0, B), (1, 4), (0, 5), (1, 0, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_9 6, (0, 8), (0, A), (1, 2), (1, 4), (1, 0, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_8 7, (0, 7), (0, 9), (1, 0), (0, 4), (1, 0, 0, 0)
-#define PPUTLIMPL_NYBL_TRAIT_7 8, (0, 6), (0, 8), (0, E), (1, 3), (0, 1, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_6 9, (0, 5), (0, 7), (0, C), (0, 3), (0, 1, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_5 A, (0, 4), (0, 6), (0, A), (1, 2), (0, 1, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_4 B, (0, 3), (0, 5), (0, 8), (0, 2), (0, 1, 0, 0)
-#define PPUTLIMPL_NYBL_TRAIT_3 C, (0, 2), (0, 4), (0, 6), (1, 1), (0, 0, 1, 1)
-#define PPUTLIMPL_NYBL_TRAIT_2 D, (0, 1), (0, 3), (0, 4), (0, 1), (0, 0, 1, 0)
-#define PPUTLIMPL_NYBL_TRAIT_1 E, (0, 0), (0, 2), (0, 2), (1, 0), (0, 0, 0, 1)
-#define PPUTLIMPL_NYBL_TRAIT_0 F, (1, F), (0, 1), (0, 0), (0, 0), (0, 0, 0, 0)
+/// int ltz, not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), (...bin)
+#define PPUTLIMPL_NYBL_TRAIT_F 1, 0, (0, E), (1, 0), (1, E), (1, 7), (1, 1, 1, 1)
+#define PPUTLIMPL_NYBL_TRAIT_E 1, 1, (0, D), (0, F), (1, C), (0, 7), (1, 1, 1, 0)
+#define PPUTLIMPL_NYBL_TRAIT_D 1, 2, (0, C), (0, E), (1, A), (1, 6), (1, 1, 0, 1)
+#define PPUTLIMPL_NYBL_TRAIT_C 1, 3, (0, B), (0, D), (1, 8), (0, 6), (1, 1, 0, 0)
+#define PPUTLIMPL_NYBL_TRAIT_B 1, 4, (0, A), (0, C), (1, 6), (1, 5), (1, 0, 1, 1)
+#define PPUTLIMPL_NYBL_TRAIT_A 1, 5, (0, 9), (0, B), (1, 4), (0, 5), (1, 0, 1, 0)
+#define PPUTLIMPL_NYBL_TRAIT_9 1, 6, (0, 8), (0, A), (1, 2), (1, 4), (1, 0, 0, 1)
+#define PPUTLIMPL_NYBL_TRAIT_8 1, 7, (0, 7), (0, 9), (1, 0), (0, 4), (1, 0, 0, 0)
+#define PPUTLIMPL_NYBL_TRAIT_7 0, 8, (0, 6), (0, 8), (0, E), (1, 3), (0, 1, 1, 1)
+#define PPUTLIMPL_NYBL_TRAIT_6 0, 9, (0, 5), (0, 7), (0, C), (0, 3), (0, 1, 1, 0)
+#define PPUTLIMPL_NYBL_TRAIT_5 0, A, (0, 4), (0, 6), (0, A), (1, 2), (0, 1, 0, 1)
+#define PPUTLIMPL_NYBL_TRAIT_4 0, B, (0, 3), (0, 5), (0, 8), (0, 2), (0, 1, 0, 0)
+#define PPUTLIMPL_NYBL_TRAIT_3 0, C, (0, 2), (0, 4), (0, 6), (1, 1), (0, 0, 1, 1)
+#define PPUTLIMPL_NYBL_TRAIT_2 0, D, (0, 1), (0, 3), (0, 4), (0, 1), (0, 0, 1, 0)
+#define PPUTLIMPL_NYBL_TRAIT_1 0, E, (0, 0), (0, 2), (0, 2), (1, 0), (0, 0, 0, 1)
+#define PPUTLIMPL_NYBL_TRAIT_0 0, F, (1, F), (0, 1), (0, 0), (0, 0), (0, 0, 0, 0)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

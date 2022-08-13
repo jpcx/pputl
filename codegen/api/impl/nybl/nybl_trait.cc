@@ -110,13 +110,15 @@ decltype(nybl_trait) nybl_trait = NIFTY_DEF(nybl_trait, [&](arg nybl, arg trait)
     std::size_t i = 0;
     for (; i < 16 - 1; ++i) {
       digits[i] = def{std::string{alpha[i]}} = [&] {
-        return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i) + ", " + sr(i) + ", "
-             + bin(i);
+        return (i >= 8 ? "1, " : "0, ") + not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i)
+             + ", " + sr(i) + ", " + bin(i);
       };
     }
     digits[i] = def{std::string{alpha[i]}} = [&] {
-      docs << "not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), (...bin)";
-      return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i) + ", " + sr(i) + ", " + bin(i);
+      docs << "int ltz, not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), "
+              "(...bin)";
+      return (i >= 8 ? "1, " : "0, ") + not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i)
+           + ", " + sr(i) + ", " + bin(i);
     };
   }
 
@@ -132,28 +134,32 @@ decltype(nybl_trait) nybl_trait = NIFTY_DEF(nybl_trait, [&](arg nybl, arg trait)
     return pp::cat(_0, pp::va_opt("1"));
   };
 
-  def<"\\NOT(n, ...)">{} = [&](pack args) {
+  def<"\\ILTZ(l, ...)">{} = [&](pack args) {
     return args[0];
   };
 
-  def<"\\DEC(n, d, ...)">{} = [&](pack args) {
+  def<"\\NOT(l, n, ...)">{} = [&](pack args) {
     return args[1];
   };
 
-  def<"\\INC(n, d, i, ...)">{} = [&](pack args) {
+  def<"\\DEC(l, n, d, ...)">{} = [&](pack args) {
     return args[2];
   };
 
-  def<"\\SL(n, d, i, sl, ...)">{} = [&](pack args) {
+  def<"\\INC(l, n, d, i, ...)">{} = [&](pack args) {
     return args[3];
   };
 
-  def<"\\SR(n, d, i, sl, sr, ...)">{} = [&](pack args) {
+  def<"\\SL(l, n, d, i, sl, ...)">{} = [&](pack args) {
     return args[4];
   };
 
-  def<"\\BIN(n, d, i, sl, sr, bin)">{} = [&](pack args) {
+  def<"\\SR(l, n, d, i, sl, sr, ...)">{} = [&](pack args) {
     return args[5];
+  };
+
+  def<"\\BIN(l, n, d, i, sl, sr, bin)">{} = [&](pack args) {
+    return args[6];
   };
 
   return def<"o(trait, ...)">{[&](arg trait, va args) {

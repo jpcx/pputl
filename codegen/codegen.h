@@ -76,6 +76,10 @@ constexpr std::uint8_t word_size = 3;
 static_assert(word_size >= 1);
 static_assert(word_size <= 3);
 
+// the number of bits that can be used to describes integers.
+// based on the word size.
+constexpr std::uint8_t bit_length = word_size * 4;
+
 constexpr unsigned uint_max = ([] {
   unsigned res{1};
   for (unsigned i = 0; i < word_size * 4; ++i)

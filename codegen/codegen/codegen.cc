@@ -787,13 +787,15 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
     id = apiname(id);
   }
 
-  // make sequences of O lowercase (used for nesting)
+  // make standalone O+ lowercase (used for nesting)
 
-  static std::regex oo{"_([oO]+)(_|$)", std::regex_constants::optimize};
-  for (auto it = std::sregex_iterator{id.begin(), id.end(), oo}; it != std::sregex_iterator{};
-       ++it) {
-    for (long i = 0; i < it->length(1); ++i)
-      id[it->position(1) + i] = 'o';
+  static std::regex o{"_(O+)(_|$)", std::regex_constants::optimize};
+  while (std::regex_search(id, o)) {
+    for (auto it = std::sregex_iterator{id.begin(), id.end(), o}; it != std::sregex_iterator{};
+         ++it) {
+      for (long i = 0; i < it->length(1); ++i)
+        id[it->position(1) + i] = 'o';
+    }
   }
 
   // return the macro associated with this id if it exists
