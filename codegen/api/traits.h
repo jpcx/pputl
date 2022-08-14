@@ -52,6 +52,8 @@ extern codegen::def<"is_uhex(...: <unknown>) -> bool"> const&  is_uhex;
 extern codegen::def<"is_tup(...: <unknown>) -> bool"> const&   is_tup;
 extern codegen::def<"is_hword(...: <unknown>) -> bool"> const& is_hword;
 extern codegen::def<"is_word(...: <unknown>) -> bool"> const&  is_word;
+extern codegen::def<
+    "typeof(...: <unknown>) -> NONE|SOME|HWORD|TUP|IDEC|IHEX|UDEC|UHEX|HEX|ATOM"> const& typeof;
 
 namespace detail {
 extern codegen::def<>& is_any_o;
@@ -97,6 +99,7 @@ NIFTY_DECL(is_uhex);
 NIFTY_DECL(is_tup);
 NIFTY_DECL(is_hword);
 NIFTY_DECL(is_word);
+NIFTY_DECL(typeof);
 
 inline codegen::end_category<"traits"> traits_end;
 

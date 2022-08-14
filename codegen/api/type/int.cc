@@ -34,16 +34,30 @@ using namespace codegen;
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
               + "-bit signed integer type."
-       << "constructible from any word. hword construction returns ihex."
-       << "cannot parse negative decimals; use math.neg instead."
+       << "constructible from any word."
        << ""
+       << "cannot parse negative decimals; use math.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
-       << "attempts to preserve hex/decimal representation, but will"
-       << "output hex if casting the input yields a negative number"
+       << "cast modes:"
+       << " - idec  → idec | default"
+       << " - idec  → ihex | requires IHEX pref"
+       << " - ihex  → idec | requires IDEC pref and positive result"
+       << " - ihex  → ihex | default; fallback for ihex  → idec"
+       << " - udec  → idec | requires positive result"
+       << " - udec  → ihex | requires IHEX pref"
+       << " - uhex  → idec | requires IDEC pref and positive result"
+       << " - uhex  → idec | requires IDEC pref and positive result"
+       << " - uhex  → ihex | default; fallback for uhex  → idec"
+       << " - hword → idec | requires IDEC pref and positive result"
+       << " - hword → ihex | default; fallback for hword → idec"
+       << ""
+       << "attempts to preserve hex/decimal representation by default, but"
+       << "will output hex if casting the input yields a negative number"
+       << ""
+       << "hint is ignored only if the result is negative and the hint is IDEC."
        << ""
        << "cast from unsigned reinterprets bits as signed two's complement."
-       << ""
        << "value must be a valid signed int; implicit interpretation"
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
@@ -64,62 +78,75 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
                         + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"), ", "))) =
       ("0x7" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"))) >> docs;
 
-  def<"\\HEX(uint)"> hex = [&](arg uint) {
-    return impl::uint_trait(impl::uint_trait(uint, "HUDEC"), "DIHEX");
-  };
+  def<"mode(...e, t, ...: <err>, <typeof v>, <hint>) -> <cast mode>"> mode = [&](arg e, arg t,
+                                                                                 va h) {
+    def<"0\\IDEC"> _0idec = [&] { return ""; };
+    def<"0\\IHEX">{}      = [&] { return ""; };
+    def<"0\\UDEC">{}      = [&] { return ""; };
+    def<"0\\UHEX">{}      = [&] { return ""; };
+    def<"0\\HWORD">{}     = [&] { return ""; };
+    def<"1\\IDEC"> _1idec = [&] { return ""; };
+    def<"1\\IHEX">{}      = [&] { return ""; };
+    def<"1">{}            = [&] { return ""; };
 
-  def<"\\DEC(uint)">{} = [&](arg uint) {
-    def<"0(uint)"> _0 = [&](arg u_) {
-      return impl::uint_trait(cat(impl::uint_trait(u_, "DIHEX"), 'u'), "HIDEC");
+    def<"00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
+    def<"01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+    def<"10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+    def<"11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
+      def<"\\IDECIDEC"> idecidec = [&] { return "ID_ID"; };
+      def<"\\IDECIHEX">{}        = [&] { return "ID_IH"; };
+      def<"\\IDEC">{}            = [&] { return "ID_ID"; };
+      def<"\\IHEXIDEC">{}        = [&] { return "IH_ID"; };
+      def<"\\IHEXIHEX">{}        = [&] { return "IH_IH"; };
+      def<"\\IHEX">{}            = [&] { return "IH_IH"; };
+      def<"\\UDECIDEC">{}        = [&] { return "UD_ID"; };
+      def<"\\UDECIHEX">{}        = [&] { return "UD_IH"; };
+      def<"\\UDEC">{}            = [&] { return "UD_ID"; };
+      def<"\\UHEXIDEC">{}        = [&] { return "UH_ID"; };
+      def<"\\UHEXUHEX">{}        = [&] { return "UH_IH"; };
+      def<"\\UHEX">{}            = [&] { return "UH_IH"; };
+      def<"\\HWORDIDEC">{}       = [&] { return "HW_ID"; };
+      def<"\\HWORDIHEX">{}       = [&] { return "HW_IH"; };
+      def<"\\HWORD">{}           = [&] { return "HW_IH"; };
+
+      return pp::cat(utl::slice(idecidec, -8), t, hint);
     };
 
-    def<"1(uint)">{} = [&](arg uint) {
-      return impl::uint_trait(uint, "DIHEX");
-    };
-
-    return pp::call(cat(utl::slice(_0, -1), impl::uint_trait(uint, "DINEG")), uint);
+    return pp::call(cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),
+                                                 is_none(cat(utl::slice(_1idec, -4), h)))),
+                    e, t, h);
   };
 
-  def<"o_01(e, uint)">{} = [&](arg, arg uint) {
-    docs << "cast from uint";
-    return pp::call(cat(utl::slice(hex, -3), impl::uint_trait(uint, "TYPE")), uint);
-  };
-
-  def<"o_10(e, i)">{} = [&](arg, arg i) {
-    docs << "cast from int";
-    return i;
-  };
-
-  def<"o_00(e, ...)"> _00 = [&](arg e, va) {
-    return fail(e);
-  };
-
-  def<"0(e, ...)"> _0 = [&](arg e, va some) {
-    return def<"o(e, atom)">{[&](arg e, arg atom) {
-      return pp::call(
-          cat(utl::slice(_00, -2), cat(detail::is_int_o(atom), detail::is_uint_o(atom))), e, atom);
-    }}(e, atom(some));
-  };
-
-  def<"1(e, word)">{} = [&](arg, arg word) {
-    auto params = utl::alpha_base52_seq(conf::word_size);
-    for (auto&& v : params) {
-      if (v == "u") {
-        v = "_u";
-      } else if (v == "x") {
-        v = "_x";
-      }
+  auto hword_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : hword_params)
+    if (v == "u" or v == "x") {
+      v = "_" + v;
     }
-    def cat = def{"cat(" + utl::cat(params, ", ") + ")"} = [&](pack args) {
-      return pp::cat("0x", pp::cat(args));
-    };
 
-    return esc(cat + " " + word);
+  def<"\\ID_ID(idec)"> idecidec = [&](arg idec) { return idec; };
+  def<"\\ID_IH(idec)">{}  = [&](arg idec) { return impl::uint_trait(pp::cat(idec, 'u'), "DIHEX"); };
+  def<"\\IH_ID(ihex)">{}  = [&](arg ihex) { return impl::uint_trait(pp::cat(ihex, 'u'), "HIDEC"); };
+  def<"\\IH_IH(ihex)">{}  = [&](arg ihex) { return ihex; };
+  def<"\\UD_ID(udec)">{}  = [&](arg udec) { return impl::uint_trait(udec, "DITRY"); };
+  def<"\\UD_IH(udec)">{}  = [&](arg udec) { return impl::uint_trait(udec, "DIHEX"); };
+  def<"\\UH_ID(uhex)">{}  = [&](arg uhex) { return impl::uint_trait(uhex, "HITRY"); };
+  def<"\\UH_IH(uhex)">{}  = [&](arg uhex) { return impl::uint_trait(uhex, "HIHEX"); };
+  def<"\\HW_ID(hword)">{} = [&](arg hword) {
+    def res = def{"res(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+      return impl::uint_trait("0x" + pp::cat(args) + "u", "HITRY");
+    };
+    return res + " " + hword;
+  };
+  def<"\\HW_IH(hword)">{} = [&](arg hword) {
+    def res = def{"res(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+      return impl::uint_trait("0x" + pp::cat(args) + "u", "HIHEX");
+    };
+    return res + " " + hword;
   };
 
-  return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_hword_o(some)), e, some);
-  }}(istr("[" + int_ + "] invalid integer : " + args), some(args));
+  return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
+    return pp::call(cat(utl::slice(idecidec, -8), mode(e, typeof(v), hint)), v);
+  }}(istr("[" + int_ + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

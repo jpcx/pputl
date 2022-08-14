@@ -35,15 +35,16 @@
 //    countless metaprogramming techniques that should be preferred.          //
 //                                                                            //
 //    This library is built to provide a strong, safe set of functionality    //
-//    for edge cases that uniquely benefit from text replacement and would    //
-//    would otherwise utilize  a separate code generation script,  such as    //
-//    test case generation, reflective structs,  and various optimizations    //
-//    that reduce the number of template specializations.                     //
+//    for edge cases that still uniquely benefit from text replacement and    //
+//    would otherwise utilize a separate code generation script or require    //
+//    higly verbose or redundant syntax, such as comprehensive test cases,    //
+//    struct reflection, static initialization control, or optimization of    //
+//    algorithms that manipulate template arguments and specializations.      //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
 //                                                                            //
-//    pputl  is a powerful, typed C++ preprocessor utilities library  that    //
+//    pputl is a powerful,  typed C++ preprocessor utilities library  that    //
 //    implements many high-level programming constructs,  including 12-bit    //
 //    signed and unsigned integers with arithmetic and comparison support.    //
 //                                                                            //
@@ -61,8 +62,8 @@
 //    -----                                                                   //
 //    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    Configuration of the word size and naming scheme  can be achieved by    //
-//    modifying the head of codegen/codegen.h and running `make`.             //
+//    Word size and naming preferences  can be configured by modifying the    //
+//    head of codegen/codegen.h and running `make`.                           //
 //                                                                            //
 //    Run `make test` to validate the library on your system.                 //
 //                                                                            //
@@ -217,6 +218,11 @@ ASSERT_PP_EQ((PTL_TRIM(a, b, )), (a, b,));
 ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
 ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
+
+ASSERT_PP_EQ((PTL_DEFAULT(a)), (a));
+ASSERT_PP_EQ((PTL_DEFAULT(a,)), (a));
+ASSERT_PP_EQ((PTL_DEFAULT(a, b)), (b));
+ASSERT_PP_EQ((PTL_DEFAULT(a, b, c)), (b, c));
 
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));

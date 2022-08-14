@@ -67,7 +67,7 @@ constexpr char const impl_prefix[]{"PPUTL"};
 constexpr std::array<char const*, 2> impl_shortnames[]{
     {"ropen", "ro"},
     {"rclose", "rc"},
-    {"uint_traits", "utraits"},
+    {"impl_uint_trait", "impl_utrait"},
 };
 
 // the number of hex digits used to describes integers.
@@ -139,15 +139,16 @@ constexpr char const project_header[]{
     "//    countless metaprogramming techniques that should be preferred.          //\n"
     "//                                                                            //\n"
     "//    This library is built to provide a strong, safe set of functionality    //\n"
-    "//    for edge cases that uniquely benefit from text replacement and would    //\n"
-    "//    would otherwise utilize  a separate code generation script,  such as    //\n"
-    "//    test case generation, reflective structs,  and various optimizations    //\n"
-    "//    that reduce the number of template specializations.                     //\n"
+    "//    for edge cases that still uniquely benefit from text replacement and    //\n"
+    "//    would otherwise utilize a separate code generation script or require    //\n"
+    "//    higly verbose or redundant syntax, such as comprehensive test cases,    //\n"
+    "//    struct reflection, static initialization control, or optimization of    //\n"
+    "//    algorithms that manipulate template arguments and specializations.      //\n"
     "//                                                                            //\n"
     "//    ABOUT                                                                   //\n"
     "//    -----                                                                   //\n"
     "//                                                                            //\n"
-    "//    pputl  is a powerful, typed C++ preprocessor utilities library  that    //\n"
+    "//    pputl is a powerful,  typed C++ preprocessor utilities library  that    //\n"
     "//    implements many high-level programming constructs,  including 12-bit    //\n"
     "//    signed and unsigned integers with arithmetic and comparison support.    //\n"
     "//                                                                            //\n"
@@ -165,8 +166,8 @@ constexpr char const project_header[]{
     "//    -----                                                                   //\n"
     "//    Copy pputl.h and include. The distribution is single-header.            //\n"
     "//                                                                            //\n"
-    "//    Configuration of the word size and naming scheme  can be achieved by    //\n"
-    "//    modifying the head of codegen/codegen.h and running `make`.             //\n"
+    "//    Word size and naming preferences  can be configured by modifying the    //\n"
+    "//    head of codegen/codegen.h and running `make`.                           //\n"
     "//                                                                            //\n"
     "//    Run `make test` to validate the library on your system.                 //\n"
     "//                                                                            //\n"

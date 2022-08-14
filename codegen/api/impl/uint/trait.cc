@@ -48,9 +48,8 @@ static std::string
 factors(unsigned n) {
   auto                     facts = utl::prime_factors(n);
   std::vector<std::string> sfacts(facts.size());
-  std::ranges::transform(facts, std::begin(sfacts), [](auto&& v) {
-    return std::to_string(v) + "u";
-  });
+  std::ranges::transform(facts, std::begin(sfacts),
+                         [](auto&& v) { return std::to_string(v) + "u"; });
   return pp::tup(utl::cat(sfacts, ", "));
 }
 
@@ -150,7 +149,7 @@ decltype(uint_trait) uint_trait = NIFTY_DEF(uint_trait, [&](arg uint, arg trait)
   for (; _ < (traits.size() / 2) - 1; ++_, ++n) {
     auto bin  = binary(n);
     traits[_] = def{std::to_string(n) + "\\u"} = [&] {
-      return utl::cat(std::array{std::string{"DEC"}, hex_str(bin, false),
+      return utl::cat(std::array{std::string{"DEC"}, std::to_string(n), hex_str(bin, false),
                                  std::string{n > conf::int_max ? "1" : "0"}, log2(n), sqrt(n),
                                  factors(n)},
                       ", ");
@@ -159,8 +158,8 @@ decltype(uint_trait) uint_trait = NIFTY_DEF(uint_trait, [&](arg uint, arg trait)
   {
     auto bin    = binary(n);
     traits[_++] = def{std::to_string(n) + "\\u"} = [&] {
-      docs << "type, signed hex, signed is negative, log2, sqrt, factors";
-      return utl::cat(std::array{std::string{"DEC"}, hex_str(bin, false),
+      docs << "type, udec, idec, idec try, ihex, log2, sqrt, factors";
+      return utl::cat(std::array{std::string{"DEC"}, std::to_string(n), hex_str(bin, false),
                                  std::string{n > conf::int_max ? "1" : "0"}, log2(n), sqrt(n),
                                  factors(n)},
                       ", ");
@@ -171,7 +170,7 @@ decltype(uint_trait) uint_trait = NIFTY_DEF(uint_trait, [&](arg uint, arg trait)
   for (; _ < traits.size() - 1; ++_, ++n) {
     auto bin  = binary(n);
     traits[_] = def{"\\" + hex_str(bin)} = [&] {
-      return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u",
+      return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u", hex_str(bin, false),
                                  std::to_string(uint_to_int(n)), nybls(bin), hex_str(bitnot(bin))},
                       ", ");
     };
@@ -179,62 +178,36 @@ decltype(uint_trait) uint_trait = NIFTY_DEF(uint_trait, [&](arg uint, arg trait)
   {
     auto bin  = binary(n);
     traits[_] = def{"\\" + hex_str(bin)} = [&] {
-      docs << "type, unsigned decimal, signed decimal, word, bitnot";
-      return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u",
+      docs << "type, udec, idec, idec try, ihex, word, bitnot";
+      return utl::cat(std::array{std::string{"HEX"}, std::to_string(n) + "u", hex_str(bin, false),
                                  std::to_string(uint_to_int(n)), nybls(bin), hex_str(bitnot(bin))},
                       ", ");
     };
   }
 
   def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"0"> _0 = [&] {
-      return "0";
-    };
+    def<"0"> _0 = [&] { return "0"; };
 
-    def<"01">{} = [&] {
-      return "1";
-    };
+    def<"01">{} = [&] { return "1"; };
 
     return pp::cat(_0, pp::va_opt("1"));
   };
 
-  def<"\\TYPE(t, ...) -> HEX|DEC">{} = [&](arg t, va) {
-    return t;
-  };
-
-  def<"\\HUDEC(t, ud, ...) -> ubase10">{} = [&](pack args) {
-    return args[1];
-  };
-
-  def<"\\HIDEC(t, ud, id, ...) -> ibase10">{} = [&](pack args) {
-    return args[2];
-  };
-
-  def<"\\HWORD(t, ud, id, n, ...) -> word">{} = [&](pack args) {
-    return args[3];
-  };
-
-  def<"\\HBNOT(t, ud, id, n, bn) -> ubase16">{} = [&](pack args) {
+  def<"\\TYPE(t, ...) -> HEX|DEC">{}                           = [&](arg t, va) { return t; };
+  def<"\\HUDEC(t, ud, ...) -> udec">{}                         = [&](pack args) { return args[1]; };
+  def<"\\HIDEC(t, ud, id, ...) -> idec">{}                     = [&](pack args) { return args[2]; };
+  def<"\\HIHEX(t, ud, id, ih, ...) -> idec">{}                 = [&](pack args) { return args[3]; };
+  def<"\\HITRY(t, ud, id, ih, it, ...) -> bool">{}             = [&](pack args) { return args[4]; };
+  def<"\\HWORD(t, ud, id, ih, it, in, n, ...) -> word">{}      = [&](pack args) { return args[5]; };
+  def<"\\HBNOT(t, ud, id, ih, it, in, n, bn) -> uhex">{}       = [&](pack args) { return args[6]; };
+  def<"\\DIDEC(t, id, ...) -> idec">{}                         = [&](pack args) { return args[1]; };
+  def<"\\DIHEX(t, id, ih, ...) -> ihex">{}                     = [&](pack args) { return args[1]; };
+  def<"\\DLOG2(t, id, ih, in, l2, ...) -> ubase10{log2(n)}">{} = [&](pack args) { return args[3]; };
+  def<"\\DSQRT(t, id, ih, in, l2, sq, ...) -> ubase10{sqrt(n)}">{} = [&](pack args) {
     return args[4];
   };
 
-  def<"\\DIHEX(t, ih, ...) -> ibase16">{} = [&](pack args) {
-    return args[1];
-  };
-
-  def<"\\DINEG(t, ih, in, ...) -> bool{signed<0}">{} = [&](pack args) {
-    return args[2];
-  };
-
-  def<"\\DLOG2(t, ih, in, l2, ...) -> ubase10{log2(n)}">{} = [&](pack args) {
-    return args[3];
-  };
-
-  def<"\\DSQRT(t, ih, in, l2, sq, ...) -> ubase10{sqrt(n)}">{} = [&](pack args) {
-    return args[4];
-  };
-
-  def<"\\DFACT(t, ih, in, l2, sq, f) -> typle<ubase10{factor}...>">{} = [&](pack args) {
+  def<"\\DFACT(t, id, ih, in, l2, sq, f) -> typle<ubase10{factor}...>">{} = [&](pack args) {
     return args[5];
   };
 

@@ -37,15 +37,16 @@
 //    countless metaprogramming techniques that should be preferred.          //
 //                                                                            //
 //    This library is built to provide a strong, safe set of functionality    //
-//    for edge cases that uniquely benefit from text replacement and would    //
-//    would otherwise utilize  a separate code generation script,  such as    //
-//    test case generation, reflective structs,  and various optimizations    //
-//    that reduce the number of template specializations.                     //
+//    for edge cases that still uniquely benefit from text replacement and    //
+//    would otherwise utilize a separate code generation script or require    //
+//    higly verbose or redundant syntax, such as comprehensive test cases,    //
+//    struct reflection, static initialization control, or optimization of    //
+//    algorithms that manipulate template arguments and specializations.      //
 //                                                                            //
 //    ABOUT                                                                   //
 //    -----                                                                   //
 //                                                                            //
-//    pputl  is a powerful, typed C++ preprocessor utilities library  that    //
+//    pputl is a powerful,  typed C++ preprocessor utilities library  that    //
 //    implements many high-level programming constructs,  including 12-bit    //
 //    signed and unsigned integers with arithmetic and comparison support.    //
 //                                                                            //
@@ -63,8 +64,8 @@
 //    -----                                                                   //
 //    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    Configuration of the word size and naming scheme  can be achieved by    //
-//    modifying the head of codegen/codegen.h and running `make`.             //
+//    Word size and naming preferences  can be configured by modifying the    //
+//    head of codegen/codegen.h and running `make`.                           //
 //                                                                            //
 //    Run `make test` to validate the library on your system.                 //
 //                                                                            //
@@ -284,6 +285,25 @@
 #define PPUTLTRIM_010(_, ...)  _
 #define PPUTLTRIM_001(_, ...)  __VA_ARGS__
 #define PPUTLTRIM_00(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [lang.default]
+/// --------------
+/// returns the first argument iff the rest of the arguments are nothing.
+/// else, returns only the rest of the arguments.
+///
+/// PTL_DEFAULT(a)       // a
+/// PTL_DEFAULT(a,)      // a
+/// PTL_DEFAULT(a, b)    // b
+/// PTL_DEFAULT(a, b, c) // b, c
+#define PTL_DEFAULT(/* default: <any>, ...argument: <any...> */...) PPUTLDEFAULT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLDEFAULT_o(_, ...)  PPUTLDEFAULT_0##__VA_OPT__(1)(_, __VA_ARGS__)
+#define PPUTLDEFAULT_01(_, ...) __VA_ARGS__
+#define PPUTLDEFAULT_0(_, ...)  _
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -760,7 +780,7 @@
 ///
 /// PTL_BOOL(0) // 0
 /// PTL_BOOL(1) // 1
-#define PTL_BOOL(/* b: 0|1 */...) /* -> b */                                                \
+#define PTL_BOOL(/* v: 0|1 */...) /* -> b */                                                \
   PPUTLBOOL_o(PTL_ISTR([PTL_BOOL] bool cannot describe anything but the literal '1' and '0' \
                        : __VA_ARGS__),                                                      \
               PTL_ATOM(__VA_ARGS__))
@@ -776,13 +796,13 @@
 /// [type.hex]
 /// ----------
 /// [inherits from PTL_ATOM] capital hex digit type.
-/// expands to h if valid, else fails.
+/// expands to v if valid, else fails.
 ///
 /// PTL_HEX(0) // 0
 /// PTL_HEX(1) // 1
 /// PTL_HEX(B) // B
 /// PTL_HEX(F) // F
-#define PTL_HEX(/* h: 0-F */...) /* -> hex{h}: <0-F> */                                            \
+#define PTL_HEX(/* v: 0-F */...) /* -> hex{h}: <0-F> */                                            \
   PPUTLHEX_o(PTL_ISTR([PTL_HEX] hex cannot describe anything but literal, capital hex digits 0 - F \
                       : __VA_ARGS__),                                                              \
              PTL_ATOM(__VA_ARGS__))
@@ -798,16 +818,17 @@
 /// [type.int]
 /// ----------
 /// [inherits from PTL_ATOM] 12-bit signed integer type.
-/// constructible from any word. hword construction returns ihex.
+/// constructible from any word. hword construction returns ihex by default.
 /// cannot parse negative decimals; use math.neg instead.
-///
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
-/// attempts to preserve hex/decimal representation, but will
-/// output hex if casting the input yields a negative number
+/// attempts to preserve hex/decimal representation by default, but
+/// will output hex if casting the input yields a negative number
+///
+/// supply a hint (literal IDEC or IHEX) to choose a result preference.
+/// will be ignored only if the result is negative and the hint is IDEC.
 ///
 /// cast from unsigned reinterprets bits as signed two's complement.
-///
 /// value must be a valid signed int; implicit interpretation
 /// as unsigned is not allowed (e.g. 4095 is not a valid integer).
 ///
@@ -819,15 +840,17 @@
 /// PTL_INT(4095u)     // 0xFFF
 /// PTL_INT((8, 0, 0)) // 0x800
 /// PTL_INT((7, F, F)) // 0x7FF
-#define PTL_INT(/* n: word */...) /* -> int{n} */ \
-  PPUTLINT_o(PTL_ISTR([PTL_INT] invalid integer : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
+#define PTL_INT(/* v: word, [hint]: IDEC|IHEX */...) /* -> int{n} */ \
+  PPUTLINT_o(PTL_ISTR([PTL_INT] invalid arguments                    \
+                      : __VA_ARGS__),                                \
+             PTL_IREST(__VA_ARGS__), PTL_SOME(PTL_IFIRST(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLINT_o(e, ...)      PTL_CAT(PPUTLINT_, PPUTLIS_HWORD_o(__VA_ARGS__))(e, __VA_ARGS__)
-#define PPUTLINT_1(e, word)     PTL_ESC(PPUTLINT_1_CAT word)
-#define PPUTLINT_1_CAT(a, b, c) 0x##a##b##c
-#define PPUTLINT_0(e, ...)      PPUTLINT_0_o(e, PTL_ATOM(__VA_ARGS__))
+#define PPUTLINT_o(e, hint, ...) PTL_CAT(PPUTLINT_, PPUTLIS_HWORD_o(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLINT_1(e, word)      PTL_ESC(PPUTLINT_1_CAT word)
+#define PPUTLINT_1_CAT(a, b, c)  0x##a##b##c
+#define PPUTLINT_0(e, ...)       PPUTLINT_0_o(e, PTL_ATOM(__VA_ARGS__))
 #define PPUTLINT_0_o(e, atom) \
   PTL_CAT(PPUTLINT_o_, PTL_CAT(PPUTLIS_INT_o(atom), PPUTLIS_UINT_o(atom)))(e, atom)
 #define PPUTLINT_o_00(e, ...) PTL_FAIL(e)
@@ -857,7 +880,7 @@
 /// PTL_IDEC(0x005u) // 5
 /// PTL_IDEC(0x7FF)  // 2047
 /// PTL_IDEC(2047)   // 2047
-#define PTL_IDEC(/* n: word */...) /* -> idec{n} */                   \
+#define PTL_IDEC(/* v: word */...) /* -> idec{n} */                   \
   PPUTLIDEC_o(PTL_ISTR([PTL_IDEC] cannot represent negative in base10 \
                        : __VA_ARGS__),                                \
               PTL_INT(__VA_ARGS__))
@@ -883,7 +906,7 @@
 /// PTL_IHEX(5)     // 0x005
 /// PTL_IHEX(4095u) // 0xFFF
 /// PTL_IHEX(2047u) // 0x7FF
-#define PTL_IHEX(/* n: word */...) /* -> ihex{n} */ PPUTLIHEX_o(PTL_INT(__VA_ARGS__))
+#define PTL_IHEX(/* v: word */...) /* -> ihex{n} */ PPUTLIHEX_o(PTL_INT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -919,7 +942,7 @@
 /// PTL_UINT(0xFFF)     // 0xFFFu
 /// PTL_UINT((0, 0, 0)) // 0x000u
 /// PTL_UINT((F, F, F)) // 0xFFFu
-#define PTL_UINT(/* n: word */...) /* -> uint{n} */ \
+#define PTL_UINT(/* v: word, [hint]: UDEC|UHEX */...) /* -> uint{n} */ \
   PPUTLUINT_o(PTL_ISTR([PTL_UINT] invalid integer : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -946,7 +969,7 @@
 /// PTL_UDEC(0x005u) // 5u
 /// PTL_UDEC(0xFFFu) // 4095u
 /// PTL_UDEC(0xFFF)  // 4095u
-#define PTL_UDEC(/* n: word */...) /* -> udec{n} */ PPUTLUDEC_o(PTL_UINT(__VA_ARGS__))
+#define PTL_UDEC(/* v: word */...) /* -> udec{n} */ PPUTLUDEC_o(PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -967,7 +990,7 @@
 /// PTL_UHEX(0x000u) // 0x000u
 /// PTL_UHEX(0x001u) // 0x001u
 /// PTL_UHEX(0xFFF)  // 0xFFFu
-#define PTL_UHEX(/* n: word */...) /* -> uhex{n} */ PPUTLUHEX_o(PTL_UINT(__VA_ARGS__))
+#define PTL_UHEX(/* v: word */...) /* -> uhex{n} */ PPUTLUHEX_o(PTL_UINT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -984,7 +1007,7 @@
 ///
 /// PTL_TUP(())     // ()
 /// PTL_TUP((1, 2)) // (1, 2)
-#define PTL_TUP(/* t: tup */...) /* -> t */                          \
+#define PTL_TUP(/* v: tup */...) /* -> t */                          \
   PPUTLTUP_o(PTL_ISTR([PTL_TUP] tuple must be wrapped in parentheses \
                       : __VA_ARGS__),                                \
              PTL_ANY(__VA_ARGS__))
@@ -1007,7 +1030,7 @@
 /// PTL_HWORD(0x800)     // (8, 0, 0)
 /// PTL_HWORD(2047)      // (7, F, F)
 /// PTL_HWORD((1, 0, 0)) // (1, 0, 0)
-#define PTL_HWORD(/* n: word */...) /* -> hword{n} */ \
+#define PTL_HWORD(/* v: word */...) /* -> hword{n} */ \
   PPUTLHWORD_o(PTL_ISTR([PTL_HWORD] invalid integer or word : __VA_ARGS__), PTL_SOME(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1034,9 +1057,9 @@
 /// PTL_WORD(4095u)     // 4095u
 /// PTL_WORD(0xFFFu)    // 0xFFFu
 /// PTL_WORD((0, 0, 8)) // (0, 0, 8)
-#define PTL_WORD(/* n: word */...) /* -> word{n} */                         \
-  PPUTLWORD_o(PTL_ISTR([PTL_WORD] invalid word; must be int, uint, or hword \
-                       : __VA_ARGS__),                                      \
+#define PTL_WORD(/* v: word, [hint]: HWORD|IDEC|IHEX|UDEC|UHEX */...) /* -> word{n} */ \
+  PPUTLWORD_o(PTL_ISTR([PTL_WORD] invalid word; must be int, uint, or hword            \
+                       : __VA_ARGS__),                                                 \
               PTL_ANY(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1078,8 +1101,7 @@
 /// PTL_TYPEOF((0, 0, 0)) // PTL_HWORD
 /// PTL_TYPEOF((F, F, F)) // PTL_HWORD
 /// PTL_TYPEOF()          // PTL_NONE
-#define PTL_TYPEOF(                                                                     \
-    /* <unknown> */...) /* -> ctor<none|some|hword|tup|idec|ihex|udec|uhex|hex|atom> */ \
+#define PTL_TYPEOF(/* <unknown> */...) /* -> NONE|SOME|HWORD|TUP|IDEC|IHEX|UDEC|UHEX|HEX|ATOM */ \
   PTL_CAT(PPUTLTYPEOF_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1454,7 +1476,7 @@
 /// PTL_BITGET(2, 11)      // 0
 /// PTL_BITGET(0xFFEu, 10) // 1
 /// PTL_BITGET(0xFFEu, 11) // 0
-#define PTL_BITGET(/* v: int|uint|word, i: int|uint */...) /* -> v[i]: bool */ \
+#define PTL_BITGET(/* v: word, i: idec */...) /* -> v[i]: bool */ \
   PPUTLBITGET_o(PTL_ISTR([PTL_BITGET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1493,8 +1515,8 @@
 /// PTL_BITSET(0, 10, 1) // (0, 0, 2)
 /// PTL_BITSET(1u, 9, 1) // (0, 0, 5)
 /// PTL_BITSET(5, 7, 1)  // (0, 1, 5)
-#define PTL_BITSET(/* v: int|uint|word, i: int|uint, b: bool */...) /* -> (v[i] = b): word */ \
-  PPUTLBITSET_o(PTL_ISTR([PTL_BITGET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+#define PTL_BITSET(/* v: word, i: idec, b: bool */...) /* -> word{v[i] = b} */ \
+  PPUTLBITSET_o(PTL_ISTR([PTL_BITSET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 

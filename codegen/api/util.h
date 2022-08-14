@@ -42,8 +42,8 @@ inline codegen::category<"util"> util;
 //
 // TODO: bin
 
-extern codegen::def<"size(...: v: tup) -> udec"> const&  size;
-extern codegen::def<"items(...: v: tup) -> ...v"> const& items;
+extern codegen::def<"size(...: v: tup) -> udec"> const&     size;
+extern codegen::def<"items(...: v: tup) -> ...v"> const&    items;
 
 NIFTY_DECL(size);
 NIFTY_DECL(items);

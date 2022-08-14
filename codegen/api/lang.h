@@ -45,7 +45,8 @@ extern codegen::def<"first(...: v: any...) -> v[0]"> const&                     
 extern codegen::def<"irest(_, ...: first: any, rest: any...) -> ...rest"> const& irest;
 extern codegen::def<"rest(...:  v: any...) -> ...v"> const&                      rest;
 extern codegen::def<"trim(...: v: any...) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
-extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&        fail;
+extern codegen::def<"default(...: default: <any>, ...argument: <any...>) -> "> const&  default_;
+extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const& fail;
 
 // TODO fmt.hex
 
@@ -61,6 +62,7 @@ NIFTY_DECL(first);
 NIFTY_DECL(irest);
 NIFTY_DECL(rest);
 NIFTY_DECL(trim);
+NIFTY_DECL(default_);
 NIFTY_DECL(fail);
 
 inline codegen::end_category<"lang"> lang_end;

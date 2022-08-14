@@ -40,9 +40,8 @@ inline codegen::category<"bitwise"> bitwise;
 
 // TODO: bitzip
 
-extern codegen::def<"bitget(...: v: int|uint|word, i: int|uint) -> v[i]: bool"> const& bitget;
-extern codegen::def<
-    "bitset(...: v: int|uint|word, i: int|uint, b: bool) -> (v[i] = b): word"> const& bitset;
+extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const&              bitget;
+extern codegen::def<"bitset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const& bitset;
 // extern codegen::def<"bitflip(...: v: uint|int, i: int) -> (v[i] = !v[i]): typeof(v)"> const&
 //                                                                         bitflip_;
 // extern codegen::def<"bitnot(...: v: uint|int) -> ~v: typeof(v)"> const& bitnot_;

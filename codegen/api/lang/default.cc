@@ -25,46 +25,32 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
-  docs << "[inherits from " + atom + "] capital hex digit type."
-       << "expands to v if valid, else fails.";
+decltype(default_) default_ = NIFTY_DEF(default_, [&](va args) {
+  docs << "returns the first argument iff the rest of the arguments are nothing."
+       << "else, returns only the rest of the arguments.";
 
-  tests << hex(0)   = "0" >> docs;
-  tests << hex(1)   = "1" >> docs;
-  tests << hex(2)   = "2";
-  tests << hex(3)   = "3";
-  tests << hex(4)   = "4";
-  tests << hex(5)   = "5";
-  tests << hex(6)   = "6";
-  tests << hex(7)   = "7";
-  tests << hex(8)   = "8";
-  tests << hex(9)   = "9";
-  tests << hex("A") = "A";
-  tests << hex("B") = "B" >> docs;
-  tests << hex("C") = "C";
-  tests << hex("D") = "D";
-  tests << hex("E") = "E";
-  tests << hex("F") = "F" >> docs;
+  tests << default_("a")       = "a" >> docs;
+  tests << default_("a,")      = "a" >> docs;
+  tests << default_("a, b")    = "b" >> docs;
+  tests << default_("a, b, c") = "b, c" >> docs;
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"0(_, ...)"> _0 = [&](arg first, va) {
+    return first;
   };
 
-  def<"1(e, hex)">{} = [](arg, arg hex) {
-    return hex;
+  def<"01(_, ...)">{} = [&](arg, va args) {
+    return args;
   };
 
-  return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_hex_o(atom)), e, atom);
-  }}(istr("[" + hex
-          + "] hex cannot describe anything but literal, capital hex digits 0-F : " + args),
-     atom(args));
+  return def<"o(_, ...)">{[&](arg first, va rest) {
+    return pp::call(pp::cat(_0, pp::va_opt("1")), first, rest);
+  }}(args);
 });
 
 } // namespace api
