@@ -25,7 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/hex.h"
+#include "impl/traits.h"
 
 namespace api {
 namespace impl {
@@ -65,9 +65,8 @@ add(std::size_t i, std::size_t j) {
   return pp::tup(alpha[(i + j) / 16], alpha[(i + j) % 16]);
 }
 
-decltype(hex_pair_trait) hex_pair_trait = NIFTY_DEF(hex_pair_trait, [&](arg pair, arg trait) {
-  docs << "[internal] get a hex pair trait."
-       << "p must be a hex pair; e.g. E6.";
+decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
+  docs << "[internal] hex pair (hex##hex) traits";
 
   std::array<def<>, 16 * 16> pairs{};
   {
@@ -99,33 +98,22 @@ decltype(hex_pair_trait) hex_pair_trait = NIFTY_DEF(hex_pair_trait, [&](arg pair
     }
   }
 
-  def<"\\LT(l, ...)"> lt = [&](pack args) {
-    return args[0];
+  def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
+    def<"0"> _0 = [&] { return "0"; };
+    def<"01">{} = [&] { return "1"; };
+    return pp::cat(_0, pp::va_opt("1"));
   };
 
-  def<"\\AND(l, a, ...)">{} = [&](pack args) {
-    return args[1];
-  };
+  def<"\\LT(l, ...) -> bool">{}                         = [&](pack args) { return args[0]; };
+  def<"\\AND(l, a, ...) -> hex">{}                      = [&](pack args) { return args[1]; };
+  def<"\\OR(l, a, o, ...) -> hex">{}                    = [&](pack args) { return args[2]; };
+  def<"\\XOR(l, a, o, x, ...) -> hex">{}                = [&](pack args) { return args[3]; };
+  def<"\\SUB(l, a, o, x, s, ...) -> (bool, hex)">{}     = [&](pack args) { return args[4]; };
+  def<"\\ADD(l, a, o, x, s, ad, ...) -> (bool, hex)">{} = [&](pack args) { return args[5]; };
 
-  def<"\\OR(l, a, o, ...)">{} = [&](pack args) {
-    return args[2];
-  };
-
-  def<"\\XOR(l, a, o, x, ...)">{} = [&](pack args) {
-    return args[3];
-  };
-
-  def<"\\SUB(l, a, o, x, s, ...)">{} = [&](pack args) {
-    return args[4];
-  };
-
-  def<"\\ADD(l, a, o, x, s, ad, ...)">{} = [&](pack args) {
-    return args[5];
-  };
-
-  return def<"o(trait, ...)">{[&](arg trait, va args) {
-    return pp::call(pp::cat(utl::slice(lt, -2), trait), args);
-  }}(trait, cat(utl::slice(pairs[0], -2), pair));
+  return def<"o(t, ...)">{[&](arg t, va row) {
+    return pp::call(pp::cat(utl::slice(is, -2), t), row);
+  }}(t, cat(utl::slice(pairs[0], -2), v));
 });
 
 } // namespace impl

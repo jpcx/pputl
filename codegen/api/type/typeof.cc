@@ -36,7 +36,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << "literal 0 through 9 are considered ibase10 rather than bool or hex."
        << ""
        << "returns one of:"
-       << "  NONE | SOME | HWORD | TUP | IDEC"
+       << "  NONE | SOME | XWORD | TUP | IDEC"
        << "  IHEX | UDEC | UHEX  | HEX | ATOM";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -55,9 +55,9 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   if constexpr (conf::word_size > 1)
     tests << typeof("(A)") = "TUP" >> docs;
   tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) =
-      "HWORD" >> docs;
+      "XWORD" >> docs;
   tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) =
-      "HWORD" >> docs;
+      "XWORD" >> docs;
   tests << typeof() = "NONE" >> docs;
 
   // !none
@@ -148,19 +148,19 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       def<"<1(tup)">{} = [&](arg tup_) {
         docs << "^!none → any → tup";
 
-        // !hword
+        // !xword
         def<"<0(tup)"> _0 = [&](arg) {
-          docs << "^!none → any → tup → !hword";
+          docs << "^!none → any → tup → !xword";
           return "TUP";
         };
 
-        // hword
-        def<"<1(hword)">{} = [&](arg) {
-          docs << "^!none → any → tup → hword";
-          return "HWORD";
+        // xword
+        def<"<1(xword)">{} = [&](arg) {
+          docs << "^!none → any → tup → xword";
+          return "XWORD";
         };
 
-        return pp::call(cat(utl::slice(_0, -1), detail::is_hword_o(tup_)), tup_);
+        return pp::call(cat(utl::slice(_0, -1), detail::is_xword_o(tup_)), tup_);
       };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), any);

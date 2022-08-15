@@ -25,7 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/hex.h"
+#include "impl/traits.h"
 
 namespace api {
 namespace impl {
@@ -100,9 +100,8 @@ bin(std::size_t i) {
   };
 }
 
-decltype(hex_trait) hex_trait = NIFTY_DEF(hex_trait, [&](arg hex, arg trait) {
-  docs << "[internal] get a hex digit trait."
-       << "argument must be atom for IS. all other traits require hex.";
+decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
+  docs << "[internal] hex traits";
 
   std::array<def<>, 16> digits{};
 
@@ -110,61 +109,33 @@ decltype(hex_trait) hex_trait = NIFTY_DEF(hex_trait, [&](arg hex, arg trait) {
     std::size_t i = 0;
     for (; i < 16 - 1; ++i) {
       digits[i] = def{std::string{alpha[i]}} = [&] {
-        return (i >= 8 ? "1, " : "0, ") + not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i)
-             + ", " + sr(i) + ", " + bin(i);
+        return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i) + ", " + sr(i) + ", "
+             + bin(i);
       };
     }
     digits[i] = def{std::string{alpha[i]}} = [&] {
-      docs << "int ltz, not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), "
+      docs << "not, (dec carry, dec), (inc carry, inc), (sl carry, sl), (sr mod, sr), "
               "(...bin)";
-      return (i >= 8 ? "1, " : "0, ") + not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i)
-           + ", " + sr(i) + ", " + bin(i);
+      return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + sl(i) + ", " + sr(i) + ", " + bin(i);
     };
   }
 
-  def<"\\IS(_, ...)"> is = [&](arg, va) {
-    def<"0"> _0 = [&] {
-      return "0";
-    };
-
-    def<"01">{} = [&] {
-      return "1";
-    };
-
+  def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
+    def<"0"> _0 = [&] { return "0"; };
+    def<"01">{} = [&] { return "1"; };
     return pp::cat(_0, pp::va_opt("1"));
   };
 
-  def<"\\ILTZ(l, ...)">{} = [&](pack args) {
-    return args[0];
-  };
+  def<"\\NOT(n, ...) -> hex">{}                        = [&](pack args) { return args[0]; };
+  def<"\\DEC(n, d, ...) -> hex">{}                     = [&](pack args) { return args[1]; };
+  def<"\\INC(n, d, i, ...) -> hex">{}                  = [&](pack args) { return args[2]; };
+  def<"\\SL(n, d, i, sl, ...) -> hex">{}               = [&](pack args) { return args[3]; };
+  def<"\\SR(n, d, i, sl, sr, ...) -> hex">{}           = [&](pack args) { return args[4]; };
+  def<"\\BIN(n, d, i, sl, sr, bin) -> (bool...<4>)">{} = [&](pack args) { return args[5]; };
 
-  def<"\\NOT(l, n, ...)">{} = [&](pack args) {
-    return args[1];
-  };
-
-  def<"\\DEC(l, n, d, ...)">{} = [&](pack args) {
-    return args[2];
-  };
-
-  def<"\\INC(l, n, d, i, ...)">{} = [&](pack args) {
-    return args[3];
-  };
-
-  def<"\\SL(l, n, d, i, sl, ...)">{} = [&](pack args) {
-    return args[4];
-  };
-
-  def<"\\SR(l, n, d, i, sl, sr, ...)">{} = [&](pack args) {
-    return args[5];
-  };
-
-  def<"\\BIN(l, n, d, i, sl, sr, bin)">{} = [&](pack args) {
-    return args[6];
-  };
-
-  return def<"o(trait, ...)">{[&](arg trait, va args) {
-    return pp::call(pp::cat(utl::slice(is, -2), trait), args);
-  }}(trait, cat(utl::slice(digits[0], -1), hex));
+  return def<"o(t, ...)">{[&](arg t, va row) {
+    return pp::call(pp::cat(utl::slice(is, -2), t), row);
+  }}(t, cat(utl::slice(digits[0], -1), v));
 });
 
 } // namespace impl

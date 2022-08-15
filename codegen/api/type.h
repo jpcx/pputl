@@ -48,8 +48,8 @@ extern codegen::def<"uint(...: v: word, [hint]: UDEC|UHEX) -> uint{n}"> const& u
 extern codegen::def<"udec(...: v: word) -> udec{n}"> const&                    udec;
 extern codegen::def<"uhex(...: v: word) -> uhex{n}"> const&                    uhex;
 extern codegen::def<"tup(...: v: tup) -> t"> const&                            tup;
-extern codegen::def<"hword(...: v: word) -> hword{n}"> const&                  hword;
-extern codegen::def<"word(...: v: word, [hint]: HWORD|IDEC|IHEX|UDEC|UHEX) -> word{n}"> const& word;
+extern codegen::def<"xword(...: v: word) -> xword{n}"> const&                  xword;
+extern codegen::def<"word(...: v: word, [hint]: XWORD|IDEC|IHEX|UDEC|UHEX) -> word{n}"> const& word;
 
 // TODO: ctor
 
@@ -66,7 +66,7 @@ NIFTY_DECL(uint);
 NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
 NIFTY_DECL(tup);
-NIFTY_DECL(hword);
+NIFTY_DECL(xword);
 NIFTY_DECL(word);
 
 inline codegen::end_category<"type"> type_end;

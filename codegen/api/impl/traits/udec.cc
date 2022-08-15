@@ -25,42 +25,52 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_udec_o) is_udec_o = NIFTY_DEF(is_udec_o);
-}
+decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
+  docs << "[internal] udec traits";
 
-decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
-  docs << "[extends " + is_uint
-              + "] detects if args is an unsigned int in deicmal form (requires 'u' suffix).";
+  std::array<codegen::def<>, codegen::conf::uint_max + 1> udecs;
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
+  {
+    std::size_t i = 0;
+    for (; i < udecs.size() - 1; ++i) {
+      auto bin = detail::binary(i);
+      udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
+        return utl::cat(
+            std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i), detail::fact(i)}, ", ");
+      };
+    }
+    {
+      auto bin = detail::binary(i);
+      udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
+        docs << "UHEX, LOG2, SQRT, FACT";
+        return utl::cat(
+            std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i), detail::fact(i)}, ", ");
+      };
+    }
+  }
 
-  tests << is_udec("1")            = "0" >> docs;
-  tests << is_udec("1u")           = "1" >> docs;
-  tests << is_udec(conf::uint_max) = "0" >> docs;
-  tests << is_udec(uint_max_s)     = "1" >> docs;
-  tests << is_udec(min + "u")      = "0" >> docs;
-  tests << is_udec(max)            = "0" >> docs;
-  tests << is_udec("(), ()")       = "0" >> docs;
-
-  detail::is_udec_o = def{"o(uint)"} = [&](arg uint) {
+  def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
     def<"0"> _0 = [&] { return "0"; };
-    def<"1">{}  = [&] { return "1"; };
-
-    return cat(utl::slice(_0, -1), impl::udec(uint, "IS"));
+    def<"01">{} = [&] { return "1"; };
+    return pp::cat(_0, pp::va_opt("1"));
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_udec_o; };
+  def<"\\UHEX(u, ...) -> uhex">{}          = [&](pack args) { return args[0]; };
+  def<"\\LOG2(u, l, ...) -> udec">{}       = [&](pack args) { return args[1]; };
+  def<"\\SQRT(u, l, s, ...) -> udec">{}    = [&](pack args) { return args[2]; };
+  def<"\\FACT(u, l, s, f) -> (udec...)">{} = [&](pack args) { return args[3]; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
+  return def<"o(t, ...)">{[&](arg t, va row) {
+    return pp::call(pp::cat(utl::slice(is, -2), t), row);
+  }}(t, cat(utl::slice(udecs[0], -2), v));
 });
 
+} // namespace impl
 } // namespace api

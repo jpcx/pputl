@@ -48,25 +48,14 @@ decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
   detail::is_any_o = def{"o(_, ...: <some + token; e.g. __VA_ARGS__.foo>)"} = [&](arg first, va) {
     docs << "must be called with an tokens after __VA_ARGS__";
     def<"ok"> pass = [&] {
-      def<"0"> _0 = [&] {
-        return "0";
-      };
-
-      def<"1">{} = [&] {
-        return "1";
-      };
+      def<"0"> _0 = [&] { return "0"; };
+      def<"1">{}  = [&] { return "1"; };
       return utl::slice(_0, -1);
     };
 
     def<"not_ok"> no_pass = [&] {
-      def<"0"> _0 = [&] {
-        return "0";
-      };
-
-      def<"1">{} = [&] {
-        return "0";
-      };
-
+      def<"0"> _0 = [&] { return "0"; };
+      def<"1">{}  = [&] { return "0"; };
       return utl::slice(_0, -1);
     };
 
@@ -80,15 +69,9 @@ decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
     return cat(pp::cat(prefix, pp::va_opt(diff), small), is_some(first));
   };
 
-  def<"0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
-  };
+  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
 
-  def<"1">{} = [&] {
-    return detail::is_any_o;
-  };
+  def<"1">{} = [&] { return detail::is_any_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_some(args)), args + ".");
 });

@@ -52,13 +52,8 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
   tests << hex("E") = "E";
   tests << hex("F") = "F" >> docs;
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-
-  def<"1(e, hex)">{} = [](arg, arg hex) {
-    return hex;
-  };
+  def<"0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
+  def<"1(e, hex)">{}  = [](arg, arg hex) { return hex; };
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_hex_o(atom)), e, atom);

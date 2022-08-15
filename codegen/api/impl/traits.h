@@ -29,19 +29,26 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+//
+#include "impl/traits/detail.h"
 
 namespace api {
 namespace impl {
 
-inline codegen::category<"impl.uint"> uint;
+inline codegen::category<"impl.traits"> traits;
 
-extern codegen::def<"uint_trait(v, t: v: <atom|uint>, trait: "
-                    "IS|TYPE|HUDEC|HIDEC|HNYBS|HBNOT|DHEX|DINEG|DLOG2|DSQRT|DFACT)"> const&
-    uint_trait;
+extern codegen::def<"hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC|INC|SL|SR|BIN})"> const&         hex;
+extern codegen::def<"hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD})"> const& hexhex;
+extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const&         udec;
+extern codegen::def<"uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|XWORD|IHEX|ICAST|ILTZ|BNOT})"> const&
+    uhex;
 
-NIFTY_DECL(uint_trait);
+NIFTY_DECL(hex);
+NIFTY_DECL(hexhex);
+NIFTY_DECL(udec);
+NIFTY_DECL(uhex);
 
-inline codegen::end_category<"impl.uint"> uint_end;
+inline codegen::end_category<"impl.traits"> traits_end;
 
 } // namespace impl
 } // namespace api

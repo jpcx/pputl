@@ -54,18 +54,15 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
   tests << is_uint("(), ()")       = "0" >> docs;
 
   detail::is_uint_o = def{"o(atom)"} = [&](arg atom) {
-    return impl::uint_trait(atom, "IS");
+    def<"00"> _00 = [&] { return "0"; };
+    def<"01">{}   = [&] { return "1"; };
+    def<"10">{}   = [&] { return "1"; };
+
+    return cat(utl::slice(_00, -2), cat(impl::udec(atom, "IS"), impl::uhex(atom, "IS")));
   };
 
-  def<"0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
-  };
-
-  def<"1">{} = [&] {
-    return detail::is_uint_o;
-  };
+  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"1">{}  = [&] { return detail::is_uint_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
 });

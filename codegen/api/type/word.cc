@@ -32,26 +32,154 @@ namespace api {
 using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
-  docs << "[inherits from " + any + "] a union of int|uint|hword.";
+  docs << "[inherits from " + any + "] a union of int|uint|xword."
+       << "constructibe from any word."
+       << ""
+       << "cannot parse negative decimals; use math.neg instead."
+       << "hex length is fixed. cannot parse shorter hex lengths."
+       << ""
+       << "cast modes:"
+       << ""
+       << "  idec  → idec  | [default]"
+       << "  idec  → ihex  | requires IHEX hint"
+       << "  idec  → udec  | requires UDEC hint"
+       << "  idec  → uhex  | requires UHEX hint"
+       << "  idec  → xword | requires XWORD hint"
+       << ""
+       << "  ihex  → ihex  | [default]; failback for failed ihex → idec"
+       << "  ihex  → idec  | requires IDEC hint and positive result"
+       << "  ihex  → udec  | requires UDEC hint"
+       << "  ihex  → uhex  | requires UHEX hint"
+       << "  ihex  → xword | requires XWORD hint"
+       << ""
+       << "  udec  → udec  | [default]"
+       << "  udec  → idec  | requires IDEC hint and positive result"
+       << "  udec  → ihex  | requires IHEX hint or udec → idec failure"
+       << "  udec  → uhex  | requires UHEX hint"
+       << "  udec  → xword | requires XWORD hint"
+       << ""
+       << "  uhex  → uhex  | [default]"
+       << "  uhex  → idec  | requires IDEC hint and positive result"
+       << "  uhex  → ihex  | requires IHEX hint or uhex → idec failure"
+       << "  uhex  → udec  | requires UDEC hint"
+       << "  uhex  → xword | requires XWORD hint"
+       << ""
+       << "  xword → xword | [default]"
+       << "  xword → idec  | requires IDEC hint and positive result"
+       << "  xword → ihex  | requires IHEX hint or xword → idec failure"
+       << "  xword → udec  | requires UDEC hint"
+       << "  xword → uhex  | requires UHEX hint"
+       << ""
+       << "attempts to preserve hex/decimal representation by default, but"
+       << "will output hex if casting the input yields a negative number."
+       << "hint is ignored only if the result is negative and the hint is IDEC."
+       << ""
+       << "cast between signed and unsigned reinterprets bits."
+       << ""
+       << "values above the int max must have a 'u' suffix; implicit interpretation"
+       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+              + " is not a valid integer).";
 
-  tests << word("0")                               = "0" >> docs;
-  tests << word("0u")                              = "0u" >> docs;
-  tests << word(int_min_s)                         = int_min_s >> docs;
-  tests << word(uint_max_s)                        = uint_max_s >> docs;
-  tests << word("0x" + utl::cat(samp::hmax) + "u") = ("0x" + utl::cat(samp::hmax) + "u") >> docs;
-  tests << word(pp::tup(samp::h8))                 = pp::tup(samp::h8) >> docs;
+  // idec  → idec  | [default]
+  tests << word(0)          = "0" >> docs;
+  // idec  → ihex  | requires IHEX hint
+  tests << word(1, "IHEX")  = ("0x" + utl::cat(samp::h1)) >> docs;
+  // idec  → udec  | requires UDEC hint
+  tests << word(2, "UDEC")  = "2u" >> docs;
+  // idec  → uhex  | requires UHEX hint
+  tests << word(3, "UHEX")  = ("0x" + utl::cat(samp::h3) + "u") >> docs;
+  // idec  → xword | requires XWORD hint
+  tests << word(4, "XWORD") = pp::tup(samp::h4) >> docs;
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  // ihex  → ihex  | [default]; failback for failed ihex → idec
+  tests << word("0x" + utl::cat(samp::h2))            = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << word("0x" + utl::cat(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
+  // ihex  → idec  | requires IDEC hint and positive result
+  tests << word("0x" + utl::cat(samp::h2), "IDEC")    = "2" >> docs;
+  // ihex  → udec  | requires UDEC hint
+  tests << word("0x" + utl::cat(samp::h15), "UDEC")   = "15u" >> docs;
+  // ihex  → uhex  | requires UHEX hint
+  tests << word("0x" + utl::cat(samp::h7), "UHEX")    = ("0x" + utl::cat(samp::h7) + "u") >> docs;
+  // ihex  → xword | requires XWORD hint
+  tests << word("0x" + utl::cat(samp::h8), "XWORD")   = pp::tup(samp::h8) >> docs;
+
+  // udec  → udec  | [default]
+  tests << word("8u")               = "8u" >> docs;
+  // udec  → idec  | requires IDEC hint and positive result
+  tests << word("7u", "IDEC")       = "7" >> docs;
+  // udec  → ihex  | requires IHEX hint or udec → idec failure
+  tests << word("15u", "IHEX")      = ("0x" + utl::cat(samp::h15)) >> docs;
+  tests << word(uint_max_s, "IDEC") = ("0x" + utl::cat(samp::hmax)) >> docs;
+  // udec  → uhex  | requires UHEX hint
+  tests << word("6u", "UHEX")       = ("0x" + utl::cat(samp::h6) + "u") >> docs;
+  // udec  → xword | requires XWORD hint
+  tests << word("4u", "XWORD")      = pp::tup(samp::h4) >> docs;
+
+  // uhex  → uhex  | [default]
+  tests << word("0x" + utl::cat(samp::h5) + "u") = ("0x" + utl::cat(samp::h5) + "u") >> docs;
+  // uhex  → idec  | requires IDEC hint and positive result
+  tests << word("0x" + utl::cat(samp::h5) + "u", "IDEC")   = "5" >> docs;
+  // uhex  → ihex  | requires IHEX hint or uhex → idec failure
+  tests << word("0x" + utl::cat(samp::h7) + "u", "IHEX")   = ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << word("0x" + utl::cat(samp::hmax) + "u", "IDEC") = ("0x" + utl::cat(samp::hmax)) >> docs;
+  // uhex  → udec  | requires UDEC hint
+  tests << word("0x" + utl::cat(samp::h4) + "u", "UDEC")   = "4u" >> docs;
+  // uhex  → xword | requires XWORD hint
+  tests << word("0x" + utl::cat(samp::h15) + "u", "XWORD") = pp::tup(samp::h15) >> docs;
+
+  // xword → xword | [default]
+  tests << word(pp::tup(samp::h3))            = pp::tup(samp::h3) >> docs;
+  // xword → idec  | requires IDEC hint and positive result
+  tests << word(pp::tup(samp::himax), "IDEC") = int_max_s >> docs;
+  // xword → ihex  | requires IHEX hint or xword → idec failure
+  tests << word(pp::tup(samp::hmin), "IHEX")  = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << word(pp::tup(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
+  // xword → udec  | requires UDEC hint
+  tests << word(pp::tup(samp::hmax), "UDEC")  = uint_max_s >> docs;
+  // xword → uhex  | requires UHEX hint
+  tests << uint(pp::tup(samp::hmin), "UHEX")  = ("0x" + utl::cat(samp::hmin) + "u") >> docs;
+
+  def<"mode(e, t, ...: <err>, <typeof v>, <hint>) -> <cast mode>"> mode = [&](arg e, arg t,
+                                                                              va hint) {
+    docs << "cast mode selector and error detector";
+
+    def<"0\\IDEC"> _0idec = [&] { return ""; };
+    def<"0\\IHEX">{}      = [&] { return ""; };
+    def<"0\\UDEC">{}      = [&] { return ""; };
+    def<"0\\UHEX">{}      = [&] { return ""; };
+    def<"0\\XWORD">{}     = [&] { return ""; };
+    def<"1\\IDEC"> _1idec = [&] { return ""; };
+    def<"1\\IHEX">{}      = [&] { return ""; };
+    def<"1\\UDEC">{}      = [&] { return ""; };
+    def<"1\\UHEX">{}      = [&] { return ""; };
+    def<"1\\XWORD">{}     = [&] { return ""; };
+    def<"1">{}            = [&] { return ""; };
+
+    def<"00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
+    def<"01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+    def<"10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+    def<"11(e, t, ...)">{}   = [&](arg, arg t, va hint) { return default_(t, hint); };
+
+    return pp::call(cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),
+                                                 is_none(pp::cat(utl::slice(_1idec, -4), hint)))),
+                    e, t, hint);
   };
 
-  def<"1(e, word)">{} = [](arg, arg word) {
-    return word;
-  };
+  auto hword_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : hword_params)
+    if (v == "u" or v == "x") {
+      v = "_" + v;
+    }
 
-  return def<"o(e, any)">{[&](arg e, arg any) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_word_o(any)), e, any);
-  }}(istr("[" + word + "] invalid word; must be int, uint, or hword : " + args), any(args));
+  def<"\\IDEC(word)"> idec = [&](arg word) { return int_(word, "IDEC"); };
+  def<"\\IHEX(word)">{}    = [&](arg word) { return int_(word, "IHEX"); };
+  def<"\\UDEC(word)">{}    = [&](arg word) { return uint(word, "UDEC"); };
+  def<"\\UHEX(word)">{}    = [&](arg word) { return uint(word, "UHEX"); };
+  def<"\\XWORD(word)">{}   = [&](arg word) { return xword(word); };
+
+  return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
+    return pp::call(cat(utl::slice(idec, -4), mode(e, typeof(v), hint)), v);
+  }}(istr("[" + word + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

@@ -47,14 +47,9 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   tests << ihex(std::to_string(conf::int_max) + "u") = max >> docs;
 
   def<"0(idec)"> _0 = [&](arg idec) {
-    return def<"o(udec)">{[&](arg udec) {
-      return impl::uint_trait(udec, "DIHEX");
-    }}(pp::cat(idec, 'u'));
+    return impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "IHEX");
   };
-
-  def<"1(ihex)">{} = [&](arg ihex) {
-    return ihex;
-  };
+  def<"1(ihex)">{} = [&](arg ihex) { return ihex; };
 
   return def<"o(int)">{[&](arg int_) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_ihex_o(int_)), int_);
