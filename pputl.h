@@ -1527,7 +1527,7 @@
 /// PTL_LT((0, 0, 0), (F, F, F))  // 1
 /// PTL_LT((7, F, F), 2048u)      // 1
 /// PTL_LT(2048u, (7, F, F))      // 0
-#define PTL_LT(/* l: word, r: <signof l> */...) /* -> bool{l < r} */                      \
+#define PTL_LT(/* l: word, r: word<signof l> */...) /* -> bool{l < r} */                  \
   PPUTLLT_o(__VA_ARGS__)(PTL_ISTR([PTL_LT] comparison of different signedness not allowed \
                                   : __VA_ARGS__),                                         \
                          __VA_ARGS__)
@@ -1586,7 +1586,7 @@
 /// PTL_GT(2047, 0x800)           // 1
 /// PTL_GT(0x800, PTL_INT(2048u)) // 0
 /// PTL_GT(0x800, PTL_INT(2049u)) // 0
-#define PTL_GT(/* l: word, r: <signof l> */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
+#define PTL_GT(/* l: word, r: word<signof l> */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1606,7 +1606,8 @@
 /// PTL_LE(2047, 0x800)           // 0
 /// PTL_LE(0x800, PTL_INT(2048u)) // 1
 /// PTL_LE(0x800, PTL_INT(2049u)) // 1
-#define PTL_LE(/* l: word, r: <signof l> */...) /* -> bool{l <= r} */ PTL_NOT(PTL_GT(__VA_ARGS__))
+#define PTL_LE(/* l: word, r: word<signof l> */...) /* -> bool{l <= r} */ \
+  PTL_NOT(PTL_GT(__VA_ARGS__))
 
 /// [compare.ge]
 /// ------------
@@ -1620,7 +1621,8 @@
 /// PTL_GE(2047, 0x800)           // 1
 /// PTL_GE(0x800, PTL_INT(2048u)) // 1
 /// PTL_GE(0x800, PTL_INT(2049u)) // 0
-#define PTL_GE(/* l: word, r: <signof l> */...) /* -> bool{l >= r} */ PTL_NOT(PTL_LT(__VA_ARGS__))
+#define PTL_GE(/* l: word, r: word<signof l> */...) /* -> bool{l >= r} */ \
+  PTL_NOT(PTL_LT(__VA_ARGS__))
 
 /// [compare.eq]
 /// ------------
@@ -1634,7 +1636,7 @@
 /// PTL_EQ(2047, 0x800)           // 0
 /// PTL_EQ(0x800, PTL_INT(2048u)) // 1
 /// PTL_EQ(0x800, PTL_INT(2049u)) // 0
-#define PTL_EQ(/* l: word, r: <signof l> */...) /* -> bool{l == r} */ \
+#define PTL_EQ(/* l: word, r: word<signof l> */...) /* -> bool{l == r} */ \
   PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
 
 /// [compare.ne]
@@ -1649,7 +1651,8 @@
 /// PTL_NE(2047, 0x800)           // 1
 /// PTL_NE(0x800, PTL_INT(2048u)) // 0
 /// PTL_NE(0x800, PTL_INT(2049u)) // 1
-#define PTL_NE(/* l: word, r: <signof l> */...) /* -> bool{l != r} */ PTL_NOT(PTL_EQ(__VA_ARGS__))
+#define PTL_NE(/* l: word, r: word<signof l> */...) /* -> bool{l != r} */ \
+  PTL_NOT(PTL_EQ(__VA_ARGS__))
 
 /// [compare.min]
 /// -------------
@@ -1663,7 +1666,7 @@
 /// PTL_MIN(2047, 0x800)           // 0x800
 /// PTL_MIN(0x800, PTL_INT(2048u)) // 0x800
 /// PTL_MIN(0x800, PTL_INT(2049u)) // 0x800
-#define PTL_MIN(/* l: word, r: <signof l> */...) /* -> a < b ? a : b */ \
+#define PTL_MIN(/* l: word, r: word<signof l> */...) /* -> a < b ? a : b */ \
   PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1685,13 +1688,124 @@
 /// PTL_MAX(2047, 0x800)           // 2047
 /// PTL_MAX(0x800, PTL_INT(2048u)) // 0x800
 /// PTL_MAX(0x800, PTL_INT(2049u)) // 0x801
-#define PTL_MAX(/* l: word, r: <signof l> */...) /* -> a > b ? a : b */ \
+#define PTL_MAX(/* l: word, r: word<signof l> */...) /* -> a > b ? a : b */ \
   PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLMAX_1(a, b) a
 #define PPUTLMAX_0(a, b) b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitget]
+/// ----------------
+/// gets the ith bit from the word.
+/// i must be between 0 and PTL_BIT_LENGTH (12).
+///
+/// PTL_BITGET(2, 9)          // 0
+/// PTL_BITGET(2, 10)         // 1
+/// PTL_BITGET(2, 11)         // 0
+/// PTL_BITGET(5u, 9)         // 1
+/// PTL_BITGET(0xFFE, 10)     // 1
+/// PTL_BITGET(0xFFEu, 11)    // 0
+/// PTL_BITGET((F, F, F), 11) // 1
+#define PTL_BITGET(/* v: word, i: idec */...) /* -> v[i]: bool */ \
+  PPUTLBITGET_o(PTL_ISTR([PTL_BITGET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITGET_o(e, v, i) PPUTLBITGET_oo(e, PTL_IDEC(i), PPUTLBITGET_BIN PTL_WORD(v, XWORD))
+#define PPUTLBITGET_oo(e, i, ...) \
+  PPUTLBITGET_ooo(e, i, PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), __VA_ARGS__)
+#define PPUTLBITGET_ooo(...)                               PPUTLBITGET_oooo(__VA_ARGS__)
+#define PPUTLBITGET_oooo(e, i, gelt, ...)                  PPUTLBITGET_oooo_##gelt(e, i, __VA_ARGS__)
+#define PPUTLBITGET_oooo_1(e, i, ...)                      PPUTLBITGET_##i(__VA_ARGS__)
+#define PPUTLBITGET_oooo_0(e, ...)                         PTL_FAIL(e)
+#define PPUTLBITGET_11(a, b, c, d, e, f, g, h, i, j, k, l) l
+#define PPUTLBITGET_10(a, b, c, d, e, f, g, h, i, j, k, l) k
+#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  j
+#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j, k, l)  i
+#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j, k, l)  h
+#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j, k, l)  g
+#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j, k, l)  f
+#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j, k, l)  e
+#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j, k, l)  d
+#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  c
+#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  b
+#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  a
+#define PPUTLBITGET_BIN(a, b, c) \
+  PTL_ESC PPUTLIMPL_HEX(a, BIN), PTL_ESC PPUTLIMPL_HEX(b, BIN), PTL_ESC PPUTLIMPL_HEX(c, BIN)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitset]
+/// ----------------
+/// sets the ith bit of the word to b.
+/// i must be between 0 and PTL_BIT_LENGTH (12).
+///
+/// PTL_BITSET(0, 10, 1)        // 2
+/// PTL_BITSET(1u, 9, 1)        // 5u
+/// PTL_BITSET(5, 7, 1)         // 21
+/// PTL_BITSET(0x002, 11, 1)    // 0x003
+/// PTL_BITSET(0x003u, 11, 0)   // 0x002u
+/// PTL_BITSET((F, F, F), 0, 0) // (7, F, F)
+#define PTL_BITSET(/* v: word, i: idec, b: bool */...) /* -> word{v[i] = b} */ \
+  PPUTLBITSET_o(PTL_ISTR([PTL_BITSET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITSET_o(e, v, i, b)                                                           \
+  PTL_WORD(PPUTLBITSET_oo(e, PTL_IDEC(i), PTL_BOOL(b), PPUTLBITSET_BIN PTL_WORD(v, XWORD)), \
+           PTL_TYPEOF(v))
+#define PPUTLBITSET_oo(e, i, b, ...) \
+  PPUTLBITSET_ooo(e, i, b, PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), __VA_ARGS__)
+#define PPUTLBITSET_ooo(...)                 PPUTLBITSET_oooo(__VA_ARGS__)
+#define PPUTLBITSET_oooo(e, i, b, gelt, ...) PPUTLBITSET_oooo_##gelt(e, i, b, __VA_ARGS__)
+#define PPUTLBITSET_oooo_1(e, i, b, ...)     PPUTLBITSET_##i(b, __VA_ARGS__)
+#define PPUTLBITSET_oooo_0(e, ...)           PTL_FAIL(e)
+#define PPUTLBITSET_11(l, a, b, c, d, e, f, g, h, i, j, k, _) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_10(k, a, b, c, d, e, f, g, h, i, j, _, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_9(j, a, b, c, d, e, f, g, h, i, _, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_8(i, a, b, c, d, e, f, g, h, _, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_7(h, a, b, c, d, e, f, g, _, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_6(g, a, b, c, d, e, f, _, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_5(f, a, b, c, d, e, _, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_4(e, a, b, c, d, _, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_3(d, a, b, c, _, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_2(c, a, b, _, d, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_1(b, a, _, c, d, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_0(a, _, b, c, d, e, f, g, h, i, j, k, l) \
+  (PPUTLBITSET_N##a##b##c##d, PPUTLBITSET_N##e##f##g##h, PPUTLBITSET_N##i##j##k##l)
+#define PPUTLBITSET_BIN(a, b, c) \
+  PTL_ESC PPUTLIMPL_HEX(a, BIN), PTL_ESC PPUTLIMPL_HEX(b, BIN), PTL_ESC PPUTLIMPL_HEX(c, BIN)
+#define PPUTLBITSET_N1111 F
+#define PPUTLBITSET_N1110 E
+#define PPUTLBITSET_N1101 D
+#define PPUTLBITSET_N1100 C
+#define PPUTLBITSET_N1011 B
+#define PPUTLBITSET_N1010 A
+#define PPUTLBITSET_N1001 9
+#define PPUTLBITSET_N1000 8
+#define PPUTLBITSET_N0111 7
+#define PPUTLBITSET_N0110 6
+#define PPUTLBITSET_N0101 5
+#define PPUTLBITSET_N0100 4
+#define PPUTLBITSET_N0011 3
+#define PPUTLBITSET_N0010 2
+#define PPUTLBITSET_N0001 1
+#define PPUTLBITSET_N0000 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

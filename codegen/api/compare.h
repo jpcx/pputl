@@ -37,14 +37,14 @@ namespace api {
 
 inline codegen::category<"compare"> compare;
 
-extern codegen::def<"lt(...: l: word, r: <signof l>) -> bool{l < r}"> const&    lt;
-extern codegen::def<"gt(...: l: word, r: <signof l>) -> bool{l > r}"> const&    gt;
-extern codegen::def<"le(...: l: word, r: <signof l>) -> bool{l <= r}"> const&   le;
-extern codegen::def<"ge(...: l: word, r: <signof l>) -> bool{l >= r}"> const&   ge;
-extern codegen::def<"eq(...: l: word, r: <signof l>) -> bool{l == r}"> const&   eq;
-extern codegen::def<"ne(...: l: word, r: <signof l>) -> bool{l != r}"> const&   ne;
-extern codegen::def<"min(...: l: word, r: <signof l>) -> a < b ? a : b"> const& min;
-extern codegen::def<"max(...: l: word, r: <signof l>) -> a > b ? a : b"> const& max;
+extern codegen::def<"lt(...: l: word, r: word<signof l>) -> bool{l < r}"> const&    lt;
+extern codegen::def<"gt(...: l: word, r: word<signof l>) -> bool{l > r}"> const&    gt;
+extern codegen::def<"le(...: l: word, r: word<signof l>) -> bool{l <= r}"> const&   le;
+extern codegen::def<"ge(...: l: word, r: word<signof l>) -> bool{l >= r}"> const&   ge;
+extern codegen::def<"eq(...: l: word, r: word<signof l>) -> bool{l == r}"> const&   eq;
+extern codegen::def<"ne(...: l: word, r: word<signof l>) -> bool{l != r}"> const&   ne;
+extern codegen::def<"min(...: l: word, r: word<signof l>) -> a < b ? a : b"> const& min;
+extern codegen::def<"max(...: l: word, r: word<signof l>) -> a > b ? a : b"> const& max;
 
 NIFTY_DECL(lt);
 NIFTY_DECL(gt);

@@ -36,24 +36,24 @@
 
 namespace api {
 
-// inline codegen::category<"bitwise"> bitwise;
+inline codegen::category<"bitwise"> bitwise;
 
 // TODO: bitzip
 
-// extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const&              bitget;
-// extern codegen::def<"bitset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const& bitset;
+extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const&              bitget;
+extern codegen::def<"bitset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const& bitset;
 // extern codegen::def<"bitflip(...: v: uint|int, i: int) -> (v[i] = !v[i]): typeof(v)"> const&
 //                                                                         bitflip_;
 // extern codegen::def<"bitnot(...: v: uint|int) -> ~v: typeof(v)"> const& bitnot_;
 // extern codegen::def<"bitshift_left(...: v: uint|int, ct: ibase10) -> (v << i): typeof(v)"> const&
 //     bitshift_left_;
 
-// NIFTY_DECL(bitget);
-// NIFTY_DECL(bitset);
+NIFTY_DECL(bitget);
+NIFTY_DECL(bitset);
 // NIFTY_DECL(bitflip_);
 // NIFTY_DECL(bitnot_);
 // NIFTY_DECL(bitshift_left_);
 
-// inline codegen::end_category<"bitwise"> bitwise_end;
+inline codegen::end_category<"bitwise"> bitwise_end;
 
 } // namespace api
