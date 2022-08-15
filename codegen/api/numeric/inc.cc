@@ -32,13 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
-  docs << "word increment w/ overflow.";
+  docs << "numerical increment w/ overflow.";
 
   static_assert(conf::word_size > 1, "TODO");
 
-  tests << inc(0)         = "1" >> docs;
-  tests << inc("1u")      = "2u" >> docs;
-  tests << inc(int_max_s) = int_min_s >> docs;
+  tests << inc(0)                            = "1" >> docs;
+  tests << inc("1u")                         = "2u" >> docs;
+  tests << inc(int_max_s)                    = int_min_s >> docs;
+  tests << inc("0x" + utl::cat(samp::himax)) = (int_min_s) >> docs;
+
   if constexpr (conf::word_size > 1) {
     tests << inc("15u")      = "16u" >> docs;
     tests << inc(uint_max_s) = "0u" >> docs;

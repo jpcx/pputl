@@ -25,27 +25,69 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
-//   docs << "uint decrement lookup w/ underflow.";
-// 
-//   tests << dec(0)                  = uint_max_s >> docs;
-//   tests << dec(1)                  = "0";
-//   tests << dec(2)                  = "1";
-//   tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1);
-//   tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[0];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "numeric.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
+  docs << "numerical decrement w/ underflow.";
+
+  static_assert(conf::word_size > 1, "TODO");
+
+  tests << dec(1)         = "0" >> docs;
+  tests << dec("2u")      = "1u" >> docs;
+  tests << dec(0)         = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << dec(int_min_s) = ("0x" + utl::cat(samp::himax)) >> docs;
+
+  if constexpr (conf::word_size > 1)
+    tests << dec("16u") = "15u" >> docs;
+
+  tests << dec("0u") = uint_max_s >> docs;
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def init =
+      def{"init(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
+        svect head = svect(args.begin(), std::prev(args.end()));
+        return utl::cat(head, ", ") + ", " + esc + " " + impl::hex(args.back(), "DEC");
+      };
+
+  def<"r0(...)"> r0 = [&](va args) {
+    def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
+                + ", _carry, _dec)"} = [&](pack args) {
+      def<"0(b)"> _0 = [&](arg b) { return "0, " + b; };
+      def<"1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "DEC")); };
+
+      return args.back() + ", " + args.front() + ", "
+           + pp::call(pp::cat(utl::slice(_0, -1), *(args.rbegin() + 1)), args[1]);
+    };
+
+    return o(args);
+  };
+
+  def<"r1(...)"> r1 = [&](va args) {
+    def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
+                + ", _carry, _dec)"} = [&](pack args) { //
+      return args.back() + ", " + args.front() + ", 0, " + args[1];
+    };
+
+    return o(args);
+  };
+
+  def<"res(...)"> res = [&](va args) {
+    def o = def{"o(_hint, " + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
+                + ", _carry, _dec)"} = [&](pack args) { //
+      return word(pp::tup(args[1], args[2], args.back()), args.front());
+    };
+    return o(args);
+  };
+
+  return res(typeof(args), def<"o(...)">{[&](va args) {
+               return r1(utl::cat(svect(conf::word_size - 1, r0 + "(")) + args
+                         + utl::cat(svect(conf::word_size - 1, ")")));
+             }}(x(init + " " + xword(args))));
+});
+
+} // namespace api

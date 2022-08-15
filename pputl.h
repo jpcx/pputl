@@ -1709,11 +1709,12 @@
 
 /// [numeric.inc]
 /// -------------
-/// word increment w/ overflow.
+/// numerical increment w/ overflow.
 ///
 /// PTL_INC(0)     // 1
 /// PTL_INC(1u)    // 2u
 /// PTL_INC(2047)  // 0x800
+/// PTL_INC(0x7FF) // 0x800
 /// PTL_INC(15u)   // 16u
 /// PTL_INC(4095u) // 0u
 #define PTL_INC(/* n: word */...) /* -> word{n + 1} */ \
@@ -1735,6 +1736,128 @@
 #define PPUTLINC_X(...)                           __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.dec]
+/// -------------
+/// numerical decrement w/ underflow.
+///
+/// PTL_DEC(1)     // 0
+/// PTL_DEC(2u)    // 1u
+/// PTL_DEC(0)     // 0xFFF
+/// PTL_DEC(0x800) // 0x7FF
+/// PTL_DEC(16u)   // 15u
+/// PTL_DEC(0u)    // 4095u
+#define PTL_DEC(/* n: word */...) /* -> word{n - 1} */ \
+  PPUTLDEC_RES(PTL_TYPEOF(__VA_ARGS__),                \
+               PPUTLDEC_o(PPUTLDEC_X(PPUTLDEC_INIT PTL_XWORD(__VA_ARGS__))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLDEC_o(...)                           PPUTLDEC_R1(PPUTLDEC_R0(PPUTLDEC_R0(__VA_ARGS__)))
+#define PPUTLDEC_RES(...)                         PPUTLDEC_RES_o(__VA_ARGS__)
+#define PPUTLDEC_RES_o(_hint, a, b, _carry, _dec) PTL_WORD((a, b, _dec), _hint)
+#define PPUTLDEC_R1(...)                          PPUTLDEC_R1_o(__VA_ARGS__)
+#define PPUTLDEC_R1_o(a, b, _carry, _dec)         _dec, a, 0, b
+#define PPUTLDEC_R0(...)                          PPUTLDEC_R0_o(__VA_ARGS__)
+#define PPUTLDEC_R0_o(a, b, _carry, _dec)         _dec, a, PPUTLDEC_R0_o_##_carry(b)
+#define PPUTLDEC_R0_o_1(b)                        PPUTLDEC_X(PTL_ESC PPUTLIMPL_HEX(b, DEC))
+#define PPUTLDEC_R0_o_0(b)                        0, b
+#define PPUTLDEC_INIT(a, b, c)                    a, b, PTL_ESC PPUTLIMPL_HEX(c, DEC)
+#define PPUTLDEC_X(...)                           __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.eqz]
+/// -------------
+/// numerical zero detection.
+///
+/// PTL_EQZ(0)         // 1
+/// PTL_EQZ(0u)        // 1
+/// PTL_EQZ(0x000)     // 1
+/// PTL_EQZ(0x000u)    // 1
+/// PTL_EQZ((0, 0, 0)) // 1
+/// PTL_EQZ(1u)        // 0
+/// PTL_EQZ(2)         // 0
+/// PTL_EQZ(4095u)     // 0
+/// PTL_EQZ(0x800)     // 0
+#define PTL_EQZ(/* n: word */...) /* -> bool{n == 0} */ \
+  PTL_IS_NONE(PTL_CAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLEQZ_0u
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.nez]
+/// -------------
+/// numerical non-zero detection.
+///
+/// PTL_NEZ(0)         // 0
+/// PTL_NEZ(0u)        // 0
+/// PTL_NEZ(0x000)     // 0
+/// PTL_NEZ(0x000u)    // 0
+/// PTL_NEZ((0, 0, 0)) // 0
+/// PTL_NEZ(1u)        // 1
+/// PTL_NEZ(2)         // 1
+/// PTL_NEZ(4095u)     // 1
+/// PTL_NEZ(0x800)     // 1
+#define PTL_NEZ(/* n: word */...) /* -> bool{n != 0} */ \
+  PTL_IS_SOME(PTL_CAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
+
+/// [numeric.ltz]
+/// -------------
+/// signed integral less-than-zero detection.
+///
+/// PTL_LTZ(0)             // 0
+/// PTL_LTZ(1)             // 0
+/// PTL_LTZ(2047)          // 0
+/// PTL_LTZ(0x800)         // 1
+/// PTL_LTZ(PTL_INC(2047)) // 1
+#define PTL_LTZ(/* n: int */...) /* -> bool{n < 0} */ \
+  PPUTLLTZ_o(PPUTLLTZ_RES PTL_XWORD(PTL_INT(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLLTZ_o(...)       __VA_ARGS__
+#define PPUTLLTZ_RES(a, b, c) PPUTLIMPL_HEXHEX(7##a, LT)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.gtz]
+/// -------------
+/// signed integral greater-than-zero detection.
+///
+/// PTL_GTZ(0)             // 0
+/// PTL_GTZ(1)             // 1
+/// PTL_GTZ(2047)          // 1
+/// PTL_GTZ(0x800)         // 0
+/// PTL_GTZ(PTL_INC(2047)) // 0
+#define PTL_GTZ(/* n: int */...) /* -> bool{n > 0} */ \
+  PTL_NOR(PTL_LTZ(__VA_ARGS__), PTL_EQZ(__VA_ARGS__))
+
+/// [numeric.lez]
+/// -------------
+/// signed integral greater-than-or-equal-to-zero detection.
+///
+/// PTL_LEZ(0)             // 1
+/// PTL_LEZ(1)             // 0
+/// PTL_LEZ(2047)          // 0
+/// PTL_LEZ(0x800)         // 1
+/// PTL_LEZ(PTL_INC(2047)) // 1
+#define PTL_LEZ(/* n: int */...) /* -> bool{n >= 0} */ \
+  PTL_OR(PTL_LTZ(__VA_ARGS__), PTL_EQZ(__VA_ARGS__))
+
+/// [numeric.gez]
+/// -------------
+/// signed integral greater-than-or-equal-to-zero detection.
+///
+/// PTL_GEZ(0)             // 1
+/// PTL_GEZ(1)             // 1
+/// PTL_GEZ(2047)          // 1
+/// PTL_GEZ(0x800)         // 0
+/// PTL_GEZ(PTL_INC(2047)) // 0
+#define PTL_GEZ(/* n: int */...) /* -> bool{n >= 0} */ PTL_NOT(PTL_LTZ(__VA_ARGS__))
 
 /// [bitwise.bitget]
 /// ----------------
