@@ -36,6 +36,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << "literal 0 through 9 are considered ibase10 rather than bool or hex."
        << ""
        << "returns one of:"
+       << ""
        << "  NONE | SOME | XWORD | TUP | IDEC"
        << "  IHEX | UDEC | UHEX  | HEX | ATOM";
 

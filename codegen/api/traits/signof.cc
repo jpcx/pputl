@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,35 +25,30 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "logic.h"
 #include "traits.h"
-#include "type.h"
 
 namespace api {
 
-inline codegen::category<"compare"> compare;
+using namespace codegen;
 
-extern codegen::def<"lt(...: l: word, r: <signof l>) -> bool{l < r}"> const&    lt;
-extern codegen::def<"gt(...: l: word, r: <signof l>) -> bool{l > r}"> const&    gt;
-extern codegen::def<"le(...: l: word, r: <signof l>) -> bool{l <= r}"> const&   le;
-extern codegen::def<"ge(...: l: word, r: <signof l>) -> bool{l >= r}"> const&   ge;
-extern codegen::def<"eq(...: l: word, r: <signof l>) -> bool{l == r}"> const&   eq;
-extern codegen::def<"ne(...: l: word, r: <signof l>) -> bool{l != r}"> const&   ne;
-extern codegen::def<"min(...: l: word, r: <signof l>) -> a < b ? a : b"> const& min;
-extern codegen::def<"max(...: l: word, r: <signof l>) -> a > b ? a : b"> const& max;
+decltype(signof) signof = NIFTY_DEF(signof, [&](va args) {
+  docs << "detects if a value is signed, unsigned, or a non-integral."
+       << "returns literal INT, UINT, or NONE.";
 
-NIFTY_DECL(lt);
-NIFTY_DECL(gt);
-NIFTY_DECL(le);
-NIFTY_DECL(ge);
-NIFTY_DECL(eq);
-NIFTY_DECL(ne);
-NIFTY_DECL(min);
-NIFTY_DECL(max);
+  tests << signof(0)                               = "INT" >> docs;
+  tests << signof(int_max_s)                       = "INT";
+  tests << signof(int_min_s)                       = "INT" >> docs;
+  tests << signof("1u")                            = "UINT" >> docs;
+  tests << signof(uint_max_s)                      = "UINT" >> docs;
+  tests << signof("0x" + utl::cat(samp::h7) + "u") = "UINT" >> docs;
+  tests << signof("foo")                           = "NONE" >> docs;
+  tests << signof(pp::tup(samp::himax))            = "NONE" >> docs;
 
-inline codegen::end_category<"compare"> compare_end;
+  def<"00"> _00 = [&] { return "NONE"; };
+  def<"10">{}   = [&] { return "INT"; };
+  def<"01">{}   = [&] { return "UINT"; };
+
+  return cat(utl::slice(_00, -2), cat(is_int(args), is_uint(args)));
+});
 
 } // namespace api

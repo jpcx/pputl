@@ -53,6 +53,7 @@ extern codegen::def<"is_xword(...: <unknown>) -> bool"> const& is_xword;
 extern codegen::def<"is_word(...: <unknown>) -> bool"> const&  is_word;
 extern codegen::def<
     "typeof(...: <unknown>) -> NONE|SOME|XWORD|TUP|IDEC|IHEX|UDEC|UHEX|HEX|ATOM"> const& typeof;
+extern codegen::def<"signof(...: <unknown>) -> INT|UINT|NONE"> const& signof;
 
 namespace detail {
 extern codegen::def<>& is_any_o;
@@ -99,6 +100,7 @@ NIFTY_DECL(is_tup);
 NIFTY_DECL(is_xword);
 NIFTY_DECL(is_word);
 NIFTY_DECL(typeof);
+NIFTY_DECL(signof);
 
 inline codegen::end_category<"traits"> traits_end;
 

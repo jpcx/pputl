@@ -725,6 +725,7 @@
 /// literal 0 through 9 are considered ibase10 rather than bool or hex.
 ///
 /// returns one of:
+///
 ///   NONE | SOME | XWORD | TUP | IDEC
 ///   IHEX | UDEC | UHEX  | HEX | ATOM
 ///
@@ -783,6 +784,29 @@
 #define PPUTLTYPEOF_010000(atom) ATOM
 /// !none → !any
 #define PPUTLTYPEOF_00(...)      SOME
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.signof]
+/// ---------------
+/// detects if a value is signed, unsigned, or a non-integral.
+/// returns literal INT, UINT, or NONE.
+///
+/// PTL_SIGNOF(0)         // INT
+/// PTL_SIGNOF(0x800)     // INT
+/// PTL_SIGNOF(1u)        // UINT
+/// PTL_SIGNOF(4095u)     // UINT
+/// PTL_SIGNOF(0x007u)    // UINT
+/// PTL_SIGNOF(foo)       // NONE
+/// PTL_SIGNOF((7, F, F)) // NONE
+#define PTL_SIGNOF(/* <unknown> */...) /* -> INT|UINT|NONE */ \
+  PTL_CAT(PPUTLSIGNOF_, PTL_CAT(PTL_IS_INT(__VA_ARGS__), PTL_IS_UINT(__VA_ARGS__)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLSIGNOF_01 UINT
+#define PPUTLSIGNOF_10 INT
+#define PPUTLSIGNOF_00 NONE
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1488,8 +1512,9 @@
 
 /// [compare.lt]
 /// ------------
-/// integral less-than comparison.
+/// word less-than comparison.
 /// prohibits comparison of different signedness.
+/// xwords are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_LT(0, 0)                  // 0
 /// PTL_LT(0, 1)                  // 1
@@ -1498,36 +1523,37 @@
 /// PTL_LT(2047, 0x800)           // 0
 /// PTL_LT(0x800, PTL_INT(2048u)) // 0
 /// PTL_LT(0x800, PTL_INT(2049u)) // 1
-#define PTL_LT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l < r} */                   \
-  PPUTLLT_o(__VA_ARGS__)(PTL_ISTR([PTL_LT] one or more invalid integer                    \
-                                  : __VA_ARGS__),                                         \
-                         PTL_ISTR([PTL_LT] comparison of different signedness not allowed \
+/// PTL_LT((F, F, F), (0, 0, 0))  // 0
+/// PTL_LT((0, 0, 0), (F, F, F))  // 1
+/// PTL_LT((7, F, F), 2048u)      // 1
+/// PTL_LT(2048u, (7, F, F))      // 0
+#define PTL_LT(/* l: word, r: <signof l> */...) /* -> bool{l < r} */                      \
+  PPUTLLT_o(__VA_ARGS__)(PTL_ISTR([PTL_LT] comparison of different signedness not allowed \
                                   : __VA_ARGS__),                                         \
                          __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLLT_o(l, r) PPUTLLT_oo(PTL_IS_INT(l), PTL_IS_INT(r), PTL_IS_UINT(l), PTL_IS_UINT(r))
-
-#define PPUTLLT_oo(...)                PPUTLLT_ooo(__VA_ARGS__)
-#define PPUTLLT_ooo(il, ir, ul, ur)    PPUTLLT_ooo_##il##ir##ul##ur
-#define PPUTLLT_ooo_1100(e0, e1, l, r) PPUTLLT_ICMP(PTL_XWORD(l), PTL_XWORD(r))
-#define PPUTLLT_ooo_1001(e0, e1, l, r) PTL_FAIL(e1)
-#define PPUTLLT_ooo_1000(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ooo_0110(e0, e1, l, r) PTL_FAIL(e1)
-#define PPUTLLT_ooo_0100(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ooo_0011(e0, e1, l, r) PPUTLLT_UCMP(PTL_ESC PTL_XWORD(l), PTL_ESC PTL_XWORD(r))
-#define PPUTLLT_ooo_0010(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ooo_0001(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ooo_0000(e0, e1, l, r) PTL_FAIL(e0)
-#define PPUTLLT_ICMP(lw, rw)                                                                \
-  PTL_CAT(PPUTLLT_ICMP_, PTL_CAT(PPUTLIMPL_HEXHEX(PTL_CAT(7, PTL_ESC(PTL_IFIRST lw)), LT),  \
-                                 PPUTLIMPL_HEXHEX(PTL_CAT(7, PTL_ESC(PTL_IFIRST rw)), LT))) \
-  (lw, rw)
-#define PPUTLLT_ICMP_11(lw, rw) PPUTLLT_UCMP(PTL_ESC lw, PTL_ESC rw)
-#define PPUTLLT_ICMP_10(lw, rw) 1
-#define PPUTLLT_ICMP_01(lw, rw) 0
-#define PPUTLLT_ICMP_00(lw, rw) PPUTLLT_UCMP(PTL_ESC lw, PTL_ESC rw)
+#define PPUTLLT_o(l, r) \
+  PTL_CAT(PPUTLLT_o_, PTL_CAT(PTL_SIGNOF(PTL_WORD(l)), PTL_SIGNOF(PTL_WORD(r))))
+#define PPUTLLT_o_NONENONE(e, l, r) PPUTLLT_UCMP(PTL_ESC l, PTL_ESC r)
+#define PPUTLLT_o_NONEUINT(e, l, r) PPUTLLT_UCMP(PTL_ESC l, PTL_ESC PTL_XWORD(r))
+#define PPUTLLT_o_NONEINT(e, l, r)  PTL_FAIL(e)
+#define PPUTLLT_o_UINTNONE(e, l, r) PPUTLLT_UCMP(PTL_ESC PTL_XWORD(l), PTL_ESC r)
+#define PPUTLLT_o_UINTUINT(e, l, r) PPUTLLT_UCMP(PTL_ESC PTL_XWORD(l), PTL_ESC PTL_XWORD(r))
+#define PPUTLLT_o_UINTINT(e, l, r)  PTL_FAIL(e)
+#define PPUTLLT_o_INTNONE(e, l, r)  PTL_FAIL(e)
+#define PPUTLLT_o_INTUINT(e, l, r)  PTL_FAIL(e)
+#define PPUTLLT_o_INTINT(e, l, r)   PPUTLLT_ICMP(PTL_ESC PTL_XWORD(l), PTL_ESC PTL_XWORD(r))
+#define PPUTLLT_ICMP(...)           PPUTLLT_ICMP_o(__VA_ARGS__)
+#define PPUTLLT_ICMP_o(...)         PPUTLLT_ICMP_oo(__VA_ARGS__)
+#define PPUTLLT_ICMP_oo(a, b, c, d, e, f)                                                    \
+  PTL_CAT(PPUTLLT_ICMP_oo_, PTL_CAT(PPUTLIMPL_HEXHEX(7##a, LT), PPUTLIMPL_HEXHEX(7##d, LT))) \
+  (a, b, c, d, e, f)
+#define PPUTLLT_ICMP_oo_11(...) PPUTLLT_UCMP(__VA_ARGS__)
+#define PPUTLLT_ICMP_oo_10(...) 1
+#define PPUTLLT_ICMP_oo_01(...) 0
+#define PPUTLLT_ICMP_oo_00(...) PPUTLLT_UCMP(__VA_ARGS__)
 
 #define PPUTLLT_UCMP(...) PTL_FIRST(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(0, 0, PPUTLLT_ZIP(__VA_ARGS__)))))
 
@@ -1560,7 +1586,7 @@
 /// PTL_GT(2047, 0x800)           // 1
 /// PTL_GT(0x800, PTL_INT(2048u)) // 0
 /// PTL_GT(0x800, PTL_INT(2049u)) // 0
-#define PTL_GT(/* l: int|uint, r: typeof(l) */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
+#define PTL_GT(/* l: word, r: <signof l> */...) /* -> bool{l > r} */ PPUTLGT_X(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1580,8 +1606,7 @@
 /// PTL_LE(2047, 0x800)           // 0
 /// PTL_LE(0x800, PTL_INT(2048u)) // 1
 /// PTL_LE(0x800, PTL_INT(2049u)) // 1
-#define PTL_LE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l <= r} */ \
-  PTL_NOT(PTL_GT(__VA_ARGS__))
+#define PTL_LE(/* l: word, r: <signof l> */...) /* -> bool{l <= r} */ PTL_NOT(PTL_GT(__VA_ARGS__))
 
 /// [compare.ge]
 /// ------------
@@ -1595,8 +1620,7 @@
 /// PTL_GE(2047, 0x800)           // 1
 /// PTL_GE(0x800, PTL_INT(2048u)) // 1
 /// PTL_GE(0x800, PTL_INT(2049u)) // 0
-#define PTL_GE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l >= r} */ \
-  PTL_NOT(PTL_LT(__VA_ARGS__))
+#define PTL_GE(/* l: word, r: <signof l> */...) /* -> bool{l >= r} */ PTL_NOT(PTL_LT(__VA_ARGS__))
 
 /// [compare.eq]
 /// ------------
@@ -1610,7 +1634,7 @@
 /// PTL_EQ(2047, 0x800)           // 0
 /// PTL_EQ(0x800, PTL_INT(2048u)) // 1
 /// PTL_EQ(0x800, PTL_INT(2049u)) // 0
-#define PTL_EQ(/* l: int|uint, r: typeof(l) */...) /* -> bool{l == r} */ \
+#define PTL_EQ(/* l: word, r: <signof l> */...) /* -> bool{l == r} */ \
   PTL_AND(PTL_LE(__VA_ARGS__), PTL_GE(__VA_ARGS__))
 
 /// [compare.ne]
@@ -1625,8 +1649,7 @@
 /// PTL_NE(2047, 0x800)           // 1
 /// PTL_NE(0x800, PTL_INT(2048u)) // 0
 /// PTL_NE(0x800, PTL_INT(2049u)) // 1
-#define PTL_NE(/* l: int|uint, r: typeof(l) */...) /* -> bool{l != r} */ \
-  PTL_NOT(PTL_EQ(__VA_ARGS__))
+#define PTL_NE(/* l: word, r: <signof l> */...) /* -> bool{l != r} */ PTL_NOT(PTL_EQ(__VA_ARGS__))
 
 /// [compare.min]
 /// -------------
@@ -1640,7 +1663,7 @@
 /// PTL_MIN(2047, 0x800)           // 0x800
 /// PTL_MIN(0x800, PTL_INT(2048u)) // 0x800
 /// PTL_MIN(0x800, PTL_INT(2049u)) // 0x800
-#define PTL_MIN(/* l: int|uint, r: typeof(l) */...) /* -> a < b ? a : b */ \
+#define PTL_MIN(/* l: word, r: <signof l> */...) /* -> a < b ? a : b */ \
   PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1662,7 +1685,7 @@
 /// PTL_MAX(2047, 0x800)           // 2047
 /// PTL_MAX(0x800, PTL_INT(2048u)) // 0x800
 /// PTL_MAX(0x800, PTL_INT(2049u)) // 0x801
-#define PTL_MAX(/* l: int|uint, r: typeof(l) */...) /* -> a > b ? a : b */ \
+#define PTL_MAX(/* l: word, r: <signof l> */...) /* -> a > b ? a : b */ \
   PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
