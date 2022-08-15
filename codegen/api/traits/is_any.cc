@@ -46,7 +46,7 @@ decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
   tests << is_any("(42)")     = "1" >> docs;
 
   detail::is_any_o = def{"o(_, ...: <some + token; e.g. __VA_ARGS__.foo>)"} = [&](arg first, va) {
-    docs << "must be called with an tokens after __VA_ARGS__";
+    docs << "must be called with tokens after __VA_ARGS__ to detect empty ending arg";
     def<"ok"> pass = [&] {
       def<"0"> _0 = [&] { return "0"; };
       def<"1">{}  = [&] { return "1"; };

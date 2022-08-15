@@ -35,7 +35,7 @@ decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
   docs << "executes an invalid preprocessor operation to indicate a failure."
        << "must provide a string literal message."
        << ""
-       << "usage: " + fail("something bad happened")
+       << "usage: " + fail("\"something bad happened\"")
        << "       " + fail(istr("[myfun] invalid args : __VA_ARGS__"));
 
   return pp::cat(fail, args);

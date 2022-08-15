@@ -26,19 +26,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
-#include "logic.h"
 #include "traits.h"
 #include "type.h"
 
 namespace api {
 
-// inline codegen::category<"numeric"> numeric;
+inline codegen::category<"numeric"> numeric;
 
-// extern codegen::def<"inc(...: n: uint) -> uint{n + 1}"> const&            inc;
+extern codegen::def<"inc(...: n: word) -> word{n + 1}"> const& inc;
 // extern codegen::def<"dec(...: n: uint) -> uint{n - 1}"> const&            dec;
 // extern codegen::def<"eqz(...: n: uint) -> uint{n == 0}"> const&           eqz;
 // extern codegen::def<"nez(...: n: uint) -> uint{n != 0}"> const&           nez;
@@ -55,7 +53,7 @@ namespace api {
 // extern codegen::def<"mod64(...: n: uint) -> uint{n % 64}"> const&         mod64;
 // extern codegen::def<"factor(...: n: uint) -> ...prime_factors(n)"> const& factor;
 
-// NIFTY_DECL(inc);
+NIFTY_DECL(inc);
 // NIFTY_DECL(dec);
 // namespace detail {
 // extern codegen::def<>& eqz_0;
@@ -76,6 +74,6 @@ namespace api {
 // NIFTY_DECL(mod64);
 // NIFTY_DECL(factor);
 
-// inline codegen::end_category<"numeric"> numeric_end;
+inline codegen::end_category<"numeric"> numeric_end;
 
 } // namespace api

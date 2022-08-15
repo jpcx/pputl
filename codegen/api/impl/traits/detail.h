@@ -144,8 +144,8 @@ inline std::string
 bnot(std::array<std::string, conf::word_size * 4> const& n) {
   auto res = n;
   for (auto&& v : res)
-    v = v == "1" ? "0" : "1";
-  return uhex(n);
+    v = (v == "1" ? "0" : "1");
+  return uhex(res);
 }
 
 inline std::string

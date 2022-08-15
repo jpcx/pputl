@@ -122,7 +122,7 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
                           return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, b, args);
                         }}(args);
                   }}(e, i, b, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
-                }}(e, idec(i), bool_(b), bin + " " + word(v, "XWORD")),
+                }}(e, idec(i), bool_(b), bin + " " + xword(v)),
                 typeof(v));
   }}(istr("[" + bitset + "] invalid index; args : " + args), args);
 });

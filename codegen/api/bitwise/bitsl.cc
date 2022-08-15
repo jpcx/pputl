@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,33 +25,39 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "compare.h"
-#include "config.h"
-#include "lang.h"
-#include "logic.h"
-#include "numeric.h"
-#include "traits.h"
-#include "type.h"
-
-namespace api {
-
-inline codegen::category<"bitwise"> bitwise;
-
-// TODO: bitzip
-
-extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const&              bitget;
-extern codegen::def<"bitset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const& bitset;
-extern codegen::def<"bitflip(...: v: word, i: idec) -> word{v[i] = !v[i]}"> const&     bitflip;
-extern codegen::def<"bitnot(...: v: word) -> word{~v}"> const&                         bitnot;
-// extern codegen::def<"bitsl(...: v: word, ct: idec) -> word{v << i}"> const&            bitsl;
-
-NIFTY_DECL(bitget);
-NIFTY_DECL(bitset);
-NIFTY_DECL(bitflip);
-NIFTY_DECL(bitnot);
-// NIFTY_DECL(bitsl);
-
-inline codegen::end_category<"bitwise"> bitwise_end;
-
-} // namespace api
+// #include <span>
+// 
+// #include "bitwise.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(bitsl) bitsl = NIFTY_DEF(bitsl, [&](va args) {
+//   docs << "TODO";
+// 
+//   def rev = def{"rev" + pp::tup(utl::alpha_base52_seq(conf::word_size))} = [&](pack args) {
+//     svect rev{args};
+//     std::ranges::reverse(rev);
+//     return utl::cat(rev, ", ");
+//   };
+// 
+//   def<"r(...)"> r = [&](va args) {
+//     return def<"o(n, ccur, slcur, ...)">{[&](arg n, arg ccur, arg slcur, va rest) {
+//       // TODO select i%4, dec by at most 4 each iteration
+//       def<"0(...)"> _0 = [&](va args) { return ""; };
+//       def<"1(...)">{}  = [&](va args) { return ""; };
+//       return pp::call(pp::cat(utl::slice(_0, -1), cprev));
+//       return impl::hex(first, "SL");
+//     }}(args);
+//   };
+// 
+//   return word(pp::tup(rev(def<"o(...)">{[&](va args) {
+//                 auto open  = utl::cat(svect(conf::word_size, r + "("));
+//                 auto close = utl::cat(svect(conf::word_size, ")"));
+//                 return open + " " + args + " " + close;
+//               }}(rev + " " + xword(args)))),
+//               typeof(args));
+// });
+// 
+// } // namespace api

@@ -74,7 +74,7 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
           return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, args);
         }}(args);
       }}(e, i, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
-    }}(e, idec(i), bin + " " + word(v, "XWORD"));
+    }}(e, idec(i), bin + " " + xword(v));
   }}(istr("[" + bitget + "] invalid index; args : " + args), args);
 });
 
