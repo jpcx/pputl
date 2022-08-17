@@ -26,7 +26,6 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
@@ -36,46 +35,30 @@
 
 namespace api {
 
-// inline codegen::category<"numeric"> numeric;
+inline codegen::category<"numeric"> numeric;
 
-// extern codegen::def<"inc(...: n: uint) -> uint{n + 1}"> const&            inc;
-// extern codegen::def<"dec(...: n: uint) -> uint{n - 1}"> const&            dec;
-// extern codegen::def<"eqz(...: n: uint) -> uint{n == 0}"> const&           eqz;
-// extern codegen::def<"nez(...: n: uint) -> uint{n != 0}"> const&           nez;
-// extern codegen::def<"mul2(...: n: uint) -> uint{n * 2}"> const&           mul2;
-// extern codegen::def<"sqrt(...: n: uint) -> uint{sqrt(n)}"> const&         sqrt;
-// extern codegen::def<"pow2(...: n: uint) -> uint{n * n}"> const&           pow2;
-// extern codegen::def<"div2(...: n: uint) -> uint{n / 2}"> const&           div2;
-// extern codegen::def<"log2(...: n: uint) -> uint{log2 n}"> const&          log2;
-// extern codegen::def<"mod2(...: n: uint) -> uint{n % 2}"> const&           mod2;
-// extern codegen::def<"mod4(...: n: uint) -> uint{n % 4}"> const&           mod4;
-// extern codegen::def<"mod8(...: n: uint) -> uint{n % 8}"> const&           mod8;
-// extern codegen::def<"mod16(...: n: uint) -> uint{n % 16}"> const&         mod16;
-// extern codegen::def<"mod32(...: n: uint) -> uint{n % 32}"> const&         mod32;
-// extern codegen::def<"mod64(...: n: uint) -> uint{n % 64}"> const&         mod64;
-// extern codegen::def<"factor(...: n: uint) -> ...prime_factors(n)"> const& factor;
+extern codegen::def<"inc(...: n: word) -> word{n + 1}"> const&  inc;
+extern codegen::def<"dec(...: n: word) -> word{n - 1}"> const&  dec;
+extern codegen::def<"eqz(...: n: word) -> bool{n == 0}"> const& eqz;
+extern codegen::def<"nez(...: n: word) -> bool{n != 0}"> const& nez;
+extern codegen::def<"ltz(...: n: int) -> bool{n < 0}"> const&   ltz;
+extern codegen::def<"gtz(...: n: int) -> bool{n > 0}"> const&   gtz;
+extern codegen::def<"lez(...: n: int) -> bool{n >= 0}"> const&  lez;
+extern codegen::def<"gez(...: n: int) -> bool{n >= 0}"> const&  gez;
 
-// NIFTY_DECL(inc);
-// NIFTY_DECL(dec);
-// namespace detail {
-// extern codegen::def<>& eqz_0;
-// NIFTY_DECL(eqz_0);
-// } // namespace detail
-// NIFTY_DECL(eqz);
-// NIFTY_DECL(nez);
-// NIFTY_DECL(mul2);
-// NIFTY_DECL(sqrt);
-// NIFTY_DECL(pow2);
-// NIFTY_DECL(div2);
-// NIFTY_DECL(log2);
-// NIFTY_DECL(mod2);
-// NIFTY_DECL(mod4);
-// NIFTY_DECL(mod8);
-// NIFTY_DECL(mod16);
-// NIFTY_DECL(mod32);
-// NIFTY_DECL(mod64);
-// NIFTY_DECL(factor);
+NIFTY_DECL(inc);
+NIFTY_DECL(dec);
+namespace detail {
+extern codegen::def<>& eqz_0u;
+NIFTY_DECL(eqz_0u);
+} // namespace detail
+NIFTY_DECL(eqz);
+NIFTY_DECL(nez);
+NIFTY_DECL(ltz);
+NIFTY_DECL(gtz);
+NIFTY_DECL(lez);
+NIFTY_DECL(gez);
 
-// inline codegen::end_category<"numeric"> numeric_end;
+inline codegen::end_category<"numeric"> numeric_end;
 
 } // namespace api

@@ -32,8 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(max) max = NIFTY_DEF(max, [&](va args) {
-  docs << "integral maximum operation."
-       << "prohibits comparison of different signedness.";
+  docs << "word maximum operation."
+       << "prohibits comparison of different signedness."
+       << "xwords are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;
@@ -66,13 +67,9 @@ decltype(max) max = NIFTY_DEF(max, [&](va args) {
   tests << max(to_string(int_max / 2), to_string((int_max / 2)))     = to_string((int_max / 2));
   tests << max(to_string(int_max / 2), to_string((int_max / 2) + 1)) = to_string((int_max / 2) + 1);
 
-  def<"0(a, b)"> _0 = [&](arg, arg b) {
-    return b;
-  };
+  def<"0(a, b)"> _0 = [&](arg, arg b) { return b; };
 
-  def<"1(a, b)">{} = [&](arg a, arg) {
-    return a;
-  };
+  def<"1(a, b)">{} = [&](arg a, arg) { return a; };
 
   return pp::call(cat(utl::slice(_0, -1), gt(args)), args);
 });

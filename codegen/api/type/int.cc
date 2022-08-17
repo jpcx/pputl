@@ -34,92 +34,140 @@ using namespace codegen;
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
               + "-bit signed integer type."
-       << "constructible from any word. hword construction returns ihex."
-       << "cannot parse negative decimals; use math.neg instead."
+       << "constructible from any word."
+       << "instance is either idec or ihex."
        << ""
+       << "cannot parse negative decimals; use math.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
-       << "attempts to preserve hex/decimal representation, but will"
-       << "output hex if casting the input yields a negative number"
+       << "cast modes:"
+       << ""
+       << "  idec  → idec | [default]"
+       << "  idec  → ihex | requires IHEX hint"
+       << ""
+       << "  ihex  → ihex | [default]; fallback for failed ihex → idec"
+       << "  ihex  → idec | requires IDEC hint and positive result"
+       << ""
+       << "  udec  → idec | [default]; requires positive result"
+       << "  udec  → ihex | requires IHEX hint or udec → idec failure"
+       << ""
+       << "  uhex  → ihex | [default]; fallback for failed uhex → idec"
+       << "  uhex  → idec | requires IDEC hint and positive result"
+       << ""
+       << "  xword → ihex | [default]; fallback for failed xword → idec"
+       << "  xword → idec | requires IDEC hint and positive result"
+       << ""
+       << "attempts to preserve hex/decimal representation by default, but"
+       << "will output hex if casting the input yields a negative number."
+       << "hint is ignored only if the result is negative and the hint is IDEC."
        << ""
        << "cast from unsigned reinterprets bits as signed two's complement."
        << ""
-       << "value must be a valid signed int; implicit interpretation"
+       << "values above the int max must have a 'u' suffix; implicit interpretation"
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
+  // idec  → idec | [default]
+  tests << int_(0)         = "0" >> docs;
+  // idec  → ihex | requires IHEX hint
+  tests << int_(1, "IHEX") = ("0x" + utl::cat(samp::h1)) >> docs;
 
-  tests << int_(0)             = "0" >> docs;
-  tests << int_("1u")          = "1" >> docs;
-  tests << int_(min)           = min >> docs;
-  tests << int_(conf::int_max) = std::to_string(conf::int_max) >> docs;
-  tests << int_(max + "u")     = max >> docs;
-  tests << int_(uint_max_s)    = max >> docs;
-  tests << int_(pp::tup((conf::word_size > 1 ? "8, " : "8")
-                        + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", "))) =
-      int_min_s >> docs;
-  tests << int_(pp::tup((conf::word_size > 1 ? "7, " : "7")
-                        + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"), ", "))) =
-      ("0x7" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"))) >> docs;
+  // ihex  → ihex | [default]; fallback for failed ihex → idec
+  tests << int_("0x" + utl::cat(samp::h2))            = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << int_("0x" + utl::cat(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
+  // ihex  → idec | requires IDEC hint and positive result
+  tests << int_("0x" + utl::cat(samp::h2), "IDEC")    = "2" >> docs;
 
-  def<"\\HEX(uint)"> hex = [&](arg uint) {
-    return impl::uint_trait(impl::uint_trait(uint, "HUDEC"), "DIHEX");
-  };
+  // udec  → idec | [default]; requires positive result
+  tests << int_("7u")          = "7" >> docs;
+  // udec  → ihex | requires IHEX hint or udec → idec failure
+  tests << int_("15u", "IHEX") = ("0x" + utl::cat(samp::h15)) >> docs;
+  tests << int_(uint_max_s)    = ("0x" + utl::cat(samp::hmax)) >> docs;
 
-  def<"\\DEC(uint)">{} = [&](arg uint) {
-    def<"0(uint)"> _0 = [&](arg u_) {
-      return impl::uint_trait(cat(impl::uint_trait(u_, "DIHEX"), 'u'), "HIDEC");
+  // uhex  → ihex | [default]; fallback for failed uhex → idec
+  tests << int_("0x" + utl::cat(samp::h7) + "u")           = ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << int_("0x" + utl::cat(samp::hmax) + "u", "IDEC") = ("0x" + utl::cat(samp::hmax)) >> docs;
+  // uhex  → idec | requires IDEC hint and positive result
+  tests << int_("0x" + utl::cat(samp::h5) + "u", "IDEC")   = "5" >> docs;
+
+  // xword → ihex | [default]; fallback for failed xword → idec
+  tests << int_(pp::tup(samp::hmin))          = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << int_(pp::tup(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
+  // xword → idec | requires IDEC hint and positive result
+  tests << int_(pp::tup(samp::himax), "IDEC") = int_max_s >> docs;
+
+  def<"mode(e, t, ...: <err>, <typeof v>, <hint>) -> <cast mode>"> mode = [&](arg e, arg t, va h) {
+    docs << "cast mode selector and error detector";
+
+    def<"0\\IDEC"> _0idec = [&] { return ""; };
+    def<"0\\IHEX">{}      = [&] { return ""; };
+    def<"0\\UDEC">{}      = [&] { return ""; };
+    def<"0\\UHEX">{}      = [&] { return ""; };
+    def<"0\\XWORD">{}     = [&] { return ""; };
+    def<"1\\IDEC"> _1idec = [&] { return ""; };
+    def<"1\\IHEX">{}      = [&] { return ""; };
+    def<"1">{}            = [&] { return ""; };
+
+    def<"00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
+    def<"01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+    def<"10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+    def<"11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
+      def<"\\IDECIDEC"> idecidec = [&] { return "ID_ID"; };
+      def<"\\IDECIHEX">{}        = [&] { return "ID_IH"; };
+      def<"\\IDEC">{}            = [&] { return "ID_ID"; };
+      def<"\\IHEXIDEC">{}        = [&] { return "IH_IC"; };
+      def<"\\IHEXIHEX">{}        = [&] { return "IH_IH"; };
+      def<"\\IHEX">{}            = [&] { return "IH_IH"; };
+      def<"\\UDECIDEC">{}        = [&] { return "UD_IC"; };
+      def<"\\UDECIHEX">{}        = [&] { return "UD_IH"; };
+      def<"\\UDEC">{}            = [&] { return "UD_IC"; };
+      def<"\\UHEXIDEC">{}        = [&] { return "UH_IC"; };
+      def<"\\UHEXIHEX">{}        = [&] { return "UH_IH"; };
+      def<"\\UHEX">{}            = [&] { return "UH_IH"; };
+      def<"\\XWORDIDEC">{}       = [&] { return "XW_IC"; };
+      def<"\\XWORDIHEX">{}       = [&] { return "XW_IH"; };
+      def<"\\XWORD">{}           = [&] { return "XW_IH"; };
+
+      return pp::cat(utl::slice(idecidec, -8), t, hint);
     };
 
-    def<"1(uint)">{} = [&](arg uint) {
-      return impl::uint_trait(uint, "DIHEX");
-    };
-
-    return pp::call(cat(utl::slice(_0, -1), impl::uint_trait(uint, "DINEG")), uint);
+    return pp::call(cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),
+                                                 is_none(pp::cat(utl::slice(_1idec, -4), h)))),
+                    e, t, h);
   };
 
-  def<"o_01(e, uint)">{} = [&](arg, arg uint) {
-    docs << "cast from uint";
-    return pp::call(cat(utl::slice(hex, -3), impl::uint_trait(uint, "TYPE")), uint);
-  };
-
-  def<"o_10(e, i)">{} = [&](arg, arg i) {
-    docs << "cast from int";
-    return i;
-  };
-
-  def<"o_00(e, ...)"> _00 = [&](arg e, va) {
-    return fail(e);
-  };
-
-  def<"0(e, ...)"> _0 = [&](arg e, va some) {
-    return def<"o(e, atom)">{[&](arg e, arg atom) {
-      return pp::call(
-          cat(utl::slice(_00, -2), cat(detail::is_int_o(atom), detail::is_uint_o(atom))), e, atom);
-    }}(e, atom(some));
-  };
-
-  def<"1(e, word)">{} = [&](arg, arg word) {
-    auto params = utl::alpha_base52_seq(conf::word_size);
-    for (auto&& v : params) {
-      if (v == "u") {
-        v = "_u";
-      } else if (v == "x") {
-        v = "_x";
-      }
+  auto hword_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : hword_params)
+    if (v == "u" or v == "x") {
+      v = "_" + v;
     }
-    def cat = def{"cat(" + utl::cat(params, ", ") + ")"} = [&](pack args) {
-      return pp::cat("0x", pp::cat(args));
-    };
 
-    return esc(cat + " " + word);
+  def<"\\ID_ID(idec)"> id_id = [&](arg idec) { return idec; };
+  def<"\\ID_IH(idec)">{}     = [&](arg idec) {
+    return impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "IHEX");
+  };
+  def<"\\IH_IC(ihex)">{}  = [&](arg ihex) { return impl::uhex(pp::cat(ihex, 'u'), "ICAST"); };
+  def<"\\IH_IH(ihex)">{}  = [&](arg ihex) { return ihex; };
+  def<"\\UD_IC(udec)">{}  = [&](arg udec) { return impl::uhex(impl::udec(udec, "UHEX"), "ICAST"); };
+  def<"\\UD_IH(udec)">{}  = [&](arg udec) { return impl::uhex(impl::udec(udec, "UHEX"), "IHEX"); };
+  def<"\\UH_IC(uhex)">{}  = [&](arg uhex) { return impl::uhex(uhex, "ICAST"); };
+  def<"\\UH_IH(uhex)">{}  = [&](arg uhex) { return impl::uhex(uhex, "IHEX"); };
+  def<"\\XW_IC(hword)">{} = [&](arg hword) {
+    def o = def{"o(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+      return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "ICAST");
+    };
+    return o + " " + hword;
+  };
+  def<"\\XW_IH(hword)">{} = [&](arg hword) {
+    def o = def{"o(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+      return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "IHEX");
+    };
+    return o + " " + hword;
   };
 
-  return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_hword_o(some)), e, some);
-  }}(istr("[" + int_ + "] invalid integer : " + args), some(args));
+  return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
+    return pp::call(cat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
+  }}(istr("[" + int_ + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

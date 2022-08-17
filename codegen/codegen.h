@@ -67,7 +67,7 @@ constexpr char const impl_prefix[]{"PPUTL"};
 constexpr std::array<char const*, 2> impl_shortnames[]{
     {"ropen", "ro"},
     {"rclose", "rc"},
-    {"uint_traits", "utraits"},
+    {"impl_uint_trait", "impl_utrait"},
 };
 
 // the number of hex digits used to describes integers.
@@ -102,14 +102,20 @@ constexpr enum class name_case {
 constexpr char const project_header[]{
     "/* /////////////////////////////////////////////////////////////////////////////\n"
     "//                          __    ___                                         //\n"
-    "//                         /\\ \\__/\\_ \\                                        //\n"
-    "//   _____   _____   __  __\\ \\ ,_\\//\\ \\                                       //\n"
-    "//  /\\ '__`\\/\\ '__`\\/\\ \\/\\ \\\\ \\ \\/ \\ \\ \\                                      "
+    "//                         /\\ \\__/\\_ \\                                        "
     "//\n"
-    "//  \\ \\ \\_\\ \\ \\ \\_\\ \\ \\ \\_\\ \\\\ \\ \\_ \\_\\ \\_                                 "
+    "//   _____   _____   __  __\\ \\ ,_\\//\\ \\                                       "
+    "//\n"
+    "//  /\\ '__`\\/\\ '__`\\/\\ \\/\\ \\\\ \\ \\/ \\ \\ \\                              "
+    "        "
+    "//\n"
+    "//  \\ \\ \\_\\ \\ \\ \\_\\ \\ \\ \\_\\ \\\\ \\ \\_ \\_\\ \\_                       "
+    "          "
     "   //\n"
-    "//   \\ \\ ,__/\\ \\ ,__/\\ \\____/ \\ \\__\\/\\____\\                                   //\n"
-    "//    \\ \\ \\   \\ \\ \\   \\/___/   \\/__/\\/____/                                   //\n"
+    "//   \\ \\ ,__/\\ \\ ,__/\\ \\____/ \\ \\__\\/\\____\\                              "
+    "     //\n"
+    "//    \\ \\ \\   \\ \\ \\   \\/___/   \\/__/\\/____/                                "
+    "   //\n"
     "//     \\/_/    \\/_/                                                           //\n"
     "//                                                                            //\n"
     "//  pputl Preprocessor Utilities                                              //\n"
@@ -139,21 +145,89 @@ constexpr char const project_header[]{
     "//    countless metaprogramming techniques that should be preferred.          //\n"
     "//                                                                            //\n"
     "//    This library is built to provide a strong, safe set of functionality    //\n"
-    "//    for edge cases that uniquely benefit from text replacement and would    //\n"
-    "//    would otherwise utilize  a separate code generation script,  such as    //\n"
-    "//    test case generation, reflective structs,  and various optimizations    //\n"
-    "//    that reduce the number of template specializations.                     //\n"
+    "//    for edge cases that still uniquely benefit from text replacement and    //\n"
+    "//    would otherwise utilize a separate code generation script or require    //\n"
+    "//    higly verbose or redundant syntax, such as comprehensive test cases,    //\n"
+    "//    struct reflection, static initialization control, or optimization of    //\n"
+    "//    algorithms that manipulate template arguments and specializations.      //\n"
     "//                                                                            //\n"
     "//    ABOUT                                                                   //\n"
     "//    -----                                                                   //\n"
     "//                                                                            //\n"
-    "//    pputl  is a powerful, typed C++ preprocessor utilities library  that    //\n"
-    "//    implements many high-level programming constructs,  including 12-bit    //\n"
-    "//    signed and unsigned integers with arithmetic and comparison support.    //\n"
+    "//    pputl is a powerful C++ preprocessor utilities library that features    //\n"
+    "//    many high-level constructs including integers and range algorithms.     //\n"
     "//                                                                            //\n"
-    "//    pputl implements  recursive algorithms  by manipulating preprocessor    //\n"
-    "//    syntax to construct inline call stacks that execute much faster than    //\n"
-    "//    mutually-recursive patterns and can be nested indefinitely.             //\n"
+    "//    pputl is designed with speed, safety, and flexibility in mind.          //\n"
+    "//                                                                            //\n"
+    "//    Algorithms are implemented  using a preprocessor syntax manipulation    //\n"
+    "//    technique for constructing inline recursive call stacks that execute    //\n"
+    "//    much faster than mutually recursive patterns and can be nested.         //\n"
+    "//                                                                            //\n"
+    "//    Metaprogramming utilities are provided for arbitrary recursion.         //\n"
+    "//                                                                            //\n"
+    "//    Several arithmetic, bitwise, and comparison functions  are partially    //\n"
+    "//    pre-computed;  lookup tables are generated by the build system  that    //\n"
+    "//    contain the results of critical bitwise operations.                     //\n"
+    "//                                                                            //\n"
+    "//    Functions verify their arguments and use type casting to ensure that    //\n"
+    "//    useful error messages are generated as soon as an issue manifests.      //\n"
+    "//                                                                            //\n"
+    "//    Features overview:                                                      //\n"
+    "//                                                                            //\n"
+    "//     ◆ language enhancements                                                //\n"
+    "//       ‐ basic argument manipulation         [lang]                         //\n"
+    "//           eat     esc    cat    istr  str                                  //\n"
+    "//           ifirst  first  irest  rest  trim                                 //\n"
+    "//       ‐ control flow                        [lang, control]                //\n"
+    "//           default  fail  if  switch                                        //\n"
+    "//       ‐ type casting                        [type; see TERMINOLOGY]        //\n"
+    "//           none  some  any   atom  bool  hex  nybl   int                    //\n"
+    "//           idec  ihex  uint  udec  uhex  tup  xword  word                   //\n"
+    "//       ‐ traits detection                    [traits, util]                 //\n"
+    "//           is_none  is_some   is_any    is_atom  is_bool  is_hex            //\n"
+    "//           is_nybl  is_int    is_idec   is_ihex  is_uint  is_udec           //\n"
+    "//           is_uhex  is_tup    is_xword  is_word  typeof   signof            //\n"
+    "//           size     is_empty  is_sizey                                      //\n"
+    "//       ‐ boolean logic                       [logic]                        //\n"
+    "//           not  and  or  xor  nand  nor  xnor                               //\n"
+    "//       ‐ paste formatting                    [fmt]                          //\n"
+    "//           paste  respace  compress                                         //\n"
+    "//     ◆ signed and unsigned integers                                         //\n"
+    "//       ‐ arithmetic                          [numeric, math]                //\n"
+    "//           inc  dec  add   sub   mul   moddiv                               //\n"
+    "//           mod  div  pow2  sqrt  log2  factor                               //\n"
+    "//       ‐ comparison                          [numeric, compare]             //\n"
+    "//           eqz  nez  ltz  gtz  lez  gez  lt                                 //\n"
+    "//           gt   le   ge   eq   ne   min  max                                //\n"
+    "//       ‐ bitwise operations                  [bitwise, util]                //\n"
+    "//           bitsll   bitsrl   bitsra   bitnot                                //\n"
+    "//           bitand   bitor    bitxor   bitnand                               //\n"
+    "//           bitnor   bitxnor  bitget   bitset                                //\n"
+    "//           bitflip  bitzip   bitrotl  bitrotr                               //\n"
+    "//     ◆ range algorithms                                                     //\n"
+    "//       ‐ element access                      [util, range]                  //\n"
+    "//           items       split      join      get       set                   //\n"
+    "//           push_front  push_back  head      pop_head  tail                  //\n"
+    "//           pop_tail    pop_front  pop_back  last      slice                 //\n"
+    "//       ‐ generation                          [algo]                         //\n"
+    "//           seq  repeat  ogen  cgen                                          //\n"
+    "//       ‐ transformation                      [algo]                         //\n"
+    "//           orev         crev      otransform  ctransform shift_left         //\n"
+    "//           shift_right  rot_left  rot_right   osort      csort              //\n"
+    "//       ‐ reduction                           [algo]                         //\n"
+    "//           oreduce  creduce                                                 //\n"
+    "//     ◆ metaprogramming utilities                                            //\n"
+    "//       ‐ expansion control and tracing       [meta]                         //\n"
+    "//           id  lp  rp  xtrace  xtrace_read                                  //\n"
+    "//       ‐ mutually recursive stack expansion  [meta]                         //\n"
+    "//           x                                                                //\n"
+    "//       ‐ inline recursive stack construction [meta]                         //\n"
+    "//           orecur  crecur                                                   //\n"
+    "//                                                                            //\n"
+    "//    USAGE                                                                   //\n"
+    "//    -----                                                                   //\n"
+    "//                                                                            //\n"
+    "//    Copy pputl.h and include. The distribution is single-header.            //\n"
     "//                                                                            //\n"
     "//    pputl requires __VA_ARGS__, __VA_OPT__, and empty variadic arguments    //\n"
     "//    support (which are guaranteed by C++20) but has no dependencies.        //\n"
@@ -161,12 +235,15 @@ constexpr char const project_header[]{
     "//    pputl is completely generated and tested  by a custom C++ framework.    //\n"
     "//    See the codegen/ folder for the full source.                            //\n"
     "//                                                                            //\n"
-    "//    USAGE                                                                   //\n"
-    "//    -----                                                                   //\n"
-    "//    Copy pputl.h and include. The distribution is single-header.            //\n"
-    "//                                                                            //\n"
-    "//    Configuration of the word size and naming scheme  can be achieved by    //\n"
+    "//    Word size, naming preferences, and minification can be configured by    //\n"
     "//    modifying the head of codegen/codegen.h and running `make`.             //\n"
+    "//                                                                            //\n"
+    "//    Supported integer modes:                                                //\n"
+    "//                                    ⋮  minify=none       ⋮ minify=all       //\n"
+    "//      word_size=1 ⋮  4-bit integers ⋮  ~? KiB            ⋮ ~? KiB           //\n"
+    "//      word_size=2 ⋮  8-bit integers ⋮  ~? KiB            ⋮ ~? KiB           //\n"
+    "//      word_size=3 ⋮ 12-bit integers ⋮ [~? MiB (default)] ⋮ ~? MiB           //\n"
+    "//      word_size=4 ⋮ 16-bit integers ⋮  ~? MiB            ⋮ ~? MiB           //\n"
     "//                                                                            //\n"
     "//    Run `make test` to validate the library on your system.                 //\n"
     "//                                                                            //\n"
@@ -174,29 +251,31 @@ constexpr char const project_header[]{
     "//    -----------                                                             //\n"
     "//                                                                            //\n"
     "//    pputl defines several types  to describe different kinds of variadic    //\n"
-    "//    arguments  (potentially empty,  comma-delimited tokens of any kind).    //\n"
+    "//    arguments (potentially empty, comma-delimited tokens of any kind).      //\n"
+    "//                                                                            //\n"
     "//    Type identification and conversion is used extensively.                 //\n"
     "//                                                                            //\n"
     "//    Each type  is represented by  two functions:  a predicate for traits    //\n"
     "//    testing, and a constructor that validates, converts, or fails.   All    //\n"
     "//    functions that use these types in their parameter docs  assert their    //\n"
-    "//    argument sanity by calling the appropriate constructor functions.       //\n"
+    "//    argument sanity by invoking their constructors or traits functions.     //\n"
     "//                                                                            //\n"
     "//      none: nothing                                                         //\n"
     "//      some: <abstract> something; not nothing                               //\n"
-    "//       |- any: exactly one generic value                                    //\n"
-    "//          |- atom: a generic value not surrounded by parentheses            //\n"
-    "//          |   |- bool: a literal '1' or '0'                                 //\n"
-    "//          |   |- hex: a literal uppercase hex digit [e.g. B]                //\n"
-    "//          |   |- int: <abstract> a word-sized signed integer                //\n"
-    "//          |   |   |- idec: a positive 2s-complement decimal int [e.g. 3]    //\n"
-    "//          |   |   |- ihex: a signed hex integer [e.g. 0x861]                //\n"
-    "//          |   |- uint: <abstract> a word-sized unsigned integer             //\n"
-    "//          |       |- udec: an unsigned decimal integer [e.g. 42u]           //\n"
-    "//          |       |- uhex: an unsigned hex integer [e.g. 0x02Au]            //\n"
-    "//          |- tup: parenthesised items [typedocs: tup, (T...), (T, U), etc.] //\n"
-    "//          |   |- hword: a word-sized tup of hex [e.g. (6, D, 2)]            //\n"
-    "//          |- word: <union> int|uint|hword                                   //\n"
+    "//       └─ any: exactly one generic value                                    //\n"
+    "//          ├─ atom: a generic value not surrounded by parentheses            //\n"
+    "//          │   ├─ bool: a literal '1' or '0'                                 //\n"
+    "//          │   ├─ hex:  a literal uppercase hexadecimal digit [e.g. B]       //\n"
+    "//          │   ├─ nybl: a literal 4-bit bool concatenation [e.g. 0110]       //\n"
+    "//          │   ├─ int: <abstract> a word-sized signed integer                //\n"
+    "//          │   │   ├─ idec: a positive 2s-complement decimal [e.g. 3]        //\n"
+    "//          │   │   └─ ihex: a signed hex integer [e.g. 0x861]                //\n"
+    "//          │   └─ uint: <abstract> a word-sized unsigned integer             //\n"
+    "//          │       ├─ udec: an unsigned decimal integer [e.g. 42u]           //\n"
+    "//          │       └─ uhex: an unsigned hex integer [e.g. 0x02Au]            //\n"
+    "//          ├─ tup: parenthesised items [docs: tup, (T...), (T, U), etc.]     //\n"
+    "//          │   └─ xword: a word-sized tup of hex [e.g. (6, D, 2)]            //\n"
+    "//          └─ word: <union> int | uint | xword                               //\n"
     "//                                                                            //\n"
     "//    FUNDAMENTALS                                                            //\n"
     "//    ------------                                                            //\n"
@@ -214,63 +293,106 @@ constexpr char const project_header[]{
     "//    Negative ints cannot be represented in decimal  due to concatenation    //\n"
     "//    restrictions. Arithmetic and bitwise functions attempt to cast their    //\n"
     "//    results in the same form as their input, but will always return ihex    //\n"
-    "//    when an idec input becomes negative.  Decimal representations can be   ///\n"
+    "//    when an idec input becomes negative.  Decimal representations may be   ///\n"
     "//    generated for pasting using fmt.paste.                                ////\n"
     "//                                                                         /////\n"
     "///////////////////////////////////////////////////////////////////////////// */"};
 
 } // namespace conf
 
+// shortcuts
+using svect = std::vector<std::string>;
+
 // samples for docs and tests
 namespace samp {
-inline auto hmin = std::vector<std::string>(conf::word_size, "0");
-inline auto hmax = std::vector<std::string>(conf::word_size, "F");
-inline auto h1   = ([] {
+inline auto hmin  = std::vector<std::string>(conf::word_size, "0");
+inline auto hmax  = std::vector<std::string>(conf::word_size, "F");
+inline auto himax = ([] {
+  auto _ = hmax;
+  _[0]   = "7";
+  return _;
+})();
+inline auto himin = ([] {
+  auto _ = hmin;
+  _[0]   = "8";
+  return _;
+})();
+inline auto h1    = ([] {
   auto res   = hmin;
   res.back() = "1";
   return res;
 })();
-inline auto h2   = ([] {
+inline auto h2    = ([] {
   auto res   = hmin;
   res.back() = "2";
   return res;
 })();
-inline auto h3   = ([] {
+inline auto h3    = ([] {
   auto res   = hmin;
   res.back() = "3";
   return res;
 })();
-inline auto h4   = ([] {
+inline auto h4    = ([] {
   auto res   = hmin;
   res.back() = "4";
   return res;
 })();
-inline auto h5   = ([] {
+inline auto h5    = ([] {
   auto res   = hmin;
   res.back() = "5";
   return res;
 })();
-inline auto h6   = ([] {
+inline auto h6    = ([] {
   auto res   = hmin;
   res.back() = "6";
   return res;
 })();
-inline auto h7   = ([] {
+inline auto h7    = ([] {
   auto res   = hmin;
   res.back() = "7";
   return res;
 })();
-inline auto h8   = ([] {
+inline auto h8    = ([] {
   auto res   = hmin;
   res.back() = "8";
   return res;
 })();
-inline auto h15  = ([] {
+inline auto h9    = ([] {
+  auto res   = hmin;
+  res.back() = "9";
+  return res;
+})();
+inline auto h10   = ([] {
+  auto res   = hmin;
+  res.back() = "A";
+  return res;
+})();
+inline auto h11   = ([] {
+  auto res   = hmin;
+  res.back() = "B";
+  return res;
+})();
+inline auto h12   = ([] {
+  auto res   = hmin;
+  res.back() = "C";
+  return res;
+})();
+inline auto h13   = ([] {
+  auto res   = hmin;
+  res.back() = "D";
+  return res;
+})();
+inline auto h14   = ([] {
+  auto res   = hmin;
+  res.back() = "E";
+  return res;
+})();
+inline auto h15   = ([] {
   auto res   = hmin;
   res.back() = "F";
   return res;
 })();
-inline auto h16  = ([] {
+inline auto h16   = ([] {
   if constexpr (conf::word_size > 1) {
     auto res            = hmin;
     *(res.rbegin() + 1) = "1";
@@ -327,8 +449,8 @@ struct string_literal {
 
 /// describes forward ranges whose reference type is convertible to V&.
 template<class R, class V>
-concept forward_iterable_for =
-    (std::ranges::forward_range<R>)and(std::convertible_to<std::ranges::range_reference_t<R>, V&>);
+concept forward_iterable_for = (std::ranges::forward_range<R>)and(
+    std::convertible_to<std::ranges::range_reference_t<R>, V&>);
 } // namespace detail
 
 namespace utl {
@@ -343,24 +465,28 @@ concept string_representable = std::convertible_to<T, std::string> or requires(T
 template<string_representable T>
 [[nodiscard]] std::string to_string(T&& v);
 
-[[nodiscard]] std::string              slice(std::string const& s, int end_ofs);
-[[nodiscard]] std::string              slice(std::string const& s, int begin_ofs, int end_ofs);
-[[nodiscard]] std::vector<std::string> split(std::string const& target, std::regex const& delim);
+[[nodiscard]] std::string slice(std::string const& s, int end_ofs);
+[[nodiscard]] std::string slice(std::string const& s, int begin_ofs, int end_ofs);
+[[nodiscard]] std::vector<std::string> split(std::string const& target,
+                                             std::regex const&  delim);
 template<detail::forward_iterable_for<std::string const> Strs>
 [[nodiscard]] std::string              cat(Strs&& strs, std::string const& delim = "");
 [[nodiscard]] std::string              alpha_base52(std::size_t num); // a-zA-Z
-[[nodiscard]] std::vector<std::string> base10_seq(std::size_t size, std::string begin = "0"); // 0-9
-[[nodiscard]] std::vector<std::string> alpha_base52_seq(std::size_t size,
-                                                        std::string begin = "a"); // a-zA-Z
-[[nodiscard]] std::string prefix_lines(std::string const& prefix, std::string const& multiline);
+[[nodiscard]] std::vector<std::string> base10_seq(std::size_t size,
+                                                  std::string begin = "0"); // 0-9
+[[nodiscard]] std::vector<std::string>
+                          alpha_base52_seq(std::size_t size,
+                                           std::string begin = "a"); // a-zA-Z
+[[nodiscard]] std::string prefix_lines(std::string const& prefix,
+                                       std::string const& multiline);
 template<std::unsigned_integral Int>
 [[nodiscard]] std::vector<Int> prime_factors(Int n);
 template<std::unsigned_integral Int>
 [[nodiscard]] inline Int largest_pow2_up_to(Int n);
 
 template<class T>
-using storage =
-    std::aligned_storage_t<sizeof(std::remove_cvref_t<T>), alignof(std::remove_cvref_t<T>)>;
+using storage = std::aligned_storage_t<sizeof(std::remove_cvref_t<T>),
+                                       alignof(std::remove_cvref_t<T>)>;
 
 template<class T>
 class nifty {
@@ -396,28 +522,30 @@ class nifty {
   }
 };
 
-#define NIFTY_DECL(extern_ref_name)                                                                \
-  extern codegen::utl::nifty<decltype(extern_ref_name)> internal_nifty##extern_ref_name##storage_; \
-  static struct internal_nifty##extern_ref_name##decl_ {                                           \
-    internal_nifty##extern_ref_name##decl_();                                                      \
-    ~internal_nifty##extern_ref_name##decl_();                                                     \
+#define NIFTY_DECL(extern_ref_name)                      \
+  extern codegen::utl::nifty<decltype(extern_ref_name)>  \
+      internal_nifty##extern_ref_name##storage_;         \
+  static struct internal_nifty##extern_ref_name##decl_ { \
+    internal_nifty##extern_ref_name##decl_();            \
+    ~internal_nifty##extern_ref_name##decl_();           \
   } internal_nifty##extern_ref_name##decl_
 
-#define NIFTY_DEF(extern_ref_name, ...)                                                      \
-  internal_nifty##extern_ref_name##storage_;                                                 \
-  internal_nifty##extern_ref_name##decl_::internal_nifty##extern_ref_name##decl_() {         \
-    internal_nifty##extern_ref_name##storage_.ref(__VA_ARGS__);                              \
-  }                                                                                          \
-  internal_nifty##extern_ref_name##decl_::~internal_nifty##extern_ref_name##decl_() {        \
-    internal_nifty##extern_ref_name##storage_.unref();                                       \
-  }                                                                                          \
-  codegen::utl::nifty<decltype(extern_ref_name)> internal_nifty##extern_ref_name##storage_ { \
+#define NIFTY_DEF(extern_ref_name, ...)                                               \
+  internal_nifty##extern_ref_name##storage_;                                          \
+  internal_nifty##extern_ref_name##decl_::internal_nifty##extern_ref_name##decl_() {  \
+    internal_nifty##extern_ref_name##storage_.ref(__VA_ARGS__);                       \
+  }                                                                                   \
+  internal_nifty##extern_ref_name##decl_::~internal_nifty##extern_ref_name##decl_() { \
+    internal_nifty##extern_ref_name##storage_.unref();                                \
+  }                                                                                   \
+  codegen::utl::nifty<decltype(extern_ref_name)>                                      \
+      internal_nifty##extern_ref_name##storage_ {                                     \
   }
 
 } // namespace utl
 
 [[nodiscard]] std::string apiname(std::string const& short_name); // uses conf::api_prefix
-[[nodiscard]] std::string implname(std::string short_name);       // uses conf::impl_prefix
+[[nodiscard]] std::string implname(std::string short_name); // uses conf::impl_prefix
 
 namespace pp {
 template<detail::forward_iterable_for<std::string const> Args>
@@ -426,7 +554,8 @@ template<detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string cat(Args&& args);
 template<bool Space = true, detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string tup(Args&& args);
-template<std::convertible_to<std::string> Fn, detail::forward_iterable_for<std::string const> Args>
+template<std::convertible_to<std::string>                Fn,
+         detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string call(Fn&& fn, Args&& args);
 
 template<utl::string_representable... Args>
@@ -474,13 +603,16 @@ template<functor F>
 using functor_return_type =
     typename functor_traits<decltype(std::function{std::declval<F>()})>::return_type;
 
-template<class T, class FirstAllowed, class... RestAllowed> // enforce at least one comparison
-concept same_as_any_of = std::same_as<T, FirstAllowed> or(std::same_as<T, RestAllowed> || ...);
+template<class T, class FirstAllowed,
+         class... RestAllowed> // enforce at least one comparison
+concept same_as_any_of =
+    std::same_as<T, FirstAllowed> or(std::same_as<T, RestAllowed> || ...);
 
 template<class Tup, class FirstAllowed, class... RestAllowed, std::size_t... Idx>
 [[nodiscard]] inline constexpr bool
 elements_same_as_any_of_impl(std::index_sequence<Idx...>&&) noexcept {
-  return (same_as_any_of<std::tuple_element_t<Idx, Tup>, FirstAllowed, RestAllowed...> && ...);
+  return (same_as_any_of<std::tuple_element_t<Idx, Tup>, FirstAllowed,
+                         RestAllowed...> && ...);
 }
 
 template<class Tup, class FirstAllowed, class... RestAllowed>
@@ -554,7 +686,8 @@ trim_end(Begin begin, End end) noexcept {
 
 [[nodiscard]] inline constexpr bool
 is_alphanum(char ch) noexcept {
-  return (ch >= '0' and ch <= '9') or (ch >= 'A' and ch <= 'Z') or (ch >= 'a' and ch <= 'z');
+  return (ch >= '0' and ch <= '9') or (ch >= 'A' and ch <= 'Z')
+      or (ch >= 'a' and ch <= 'z');
 }
 
 } // namespace detail
@@ -706,8 +839,8 @@ struct signature_literal {
       return {};
 
     return {span_literal{data->begin(), std::ranges::find_if_not(*data, [](char ch) {
-                           return detail::is_alphanum(ch) or ch == '_' or ch == '$' or ch == '\\'
-                               or ch == '<';
+                           return detail::is_alphanum(ch) or ch == '_' or ch == '$'
+                               or ch == '\\' or ch == '<';
                          })}};
   };
 
@@ -762,7 +895,8 @@ struct signature_literal {
     // either ends at outer_end (')') or docparams begin (':')
     auto params_end = std::find(begin, end, ':');
 
-    return span_literal{detail::trim_begin(begin, params_end), detail::trim_end(begin, params_end)};
+    return span_literal{detail::trim_begin(begin, params_end),
+                        detail::trim_end(begin, params_end)};
   };
 
   // set docparams to
@@ -790,7 +924,8 @@ struct signature_literal {
     if (detail::trim_begin(begin + 1, end) == end)
       return {};
 
-    return span_literal{detail::trim_begin(begin + 1, end), detail::trim_end(begin + 1, end)};
+    return span_literal{detail::trim_begin(begin + 1, end),
+                        detail::trim_end(begin + 1, end)};
   };
 
   opt_literal<span_literal> const xout = ii << [&]() -> decltype(xout) {
@@ -834,7 +969,8 @@ struct signature_literal {
 
       // returns sizey range
       return span_literal{
-          begin, detail::trim_end(begin, end)}; // -> end is last nonspace before closing '>'
+          begin,
+          detail::trim_end(begin, end)}; // -> end is last nonspace before closing '>'
     } else if (*(begin + 1) == '>') {
       // return empty if no xout but valid docreturn arrow;
       // set begin to arrow body
@@ -866,7 +1002,8 @@ struct signature_literal {
         return {};
 
       // fail if closing '>' is not followed by "->"
-      if (it + 1 == data->end() or it + 2 == data->end() or *(it + 1) != '-' or *(it + 2) != '>')
+      if (it + 1 == data->end() or it + 2 == data->end() or *(it + 1) != '-'
+          or *(it + 2) != '>')
         return {};
 
       begin = it + 2; // set to last '>' before docreturn
@@ -880,7 +1017,8 @@ struct signature_literal {
   };
 
   // invalid if any member returned nullopt
-  bool const valid{data and name and params_decl and params and docparams and xout and docreturn};
+  bool const valid{data and name and params_decl and params and docparams and xout
+                   and docreturn};
 };
 
 struct runtime_signature : private signature_literal {
@@ -905,24 +1043,28 @@ struct runtime_signature : private signature_literal {
       throw std::runtime_error{"invalid signature " + sig};
   }
 
-  std::string const data{signature_literal::data ? std::string{signature_literal::data->begin(),
-                                                               signature_literal::data->end()}
-                                                 : ""};
-  std::string const name{signature_literal::name ? std::string{signature_literal::name->begin(),
-                                                               signature_literal::name->end()}
-                                                 : ""};
-  bool const is_fn{signature_literal::params_decl and not signature_literal::params_decl->empty()};
+  std::string const data{
+      signature_literal::data
+          ? std::string{signature_literal::data->begin(), signature_literal::data->end()}
+          : ""};
+  std::string const name{
+      signature_literal::name
+          ? std::string{signature_literal::name->begin(), signature_literal::name->end()}
+          : ""};
+  bool const        is_fn{signature_literal::params_decl
+                   and not signature_literal::params_decl->empty()};
   std::string const params = utl::ii << [&] {
-    std::string params = signature_literal::params ? std::string{signature_literal::params->begin(),
-                                                                 signature_literal::params->end()}
-                                                   : "";
+    std::string params = signature_literal::params
+                           ? std::string{signature_literal::params->begin(),
+                                         signature_literal::params->end()}
+                           : "";
 
     if (params.empty())
       return params;
     // replace any keywords in parameters
-    static std::unordered_set<std::string> const reserved{"and",   "and_eq", "bitand", "bitor",
-                                                          "compl", "not",    "not_eq", "or",
-                                                          "or_eq", "xor",    "xor_eq"};
+    static std::unordered_set<std::string> const reserved{
+        "and",    "and_eq", "bitand", "bitor", "compl", "not",
+        "not_eq", "or",     "or_eq",  "xor",   "xor_eq"};
 
     std::vector<std::string> clean_params{};
     for (auto&& v : utl::split(params, std::regex{", ?"})) {
@@ -935,17 +1077,18 @@ struct runtime_signature : private signature_literal {
     return params;
   };
 
-  std::string const docparams{
-      signature_literal::docparams
-          ? std::string{signature_literal::docparams->begin(), signature_literal::docparams->end()}
+  std::string const docparams{signature_literal::docparams
+                                  ? std::string{signature_literal::docparams->begin(),
+                                                signature_literal::docparams->end()}
+                                  : ""};
+  std::string const xout{
+      signature_literal::xout
+          ? std::string{signature_literal::xout->begin(), signature_literal::xout->end()}
           : ""};
-  std::string const xout{signature_literal::xout ? std::string{signature_literal::xout->begin(),
-                                                               signature_literal::xout->end()}
-                                                 : ""};
-  std::string const docreturn{
-      signature_literal::docreturn
-          ? std::string{signature_literal::docreturn->begin(), signature_literal::docreturn->end()}
-          : ""};
+  std::string const docreturn{signature_literal::docreturn
+                                  ? std::string{signature_literal::docreturn->begin(),
+                                                signature_literal::docreturn->end()}
+                                  : ""};
 };
 
 /// base class for macro construction. manages static instances by id.
@@ -1074,8 +1217,8 @@ class def_base {
   def_base();
 
   /// updates signature data.
-  explicit def_base(runtime_signature const&       sig,
-                    detail::source_location const& loc = detail::source_location::current());
+  explicit def_base(runtime_signature const& sig, detail::source_location const& loc =
+                                                      detail::source_location::current());
 
   /// updates signature data and defines.
   /// macros cannot be redefined.
@@ -1128,7 +1271,8 @@ inline class tests {
     }
   };
 
-  friend tests::example_tag operator>>(std::string const& expected, class docs const&) noexcept;
+  friend tests::example_tag operator>>(std::string const& expected,
+                                       class docs const&) noexcept;
 
   class expected {
     std::string _actual;
@@ -1181,7 +1325,8 @@ class end_category {
   end_category() {
     if (def_base::_cur_category != Name.c_str())
       throw std::runtime_error{std::string{"end_category <"} + Name.c_str()
-                               + ">not preceeded by same category: " + def_base::_cur_category};
+                               + ">not preceeded by same category: "
+                               + def_base::_cur_category};
     def_base::_cur_category = "";
   }
 };
@@ -1232,8 +1377,10 @@ class pack {
 
   [[nodiscard]] operator std::vector<std::string> const&() const;
 
-  [[nodiscard]] std::vector<std::string>::const_iterator begin() const;
-  [[nodiscard]] std::vector<std::string>::const_iterator end() const;
+  [[nodiscard]] std::vector<std::string>::const_iterator         begin() const;
+  [[nodiscard]] std::vector<std::string>::const_iterator         end() const;
+  [[nodiscard]] std::vector<std::string>::const_reverse_iterator rbegin() const;
+  [[nodiscard]] std::vector<std::string>::const_reverse_iterator rend() const;
 
   [[nodiscard]] std::string const& front() const;
   [[nodiscard]] std::string const& back() const;
@@ -1256,7 +1403,8 @@ class def : public def_base {
   /// macros cannot be redefined.
   template<detail::body_functor Body>
     requires(not Sig.empty())
-  def(Body&& body, detail::source_location const& loc = detail::source_location::current());
+  def(Body&&                         body,
+      detail::source_location const& loc = detail::source_location::current());
 
   /// default construction. does not register anything.
   template<class = void>

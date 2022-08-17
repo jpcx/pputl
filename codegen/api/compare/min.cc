@@ -32,8 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(min) min = NIFTY_DEF(min, [&](va args) {
-  docs << "integral minimum operation."
-       << "prohibits comparison of different signedness.";
+  docs << "word minimum operation."
+       << "prohibits comparison of different signedness."
+       << "xwords are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;
@@ -63,13 +64,9 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
   tests << min(to_string(int_max / 2), to_string((int_max / 2)))     = to_string((int_max / 2));
   tests << min(to_string(int_max / 2), to_string((int_max / 2) + 1)) = to_string(int_max / 2);
 
-  def<"0(a, b)"> _0 = [&](arg, arg b) {
-    return b;
-  };
+  def<"0(a, b)"> _0 = [&](arg, arg b) { return b; };
 
-  def<"1(a, b)">{} = [&](arg a, arg) {
-    return a;
-  };
+  def<"1(a, b)">{} = [&](arg a, arg) { return a; };
 
   return pp::call(cat(utl::slice(_0, -1), lt(args)), args);
 });

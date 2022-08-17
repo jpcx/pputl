@@ -25,24 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(mod32) mod32 = NIFTY_DEF(mod32, [&](va args) {
-//   docs << "uint modulo by 32 lookup.";
-// 
-//   tests << mod32(conf::uint_max / 17) = std::to_string((conf::uint_max / 17) % 32) >> docs;
-//   tests << mod32(conf::uint_max)      = std::to_string(conf::uint_max % 32) >> docs;
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[13];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitnor) bitnor = NIFTY_DEF(bitnor, [&](va args) {
+  docs << "bitwise NOR."
+       << "uses arg 'a' for result cast hint.";
+
+  tests << bitnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bitnor(0, 1) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
+  tests << bitnor(5, 7) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
+  tests << bitnor(7, 8) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
+
+  return word(impl::uhex(uhex(bitor_(args)), "BNOT"), typeof(ifirst(args)));
+});
+
+} // namespace api

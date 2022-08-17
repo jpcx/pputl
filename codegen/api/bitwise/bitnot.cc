@@ -25,32 +25,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "bitwise.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(bitnot_) bitnot_ = NIFTY_DEF(bitnot_, [&](va args) {
-//   docs << "bitwise NOT."
-//        << "returns the same int representation as its input (unless v becomes negative).";
-// 
-//   auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0")) + "u";
-//   auto binone  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "0")) + "1u";
-//   auto binmax  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u";
-//   auto ibinmax = binmax;
-//   ibinmax.pop_back();
-//   auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u";
-//   auto ibinneg2     = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0";
-// 
-//   tests << bitnot_("0u")   = uint_max_s >> docs;
-//   tests << bitnot_("1u")   = (std::to_string(conf::uint_max - 1) + "u") >> docs;
-//   tests << bitnot_("0")    = ibinmax >> docs;
-//   tests << bitnot_("1")    = ibinneg2 >> docs;
-//   tests << bitnot_(binmin) = binmax >> docs;
-//   tests << bitnot_(binone) = binmaxminus1 >> docs;
-// 
-//   return pp::call(typeof(args), detail::uint_trait(ubase2(args), "HEX_BNOT"));
-// });
-// 
-// } // namespace api
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitnot) bitnot = NIFTY_DEF(bitnot, [&](va args) {
+  docs << "bitwise NOT.";
+
+  tests << bitnot("0u")                 = uint_max_s >> docs;
+  tests << bitnot(0)                    = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bitnot(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
+  tests << bitnot(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
+
+  return word(impl::uhex(uhex(args), "BNOT"), typeof(args));
+});
+
+} // namespace api

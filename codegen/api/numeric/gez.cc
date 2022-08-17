@@ -25,24 +25,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(mod4) mod4 = NIFTY_DEF(mod4, [&](va args) {
-//   docs << "uint modulo by 4 lookup.";
-// 
-//   tests << mod4(conf::uint_max / 5) = std::to_string((conf::uint_max / 5) % 4) >> docs;
-//   tests << mod4(conf::uint_max)     = std::to_string(conf::uint_max % 4) >> docs;
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[10];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "numeric.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(gez) gez = NIFTY_DEF(gez, [&](va args) {
+  docs << "signed integral greater-than-or-equal-to-zero detection.";
+
+  tests << gez("0")            = "1" >> docs;
+  tests << gez("1")            = "1" >> docs;
+  tests << gez(int_max_s)      = "1" >> docs;
+  tests << gez(int_min_s)      = "0" >> docs;
+  tests << gez(inc(int_max_s)) = "0" >> docs;
+
+  return not_(ltz(args));
+});
+
+} // namespace api

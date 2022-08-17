@@ -32,8 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
-  docs << "integral less-than comparison."
-       << "prohibits comparison of different signedness.";
+  docs << "word less-than comparison."
+       << "prohibits comparison of different signedness."
+       << "xwords are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;
@@ -56,45 +57,25 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   tests << lt(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "0";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
+  tests << lt(pp::tup(samp::hmax), pp::tup(samp::hmin))                           = "0" >> docs;
+  tests << lt(pp::tup(samp::hmin), pp::tup(samp::hmax))                           = "1" >> docs;
+  tests << lt(pp::tup(samp::himax), std::to_string(conf::int_max + 1) + "u")      = "1" >> docs;
+  tests << lt(std::to_string(conf::int_max + 1) + "u", pp::tup(samp::himax))      = "0" >> docs;
 
-  def<"000"> _000 = [&] {
-    return "0";
-  };
-
-  def<"001">{} = [&] {
-    return "1";
-  };
-
-  def<"010">{} = [&] {
-    return "0";
-  };
-
-  def<"011">{} = [&] {
-    return "0";
-  };
-
-  def<"100">{} = [&] {
-    return "1";
-  };
-
-  def<"101">{} = [&] {
-    return "1";
-  };
-
-  def<"110">{} = [&] {
-    return "1";
-  };
-
-  def<"111">{} = [&] {
-    return "1";
-  };
+  def<"000"> _000 = [&] { return "0"; };
+  def<"001">{}    = [&] { return "1"; };
+  def<"010">{}    = [&] { return "0"; };
+  def<"011">{}    = [&] { return "0"; };
+  def<"100">{}    = [&] { return "1"; };
+  def<"101">{}    = [&] { return "1"; };
+  def<"110">{}    = [&] { return "1"; };
+  def<"111">{}    = [&] { return "1"; };
 
   def<"r(...)"> recur = [&](va args) {
     return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {
-      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::hex_pair_trait(pp::cat(a, b), "LT"))
-           + ", "
-           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::hex_pair_trait(pp::cat(b, a), "LT"))
-           + ", " + args;
+      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::hexhex(pp::cat(a, b), "LT")) + ", "
+           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::hexhex(pp::cat(b, a), "LT")) + ", "
+           + args;
     }}(args);
   };
 
@@ -115,81 +96,48 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
                  + zip(args) + utl::cat(std::vector<std::string>(conf::word_size, ")")));
   };
 
-  def<"icmp(lw, rw)"> icmp = [&](arg lw, arg rw) {
-    def<"00(lw, rw)"> _00 = [&](arg lw, arg rw) {
-      return ucmp(esc + " " + lw, esc + " " + rw);
-    };
+  def<"icmp(...)"> icmp = [&](va args) {
+    return def<"o(...)">{[&](va args) {
+      def o = def{"<o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
+                  + ")"} = [&](pack args) {
+        def<"00(...)"> _00 = [&](va args) { return ucmp(args); };
+        def<"01(...)">{}   = [&](va) { return "0"; };
+        def<"10(...)">{}   = [&](va) { return "1"; };
+        def<"11(...)">{}   = [&](va args) { return ucmp(args); };
 
-    def<"01(lw, rw)">{} = [&](arg, arg) {
-      return "0";
-    };
+        return pp::call(
+            cat(utl::slice(_00, -2), cat(impl::hexhex(pp::cat("7", args[0]), "LT"),
+                                         impl::hexhex(pp::cat("7", args[conf::word_size]), "LT"))),
+            args);
+      };
 
-    def<"10(lw, rw)">{} = [&](arg, arg) {
-      return "1";
-    };
-
-    def<"11(lw, rw)">{} = [&](arg lw, arg rw) {
-      return ucmp(esc + " " + lw, esc + " " + rw);
-    };
-
-    return pp::call(cat(utl::slice(_00, -2), cat(impl::hex_trait(esc(ifirst + " " + lw), "ILTZ"),
-                                                 impl::hex_trait(esc(ifirst + " " + rw), "ILTZ"))),
-                    lw, rw);
+      return o(args);
+    }}(args);
   };
 
   return pp::call(def<"o(l, r)">{[&](arg l, arg r) {
-                    return def<"<o(...)">{[&](va args) {
-                      return def<"<o(il, ir, ul, ur)">{[&](arg il, arg ir, arg ul, arg ur) {
-                        // non-integer l and r
-                        def<"0000(e0, e1, l, r)"> _0000 = [&](arg e0, arg, arg, arg) {
-                          return fail(e0);
-                        };
+                    def<"\\INTINT(e, l, r)"> intint = [&](arg, arg l, arg r) {
+                      return icmp(esc + " " + xword(l), esc + " " + xword(r));
+                    };
+                    def<"\\INTUINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+                    def<"\\INTNONE(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+                    def<"\\UINTINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+                    def<"\\UINTUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
+                      return ucmp(esc + " " + xword(l), esc + " " + xword(r));
+                    };
+                    def<"\\UINTNONE(e, l, r)">{} = [&](arg, arg l, arg r) {
+                      return ucmp(esc + " " + xword(l), esc + " " + r);
+                    };
+                    def<"\\NONEINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+                    def<"\\NONEUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
+                      return ucmp(esc + " " + l, esc + " " + xword(r));
+                    };
+                    def<"\\NONENONE(e, l, r)">{} = [&](arg, arg l, arg r) {
+                      return ucmp(esc + " " + l, esc + " " + r);
+                    };
 
-                        // non-integer l, unsigned r
-                        def<"0001(e0, e1, l, r)">{} = [&](arg e0, arg, arg, arg) {
-                          return fail(e0);
-                        };
-
-                        // unsigned l, non-integer r
-                        def<"0010(e0, e1, l, r)">{} = [&](arg e0, arg, arg, arg) {
-                          return fail(e0);
-                        };
-
-                        // unsigned l and r
-                        def<"0011(e0, e1, l, r)">{} = [&](arg, arg, arg l, arg r) {
-                          return ucmp(esc + " " + hword(l), esc + " " + hword(r));
-                        };
-
-                        // non-integer l, signed r
-                        def<"0100(e0, e1, l, r)">{} = [&](arg e0, arg, arg, arg) {
-                          return fail(e0);
-                        };
-
-                        // unsigned l, signed r
-                        def<"0110(e0, e1, l, r)">{} = [&](arg, arg e1, arg, arg) {
-                          return fail(e1);
-                        };
-
-                        // signed l, non-integer r
-                        def<"1000(e0, e1, l, r)">{} = [&](arg e0, arg, arg, arg) {
-                          return fail(e0);
-                        };
-
-                        // signed l, unsigned r
-                        def<"1001(e0, e1, l, r)">{} = [&](arg, arg e1, arg, arg) {
-                          return fail(e1);
-                        };
-
-                        // signed l, signed r
-                        def<"1100(e0, e1, l, r)">{} = [&](arg, arg, arg l, arg r) {
-                          return icmp(hword(l), hword(r));
-                        };
-
-                        return pp::cat(utl::slice(_0000, -4), il, ir, ul, ur);
-                      }}(args);
-                    }}(is_int(l), is_int(r), is_uint(l), is_uint(r));
+                    return cat(utl::slice(intint, -6), cat(signof(word(l)), signof(word(r))));
                   }}(args),
-                  istr("[" + lt + "] one or more invalid integer : " + args),
                   istr("[" + lt + "] comparison of different signedness not allowed : " + args),
                   args);
 });

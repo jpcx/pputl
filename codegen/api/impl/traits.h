@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,26 +26,32 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
-//   docs << "uint sqrt lookup.";
-// 
-//   tests << sqrt(0)                  = "0";
-//   tests << sqrt(4)                  = "2" >> docs;
-//   tests << sqrt(conf::uint_max / 2) = std::to_string((unsigned)std::sqrt(conf::uint_max / 2));
-//   tests << sqrt(conf::uint_max)     = std::to_string((unsigned)std::sqrt(conf::uint_max)) >> docs;
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[6];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+//
+#include "impl/traits/detail.h"
+
+namespace api {
+namespace impl {
+
+inline codegen::category<"impl.traits"> traits;
+
+extern codegen::def<"hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC|INC|NYBL|BITS})"> const& hex;
+extern codegen::def<
+    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD})"> const& hexhex;
+extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const&    nybl;
+extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const& udec;
+extern codegen::def<
+    "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|XWORD|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;
+
+NIFTY_DECL(hex);
+NIFTY_DECL(hexhex);
+NIFTY_DECL(nybl);
+NIFTY_DECL(udec);
+NIFTY_DECL(uhex);
+
+inline codegen::end_category<"impl.traits"> traits_end;
+
+} // namespace impl
+} // namespace api

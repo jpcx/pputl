@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,24 +25,27 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
+#include <span>
+
+#include "bitwise.h"
 
 namespace api {
-namespace impl {
 
-inline codegen::category<"impl.hex"> hex;
+using namespace codegen;
 
-extern codegen::def<"hex_trait(v, t: v: <atom|hex>, trait: IS|NOT|DEC|INC|SL|SR|BIN)"> const&
-    hex_trait;
-extern codegen::def<"hex_pair_trait(p, t: p: <hex pair>, trait: LT|AND|OR|XOR|SUB|ADD)"> const&
-    hex_pair_trait;
+decltype(bitflip) bitflip = NIFTY_DEF(bitflip, [&](va args) {
+  docs << "flips the ith bit in the uint."
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
 
-NIFTY_DECL(hex_trait);
-NIFTY_DECL(hex_pair_trait);
+  tests << bitflip(0, conf::bit_length - 1)    = "1" >> docs;
+  tests << bitflip("1u", conf::bit_length - 2) = "3u" >> docs;
+  tests << bitflip("0x" + utl::cat(samp::h2), conf::bit_length - 3) =
+      ("0x" + utl::cat(samp::h6)) >> docs;
+  tests << bitflip("0x" + utl::cat(samp::h3) + "u", conf::bit_length - 4) =
+      ("0x" + utl::cat(samp::h11) + "u") >> docs;
+  tests << bitflip(pp::tup(samp::hmax), 0) = pp::tup(samp::himax) >> docs;
 
-inline codegen::end_category<"impl.hex"> hex_end;
+  return bitset(args, not_(bitget(args)));
+});
 
-} // namespace impl
 } // namespace api

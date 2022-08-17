@@ -32,8 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(le) le = NIFTY_DEF(le, [&](va args) {
-  docs << "integral less-than-or-equal-to comparison."
-       << "prohibits comparison of different signedness.";
+  docs << "word less-than-or-equal-to comparison."
+       << "prohibits comparison of different signedness."
+       << "xwords are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;

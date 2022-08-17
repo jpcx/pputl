@@ -814,9 +814,7 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   instance*                     parent{nullptr};
   if (not _exec_stack.empty()) {
     parent = _exec_stack.back();
-    ins_it = std::ranges::find(_instances, parent, [](auto&& v) {
-      return &v;
-    });
+    ins_it = std::ranges::find(_instances, parent, [](auto&& v) { return &v; });
     if (ins_it == _instances.end())
       throw std::logic_error{"cannot find instance " + _exec_stack.back()->id
                              + " in the instances list"};
@@ -1255,6 +1253,18 @@ std::vector<std::string>::const_iterator
 pack::end() const {
   validate_context();
   return _value.end();
+}
+
+std::vector<std::string>::const_reverse_iterator
+pack::rbegin() const {
+  validate_context();
+  return _value.rbegin();
+}
+
+std::vector<std::string>::const_reverse_iterator
+pack::rend() const {
+  validate_context();
+  return _value.rend();
 }
 
 std::string const&

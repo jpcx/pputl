@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,22 +25,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
+#include "type.h"
 
 namespace api {
-namespace impl {
 
-inline codegen::category<"impl.uint"> uint;
+using namespace codegen;
 
-extern codegen::def<"uint_trait(v, t: v: <atom|uint>, trait: "
-                    "IS|TYPE|HUDEC|HIDEC|HNYBS|HBNOT|DHEX|DINEG|DLOG2|DSQRT|DFACT)"> const&
-    uint_trait;
+decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
+  docs << "[inherits from " + atom + "] 4-bit bool concatenation type."
+       << "constructible from either nybl or hex."
+       << "expands to v if valid, else fails.";
 
-NIFTY_DECL(uint_trait);
+  tests << nybl("0000") = "0000" >> docs;
+  tests << nybl("0110") = "0110" >> docs;
+  tests << nybl("5")    = "0101" >> docs;
+  tests << nybl("A")    = "1010" >> docs;
 
-inline codegen::end_category<"impl.uint"> uint_end;
+  def<"00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
+  def<"01(e, hex)">{}   = [](arg, arg hex) { return impl::hex(hex, "NYBL"); };
+  def<"10(e, nybl)">{}  = [](arg, arg nybl) { return nybl; };
 
-} // namespace impl
+  return def<"o(e, atom)">{[&](arg e, arg atom) {
+    return pp::call(
+        cat(utl::slice(_00, -2), cat(detail::is_nybl_o(atom), detail::is_hex_o(atom))), e,
+        atom);
+  }}(istr("[" + nybl + "] invalid arguments; must be nybl or hex : " + args), atom(args));
+});
+
 } // namespace api

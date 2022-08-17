@@ -32,10 +32,10 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_hword_o) is_hword_o = NIFTY_DEF(is_hword_o);
+decltype(is_xword_o) is_xword_o = NIFTY_DEF(is_xword_o);
 }
 
-decltype(is_hword) is_hword = NIFTY_DEF(is_hword, [&](va args) {
+decltype(is_xword) is_xword = NIFTY_DEF(is_xword, [&](va args) {
   docs << "[extends " + is_tup + "] detects if args a tup of exactly " + word_size + " ("
               + std::to_string(conf::word_size) + ") hex digits.";
 
@@ -46,43 +46,31 @@ decltype(is_hword) is_hword = NIFTY_DEF(is_hword, [&](va args) {
     return utl::cat(hexs, ", ");
   };
 
-  tests << is_hword("")    = "0" >> docs;
-  tests << is_hword("()")  = "0";
-  tests << is_hword("foo") = "0" >> docs;
-  tests << is_hword("0")   = "0" >> docs;
+  tests << is_xword("")    = "0" >> docs;
+  tests << is_xword("()")  = "0";
+  tests << is_xword("foo") = "0" >> docs;
+  tests << is_xword("0")   = "0" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << is_hword("(0)") = "0";
-  tests << is_hword(word)                  = "0" >> docs;
-  tests << is_hword(pp::tup(word))         = "1" >> docs;
-  tests << is_hword(pp::tup(word + ","))   = "0" >> docs;
-  tests << is_hword(pp::tup(word + ", E")) = "0" >> docs;
+    tests << is_xword("(0)") = "0";
+  tests << is_xword(word)                  = "0" >> docs;
+  tests << is_xword(pp::tup(word))         = "1" >> docs;
+  tests << is_xword(pp::tup(word + ","))   = "0" >> docs;
+  tests << is_xword(pp::tup(word + ", E")) = "0" >> docs;
 
   def<> _00;
   def<> chk;
   def<> res;
   def<> r;
   if constexpr (conf::word_size > 1) {
-    _00 = def{"00"} = [&] {
-      return "0";
-    };
-
-    def<"01">{} = [&] {
-      return "0";
-    };
-
-    def<"10">{} = [&] {
-      return "0";
-    };
-
-    def<"11">{} = [&] {
-      return "1";
-    };
+    _00 = def{"00"} = [&] { return "0"; };
+    def<"01">{}     = [&] { return "0"; };
+    def<"10">{}     = [&] { return "0"; };
+    def<"11">{}     = [&] { return "1"; };
 
     chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
               + ", ...)"} = [&](pack args) {
-      def verify = def{utl::cat(std::vector<std::string>(conf::word_size - 1, "1"))} = [&] {
-        return "";
-      };
+      def verify =
+          def{utl::cat(std::vector<std::string>(conf::word_size - 1, "1"))} = [&] { return ""; };
 
       return pp::cat(utl::slice(verify, -(conf::word_size - 1)),
                      pp::cat(std::vector<std::string>{args.begin(), args.end() - 1}));
@@ -91,9 +79,8 @@ decltype(is_hword) is_hword = NIFTY_DEF(is_hword, [&](va args) {
     res = def{"res(...)"} = [&](va args) {
       return def<"o(ctup, ...)">{[&](arg ctup, va fin) {
         return def<"<o(...)">{[&](va args) {
-          return def<"<o(c, n)">{[&](arg c, arg n) {
-            return pp::cat(utl::slice(_00, -2), c, n);
-          }}(args);
+          return def<"<o(c, n)">{[&](arg c, arg n) { return pp::cat(utl::slice(_00, -2), c, n); }}(
+              args);
         }}(is_none(chk + " " + ctup), is_hex(fin));
       }}(args);
     };
@@ -105,7 +92,7 @@ decltype(is_hword) is_hword = NIFTY_DEF(is_hword, [&](va args) {
     };
   }
 
-  detail::is_hword_o = def{"o(tup)"} = [&](arg tup) {
+  detail::is_xword_o = def{"o(tup)"} = [&](arg tup) {
     if constexpr (conf::word_size > 1) {
       auto open  = utl::cat(std::vector<std::string>(conf::word_size - 1, r + "("));
       auto close = utl::cat(std::vector<std::string>(conf::word_size - 1, ")"));
@@ -115,15 +102,8 @@ decltype(is_hword) is_hword = NIFTY_DEF(is_hword, [&](va args) {
     }
   };
 
-  def<"0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
-  };
-
-  def<"1">{} = [&] {
-    return detail::is_hword_o;
-  };
+  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"1">{}  = [&] { return detail::is_xword_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_tup(args)), args);
 });

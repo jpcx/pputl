@@ -25,24 +25,32 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(mod2) mod2 = NIFTY_DEF(mod2, [&](va args) {
-//   docs << "uint modulo by 2 lookup.";
-// 
-//   tests << mod2(conf::uint_max / 3) = std::to_string((conf::uint_max / 3) % 2) >> docs;
-//   tests << mod2(conf::uint_max)     = std::to_string(conf::uint_max % 2) >> docs;
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[9];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "lang.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(default_) default_ = NIFTY_DEF(default_, [&](va args) {
+  docs << "returns the first argument iff the rest of the arguments are nothing."
+       << "else, returns only the rest of the arguments.";
+
+  tests << default_("a")       = "a" >> docs;
+  tests << default_("a,")      = "a" >> docs;
+  tests << default_("a, b")    = "b" >> docs;
+  tests << default_("a, b, c") = "b, c" >> docs;
+
+  def<"0(_, ...)"> _0 = [&](arg first, va) {
+    return first;
+  };
+
+  def<"01(_, ...)">{} = [&](arg, va args) {
+    return args;
+  };
+
+  return def<"o(_, ...)">{[&](arg first, va rest) {
+    return pp::call(pp::cat(_0, pp::va_opt("1")), first, rest);
+  }}(args);
+});
+
+} // namespace api

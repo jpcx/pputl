@@ -29,6 +29,7 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "traits.h"
 #include "type.h"
 
 namespace api {
@@ -38,17 +39,17 @@ inline codegen::category<"logic"> logic;
 extern codegen::def<"not(...: v: bool) -> bool{!v}"> const&                   not_;
 extern codegen::def<"and(...: a: bool, b: bool) -> bool{a and b}"> const&     and_;
 extern codegen::def<"or(...: a: bool, b: bool) -> bool{a or b}"> const&       or_;
+extern codegen::def<"xor(...: a: bool, b: bool) -> bool{a xor b}"> const&     xor_;
 extern codegen::def<"nand(...: a: bool, b: bool) -> bool{!(a and b)}"> const& nand_;
 extern codegen::def<"nor(...: a: bool, b: bool) -> bool{!(a or b)}"> const&   nor_;
-extern codegen::def<"xor(...: a: bool, b: bool) -> bool{a xor b}"> const&     xor_;
 extern codegen::def<"xnor(...: a: bool, b: bool) -> bool{!(a xor b)}"> const& xnor_;
 
 NIFTY_DECL(not_);
 NIFTY_DECL(and_);
 NIFTY_DECL(or_);
+NIFTY_DECL(xor_);
 NIFTY_DECL(nand_);
 NIFTY_DECL(nor_);
-NIFTY_DECL(xor_);
 NIFTY_DECL(xnor_);
 
 inline codegen::end_category<"logic"> logic_end;

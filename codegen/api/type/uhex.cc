@@ -48,13 +48,8 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   tests << uhex(one)        = one >> docs;
   tests << uhex(imax)       = max >> docs;
 
-  def<"0(udec)"> _0 = [&](arg udec) {
-    return cat(impl::uint_trait(udec, "DIHEX"), 'u');
-  };
-
-  def<"1(uhex)">{} = [&](arg uhex) {
-    return uhex;
-  };
+  def<"0(udec)"> _0 = [&](arg udec) { return impl::udec(udec, "UHEX"); };
+  def<"1(uhex)">{}  = [&](arg uhex) { return uhex; };
 
   return def<"o(uint)">{[&](arg uint) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_uhex_o(uint)), uint);

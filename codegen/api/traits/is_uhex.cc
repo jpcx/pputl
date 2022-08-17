@@ -50,21 +50,14 @@ decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
   tests << is_uhex("(), ()")  = "0" >> docs;
 
   detail::is_uhex_o = def{"o(uint)"} = [&](arg uint) {
-    def<"\\HEX"> hex = [&] {
-      return "";
-    };
-    return is_none(cat(utl::slice(hex, -3), impl::uint_trait(uint, "TYPE")));
+    def<"0"> _0 = [&] { return "0"; };
+    def<"1">{}  = [&] { return "1"; };
+
+    return cat(utl::slice(_0, -1), impl::uhex(uint, "IS"));
   };
 
-  def<"0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
-  };
-
-  def<"1">{} = [&] {
-    return detail::is_uhex_o;
-  };
+  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"1">{}  = [&] { return detail::is_uhex_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
 });

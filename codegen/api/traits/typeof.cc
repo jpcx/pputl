@@ -25,7 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
@@ -36,29 +36,32 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << "literal 0 through 9 are considered ibase10 rather than bool or hex."
        << ""
        << "returns one of:"
-       << "- " + none << "- " + some << "- " + hword << "- " + tup << "- " + idec << "- " + ihex
-       << "- " + udec << "- " + uhex << "- " + hex << "- " + atom;
+       << ""
+       << "  | NONE | SOME | XWORD | TUP  | IDEC | IHEX"
+       << "  | UDEC | UHEX | HEX   | NYBL | ATOM";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
 
-  tests << typeof("(foo)")        = tup >> docs;
-  tests << typeof(0)              = idec >> docs;
-  tests << typeof("0u")           = udec >> docs;
-  tests << typeof("D")            = hex >> docs;
-  tests << typeof(conf::uint_max) = atom >> docs;
-  tests << typeof(uint_max_s)     = udec >> docs;
-  tests << typeof(ihexneg1)       = ihex >> docs;
-  tests << typeof(ubinmax)        = uhex >> docs;
-  tests << typeof("foo")          = atom >> docs;
-  tests << typeof("foo, bar")     = some >> docs;
+  tests << typeof("(foo)")        = "TUP" >> docs;
+  tests << typeof(0)              = "IDEC" >> docs;
+  tests << typeof("0u")           = "UDEC" >> docs;
+  tests << typeof("D")            = "HEX" >> docs;
+  tests << typeof(conf::uint_max) = "ATOM" >> docs;
+  tests << typeof(uint_max_s)     = "UDEC" >> docs;
+  tests << typeof(ihexneg1)       = "IHEX" >> docs;
+  tests << typeof(ubinmax)        = "UHEX" >> docs;
+  tests << typeof("foo")          = "ATOM" >> docs;
+  tests << typeof("001")          = "ATOM" >> docs;
+  tests << typeof("0010")         = "NYBL" >> docs;
+  tests << typeof("foo, bar")     = "SOME" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << typeof("(A)") = tup >> docs;
-  tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) =
-      hword >> docs;
-  tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) =
-      hword >> docs;
-  tests << typeof() = none >> docs;
+    tests << typeof("(A)") = "TUP" >> docs;
+  tests << typeof(pp::tup(
+      utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) = "XWORD" >> docs;
+  tests << typeof(pp::tup(
+      utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "XWORD" >> docs;
+  tests << typeof()                                                    = "NONE" >> docs;
 
   // !none
   def<"0(...)"> _0 = [&](va some_) {
@@ -67,7 +70,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
     // !any
     def<"<0(...)"> _0 = [&](va) {
       docs << "^!none → !any";
-      return some;
+      return "SOME";
     };
 
     // any
@@ -87,14 +90,28 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
             docs << "^!none → any → !tup → !int → !uint";
 
             // !hex
-            def<"<0(atom)"> _0 = [&](arg) {
+            def<"<0(atom)"> _0 = [&](arg atom_) {
               docs << "^!none → any → !tup → !int → !uint → !hex";
-              return atom;
+
+              // !nybl
+              def<"<0(atom)"> _0 = [&](arg) {
+                docs << "^!none → any → !tup → !int → !uint → !hex → !nybl";
+                return "ATOM";
+              };
+
+              // nybl
+              def<"<1(nybl)">{} = [&](arg) {
+                docs << "^!none → any → !tup → !int → !uint → !hex → nybl";
+                return "NYBL";
+              };
+
+              return pp::call(cat(utl::slice(_0, -1), detail::is_nybl_o(atom_)), atom_);
             };
 
+            // hex
             def<"<1(hex)">{} = [&](arg) {
               docs << "^!none → any → !tup → !int → !uint → hex";
-              return hex;
+              return "HEX";
             };
 
             return pp::call(cat(utl::slice(_0, -1), detail::is_hex_o(atom_)), atom_);
@@ -107,13 +124,13 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
             // !udec
             def<"<0(uhex)"> _0 = [&](arg) {
               docs << "^!none → any → !tup → !int → uint → !udec";
-              return uhex;
+              return "UHEX";
             };
 
             // udec
             def<"<1(udec)">{} = [&](arg) {
               docs << "^!none → any → !tup → !int → uint → udec";
-              return udec;
+              return "UDEC";
             };
 
             return pp::call(cat(utl::slice(_0, -1), detail::is_udec_o(uint)), uint);
@@ -129,13 +146,13 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
           // !idec
           def<"<0(ihex)"> _0 = [&](arg) {
             docs << "^!none → any → !tup → int → !idec";
-            return ihex;
+            return "IHEX";
           };
 
           // idec
           def<"<1(idec)">{} = [&](arg) {
             docs << "^!none → any → !tup → int → idec";
-            return idec;
+            return "IDEC";
           };
 
           return pp::call(cat(utl::slice(_0, -1), detail::is_idec_o(int_)), int_);
@@ -148,19 +165,19 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       def<"<1(tup)">{} = [&](arg tup_) {
         docs << "^!none → any → tup";
 
-        // !hword
+        // !xword
         def<"<0(tup)"> _0 = [&](arg) {
-          docs << "^!none → any → tup → !hword";
-          return tup;
+          docs << "^!none → any → tup → !xword";
+          return "TUP";
         };
 
-        // hword
-        def<"<1(hword)">{} = [&](arg) {
-          docs << "^!none → any → tup → hword";
-          return hword;
+        // xword
+        def<"<1(xword)">{} = [&](arg) {
+          docs << "^!none → any → tup → xword";
+          return "XWORD";
         };
 
-        return pp::call(cat(utl::slice(_0, -1), detail::is_hword_o(tup_)), tup_);
+        return pp::call(cat(utl::slice(_0, -1), detail::is_xword_o(tup_)), tup_);
       };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), any);
@@ -172,7 +189,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   // nothing
   def<"1(...)">{} = [&](va) {
     docs << "none";
-    return none;
+    return "NONE";
   };
 
   return pp::call(cat(utl::slice(_0, -1), is_none(args)), args);

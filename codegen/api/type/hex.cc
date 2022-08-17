@@ -33,38 +33,23 @@ using namespace codegen;
 
 decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
   docs << "[inherits from " + atom + "] capital hex digit type."
-       << "expands to h if valid, else fails.";
+       << "constructible from either hex or nybl."
+       << "expands to v if valid, else fails.";
 
-  tests << hex(0)   = "0" >> docs;
-  tests << hex(1)   = "1" >> docs;
-  tests << hex(2)   = "2";
-  tests << hex(3)   = "3";
-  tests << hex(4)   = "4";
-  tests << hex(5)   = "5";
-  tests << hex(6)   = "6";
-  tests << hex(7)   = "7";
-  tests << hex(8)   = "8";
-  tests << hex(9)   = "9";
-  tests << hex("A") = "A";
-  tests << hex("B") = "B" >> docs;
-  tests << hex("C") = "C";
-  tests << hex("D") = "D";
-  tests << hex("E") = "E";
-  tests << hex("F") = "F" >> docs;
+  tests << hex(0)      = "0" >> docs;
+  tests << hex("F")    = "F" >> docs;
+  tests << hex("0110") = "6" >> docs;
+  tests << hex("1010") = "A" >> docs;
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-
-  def<"1(e, hex)">{} = [](arg, arg hex) {
-    return hex;
-  };
+  def<"00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
+  def<"01(e, nybl)">{}  = [](arg, arg nybl) { return impl::nybl(nybl, "HEX"); };
+  def<"10(e, hex)">{}   = [](arg, arg hex) { return hex; };
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_hex_o(atom)), e, atom);
-  }}(istr("[" + hex
-          + "] hex cannot describe anything but literal, capital hex digits 0-F : " + args),
-     atom(args));
+    return pp::call(
+        cat(utl::slice(_00, -2), cat(detail::is_hex_o(atom), detail::is_nybl_o(atom))), e,
+        atom);
+  }}(istr("[" + hex + "] invalid arguments; must be hex or nybl : " + args), atom(args));
 });
 
 } // namespace api

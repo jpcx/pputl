@@ -39,13 +39,8 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
 
   tests << any("foo") = "foo" >> docs;
 
-  def<"0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-
-  def<"1(e, any)">{} = [](arg, arg any) {
-    return any;
-  };
+  def<"0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
+  def<"1(e, any)">{}  = [](arg, arg any) { return any; };
 
   return def<"o(e, ...)">{[&](arg e, va some) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_any_o(some + ".")), e, some);

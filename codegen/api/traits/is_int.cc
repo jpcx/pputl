@@ -56,45 +56,22 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   tests << is_int("(), ()") = "0" >> docs;
 
   detail::is_int_o = def{"o(atom)"} = [&](arg atom) {
-    def<"0(...)"> _0 = [&](va) {
-      return def<"fail(...)">{[&](va) {
-        return "0";
-      }};
+    def<"00(...)"> _00 = [&] { return "0"; };
+    def<"01(uhex)">{}  = [&](arg) { return "1"; };
+    def<"10(udec)">{}  = [&](arg udec) {
+      def<"0"> _0 = [&] { return "1"; };
+      def<"1">{}  = [&] { return "0"; };
+
+      return cat(utl::slice(_0, -1), impl::uhex(impl::udec(udec, "UHEX"), "ILTZ"));
     };
 
-    def<"1(i)">{} = [&](arg i) {
-      def<"\\HEX(i)"> hex = [&](arg) {
-        return "1";
-      };
-
-      def<"\\DEC(i)">{} = [&](arg i) {
-        def<"0"> _0 = [&] {
-          return "1";
-        };
-
-        def<"1">{} = [&] {
-          return "0";
-        };
-
-        return cat(utl::slice(_0, -1), impl::uint_trait(pp::cat(i, 'u'), "DINEG"));
-      };
-
-      return cat(utl::slice(hex, -3), impl::uint_trait(pp::cat(i, 'u'), "TYPE"));
-    };
-
-    return pp::call(
-        pp::call(cat(utl::slice(_0, -1), impl::uint_trait(pp::cat(atom, 'u'), "IS")), atom), atom);
+    return pp::call(cat(utl::slice(_00, -2), cat(impl::udec(pp::cat(atom, 'u'), "IS"),
+                                                 impl::uhex(pp::cat(atom, 'u'), "IS"))),
+                    pp::cat(atom, 'u'));
   };
 
-  def<"0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
-  };
-
-  def<"1">{} = [&] {
-    return detail::is_int_o;
-  };
+  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"1">{}  = [&] { return detail::is_int_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
 });

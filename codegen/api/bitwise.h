@@ -31,29 +31,46 @@
 #include "config.h"
 #include "lang.h"
 #include "logic.h"
+#include "numeric.h"
 #include "traits.h"
 #include "type.h"
+#include "util.h"
 
 namespace api {
 
 inline codegen::category<"bitwise"> bitwise;
 
-// TODO: bitzip
+// TODO: bitzip hexzip bitrotl bitrotr
 
-extern codegen::def<"bitget(...: v: int|uint|word, i: int|uint) -> v[i]: bool"> const& bitget;
-extern codegen::def<
-    "bitset(...: v: int|uint|word, i: int|uint, b: bool) -> (v[i] = b): word"> const& bitset;
-// extern codegen::def<"bitflip(...: v: uint|int, i: int) -> (v[i] = !v[i]): typeof(v)"> const&
-//                                                                         bitflip_;
-// extern codegen::def<"bitnot(...: v: uint|int) -> ~v: typeof(v)"> const& bitnot_;
-// extern codegen::def<"bitshift_left(...: v: uint|int, ct: ibase10) -> (v << i): typeof(v)"> const&
-//     bitshift_left_;
+extern codegen::def<"bitsll(...: v: word, n: idec) -> word{v << n}"> const&   bitsll;
+extern codegen::def<"bitsrl(...: v: word, n: idec) -> word{v >> n}"> const&   bitsrl;
+extern codegen::def<"bitsra(...: v: int, n: idec) -> int{v / 2**n}"> const&   bitsra;
+extern codegen::def<"bitnot(...: v: word) -> word{~v}"> const&                bitnot;
+extern codegen::def<"bitand(...: a: word, b: word) -> int{a & b}"> const&     bitand_;
+extern codegen::def<"bitor(...: a: word, b: word) -> int{a | b}"> const&      bitor_;
+extern codegen::def<"bitxor(...: a: word, b: word) -> int{a ^ b}"> const&     bitxor;
+extern codegen::def<"bitnand(...: a: word, b: word) -> int{~(a & b)}"> const& bitnand;
+extern codegen::def<"bitnor(...: a: word, b: word) -> int{~(a | b)}"> const&  bitnor;
+extern codegen::def<"bitxnor(...: a: word, b: word) -> int{~(a ^ b)}"> const& bitxnor;
+extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const& bitget;
+extern codegen::def<"bitset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const&
+    bitset;
+extern codegen::def<"bitflip(...: v: word, i: idec) -> word{v[i] = !v[i]}"> const&
+                                                                              bitflip;
 
+NIFTY_DECL(bitsll);
+NIFTY_DECL(bitsrl);
+NIFTY_DECL(bitsra);
+NIFTY_DECL(bitnot);
+NIFTY_DECL(bitand_);
+NIFTY_DECL(bitor_);
+NIFTY_DECL(bitxor);
+NIFTY_DECL(bitnand);
+NIFTY_DECL(bitnor);
+NIFTY_DECL(bitxnor);
 NIFTY_DECL(bitget);
 NIFTY_DECL(bitset);
-// NIFTY_DECL(bitflip_);
-// NIFTY_DECL(bitnot_);
-// NIFTY_DECL(bitshift_left_);
+NIFTY_DECL(bitflip);
 
 inline codegen::end_category<"bitwise"> bitwise_end;
 

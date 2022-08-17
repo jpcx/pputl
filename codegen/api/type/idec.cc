@@ -49,24 +49,13 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
   tests << idec(conf::int_max) = int_max_s >> docs;
 
   def<"0(e, ihex)"> _0 = [&](arg e, arg ihex) {
-    return def<"o(e, uhex)">{[&](arg e, arg uhex) {
-      def<"0(e, uhex)"> _0 = [&](arg, arg uhex) {
-        return impl::uint_trait(uhex, "HIDEC");
-      };
-
-      def<"1(e, uhex)">{} = [&](arg e, arg) {
-        return fail(e);
-      };
-
-      return pp::call(
-          cat(utl::slice(_0, -1), impl::uint_trait(impl::uint_trait(uhex, "HUDEC"), "DINEG")), e,
-          uhex);
-    }}(e, pp::cat(ihex, 'u'));
+    def<"0(e, uhex)"> _0 = [&](arg, arg uhex) { return impl::uhex(uhex, "ICAST"); };
+    def<"1(e, uhex)">{}  = [&](arg e, arg) { return fail(e); };
+    return pp::call(cat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ")), e,
+                    pp::cat(ihex, 'u'));
   };
 
-  def<"1(e, idec)">{} = [&](arg, arg idec) {
-    return idec;
-  };
+  def<"1(e, idec)">{} = [&](arg, arg idec) { return idec; };
 
   return def<"o(e, int)">{[&](arg e, arg int_) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_idec_o(int_)), e, int_);
