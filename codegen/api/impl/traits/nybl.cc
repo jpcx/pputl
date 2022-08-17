@@ -32,66 +32,39 @@ namespace impl {
 
 using namespace codegen;
 
-static constexpr char const alpha[] = "0123456789ABCDEF";
-static_assert(sizeof alpha == 17);
+decltype(nybl) nybl = NIFTY_DEF(nybl, [&](arg v, arg t) {
+  docs << "[internal] nybl traits";
 
-static std::string
-not_(std::size_t i) {
-  return std::string{alpha[~i % 16]};
-}
-
-static std::string
-dec(std::size_t i) {
-  return pp::tup<false>(i == 0, i > 0 ? alpha[i - 1] : alpha[15]);
-}
-
-static std::string
-inc(std::size_t i) {
-  return pp::tup<false>(i == 15, i < 15 ? alpha[i + 1] : alpha[0]);
-}
-
-static std::string
-to_nybl(std::size_t i) {
-  auto        b     = detail::bits(i);
-  static auto comma = std::regex{", ", std::regex_constants::optimize};
-  return std::regex_replace(b, comma, "");
-}
-
-decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
-  docs << "[internal] hex traits";
-
-  std::array<def<>, 16> digits{};
-
-  {
-    std::size_t i = 0;
-    for (; i < 16 - 1; ++i) {
-      digits[i] = def{std::string{alpha[i]}} = [&] {
-        return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + to_nybl(i) + ", "
-             + detail::bits(i);
-      };
-    }
-    digits[i] = def{std::string{alpha[i]}} = [&] {
-      docs << "not, (dec carry, dec), (inc carry, inc), nybl, ...bits";
-      return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + to_nybl(i) + ", "
-           + detail::bits(i);
-    };
-  }
+  std::array<def<>, 16> nybls{
+      def{"0000"} = [&] { return "0, " + detail::bits(0); },
+      def{"0001"} = [&] { return "1, " + detail::bits(1); },
+      def{"0010"} = [&] { return "2, " + detail::bits(2); },
+      def{"0011"} = [&] { return "3, " + detail::bits(3); },
+      def{"0100"} = [&] { return "4, " + detail::bits(4); },
+      def{"0101"} = [&] { return "5, " + detail::bits(5); },
+      def{"0110"} = [&] { return "6, " + detail::bits(6); },
+      def{"0111"} = [&] { return "7, " + detail::bits(7); },
+      def{"1000"} = [&] { return "8, " + detail::bits(8); },
+      def{"1001"} = [&] { return "9, " + detail::bits(9); },
+      def{"1010"} = [&] { return "A, " + detail::bits(10); },
+      def{"1011"} = [&] { return "B, " + detail::bits(11); },
+      def{"1100"} = [&] { return "C, " + detail::bits(12); },
+      def{"1101"} = [&] { return "D, " + detail::bits(13); },
+      def{"1110"} = [&] { return "E, " + detail::bits(14); },
+      def{"1111"} = [&] { return "F, " + detail::bits(15); },
+  };
 
   def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
     def<"0"> _0 = [&] { return "0"; };
     def<"01">{} = [&] { return "1"; };
     return pp::cat(_0, pp::va_opt("1"));
   };
-
-  def<"\\NOT(n, ...) -> hex">{}                = [&](pack args) { return args[0]; };
-  def<"\\DEC(n, d, ...) -> (bool, hex)">{}     = [&](pack args) { return args[1]; };
-  def<"\\INC(n, d, i, ...) -> (bool, hex)">{}  = [&](pack args) { return args[2]; };
-  def<"\\NYBL(n, d, i, ny, ...) -> nybl">{}    = [&](pack args) { return args[3]; };
-  def<"\\BITS(n, d, i, ny, ...) -> ...bool">{} = [&](pack args) { return args[4]; };
+  def<"\\HEX(hex, ...) -> hex">{}      = [&](pack args) { return args[0]; };
+  def<"\\BITS(hex, ...) -> ...bool">{} = [&](pack args) { return args[1]; };
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, cat(utl::slice(digits[0], -1), v));
+  }}(t, cat(utl::slice(nybls[0], -4), v));
 });
 
 } // namespace impl

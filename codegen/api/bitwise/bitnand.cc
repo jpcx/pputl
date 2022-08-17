@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,32 +25,23 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "traits.h"
-#include "type.h"
+#include "bitwise.h"
 
 namespace api {
 
-inline codegen::category<"logic"> logic;
+using namespace codegen;
 
-extern codegen::def<"not(...: v: bool) -> bool{!v}"> const&                   not_;
-extern codegen::def<"and(...: a: bool, b: bool) -> bool{a and b}"> const&     and_;
-extern codegen::def<"or(...: a: bool, b: bool) -> bool{a or b}"> const&       or_;
-extern codegen::def<"xor(...: a: bool, b: bool) -> bool{a xor b}"> const&     xor_;
-extern codegen::def<"nand(...: a: bool, b: bool) -> bool{!(a and b)}"> const& nand_;
-extern codegen::def<"nor(...: a: bool, b: bool) -> bool{!(a or b)}"> const&   nor_;
-extern codegen::def<"xnor(...: a: bool, b: bool) -> bool{!(a xor b)}"> const& xnor_;
+decltype(bitnand) bitnand = NIFTY_DEF(bitnand, [&](va args) {
+  docs << "bitwise NAND."
+       << "uses arg 'a' for result cast hint.";
 
-NIFTY_DECL(not_);
-NIFTY_DECL(and_);
-NIFTY_DECL(or_);
-NIFTY_DECL(xor_);
-NIFTY_DECL(nand_);
-NIFTY_DECL(nor_);
-NIFTY_DECL(xnor_);
+  tests << bitnand(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bitnand(5, 7) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "A") >> docs;
+  tests << bitnand(pp::tup(samp::himax), pp::tup(samp::hmax)) =
+      pp::tup(samp::himin) >> docs;
 
-inline codegen::end_category<"logic"> logic_end;
+  return word(impl::uhex(uhex(bitand_(args)), "BNOT"), typeof(ifirst(args)));
+});
 
 } // namespace api

@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,32 +25,32 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
 #include "traits.h"
-#include "type.h"
 
 namespace api {
 
-inline codegen::category<"logic"> logic;
+using namespace codegen;
 
-extern codegen::def<"not(...: v: bool) -> bool{!v}"> const&                   not_;
-extern codegen::def<"and(...: a: bool, b: bool) -> bool{a and b}"> const&     and_;
-extern codegen::def<"or(...: a: bool, b: bool) -> bool{a or b}"> const&       or_;
-extern codegen::def<"xor(...: a: bool, b: bool) -> bool{a xor b}"> const&     xor_;
-extern codegen::def<"nand(...: a: bool, b: bool) -> bool{!(a and b)}"> const& nand_;
-extern codegen::def<"nor(...: a: bool, b: bool) -> bool{!(a or b)}"> const&   nor_;
-extern codegen::def<"xnor(...: a: bool, b: bool) -> bool{!(a xor b)}"> const& xnor_;
+namespace detail {
+decltype(is_nybl_o) is_nybl_o = NIFTY_DEF(is_nybl_o);
+}
 
-NIFTY_DECL(not_);
-NIFTY_DECL(and_);
-NIFTY_DECL(or_);
-NIFTY_DECL(xor_);
-NIFTY_DECL(nand_);
-NIFTY_DECL(nor_);
-NIFTY_DECL(xnor_);
+decltype(is_nybl) is_nybl = NIFTY_DEF(is_nybl, [&](va args) {
+  docs << "[extends " + is_atom + "] detects if args is a 4-bit concatenation bools.";
 
-inline codegen::end_category<"logic"> logic_end;
+  tests << is_nybl()       = "0" >> docs;
+  tests << is_nybl(0)      = "0" >> docs;
+  tests << is_nybl('B')    = "0" >> docs;
+  tests << is_nybl("000")  = "0" >> docs;
+  tests << is_nybl("0000") = "1" >> docs;
+  tests << is_nybl("0110") = "1" >> docs;
+
+  detail::is_nybl_o = def{"o(atom)"} = [&](arg atom) { return impl::nybl(atom, "IS"); };
+
+  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"1">{}  = [&] { return detail::is_nybl_o; };
+
+  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+});
 
 } // namespace api

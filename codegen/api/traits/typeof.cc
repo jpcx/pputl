@@ -37,8 +37,8 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << "  NONE | SOME | XWORD | TUP | IDEC"
-       << "  IHEX | UDEC | UHEX  | HEX | ATOM";
+       << "  | NONE | SOME | XWORD | TUP  | IDEC | IHEX"
+       << "  | UDEC | UHEX | HEX   | NYBL | ATOM";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -52,14 +52,16 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof(ihexneg1)       = "IHEX" >> docs;
   tests << typeof(ubinmax)        = "UHEX" >> docs;
   tests << typeof("foo")          = "ATOM" >> docs;
+  tests << typeof("001")          = "ATOM" >> docs;
+  tests << typeof("0010")         = "NYBL" >> docs;
   tests << typeof("foo, bar")     = "SOME" >> docs;
   if constexpr (conf::word_size > 1)
     tests << typeof("(A)") = "TUP" >> docs;
-  tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) =
-      "XWORD" >> docs;
-  tests << typeof(pp::tup(utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) =
-      "XWORD" >> docs;
-  tests << typeof() = "NONE" >> docs;
+  tests << typeof(pp::tup(
+      utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) = "XWORD" >> docs;
+  tests << typeof(pp::tup(
+      utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "XWORD" >> docs;
+  tests << typeof()                                                    = "NONE" >> docs;
 
   // !none
   def<"0(...)"> _0 = [&](va some_) {
@@ -88,11 +90,25 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
             docs << "^!none → any → !tup → !int → !uint";
 
             // !hex
-            def<"<0(atom)"> _0 = [&](arg) {
+            def<"<0(atom)"> _0 = [&](arg atom_) {
               docs << "^!none → any → !tup → !int → !uint → !hex";
-              return "ATOM";
+
+              // !nybl
+              def<"<0(atom)"> _0 = [&](arg) {
+                docs << "^!none → any → !tup → !int → !uint → !hex → !nybl";
+                return "ATOM";
+              };
+
+              // nybl
+              def<"<1(nybl)">{} = [&](arg) {
+                docs << "^!none → any → !tup → !int → !uint → !hex → nybl";
+                return "NYBL";
+              };
+
+              return pp::call(cat(utl::slice(_0, -1), detail::is_nybl_o(atom_)), atom_);
             };
 
+            // hex
             def<"<1(hex)">{} = [&](arg) {
               docs << "^!none → any → !tup → !int → !uint → hex";
               return "HEX";

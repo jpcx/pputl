@@ -40,7 +40,8 @@ extern codegen::def<"some(...: args: <something>...) -> some{...args}"> const& s
 extern codegen::def<"any(...: v: any) -> any{v}"> const&                       any;
 extern codegen::def<"atom(...: v: any) -> v"> const&                           atom;
 extern codegen::def<"bool(...: v: 0|1) -> b"> const&                           bool_;
-extern codegen::def<"hex(...: v: 0-F) -> hex{h}: <0-F>"> const&                hex;
+extern codegen::def<"hex(...: v: hex|nybl) -> hex{h}"> const&                  hex;
+extern codegen::def<"nybl(...: v: hex|nybl) -> nybl{h}"> const&                nybl;
 extern codegen::def<"int(...: v: word, [hint]: IDEC|IHEX) -> int{n}"> const&   int_;
 extern codegen::def<"idec(...: v: word) -> idec{n}"> const&                    idec;
 extern codegen::def<"ihex(...: v: word) -> ihex{n}"> const&                    ihex;
@@ -49,7 +50,8 @@ extern codegen::def<"udec(...: v: word) -> udec{n}"> const&                    u
 extern codegen::def<"uhex(...: v: word) -> uhex{n}"> const&                    uhex;
 extern codegen::def<"tup(...: v: tup) -> t"> const&                            tup;
 extern codegen::def<"xword(...: v: word) -> xword{n}"> const&                  xword;
-extern codegen::def<"word(...: v: word, [hint]: XWORD|IDEC|IHEX|UDEC|UHEX) -> word{n}"> const& word;
+extern codegen::def<
+    "word(...: v: word, [hint]: XWORD|IDEC|IHEX|UDEC|UHEX) -> word{n}"> const& word;
 
 // TODO: ctor
 
@@ -59,6 +61,7 @@ NIFTY_DECL(any);
 NIFTY_DECL(atom);
 NIFTY_DECL(bool_);
 NIFTY_DECL(hex);
+NIFTY_DECL(nybl);
 NIFTY_DECL(int_);
 NIFTY_DECL(idec);
 NIFTY_DECL(ihex);

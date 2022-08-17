@@ -37,14 +37,17 @@ namespace impl {
 
 inline codegen::category<"impl.traits"> traits;
 
-extern codegen::def<"hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC|INC|SL|SR|BIN})"> const&         hex;
-extern codegen::def<"hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD})"> const& hexhex;
-extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const&         udec;
-extern codegen::def<"uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|XWORD|IHEX|ICAST|ILTZ|BNOT})"> const&
-    uhex;
+extern codegen::def<"hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC|INC|NYBL|BITS})"> const& hex;
+extern codegen::def<
+    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD})"> const& hexhex;
+extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const&    nybl;
+extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const& udec;
+extern codegen::def<
+    "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|XWORD|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;
 
 NIFTY_DECL(hex);
 NIFTY_DECL(hexhex);
+NIFTY_DECL(nybl);
 NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
 

@@ -25,39 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include <span>
-// 
-// #include "bitwise.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(bitsl) bitsl = NIFTY_DEF(bitsl, [&](va args) {
-//   docs << "TODO";
-// 
-//   def rev = def{"rev" + pp::tup(utl::alpha_base52_seq(conf::word_size))} = [&](pack args) {
-//     svect rev{args};
-//     std::ranges::reverse(rev);
-//     return utl::cat(rev, ", ");
-//   };
-// 
-//   def<"r(...)"> r = [&](va args) {
-//     return def<"o(n, ccur, slcur, ...)">{[&](arg n, arg ccur, arg slcur, va rest) {
-//       // TODO select i%4, dec by at most 4 each iteration
-//       def<"0(...)"> _0 = [&](va args) { return ""; };
-//       def<"1(...)">{}  = [&](va args) { return ""; };
-//       return pp::call(pp::cat(utl::slice(_0, -1), cprev));
-//       return impl::hex(first, "SL");
-//     }}(args);
-//   };
-// 
-//   return word(pp::tup(rev(def<"o(...)">{[&](va args) {
-//                 auto open  = utl::cat(svect(conf::word_size, r + "("));
-//                 auto close = utl::cat(svect(conf::word_size, ")"));
-//                 return open + " " + args + " " + close;
-//               }}(rev + " " + xword(args)))),
-//               typeof(args));
-// });
-// 
-// } // namespace api
+#include "bitwise.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(bitxnor) bitxnor = NIFTY_DEF(bitxnor, [&](va args) {
+  docs << "bitwise XNOR."
+       << "uses arg 'a' for result cast hint.";
+
+  tests << bitxnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bitxnor(0, 1) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
+  tests << bitxnor(5, 7) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "D") >> docs;
+  tests << bitxnor(15, 8) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
+
+  return word(impl::uhex(uhex(bitxor(args)), "BNOT"), typeof(ifirst(args)));
+});
+
+} // namespace api

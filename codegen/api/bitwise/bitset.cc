@@ -35,11 +35,13 @@ using namespace codegen;
 
 decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
   docs << "sets the ith bit of the word to b."
-       << "i must be between 0 and " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
+       << "i must be between 0 and " + bit_length + " ("
+              + std::to_string(conf::bit_length) + ").";
 
-  /* auto binmax       = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u"; */
-  /* auto binmaxminus1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) +
-   * "0u"; */
+  /* auto binmax       = "0b" +
+   * utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u"; */
+  /* auto binmaxminus1 = "0b" +
+   * utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u"; */
 
   auto zero   = std::vector<std::string>(conf::word_size, "0");
   auto two    = zero;
@@ -65,36 +67,19 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
   std::vector<std::string> params{"_"};
   std::ranges::copy(utl::alpha_base52_seq(conf::bit_length), std::back_inserter(params));
 
-  def<"n0000"> n0000 = [&] { return "0"; };
-  def<"n0001">{}     = [&] { return "1"; };
-  def<"n0010">{}     = [&] { return "2"; };
-  def<"n0011">{}     = [&] { return "3"; };
-  def<"n0100">{}     = [&] { return "4"; };
-  def<"n0101">{}     = [&] { return "5"; };
-  def<"n0110">{}     = [&] { return "6"; };
-  def<"n0111">{}     = [&] { return "7"; };
-  def<"n1000">{}     = [&] { return "8"; };
-  def<"n1001">{}     = [&] { return "9"; };
-  def<"n1010">{}     = [&] { return "A"; };
-  def<"n1011">{}     = [&] { return "B"; };
-  def<"n1100">{}     = [&] { return "C"; };
-  def<"n1101">{}     = [&] { return "D"; };
-  def<"n1110">{}     = [&] { return "E"; };
-  def<"n1111">{}     = [&] { return "F"; };
-
-  def bin =
-      def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
-        std::vector<std::string> res{};
-        std::ranges::transform(args, std::back_inserter(res),
-                               [&](auto&& v) { return esc + " " + impl::hex(v, "BIN"); });
-        return utl::cat(res, ", ");
-      };
+  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
+                + ")"} = [&](pack args) {
+    std::vector<std::string> res{};
+    std::ranges::transform(args, std::back_inserter(res),
+                           [&](auto&& v) { return impl::hex(v, "BITS"); });
+    return utl::cat(res, ", ");
+  };
 
   std::array<std::string, conf::word_size> res{};
   for (std::size_t i = 0; i < res.size(); ++i) {
-    res[i] =
-        pp::cat(utl::slice(n0000, -4),
-                pp::cat(utl::alpha_base52_seq(4, std::string{static_cast<char>('a' + i * 4)})));
+    res[i] = impl::nybl(
+        pp::cat(utl::alpha_base52_seq(4, std::string{static_cast<char>('a' + i * 4)})),
+        "HEX");
   }
 
   auto p0 = params;
@@ -119,9 +104,10 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
                             return pp::call(pp::cat(utl::slice(_0, -1), i), b, args);
                           };
 
-                          return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, b, args);
+                          return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, b,
+                                          args);
                         }}(args);
-                  }}(e, i, b, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
+                  }}(e, i, b, lt(i, conf::bit_length), bin);
                 }}(e, idec(i), bool_(b), bin + " " + xword(v)),
                 typeof(v));
   }}(istr("[" + bitset + "] invalid index; args : " + args), args);

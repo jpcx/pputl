@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,32 +25,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-#include "traits.h"
 #include "type.h"
 
 namespace api {
 
-inline codegen::category<"logic"> logic;
+using namespace codegen;
 
-extern codegen::def<"not(...: v: bool) -> bool{!v}"> const&                   not_;
-extern codegen::def<"and(...: a: bool, b: bool) -> bool{a and b}"> const&     and_;
-extern codegen::def<"or(...: a: bool, b: bool) -> bool{a or b}"> const&       or_;
-extern codegen::def<"xor(...: a: bool, b: bool) -> bool{a xor b}"> const&     xor_;
-extern codegen::def<"nand(...: a: bool, b: bool) -> bool{!(a and b)}"> const& nand_;
-extern codegen::def<"nor(...: a: bool, b: bool) -> bool{!(a or b)}"> const&   nor_;
-extern codegen::def<"xnor(...: a: bool, b: bool) -> bool{!(a xor b)}"> const& xnor_;
+decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
+  docs << "[inherits from " + atom + "] 4-bit bool concatenation type."
+       << "constructible from either nybl or hex."
+       << "expands to v if valid, else fails.";
 
-NIFTY_DECL(not_);
-NIFTY_DECL(and_);
-NIFTY_DECL(or_);
-NIFTY_DECL(xor_);
-NIFTY_DECL(nand_);
-NIFTY_DECL(nor_);
-NIFTY_DECL(xnor_);
+  tests << nybl("0000") = "0000" >> docs;
+  tests << nybl("0110") = "0110" >> docs;
+  tests << nybl("5")    = "0101" >> docs;
+  tests << nybl("A")    = "1010" >> docs;
 
-inline codegen::end_category<"logic"> logic_end;
+  def<"00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
+  def<"01(e, hex)">{}   = [](arg, arg hex) { return impl::hex(hex, "NYBL"); };
+  def<"10(e, nybl)">{}  = [](arg, arg nybl) { return nybl; };
+
+  return def<"o(e, atom)">{[&](arg e, arg atom) {
+    return pp::call(
+        cat(utl::slice(_00, -2), cat(detail::is_nybl_o(atom), detail::is_hex_o(atom))), e,
+        atom);
+  }}(istr("[" + nybl + "] invalid arguments; must be nybl or hex : " + args), atom(args));
+});
 
 } // namespace api

@@ -33,9 +33,11 @@ using namespace codegen;
 
 decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
   docs << "gets the ith bit from the word."
-       << "i must be between 0 and " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
+       << "i must be between 0 and " + bit_length + " ("
+              + std::to_string(conf::bit_length) + ").";
 
-  auto maxless1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "E";
+  auto maxless1 =
+      "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "E";
 
   tests << bitget(2, conf::bit_length - 3)                   = "0" >> docs;
   tests << bitget(2, conf::bit_length - 2)                   = "1" >> docs;
@@ -47,18 +49,20 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
 
   auto bitparams = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
-  def bin =
-      def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
-        std::vector<std::string> res{};
-        std::ranges::transform(args, std::back_inserter(res),
-                               [&](auto&& v) { return esc + " " + impl::hex(v, "BIN"); });
-        return utl::cat(res, ", ");
-      };
+  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
+                + ")"} = [&](pack args) {
+    std::vector<std::string> res{};
+    std::ranges::transform(args, std::back_inserter(res),
+                           [&](auto&& v) { return bits(v); });
+    return utl::cat(res, ", ");
+  };
 
   def _0 = def{"0(" + bitparams + ")"} = [&](pack args) { return args[0]; };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
-    def{"" + std::to_string(i) + "(" + bitparams + ")"} = [&](pack args) { return args[i]; };
+    def{"" + std::to_string(i) + "(" + bitparams + ")"} = [&](pack args) {
+      return args[i];
+    };
   }
 
   return def<"o(e, v, i)">{[&](arg e, arg v, arg i) {
