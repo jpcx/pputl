@@ -66,8 +66,7 @@
 //                                                                            //
 //     ◆ language enhancements                                                //
 //       ‐ basic argument manipulation         [lang]                         //
-//           eat     esc    cat    istr  str                                  //
-//           ifirst  first  irest  rest  trim                                 //
+//           eat  esc  ifirst  first  irest  rest  trim                       //
 //       ‐ control flow                        [lang, control]                //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                        [type; see TERMINOLOGY]        //
@@ -80,8 +79,9 @@
 //           size     is_empty  is_sizey                                      //
 //       ‐ boolean logic                       [logic]                        //
 //           not  and  or  xor  nand  nor  xnor                               //
-//       ‐ paste formatting                    [fmt]                          //
-//           paste  respace  compress                                         //
+//       ‐ paste formatting                    [lang, fmt]                    //
+//           str   istr  cat   spacecat                                       //
+//           cint  chex  cbin  respace                                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                          [numeric, math]                //
 //           inc  dec  add   sub   mul   moddiv                               //
@@ -93,7 +93,7 @@
 //           bitsll   bitsrl   bitsra   bitnot                                //
 //           bitand   bitor    bitxor   bitnand                               //
 //           bitnor   bitxnor  bitget   bitset                                //
-//           bitflip  bitzip   bitrotl  bitrotr                               //
+//           bitflip  bitrotl  bitrotr  bits                                  //
 //     ◆ range algorithms                                                     //
 //       ‐ element access                      [util, range]                  //
 //           items       split      join      get       set                   //
@@ -102,15 +102,15 @@
 //       ‐ generation                          [algo]                         //
 //           seq  repeat  ogen  cgen                                          //
 //       ‐ transformation                      [algo]                         //
-//           orev         crev      otransform  ctransform shift_left         //
-//           shift_right  rot_left  rot_right   osort      csort              //
+//           orev        crev         otransform  ctransform                  //
+//           shift_left  shift_right  rot_left    rot_right                   //
 //       ‐ reduction                           [algo]                         //
 //           oreduce  creduce                                                 //
 //     ◆ metaprogramming utilities                                            //
 //       ‐ expansion control and tracing       [meta]                         //
 //           id  lp  rp  xtrace  xtrace_read                                  //
 //       ‐ mutually recursive stack expansion  [meta]                         //
-//           x                                                                //
+//           oexpand  cexpand                                                 //
 //       ‐ inline recursive stack construction [meta]                         //
 //           orecur  crecur                                                   //
 //                                                                            //
@@ -986,4 +986,15 @@ ASSERT_PP_EQ((PTL_BITFLIP(1u, 10)), (3u));
 ASSERT_PP_EQ((PTL_BITFLIP(0x002, 9)), (0x006));
 ASSERT_PP_EQ((PTL_BITFLIP(0x003u, 8)), (0x00Bu));
 ASSERT_PP_EQ((PTL_BITFLIP((F, F, F), 0)), ((7, F, F)));
+
+ASSERT_PP_EQ((PTL_BITROTL(0x000, 0)), (0x000));
+ASSERT_PP_EQ((PTL_BITROTL(0x001, 1)), (0x002));
+ASSERT_PP_EQ((PTL_BITROTL(0x001, 2)), (0x004));
+ASSERT_PP_EQ((PTL_BITROTL(0x003, 2)), (0x00C));
+
+ASSERT_PP_EQ((PTL_BITROTR(0x000, 0)), (0x000));
+ASSERT_PP_EQ((PTL_BITROTR(0x001, 0)), (0x001));
+ASSERT_PP_EQ((PTL_BITROTR(0x001, 1)), (0x800));
+ASSERT_PP_EQ((PTL_BITROTR(0x002, 1)), (0x001));
+ASSERT_PP_EQ((PTL_BITROTR(0x7FF, 2)), (0xDFF));
 // clang-format on

@@ -38,11 +38,6 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
        << "i must be between 0 and " + bit_length + " ("
               + std::to_string(conf::bit_length) + ").";
 
-  /* auto binmax       = "0b" +
-   * utl::cat(std::vector<std::string>(conf::bit_length, "1")) + "u"; */
-  /* auto binmaxminus1 = "0b" +
-   * utl::cat(std::vector<std::string>(conf::bit_length - 1, "1")) + "0u"; */
-
   auto zero   = std::vector<std::string>(conf::word_size, "0");
   auto two    = zero;
   two.back()  = "2";

@@ -176,8 +176,7 @@ constexpr char const project_header[]{
     "//                                                                            //\n"
     "//     ◆ language enhancements                                                //\n"
     "//       ‐ basic argument manipulation         [lang]                         //\n"
-    "//           eat     esc    cat    istr  str                                  //\n"
-    "//           ifirst  first  irest  rest  trim                                 //\n"
+    "//           eat  esc  ifirst  first  irest  rest  trim                       //\n"
     "//       ‐ control flow                        [lang, control]                //\n"
     "//           default  fail  if  switch                                        //\n"
     "//       ‐ type casting                        [type; see TERMINOLOGY]        //\n"
@@ -190,8 +189,9 @@ constexpr char const project_header[]{
     "//           size     is_empty  is_sizey                                      //\n"
     "//       ‐ boolean logic                       [logic]                        //\n"
     "//           not  and  or  xor  nand  nor  xnor                               //\n"
-    "//       ‐ paste formatting                    [fmt]                          //\n"
-    "//           paste  respace  compress                                         //\n"
+    "//       ‐ paste formatting                    [lang, fmt]                    //\n"
+    "//           str   istr  cat   spacecat                                       //\n"
+    "//           cint  chex  cbin  respace                                        //\n"
     "//     ◆ signed and unsigned integers                                         //\n"
     "//       ‐ arithmetic                          [numeric, math]                //\n"
     "//           inc  dec  add   sub   mul   moddiv                               //\n"
@@ -203,7 +203,7 @@ constexpr char const project_header[]{
     "//           bitsll   bitsrl   bitsra   bitnot                                //\n"
     "//           bitand   bitor    bitxor   bitnand                               //\n"
     "//           bitnor   bitxnor  bitget   bitset                                //\n"
-    "//           bitflip  bitzip   bitrotl  bitrotr                               //\n"
+    "//           bitflip  bitrotl  bitrotr  bits                                  //\n"
     "//     ◆ range algorithms                                                     //\n"
     "//       ‐ element access                      [util, range]                  //\n"
     "//           items       split      join      get       set                   //\n"
@@ -212,15 +212,15 @@ constexpr char const project_header[]{
     "//       ‐ generation                          [algo]                         //\n"
     "//           seq  repeat  ogen  cgen                                          //\n"
     "//       ‐ transformation                      [algo]                         //\n"
-    "//           orev         crev      otransform  ctransform shift_left         //\n"
-    "//           shift_right  rot_left  rot_right   osort      csort              //\n"
+    "//           orev        crev         otransform  ctransform                  //\n"
+    "//           shift_left  shift_right  rot_left    rot_right                   //\n"
     "//       ‐ reduction                           [algo]                         //\n"
     "//           oreduce  creduce                                                 //\n"
     "//     ◆ metaprogramming utilities                                            //\n"
     "//       ‐ expansion control and tracing       [meta]                         //\n"
     "//           id  lp  rp  xtrace  xtrace_read                                  //\n"
     "//       ‐ mutually recursive stack expansion  [meta]                         //\n"
-    "//           x                                                                //\n"
+    "//           oexpand  cexpand                                                 //\n"
     "//       ‐ inline recursive stack construction [meta]                         //\n"
     "//           orecur  crecur                                                   //\n"
     "//                                                                            //\n"
@@ -482,7 +482,9 @@ template<detail::forward_iterable_for<std::string const> Strs>
 template<std::unsigned_integral Int>
 [[nodiscard]] std::vector<Int> prime_factors(Int n);
 template<std::unsigned_integral Int>
-[[nodiscard]] inline Int largest_pow2_up_to(Int n);
+[[nodiscard]] inline Int next_le_pow2(Int n);
+template<std::unsigned_integral Int>
+[[nodiscard]] inline Int next_ge_pow2(Int n);
 
 template<class T>
 using storage = std::aligned_storage_t<sizeof(std::remove_cvref_t<T>),

@@ -86,13 +86,24 @@ prime_factors(Int n) {
 
 template<std::unsigned_integral Int>
 [[nodiscard]] Int
-largest_pow2_up_to(Int n) {
+next_le_pow2(Int n) {
   if (n == 0)
     throw std::runtime_error{"cannot find a power of two before zero"};
   Int res{1};
   for (Int cur = 1; cur <= n; res = cur, cur *= 2)
     ;
   return res;
+}
+
+template<std::unsigned_integral Int>
+[[nodiscard]] Int
+next_ge_pow2(Int n) {
+  if (n == 0)
+    return 1;
+  auto res = next_le_pow2(n);
+  if (res == n)
+    return n;
+  return res * 2;
 }
 
 } // namespace utl
@@ -122,7 +133,8 @@ str(Args&& args) {
   return "\"" + utl::cat(std::forward<Args>(args), ", ") + "\"";
 }
 
-template<std::convertible_to<std::string> Fn, detail::forward_iterable_for<std::string const> Args>
+template<std::convertible_to<std::string>                Fn,
+         detail::forward_iterable_for<std::string const> Args>
 [[nodiscard]] std::string
 call(Fn&& fn, Args&& args) {
   return std::string{std::forward<Fn>(fn)} + tup(std::forward<Args>(args));
@@ -143,7 +155,8 @@ cat(Args&&... args) {
 template<bool Space, utl::string_representable... Args>
 [[nodiscard]] std::string
 tup(Args&&... args) {
-  return tup<Space>(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+  return tup<Space>(
+      std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
 }
 
 template<utl::string_representable... Args>
@@ -175,7 +188,8 @@ iter_invoke_impl(F&& f, std::deque<T>& src_args, std::tuple<Args...>&& args = {}
       throw std::runtime_error{"too few args provided to iter_invoke"};
     std::string next = src_args.front();
     src_args.pop_front();
-    return iter_invoke_impl(std::forward<F>(f), src_args, std::tuple{get<Idxs>(args)..., next},
+    return iter_invoke_impl(std::forward<F>(f), src_args,
+                            std::tuple{get<Idxs>(args)..., next},
                             std::make_index_sequence<sizeof...(Idxs) + 1>{});
   }
 }
@@ -201,17 +215,15 @@ def_base::define(Body&& body) {
     throw std::runtime_error{"macro " + _instance->id + " defined twice"};
 
   { // ensure instance directly follows parent (fix forward declaration misplacements)
-    auto it = std::ranges::find(_instances, _instance, [](auto&& v) {
-      return &v;
-    });
+    auto it = std::ranges::find(_instances, _instance, [](auto&& v) { return &v; });
     if (it == _instances.end())
-      throw std::logic_error{"could not find instance " + _instance->id + " in the instances list"};
+      throw std::logic_error{"could not find instance " + _instance->id
+                             + " in the instances list"};
 
     auto ins = _instances.end();
     if (not _instance->context.empty()) {
-      ins = std::ranges::find(_instances, _instance->context.back(), [](auto&& v) {
-        return &v;
-      });
+      ins = std::ranges::find(_instances, _instance->context.back(),
+                              [](auto&& v) { return &v; });
       if (ins != _instances.end()) {
         // register this child with its parent
         ins->children.push_back(_instance);
@@ -225,20 +237,21 @@ def_base::define(Body&& body) {
   std::string def{};
   std::string body_s{};
 
-  std::optional<std::vector<std::string>> args{([&]() -> std::optional<std::vector<std::string>> {
-    if (_instance->params) {
-      std::vector<std::string> args{};
-      for (auto&& v : utl::split(*_instance->params, argdelim)) {
-        if (not std::regex_match(v, variadic))
-          args.push_back(v);
-        else
-          args.push_back("__VA_ARGS__");
-      }
-      return {args};
-    } else {
-      return {std::nullopt};
-    }
-  })()};
+  std::optional<std::vector<std::string>> args{
+      ([&]() -> std::optional<std::vector<std::string>> {
+        if (_instance->params) {
+          std::vector<std::string> args{};
+          for (auto&& v : utl::split(*_instance->params, argdelim)) {
+            if (not std::regex_match(v, variadic))
+              args.push_back(v);
+            else
+              args.push_back("__VA_ARGS__");
+          }
+          return {args};
+        } else {
+          return {std::nullopt};
+        }
+      })()};
 
   if constexpr (std::tuple_size_v<detail::functor_params_type<Body>> == 0) {
     // may either be a nullary function or a non-function
@@ -246,8 +259,8 @@ def_base::define(Body&& body) {
     _exec_stack.push_back(_instance);
     body_s = body();
     _exec_stack.pop_back();
-  } else if constexpr (detail::elements_same_as_any_of<detail::functor_params_type<Body>, arg,
-                                                       va>) {
+  } else if constexpr (detail::elements_same_as_any_of<detail::functor_params_type<Body>,
+                                                       arg, va>) {
     // must be a function that accept individual arg|va arguments
 
     if (not args)
@@ -257,15 +270,17 @@ def_base::define(Body&& body) {
     try {
       body_s = detail::iter_invoke(std::forward<Body>(body), *args);
     } catch (std::runtime_error const& e) {
-      throw std::runtime_error{"found invalid parameter/body configuration while executing "
-                               + _instance->id + ": " + e.what()};
+      throw std::runtime_error{
+          "found invalid parameter/body configuration while executing " + _instance->id
+          + ": " + e.what()};
     }
     _exec_stack.pop_back();
   } else {
     // must be a function that accepts pack arguments
     static_assert(
         std::tuple_size_v<detail::functor_params_type<Body>> == 1
-        and std::same_as<std::tuple_element_t<0, detail::functor_params_type<Body>>, pack>);
+        and std::same_as<std::tuple_element_t<0, detail::functor_params_type<Body>>,
+                         pack>);
 
     if (not args)
       throw std::runtime_error{"missing params for " + _instance->id};
@@ -285,8 +300,10 @@ def_base::define(Body&& body) {
     if (_exec_stack.empty()) { // only put category for top-level macros
       auto catstr = utl::ii << [&] {
         if (_instance->category.starts_with("impl.")) {
-          auto catname = std::string{_instance->category.begin() + 5, _instance->category.end()};
-          auto catless_name = std::regex_replace(_instance->name, std::regex{catname + "_?"}, "");
+          auto catname =
+              std::string{_instance->category.begin() + 5, _instance->category.end()};
+          auto catless_name =
+              std::regex_replace(_instance->name, std::regex{catname + "_?"}, "");
           return "[" + _instance->category + "." + catless_name + "]";
         } else {
           return "[" + _instance->category + "." + _instance->name + "]";
@@ -349,7 +366,8 @@ def_base::define(Body&& body) {
 }
 
 template<detail::body_functor Body>
-def_base::def_base(runtime_signature const& sig, Body&& body, detail::source_location const& loc)
+def_base::def_base(runtime_signature const& sig, Body&& body,
+                   detail::source_location const& loc)
     : _instance{get_instance(sig.name, loc)} {
   update_instance(sig);
   define(std::forward<Body>(body));
@@ -394,7 +412,8 @@ template<detail::string_literal Sig>
   requires(Sig.empty() or signature_literal{Sig}.valid)
 template<class>
   requires(not Sig.empty())
-def<Sig>::def(detail::source_location const& loc) : def_base{runtime_signature{Sig}, loc} {
+def<Sig>::def(detail::source_location const& loc)
+    : def_base{runtime_signature{Sig}, loc} {
 }
 
 template<detail::string_literal Sig>
@@ -424,7 +443,8 @@ template<detail::string_literal Sig>
   requires(Sig.empty() or signature_literal{Sig}.valid)
 template<detail::body_functor Body>
   requires(Sig.empty())
-def<Sig>::def(runtime_signature const& sig, Body&& body, detail::source_location const& loc)
+def<Sig>::def(runtime_signature const& sig, Body&& body,
+              detail::source_location const& loc)
     : def_base{sig, std::forward<Body>(body), loc} {
 }
 

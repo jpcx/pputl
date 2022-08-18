@@ -68,8 +68,7 @@
 //                                                                            //
 //     ◆ language enhancements                                                //
 //       ‐ basic argument manipulation         [lang]                         //
-//           eat     esc    cat    istr  str                                  //
-//           ifirst  first  irest  rest  trim                                 //
+//           eat  esc  ifirst  first  irest  rest  trim                       //
 //       ‐ control flow                        [lang, control]                //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                        [type; see TERMINOLOGY]        //
@@ -82,8 +81,9 @@
 //           size     is_empty  is_sizey                                      //
 //       ‐ boolean logic                       [logic]                        //
 //           not  and  or  xor  nand  nor  xnor                               //
-//       ‐ paste formatting                    [fmt]                          //
-//           paste  respace  compress                                         //
+//       ‐ paste formatting                    [lang, fmt]                    //
+//           str   istr  cat   spacecat                                       //
+//           cint  chex  cbin  respace                                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                          [numeric, math]                //
 //           inc  dec  add   sub   mul   moddiv                               //
@@ -95,7 +95,7 @@
 //           bitsll   bitsrl   bitsra   bitnot                                //
 //           bitand   bitor    bitxor   bitnand                               //
 //           bitnor   bitxnor  bitget   bitset                                //
-//           bitflip  bitzip   bitrotl  bitrotr                               //
+//           bitflip  bitrotl  bitrotr  bits                                  //
 //     ◆ range algorithms                                                     //
 //       ‐ element access                      [util, range]                  //
 //           items       split      join      get       set                   //
@@ -104,15 +104,15 @@
 //       ‐ generation                          [algo]                         //
 //           seq  repeat  ogen  cgen                                          //
 //       ‐ transformation                      [algo]                         //
-//           orev         crev      otransform  ctransform shift_left         //
-//           shift_right  rot_left  rot_right   osort      csort              //
+//           orev        crev         otransform  ctransform                  //
+//           shift_left  shift_right  rot_left    rot_right                   //
 //       ‐ reduction                           [algo]                         //
 //           oreduce  creduce                                                 //
 //     ◆ metaprogramming utilities                                            //
 //       ‐ expansion control and tracing       [meta]                         //
 //           id  lp  rp  xtrace  xtrace_read                                  //
 //       ‐ mutually recursive stack expansion  [meta]                         //
-//           x                                                                //
+//           oexpand  cexpand                                                 //
 //       ‐ inline recursive stack construction [meta]                         //
 //           orecur  crecur                                                   //
 //                                                                            //
@@ -193,7 +193,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220817
+#define PTL_BUILD /* -> <c++ int> */ 20220818
 
 /// [config.word_size]
 /// ------------------
@@ -3245,6 +3245,143 @@
 /// PTL_BITFLIP((F, F, F), 0) // (7, F, F)
 #define PTL_BITFLIP(/* v: word, i: idec */...) /* -> word{v[i] = !v[i]} */ \
   PTL_BITSET(__VA_ARGS__, PTL_NOT(PTL_BITGET(__VA_ARGS__)))
+
+/// [bitwise.bitrotl]
+/// -----------------
+/// bitwise left rotation by n places.
+///
+/// PTL_BITROTL(0x000, 0) // 0x000
+/// PTL_BITROTL(0x001, 1) // 0x002
+/// PTL_BITROTL(0x001, 2) // 0x004
+/// PTL_BITROTL(0x003, 2) // 0x00C
+#define PTL_BITROTL(/* a: word, n: idec */...) /* -> word */ PPUTLBITROTL_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITROTL_o(v, n) \
+  PTL_WORD(PPUTLBITROTL_oo(n, PTL_ESC(PPUTLBITROTL_BIN PTL_XWORD(v))), PTL_TYPEOF(v))
+#define PPUTLBITROTL_oo(n, ...) PTL_CAT(PPUTLBITROTL_, PTL_BITAND(n, 0x00F))(__VA_ARGS__)
+#define PPUTLBITROTL_15(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
+   PPUTLIMPL_NYBL(l##a##b##c, HEX))
+#define PPUTLBITROTL_14(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
+   PPUTLIMPL_NYBL(k##l##a##b, HEX))
+#define PPUTLBITROTL_13(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
+   PPUTLIMPL_NYBL(j##k##l##a, HEX))
+#define PPUTLBITROTL_12(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
+   PPUTLIMPL_NYBL(i##j##k##l, HEX))
+#define PPUTLBITROTL_11(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(l##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
+   PPUTLIMPL_NYBL(h##i##j##k, HEX))
+#define PPUTLBITROTL_10(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(k##l##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
+   PPUTLIMPL_NYBL(g##h##i##j, HEX))
+#define PPUTLBITROTL_9(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
+   PPUTLIMPL_NYBL(f##g##h##i, HEX))
+#define PPUTLBITROTL_8(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(i##j##k##l, HEX), PPUTLIMPL_NYBL(a##b##c##d, HEX), \
+   PPUTLIMPL_NYBL(e##f##g##h, HEX))
+#define PPUTLBITROTL_7(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(h##i##j##k, HEX), PPUTLIMPL_NYBL(l##a##b##c, HEX), \
+   PPUTLIMPL_NYBL(d##e##f##g, HEX))
+#define PPUTLBITROTL_6(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(g##h##i##j, HEX), PPUTLIMPL_NYBL(k##l##a##b, HEX), \
+   PPUTLIMPL_NYBL(c##d##e##f, HEX))
+#define PPUTLBITROTL_5(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(f##g##h##i, HEX), PPUTLIMPL_NYBL(j##k##l##a, HEX), \
+   PPUTLIMPL_NYBL(b##c##d##e, HEX))
+#define PPUTLBITROTL_4(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(e##f##g##h, HEX), PPUTLIMPL_NYBL(i##j##k##l, HEX), \
+   PPUTLIMPL_NYBL(a##b##c##d, HEX))
+#define PPUTLBITROTL_3(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
+   PPUTLIMPL_NYBL(l##a##b##c, HEX))
+#define PPUTLBITROTL_2(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
+   PPUTLIMPL_NYBL(k##l##a##b, HEX))
+#define PPUTLBITROTL_1(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
+   PPUTLIMPL_NYBL(j##k##l##a, HEX))
+#define PPUTLBITROTL_0(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
+   PPUTLIMPL_NYBL(i##j##k##l, HEX))
+#define PPUTLBITROTL_BIN(a, b, c) \
+  PPUTLIMPL_HEX(a, BITS), PPUTLIMPL_HEX(b, BITS), PPUTLIMPL_HEX(c, BITS)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [bitwise.bitrotr]
+/// -----------------
+/// bitwise right rotation by n places.
+///
+/// PTL_BITROTR(0x000, 0) // 0x000
+/// PTL_BITROTR(0x001, 0) // 0x001
+/// PTL_BITROTR(0x001, 1) // 0x800
+/// PTL_BITROTR(0x002, 1) // 0x001
+/// PTL_BITROTR(0x7FF, 2) // 0xDFF
+#define PTL_BITROTR(/* a: word, n: idec */...) /* -> word */ PPUTLBITROTR_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBITROTR_o(v, n) \
+  PTL_WORD(PPUTLBITROTR_oo(n, PTL_ESC(PPUTLBITROTR_BIN PTL_XWORD(v))), PTL_TYPEOF(v))
+#define PPUTLBITROTR_oo(n, ...) PTL_CAT(PPUTLBITROTR_, PTL_BITAND(n, 0x00F))(__VA_ARGS__)
+#define PPUTLBITROTR_15(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
+   PPUTLIMPL_NYBL(f##g##h##i, HEX))
+#define PPUTLBITROTR_14(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(k##l##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
+   PPUTLIMPL_NYBL(g##h##i##j, HEX))
+#define PPUTLBITROTR_13(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(l##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
+   PPUTLIMPL_NYBL(h##i##j##k, HEX))
+#define PPUTLBITROTR_12(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
+   PPUTLIMPL_NYBL(i##j##k##l, HEX))
+#define PPUTLBITROTR_11(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
+   PPUTLIMPL_NYBL(j##k##l##a, HEX))
+#define PPUTLBITROTR_10(a, b, c, d, e, f, g, h, i, j, k, l)          \
+  (PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
+   PPUTLIMPL_NYBL(k##l##a##b, HEX))
+#define PPUTLBITROTR_9(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
+   PPUTLIMPL_NYBL(l##a##b##c, HEX))
+#define PPUTLBITROTR_8(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(e##f##g##h, HEX), PPUTLIMPL_NYBL(i##j##k##l, HEX), \
+   PPUTLIMPL_NYBL(a##b##c##d, HEX))
+#define PPUTLBITROTR_7(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(f##g##h##i, HEX), PPUTLIMPL_NYBL(j##k##l##a, HEX), \
+   PPUTLIMPL_NYBL(b##c##d##e, HEX))
+#define PPUTLBITROTR_6(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(g##h##i##j, HEX), PPUTLIMPL_NYBL(k##l##a##b, HEX), \
+   PPUTLIMPL_NYBL(c##d##e##f, HEX))
+#define PPUTLBITROTR_5(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(h##i##j##k, HEX), PPUTLIMPL_NYBL(l##a##b##c, HEX), \
+   PPUTLIMPL_NYBL(d##e##f##g, HEX))
+#define PPUTLBITROTR_4(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(i##j##k##l, HEX), PPUTLIMPL_NYBL(a##b##c##d, HEX), \
+   PPUTLIMPL_NYBL(e##f##g##h, HEX))
+#define PPUTLBITROTR_3(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
+   PPUTLIMPL_NYBL(f##g##h##i, HEX))
+#define PPUTLBITROTR_2(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(k##l##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
+   PPUTLIMPL_NYBL(g##h##i##j, HEX))
+#define PPUTLBITROTR_1(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(l##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
+   PPUTLIMPL_NYBL(h##i##j##k, HEX))
+#define PPUTLBITROTR_0(a, b, c, d, e, f, g, h, i, j, k, l)           \
+  (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
+   PPUTLIMPL_NYBL(i##j##k##l, HEX))
+#define PPUTLBITROTR_BIN(a, b, c) \
+  PPUTLIMPL_HEX(a, BITS), PPUTLIMPL_HEX(b, BITS), PPUTLIMPL_HEX(c, BITS)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [impl]
 /// ------

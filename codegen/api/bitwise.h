@@ -40,8 +40,6 @@ namespace api {
 
 inline codegen::category<"bitwise"> bitwise;
 
-// TODO: bitzip hexzip bitrotl bitrotr
-
 extern codegen::def<"bitsll(...: v: word, n: idec) -> word{v << n}"> const&   bitsll;
 extern codegen::def<"bitsrl(...: v: word, n: idec) -> word{v >> n}"> const&   bitsrl;
 extern codegen::def<"bitsra(...: v: int, n: idec) -> int{v / 2**n}"> const&   bitsra;
@@ -52,11 +50,13 @@ extern codegen::def<"bitxor(...: a: word, b: word) -> int{a ^ b}"> const&     bi
 extern codegen::def<"bitnand(...: a: word, b: word) -> int{~(a & b)}"> const& bitnand;
 extern codegen::def<"bitnor(...: a: word, b: word) -> int{~(a | b)}"> const&  bitnor;
 extern codegen::def<"bitxnor(...: a: word, b: word) -> int{~(a ^ b)}"> const& bitxnor;
-extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const& bitget;
+extern codegen::def<"bitget(...: v: word, i: idec) -> v[i]: bool"> const&     bitget;
 extern codegen::def<"bitset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const&
     bitset;
 extern codegen::def<"bitflip(...: v: word, i: idec) -> word{v[i] = !v[i]}"> const&
-                                                                              bitflip;
+                                                                     bitflip;
+extern codegen::def<"bitrotl(...: a: word, n: idec) -> word"> const& bitrotl;
+extern codegen::def<"bitrotr(...: a: word, n: idec) -> word"> const& bitrotr;
 
 NIFTY_DECL(bitsll);
 NIFTY_DECL(bitsrl);
@@ -71,6 +71,8 @@ NIFTY_DECL(bitxnor);
 NIFTY_DECL(bitget);
 NIFTY_DECL(bitset);
 NIFTY_DECL(bitflip);
+NIFTY_DECL(bitrotl);
+NIFTY_DECL(bitrotr);
 
 inline codegen::end_category<"bitwise"> bitwise_end;
 
