@@ -31,39 +31,33 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(xct_a) xct_a = NIFTY_DEF(xct_a, );
-decltype(xct_b) xct_b = NIFTY_DEF(xct_b, );
-} // namespace detail
+decltype(lp) lp = NIFTY_DEF(lp, [&](va args) {
+  docs << "hides a left paren behind n secondary expansions.";
 
-std::string
-xct_expected(unsigned n) {
-  return (n % 2 == 0 ? detail::xct_a : detail::xct_b) + " ( "
-       + utl::cat(std::vector<std::string>(n + 1, ",")) + " )";
-}
+  def<"a(n)"> a;
+  def<"b(n)"> b;
 
-decltype(xct) xct = NIFTY_DEF(xct, [&] {
-  docs << "counts the number of expansions undergone after expression."
-       << "uses mutual recursion; can track any number of expansions."
-       << "the number of commas indicates the number of expansions.";
+  tests << cstr(lp(1)) = pp::str(b + " ( 0 )") >> docs;
+  tests << cstr(lp(2)) = pp::str(b + " ( 1 )") >> docs;
+  tests << cstr(lp(3)) = pp::str(b + " ( 2 )") >> docs;
 
-  detail::xct_a = def{"a(...)"};
-  detail::xct_b = def{"b(...)"};
-
-  detail::xct_a = [&](va args) {
-    return detail::xct_b + " " + lp() + " " + args + ", " + rp();
+  a = [&](arg n) {
+    def<"0(n)"> _0 = [&](arg n) {
+      return b + " " + impl::lp + " " + dec(n) + " " + impl::rp;
+    };
+    def<"1(n)">{} = [&](arg) { return impl::lp; };
+    return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
   };
 
-  detail::xct_b = [&](va args) {
-    return detail::xct_a + " " + lp() + " " + args + ", " + rp();
+  b = [&](arg n) {
+    def<"0(n)"> _0 = [&](arg n) {
+      return a + " " + impl::lp + " " + dec(n) + " " + impl::rp;
+    };
+    def<"1(n)">{} = [&](arg) { return impl::lp; };
+    return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
   };
 
-  tests << cstr(xct)                = pp::str(xct_expected(0)) >> docs;
-  tests << cstr(esc(xct))           = pp::str(xct_expected(1)) >> docs;
-  tests << cstr(esc(esc(xct)))      = pp::str(xct_expected(2)) >> docs;
-  tests << cstr(esc(esc(esc(xct)))) = pp::str(xct_expected(3)) >> docs;
-
-  return detail::xct_a + " " + lp() + " /**/, " + rp();
+  return def<"o(n)">{[&](arg n) { return a(n); }}(idec(default_(0, args)));
 });
 
 } // namespace api

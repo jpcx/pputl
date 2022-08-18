@@ -69,7 +69,7 @@ decltype(xword) xword = NIFTY_DEF(xword, [&](va args) {
 
   return def<"o(e, ...)">{[&](arg e, va some) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_xword_o(some)), e, some);
-  }}(istr("[" + xword + "] invalid integer or word : " + args), some(args));
+  }}(icstr("[" + xword + "] invalid integer or word : " + args), some(args));
 });
 
 } // namespace api

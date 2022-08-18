@@ -25,17 +25,18 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "impl/meta.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
 decltype(rp) rp = NIFTY_DEF(rp, [&] {
-  docs << "hides a right parens behind an expansion."
-       << "needed for implementing pair recursion.";
+  docs << "expands to a right paren.";
 
   return ")";
 });
 
+} // namespace impl
 } // namespace api

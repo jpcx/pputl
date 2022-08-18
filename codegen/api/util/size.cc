@@ -88,7 +88,7 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
         v = pp::call(op, v);
       return read(e, args + " " + pp::va_opt(", ") + " " + utl::cat(rseq, ", "));
     }}(args);
-  }}(istr("[" + size + "] tuple too large : " + args), prefix, esc + " " + tup(args));
+  }}(icstr("[" + size + "] tuple too large : " + args), prefix, esc + " " + tup(args));
 });
 
 } // namespace api

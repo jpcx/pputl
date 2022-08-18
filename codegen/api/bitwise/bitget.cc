@@ -79,7 +79,7 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
         }}(args);
       }}(e, i, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
     }}(e, idec(i), bin + " " + xword(v));
-  }}(istr("[" + bitget + "] invalid index; args : " + args), args);
+  }}(icstr("[" + bitget + "] invalid index; args : " + args), args);
 });
 
 } // namespace api

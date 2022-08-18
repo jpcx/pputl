@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,45 +26,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "meta.h"
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
 
 namespace api {
+namespace impl {
 
-using namespace codegen;
+inline codegen::category<"impl.meta"> meta;
 
-namespace detail {
-decltype(xct_a) xct_a = NIFTY_DEF(xct_a, );
-decltype(xct_b) xct_b = NIFTY_DEF(xct_b, );
-} // namespace detail
+extern codegen::def<"lp -> <left paren>"> const&  lp;
+extern codegen::def<"rp -> <right paren>"> const& rp;
 
-std::string
-xct_expected(unsigned n) {
-  return (n % 2 == 0 ? detail::xct_a : detail::xct_b) + " ( "
-       + utl::cat(std::vector<std::string>(n + 1, ",")) + " )";
-}
+NIFTY_DECL(lp);
+NIFTY_DECL(rp);
 
-decltype(xct) xct = NIFTY_DEF(xct, [&] {
-  docs << "counts the number of expansions undergone after expression."
-       << "uses mutual recursion; can track any number of expansions."
-       << "the number of commas indicates the number of expansions.";
+inline codegen::end_category<"impl.meta"> meta_end;
 
-  detail::xct_a = def{"a(...)"};
-  detail::xct_b = def{"b(...)"};
-
-  detail::xct_a = [&](va args) {
-    return detail::xct_b + " " + lp() + " " + args + ", " + rp();
-  };
-
-  detail::xct_b = [&](va args) {
-    return detail::xct_a + " " + lp() + " " + args + ", " + rp();
-  };
-
-  tests << cstr(xct)                = pp::str(xct_expected(0)) >> docs;
-  tests << cstr(esc(xct))           = pp::str(xct_expected(1)) >> docs;
-  tests << cstr(esc(esc(xct)))      = pp::str(xct_expected(2)) >> docs;
-  tests << cstr(esc(esc(esc(xct)))) = pp::str(xct_expected(3)) >> docs;
-
-  return detail::xct_a + " " + lp() + " /**/, " + rp();
-});
-
+} // namespace impl
 } // namespace api

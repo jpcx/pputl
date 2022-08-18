@@ -45,7 +45,7 @@ decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
   def<"10(e, hex)">{}   = [&](arg, arg hex) { return impl::hex(hex, "BITS"); };
 
   return pp::call(cat(utl::slice(_00, -2), cat(is_hex(args), is_nybl(args))),
-                  istr("[" + bits + "] invalid arguments : " + args), args);
+                  icstr("[" + bits + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

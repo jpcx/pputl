@@ -179,7 +179,7 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(cat(utl::slice(idec, -4), mode(e, typeof(v), hint)), v);
-  }}(istr("[" + word + "] invalid arguments : " + args), args);
+  }}(icstr("[" + word + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

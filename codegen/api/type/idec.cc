@@ -59,7 +59,7 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
 
   return def<"o(e, int)">{[&](arg e, arg int_) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_idec_o(int_)), e, int_);
-  }}(istr("[" + idec + "] cannot represent negative in base10 : " + args), int_(args));
+  }}(icstr("[" + idec + "] cannot represent negative in base10 : " + args), int_(args));
 });
 
 } // namespace api

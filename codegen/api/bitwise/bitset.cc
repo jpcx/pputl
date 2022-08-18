@@ -105,7 +105,7 @@ decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
                   }}(e, i, b, lt(i, conf::bit_length), bin);
                 }}(e, idec(i), bool_(b), bin + " " + xword(v)),
                 typeof(v));
-  }}(istr("[" + bitset + "] invalid index; args : " + args), args);
+  }}(icstr("[" + bitset + "] invalid index; args : " + args), args);
 });
 
 } // namespace api

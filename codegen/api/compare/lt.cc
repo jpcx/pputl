@@ -138,7 +138,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
                     return cat(utl::slice(intint, -6), cat(signof(word(l)), signof(word(r))));
                   }}(args),
-                  istr("[" + lt + "] comparison of different signedness not allowed : " + args),
+                  icstr("[" + lt + "] comparison of different signedness not allowed : " + args),
                   args);
 });
 

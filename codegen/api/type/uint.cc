@@ -164,7 +164,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(cat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
-  }}(istr("[" + uint + "] invalid arguments : " + args), args);
+  }}(icstr("[" + uint + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

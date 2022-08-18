@@ -66,53 +66,48 @@
 //                                                                            //
 //     ◆ language enhancements                                                //
 //       ‐ basic argument manipulation         [lang]                         //
-//           eat  esc  ifirst  first  irest  rest  trim                       //
+//           eat  esc  va_first  first  va_rest  rest  trim                   //
 //       ‐ control flow                        [lang, control]                //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                        [type; see TERMINOLOGY]        //
-//           none  some  any   atom  bool  hex  nybl   int                    //
-//           idec  ihex  uint  udec  uhex  tup  xword  word                   //
+//           none  some  any   atom  bool  hex  nybl  int                     //
+//           idec  ihex  uint  udec  uhex  tup  itup  word                    //
 //       ‐ traits detection                    [traits, util]                 //
-//           is_none  is_some   is_any    is_atom  is_bool  is_hex            //
-//           is_nybl  is_int    is_idec   is_ihex  is_uint  is_udec           //
-//           is_uhex  is_tup    is_xword  is_word  typeof   signof            //
+//           is_none  is_some   is_any   is_atom  is_bool  is_hex             //
+//           is_nybl  is_int    is_idec  is_ihex  is_uint  is_udec            //
+//           is_uhex  is_tup    is_itup  is_word  typeof   signof             //
 //           size     is_empty  is_sizey                                      //
 //       ‐ boolean logic                       [logic]                        //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                    [lang, fmt]                    //
-//           str   istr  cat   spacecat                                       //
-//           cint  chex  cbin  respace                                        //
+//           va_str  str  cat  join  cint  chex  cbin                         //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                          [numeric, math]                //
-//           inc  dec  add   sub   mul   moddiv                               //
-//           mod  div  pow2  sqrt  log2  factor                               //
+//           inc  dec  add   sub   mul   divr                                 //
+//           div  mod  pow2  sqrt  log2  fact                                 //
 //       ‐ comparison                          [numeric, compare]             //
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
-//       ‐ bitwise operations                  [bitwise, util]                //
-//           bitsll   bitsrl   bitsra   bitnot                                //
-//           bitand   bitor    bitxor   bitnand                               //
-//           bitnor   bitxnor  bitget   bitset                                //
-//           bitflip  bitrotl  bitrotr  bits                                  //
+//       ‐ bitwise operations                  [bitwise]                      //
+//           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //
+//           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //
 //     ◆ range algorithms                                                     //
 //       ‐ element access                      [util, range]                  //
-//           items       split      join      get       set                   //
-//           push_front  push_back  head      pop_head  tail                  //
-//           pop_tail    pop_front  pop_back  last      slice                 //
+//           items  bisect  unite  lget  rget  lset                           //
+//           rset   lpush   rpush  lpop  rpop  slice                          //
 //       ‐ generation                          [algo]                         //
-//           seq  repeat  ogen  cgen                                          //
+//           seq  repeat  gen_lp  gen_rp                                      //
 //       ‐ transformation                      [algo]                         //
-//           orev        crev         otransform  ctransform                  //
-//           shift_left  shift_right  rot_left    rot_right                   //
+//           rev  map_lp  map_rp  shift  rotate                               //
 //       ‐ reduction                           [algo]                         //
-//           oreduce  creduce                                                 //
+//           reduce_lp  reduce_rp                                             //
 //     ◆ metaprogramming utilities                                            //
 //       ‐ expansion control and tracing       [meta]                         //
-//           id  lp  rp  xtrace  xtrace_read                                  //
+//           x  lp  rp  xtrace  xtrace_read                                   //
 //       ‐ mutually recursive stack expansion  [meta]                         //
-//           oexpand  cexpand                                                 //
+//           xx_lp  xx_rp                                                     //
 //       ‐ inline recursive stack construction [meta]                         //
-//           orecur  crecur                                                   //
+//           recur_lp  recur_rp                                               //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
@@ -164,8 +159,8 @@
 //          │       ├─ udec: an unsigned decimal integer [e.g. 42u]           //
 //          │       └─ uhex: an unsigned hex integer [e.g. 0x02Au]            //
 //          ├─ tup: parenthesised items [docs: tup, (T...), (T, U), etc.]     //
-//          │   └─ xword: a word-sized tup of hex [e.g. (6, D, 2)]            //
-//          └─ word: <union> int | uint | xword                               //
+//          │   └─ itup: a word-sized tup of hex [e.g. (6, D, 2)]             //
+//          └─ word: <union> int | uint | itup                                //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -242,29 +237,29 @@ ASSERT_PP_EQ((PTL_ESC (a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
 ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
 
-ASSERT_PP_EQ((PTL_ISTR()), (""));
-ASSERT_PP_EQ((PTL_ISTR(foo, bar)), ("foo, bar"));
-ASSERT_PP_EQ((PTL_ISTR(PTL_CAT(foo, bar))), ("PTL_CAT(foo, bar)"));
-ASSERT_PP_EQ((PTL_ISTR(foo)), ("foo"));
-ASSERT_PP_EQ((PTL_ISTR(, )), (","));
-ASSERT_PP_EQ((PTL_ISTR(, , )), (", ,"));
-ASSERT_PP_EQ((PTL_ISTR(a, )), ("a,"));
-ASSERT_PP_EQ((PTL_ISTR(a, , )), ("a, ,"));
-ASSERT_PP_EQ((PTL_ISTR(, a)), (", a"));
-ASSERT_PP_EQ((PTL_ISTR(, a, )), (", a,"));
-ASSERT_PP_EQ((PTL_ISTR(, , a)), (", , a"));
+ASSERT_PP_EQ((PTL_ICSTR()), (""));
+ASSERT_PP_EQ((PTL_ICSTR(foo, bar)), ("foo, bar"));
+ASSERT_PP_EQ((PTL_ICSTR(PTL_CAT(foo, bar))), ("PTL_CAT(foo, bar)"));
+ASSERT_PP_EQ((PTL_ICSTR(foo)), ("foo"));
+ASSERT_PP_EQ((PTL_ICSTR(, )), (","));
+ASSERT_PP_EQ((PTL_ICSTR(, , )), (", ,"));
+ASSERT_PP_EQ((PTL_ICSTR(a, )), ("a,"));
+ASSERT_PP_EQ((PTL_ICSTR(a, , )), ("a, ,"));
+ASSERT_PP_EQ((PTL_ICSTR(, a)), (", a"));
+ASSERT_PP_EQ((PTL_ICSTR(, a, )), (", a,"));
+ASSERT_PP_EQ((PTL_ICSTR(, , a)), (", , a"));
 
-ASSERT_PP_EQ((PTL_STR()), (""));
-ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
-ASSERT_PP_EQ((PTL_STR(PTL_CAT(foo, bar))), ("foobar"));
-ASSERT_PP_EQ((PTL_STR(foo)), ("foo"));
-ASSERT_PP_EQ((PTL_STR(, )), (","));
-ASSERT_PP_EQ((PTL_STR(, , )), (", ,"));
-ASSERT_PP_EQ((PTL_STR(a, )), ("a,"));
-ASSERT_PP_EQ((PTL_STR(a, , )), ("a, ,"));
-ASSERT_PP_EQ((PTL_STR(, a)), (", a"));
-ASSERT_PP_EQ((PTL_STR(, a, )), (", a,"));
-ASSERT_PP_EQ((PTL_STR(, , a)), (", , a"));
+ASSERT_PP_EQ((PTL_CSTR()), (""));
+ASSERT_PP_EQ((PTL_CSTR(foo, bar)), ("foo, bar"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_CAT(foo, bar))), ("foobar"));
+ASSERT_PP_EQ((PTL_CSTR(foo)), ("foo"));
+ASSERT_PP_EQ((PTL_CSTR(, )), (","));
+ASSERT_PP_EQ((PTL_CSTR(, , )), (", ,"));
+ASSERT_PP_EQ((PTL_CSTR(a, )), ("a,"));
+ASSERT_PP_EQ((PTL_CSTR(a, , )), ("a, ,"));
+ASSERT_PP_EQ((PTL_CSTR(, a)), (", a"));
+ASSERT_PP_EQ((PTL_CSTR(, a, )), (", a,"));
+ASSERT_PP_EQ((PTL_CSTR(, , a)), (", , a"));
 
 ASSERT_PP_EQ((PTL_FIRST()), ());
 ASSERT_PP_EQ((PTL_FIRST(, )), ());
@@ -709,15 +704,6 @@ ASSERT_PP_EQ((PTL_GEZ(2047)), (1));
 ASSERT_PP_EQ((PTL_GEZ(0x800)), (0));
 ASSERT_PP_EQ((PTL_GEZ(PTL_INC(2047))), (0));
 
-ASSERT_PP_EQ((PTL_ID()), ());
-ASSERT_PP_EQ((PTL_ID(foo)), (foo));
-ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
-
-ASSERT_PP_EQ((PTL_STR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
-ASSERT_PP_EQ((PTL_STR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
-
 ASSERT_PP_EQ((PTL_LT(0, 0)), (0));
 ASSERT_PP_EQ((PTL_LT(0, 1)), (1));
 ASSERT_PP_EQ((PTL_LT(7u, 8u)), (1));
@@ -997,4 +983,24 @@ ASSERT_PP_EQ((PTL_BITROTR(0x001, 0)), (0x001));
 ASSERT_PP_EQ((PTL_BITROTR(0x001, 1)), (0x800));
 ASSERT_PP_EQ((PTL_BITROTR(0x002, 1)), (0x001));
 ASSERT_PP_EQ((PTL_BITROTR(0x7FF, 2)), (0xDFF));
+
+ASSERT_PP_EQ((PTL_ID()), ());
+ASSERT_PP_EQ((PTL_ID(foo)), (foo));
+ASSERT_PP_EQ((PTL_ID(a, b, c)), (a, b, c));
+
+ASSERT_PP_EQ((PTL_CSTR(PTL_LP(1))), ("PPUTLLP_B ( 0 )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_LP(2))), ("PPUTLLP_B ( 1 )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_LP(3))), ("PPUTLLP_B ( 2 )"));
+
+ASSERT_PP_EQ((PTL_LP() PTL_RP()), (( )));
+ASSERT_PP_EQ((PTL_LP(0) PTL_RP(0)), (( )));
+ASSERT_PP_EQ((PTL_ID(PTL_LP(1) PTL_RP(1))), (( )));
+ASSERT_PP_EQ((PTL_CSTR(PTL_RP(1))), ("PPUTLRP_B ( 0 )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_RP(2))), ("PPUTLRP_B ( 1 )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_RP(3))), ("PPUTLRP_B ( 2 )"));
+
+ASSERT_PP_EQ((PTL_CSTR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
+ASSERT_PP_EQ((PTL_CSTR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
 // clang-format on

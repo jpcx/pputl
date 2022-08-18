@@ -31,20 +31,20 @@ namespace api {
 
 using namespace codegen;
 
-decltype(istr) istr = NIFTY_DEF(istr, [&](va args) {
+decltype(icstr) icstr = NIFTY_DEF(icstr, [&](va args) {
   docs << "immediately stringizes args.";
 
-  tests << istr()                  = "\"\"" >> docs;
-  tests << istr("foo")             = "\"foo\"";
-  tests << istr("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << istr(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
-  tests << istr(", ")              = "\",\"";
-  tests << istr(", , ")            = "\", ,\"";
-  tests << istr("a, ")             = "\"a,\"";
-  tests << istr("a, , ")           = "\"a, ,\"";
-  tests << istr(", a")             = "\", a\"";
-  tests << istr(", a, ")           = "\", a,\"";
-  tests << istr(", , a")           = "\", , a\"";
+  tests << icstr()                  = "\"\"" >> docs;
+  tests << icstr("foo")             = "\"foo\"";
+  tests << icstr("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << icstr(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
+  tests << icstr(", ")              = "\",\"";
+  tests << icstr(", , ")            = "\", ,\"";
+  tests << icstr("a, ")             = "\"a,\"";
+  tests << icstr("a, , ")           = "\"a, ,\"";
+  tests << icstr(", a")             = "\", a\"";
+  tests << icstr(", a, ")           = "\", a,\"";
+  tests << icstr(", , a")           = "\", , a\"";
 
   return "#" + args;
 });
