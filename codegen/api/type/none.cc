@@ -40,7 +40,7 @@ decltype(none) none = NIFTY_DEF(none, [&](va args) {
   def<"1(e)">{}  = [](arg) { return ""; };
 
   return pp::call(cat(utl::slice(_0, -1), is_none(args)),
-                  icstr("[" + none + "] none cannot describe something : " + args));
+                  va_str("[" + none + "] none cannot describe something : " + args));
 });
 
 } // namespace api

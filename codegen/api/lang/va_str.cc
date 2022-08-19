@@ -25,25 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bitnor) bitnor = NIFTY_DEF(bitnor, [&](va args) {
-  docs << "bitwise NOR."
-       << "uses arg 'a' for result cast hint.";
+decltype(va_str) va_str = NIFTY_DEF(va_str, [&](va args) {
+  docs << "immediately stringizes args.";
 
-  tests << bitnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bitnor(0, 1) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
-  tests << bitnor(5, 7) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
-  tests << bitnor(7, 8) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
+  tests << va_str()                  = "\"\"" >> docs;
+  tests << va_str("foo")             = "\"foo\"";
+  tests << va_str("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << va_str(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
+  tests << va_str(", ")              = "\",\"";
+  tests << va_str(", , ")            = "\", ,\"";
+  tests << va_str("a, ")             = "\"a,\"";
+  tests << va_str("a, , ")           = "\"a, ,\"";
+  tests << va_str(", a")             = "\", a\"";
+  tests << va_str(", a, ")           = "\", a,\"";
+  tests << va_str(", , a")           = "\", , a\"";
 
-  return word(impl::uhex(uhex(bitor_(args)), "BNOT"), typeof(ifirst(args)));
+  return "#" + args;
 });
 
 } // namespace api

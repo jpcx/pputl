@@ -34,33 +34,35 @@ using namespace codegen;
 decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   docs << "word less-than comparison."
        << "prohibits comparison of different signedness."
-       << "xwords are interpreted as (and are comparable with) unsigned.";
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;
   using conf::int_max;
 
-  tests << lt("0, 0")                                                             = "0" >> docs;
-  tests << lt("0, 1")                                                             = "1" >> docs;
-  tests << lt("7u, 8u")                                                           = "1" >> docs;
-  tests << lt("8u, 7u")                                                           = "0";
-  tests << lt(int_(uint_max_s), "0")                                              = "1" >> docs;
-  tests << lt(int_max_s, int_min_s)                                               = "0" >> docs;
-  tests << lt(int_min_s, int_max_s)                                               = "1";
-  tests << lt(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
-  tests << lt(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "1" >> docs;
-  tests << lt("0u", uint_max_s)                                                   = "1";
-  tests << lt(uint_max_s, "0u")                                                   = "0";
+  tests << lt("0, 0")                                        = "0" >> docs;
+  tests << lt("0, 1")                                        = "1" >> docs;
+  tests << lt("7u, 8u")                                      = "1" >> docs;
+  tests << lt("8u, 7u")                                      = "0";
+  tests << lt(int_(uint_max_s), "0")                         = "1" >> docs;
+  tests << lt(int_max_s, int_min_s)                          = "0" >> docs;
+  tests << lt(int_min_s, int_max_s)                          = "1";
+  tests << lt(int_min_s, int_(to_string(int_max + 1) + "u")) = "0" >> docs;
+  tests << lt(int_min_s, int_(to_string(int_max + 2) + "u")) = "1" >> docs;
+  tests << lt("0u", uint_max_s)                              = "1";
+  tests << lt(uint_max_s, "0u")                              = "0";
   tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "0";
   tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
   tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "0";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
-  tests << lt(pp::tup(samp::hmax), pp::tup(samp::hmin))                           = "0" >> docs;
-  tests << lt(pp::tup(samp::hmin), pp::tup(samp::hmax))                           = "1" >> docs;
-  tests << lt(pp::tup(samp::himax), std::to_string(conf::int_max + 1) + "u")      = "1" >> docs;
-  tests << lt(std::to_string(conf::int_max + 1) + "u", pp::tup(samp::himax))      = "0" >> docs;
+  tests << lt(pp::tup(samp::hmax), pp::tup(samp::hmin)) = "0" >> docs;
+  tests << lt(pp::tup(samp::hmin), pp::tup(samp::hmax)) = "1" >> docs;
+  tests << lt(pp::tup(samp::himax), std::to_string(conf::int_max + 1) + "u") =
+      "1" >> docs;
+  tests << lt(std::to_string(conf::int_max + 1) + "u", pp::tup(samp::himax)) =
+      "0" >> docs;
 
   def<"000"> _000 = [&] { return "0"; };
   def<"001">{}    = [&] { return "1"; };
@@ -73,9 +75,10 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
   def<"r(...)"> recur = [&](va args) {
     return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {
-      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::hexhex(pp::cat(a, b), "LT")) + ", "
-           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::hexhex(pp::cat(b, a), "LT")) + ", "
-           + args;
+      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::hexhex(pp::cat(a, b), "LT"))
+           + ", "
+           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::hexhex(pp::cat(b, a), "LT"))
+           + ", " + args;
     }}(args);
   };
 
@@ -92,8 +95,9 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   };
 
   def<"ucmp(...)"> ucmp = [&](va args) {
-    return first(utl::cat(std::vector<std::string>(conf::word_size, recur + "(")) + "0, 0, "
-                 + zip(args) + utl::cat(std::vector<std::string>(conf::word_size, ")")));
+    return first(utl::cat(std::vector<std::string>(conf::word_size, recur + "("))
+                 + "0, 0, " + zip(args)
+                 + utl::cat(std::vector<std::string>(conf::word_size, ")")));
   };
 
   def<"icmp(...)"> icmp = [&](va args) {
@@ -105,41 +109,42 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
         def<"10(...)">{}   = [&](va) { return "1"; };
         def<"11(...)">{}   = [&](va args) { return ucmp(args); };
 
-        return pp::call(
-            cat(utl::slice(_00, -2), cat(impl::hexhex(pp::cat("7", args[0]), "LT"),
-                                         impl::hexhex(pp::cat("7", args[conf::word_size]), "LT"))),
-            args);
+        return pp::call(cat(utl::slice(_00, -2),
+                            cat(impl::hexhex(pp::cat("7", args[0]), "LT"),
+                                impl::hexhex(pp::cat("7", args[conf::word_size]), "LT"))),
+                        args);
       };
 
       return o(args);
     }}(args);
   };
 
-  return pp::call(def<"o(l, r)">{[&](arg l, arg r) {
-                    def<"\\INTINT(e, l, r)"> intint = [&](arg, arg l, arg r) {
-                      return icmp(esc + " " + xword(l), esc + " " + xword(r));
-                    };
-                    def<"\\INTUINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-                    def<"\\INTNONE(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-                    def<"\\UINTINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-                    def<"\\UINTUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
-                      return ucmp(esc + " " + xword(l), esc + " " + xword(r));
-                    };
-                    def<"\\UINTNONE(e, l, r)">{} = [&](arg, arg l, arg r) {
-                      return ucmp(esc + " " + xword(l), esc + " " + r);
-                    };
-                    def<"\\NONEINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-                    def<"\\NONEUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
-                      return ucmp(esc + " " + l, esc + " " + xword(r));
-                    };
-                    def<"\\NONENONE(e, l, r)">{} = [&](arg, arg l, arg r) {
-                      return ucmp(esc + " " + l, esc + " " + r);
-                    };
+  return pp::call(
+      def<"o(l, r)">{[&](arg l, arg r) {
+        def<"\\INTINT(e, l, r)"> intint = [&](arg, arg l, arg r) {
+          return icmp(esc + " " + utup(l), esc + " " + utup(r));
+        };
+        def<"\\INTUINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\INTNONE(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\UINTINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\UINTUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
+          return ucmp(esc + " " + utup(l), esc + " " + utup(r));
+        };
+        def<"\\UINTNONE(e, l, r)">{} = [&](arg, arg l, arg r) {
+          return ucmp(esc + " " + utup(l), esc + " " + r);
+        };
+        def<"\\NONEINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\NONEUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
+          return ucmp(esc + " " + l, esc + " " + utup(r));
+        };
+        def<"\\NONENONE(e, l, r)">{} = [&](arg, arg l, arg r) {
+          return ucmp(esc + " " + l, esc + " " + r);
+        };
 
-                    return cat(utl::slice(intint, -6), cat(signof(word(l)), signof(word(r))));
-                  }}(args),
-                  icstr("[" + lt + "] comparison of different signedness not allowed : " + args),
-                  args);
+        return cat(utl::slice(intint, -6), cat(signof(word(l)), signof(word(r))));
+      }}(args),
+      va_str("[" + lt + "] comparison of different signedness not allowed : " + args),
+      args);
 });
 
 } // namespace api

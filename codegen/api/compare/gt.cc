@@ -34,7 +34,7 @@ using namespace codegen;
 decltype(gt) gt = NIFTY_DEF(gt, [&](va args) {
   docs << "word greater-than comparison."
        << "prohibits comparison of different signedness."
-       << "xwords are interpreted as (and are comparable with) unsigned.";
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;

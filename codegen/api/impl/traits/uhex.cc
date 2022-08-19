@@ -42,17 +42,19 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](arg v, arg t) {
     for (; i < uhexs.size() - 1; ++i) {
       auto bin = detail::binary(i);
       uhexs[i] = def{"\\" + detail::uhex(bin)} = [&] {
-        return utl::cat(std::array{detail::udec(i), detail::xword(bin), detail::ihex(bin),
-                                   detail::icast(bin, i), detail::iltz(i), detail::bnot(bin)},
+        return utl::cat(std::array{detail::udec(i), detail::utup(bin), detail::ihex(bin),
+                                   detail::icast(bin, i), detail::iltz(i),
+                                   detail::bnot(bin)},
                         ", ");
       };
     }
     {
       auto bin = detail::binary(i);
       uhexs[i] = def{"\\" + detail::uhex(bin)} = [&] {
-        docs << "UDEC, XWORD, IHEX, ICAST, ILTZ, BNOT";
-        return utl::cat(std::array{detail::udec(i), detail::xword(bin), detail::ihex(bin),
-                                   detail::icast(bin, i), detail::iltz(i), detail::bnot(bin)},
+        docs << "UDEC, UTUP, IHEX, ICAST, ILTZ, BNOT";
+        return utl::cat(std::array{detail::udec(i), detail::utup(bin), detail::ihex(bin),
+                                   detail::icast(bin, i), detail::iltz(i),
+                                   detail::bnot(bin)},
                         ", ");
       };
     }
@@ -65,7 +67,7 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](arg v, arg t) {
   };
 
   def<"\\UDEC(u, ...) -> udec">{}                = [&](pack args) { return args[0]; };
-  def<"\\XWORD(u, x, ...) -> xword">{}           = [&](pack args) { return args[1]; };
+  def<"\\UTUP(u, x, ...) -> utup">{}             = [&](pack args) { return args[1]; };
   def<"\\IHEX(u, x, h, ...) -> ihex">{}          = [&](pack args) { return args[2]; };
   def<"\\ICAST(u, x, h, i, ...) -> idec|ihex">{} = [&](pack args) { return args[3]; };
   def<"\\ILTZ(u, x, h, i, z, ...) -> bool">{}    = [&](pack args) { return args[4]; };

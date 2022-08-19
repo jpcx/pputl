@@ -89,7 +89,7 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   return res(typeof(args), def<"o(...)">{[&](va args) {
                return r1(utl::cat(svect(conf::word_size - 1, r0 + "(")) + args
                          + utl::cat(svect(conf::word_size - 1, ")")));
-             }}(x(init + " " + xword(args))));
+             }}(x(init + " " + utup(args))));
 });
 
 } // namespace api

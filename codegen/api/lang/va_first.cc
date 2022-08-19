@@ -25,25 +25,23 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bitxnor) bitxnor = NIFTY_DEF(bitxnor, [&](va args) {
-  docs << "bitwise XNOR."
-       << "uses arg 'a' for result cast hint.";
+decltype(va_first) va_first = NIFTY_DEF(va_first, [&](arg first, va) {
+  docs << "immediately returns the first argument."
+       << "must have at least one argument."
+       << ""
+       << "useful for operating directly on __VA_ARGS__ or"
+       << "for quickly retrieving the first tuple element"
+       << "using an identity function such as " + esc + "."
+       << ""
+       << "e.g. " + va_first("__VA_ARGS__") << "     " + esc(va_first + " tup");
 
-  tests << bitxnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bitxnor(0, 1) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
-  tests << bitxnor(5, 7) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "D") >> docs;
-  tests << bitxnor(15, 8) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
-
-  return word(impl::uhex(uhex(bitxor(args)), "BNOT"), typeof(ifirst(args)));
+  return first;
 });
 
 } // namespace api

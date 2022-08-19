@@ -33,32 +33,18 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bitsra) bitsra = NIFTY_DEF(bitsra, [&](va args) {
-  docs << "performs an arithmetic bitwise right shift by n places.";
+decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
+  docs << "performs a logical bitwise right shift by n places.";
 
-  tests << bitsra(0, 1) = "0" >> docs;
-  tests << bitsra(1, 1) = "0";
-  tests << bitsra(2, 1) = "1" >> docs;
-  tests << bitsra(int_min_s, 1) =
-      ("0xC" + utl::cat(svect(conf::word_size - 1, "0"))) >> docs;
-  tests << bitsra(int_min_s, 2) =
-      ("0xE" + utl::cat(svect(conf::word_size - 1, "0"))) >> docs;
-  tests << bitsra(int_min_s, 3) =
-      ("0xF" + utl::cat(svect(conf::word_size - 1, "0"))) >> docs;
-  if constexpr (conf::word_size > 1)
-    tests << bitsra(int_min_s, 4) =
-        ("0xF8" + utl::cat(svect(conf::word_size - 2, "0"))) >> docs;
-  tests << bitsra(3, 1) = "1";
-  tests << bitsra(4, 1) = "2";
-  tests << bitsra(4, 2) = "1";
-
-  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) {
-    std::vector<std::string> res{};
-    std::ranges::transform(args, std::back_inserter(res),
-                           [&](auto&& v) { return impl::hex(v, "BITS"); });
-    return utl::cat(res, ", ");
-  };
+  tests << bsrl(0, 1)                            = "0" >> docs;
+  tests << bsrl(1, 1)                            = "0";
+  tests << bsrl(2, 1)                            = "1" >> docs;
+  tests << bsrl(3, 1)                            = "1";
+  tests << bsrl(4, 1)                            = "2" >> docs;
+  tests << bsrl(4, 2)                            = "1" >> docs;
+  tests << bsrl(int_min_s, conf::bit_length - 1) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << bsrl(int_min_s, conf::bit_length - 0) =
+      ("0x" + utl::cat(samp::hmin)) >> docs;
 
   auto params = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -80,19 +66,27 @@ decltype(bitsra) bitsra = NIFTY_DEF(bitsra, [&](va args) {
       svect shifted{args.begin(), args.end()};
       std::shift_right(shifted.begin(), shifted.end(), i);
       for (std::size_t j = 0; j < i; ++j)
-        shifted[j] = args[0];
+        shifted[j] = "0";
       svect res{};
       for (std::size_t j = 0; j < shifted.size(); j += 4) {
-        res.push_back(impl::nybl(
-            pp::cat(shifted[j + 0], shifted[j + 1], shifted[j + 2], shifted[j + 3]),
-            "HEX"));
+        res.push_back(
+            pp::cat(shifted[j + 0], shifted[j + 1], shifted[j + 2], shifted[j + 3]));
+      }
+      for (auto&& v : res) {
+        static std::regex const zerocat{"0##0", std::regex_constants::optimize};
+        while (std::regex_search(v, zerocat))
+          v = std::regex_replace(v, zerocat, "00");
+        if (v != "0000")
+          v = impl::nybl(v, "HEX");
+        else
+          v = "0";
       }
       return pp::tup(res);
     };
   }
 
   return def<"o(v, ct)">{[&](arg v, arg ct) {
-    return int_(def<"<o(i, ...)">{[&](arg i, va bin) {
+    return word(def<"<o(i, ...)">{[&](arg i, va bin) {
                   return def<"<o(...)">{[&](va args) {
                     return def<"<o(i, gelt, ...)">{[&](arg i, arg gelt, va args) {
                       def<"0(...)"> gelt0 = [&](va) { return "0"; };
@@ -103,7 +97,7 @@ decltype(bitsra) bitsra = NIFTY_DEF(bitsra, [&](va args) {
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);
                     }}(args);
                   }}(i, lt(i, conf::bit_length), bin);
-                }}(idec(ct), bin + " " + xword(int_(v))),
+                }}(idec(ct), bdump(v)),
                 typeof(v));
   }}(args);
 });

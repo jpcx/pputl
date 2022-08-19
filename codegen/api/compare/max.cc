@@ -34,7 +34,7 @@ using namespace codegen;
 decltype(max) max = NIFTY_DEF(max, [&](va args) {
   docs << "word maximum operation."
        << "prohibits comparison of different signedness."
-       << "xwords are interpreted as (and are comparable with) unsigned.";
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;
@@ -63,9 +63,12 @@ decltype(max) max = NIFTY_DEF(max, [&](va args) {
       to_string(uint_max / 2) + "u";
   tests << max(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") =
       to_string((uint_max / 2) + 1) + "u";
-  tests << max(to_string(int_max / 2), to_string((int_max / 2) - 1)) = to_string((int_max / 2));
-  tests << max(to_string(int_max / 2), to_string((int_max / 2)))     = to_string((int_max / 2));
-  tests << max(to_string(int_max / 2), to_string((int_max / 2) + 1)) = to_string((int_max / 2) + 1);
+  tests << max(to_string(int_max / 2), to_string((int_max / 2) - 1)) =
+      to_string((int_max / 2));
+  tests << max(to_string(int_max / 2), to_string((int_max / 2))) =
+      to_string((int_max / 2));
+  tests << max(to_string(int_max / 2), to_string((int_max / 2) + 1)) =
+      to_string((int_max / 2) + 1);
 
   def<"0(a, b)"> _0 = [&](arg, arg b) { return b; };
 

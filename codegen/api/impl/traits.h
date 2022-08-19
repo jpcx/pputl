@@ -43,7 +43,7 @@ extern codegen::def<
 extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const&    nybl;
 extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const& udec;
 extern codegen::def<
-    "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|XWORD|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;
+    "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;
 
 NIFTY_DECL(hex);
 NIFTY_DECL(hexhex);

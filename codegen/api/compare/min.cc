@@ -34,7 +34,7 @@ using namespace codegen;
 decltype(min) min = NIFTY_DEF(min, [&](va args) {
   docs << "word minimum operation."
        << "prohibits comparison of different signedness."
-       << "xwords are interpreted as (and are comparable with) unsigned.";
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;

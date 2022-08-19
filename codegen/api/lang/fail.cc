@@ -36,7 +36,7 @@ decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
        << "can accept either."
        << ""
        << "usage: " + fail("\"something bad happened\"")
-       << "       " + fail(icstr("[myfun] invalid args : __VA_ARGS__"));
+       << "       " + fail(va_str("[myfun] invalid args : __VA_ARGS__"));
 
   return pp::cat(fail, args);
 });

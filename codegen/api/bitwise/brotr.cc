@@ -33,26 +33,18 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bitrotr) bitrotr = NIFTY_DEF(bitrotr, [&](va args) {
+decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
   docs << "bitwise right rotation by n places.";
 
-  tests << bitrotr("0x" + utl::cat(samp::hmin), 0) =
+  tests << brotr("0x" + utl::cat(samp::hmin), 0) =
       ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << bitrotr("0x" + utl::cat(samp::h1), 0) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << bitrotr("0x" + utl::cat(samp::h1), 1) = ("0x" + utl::cat(samp::himin)) >> docs;
-  tests << bitrotr("0x" + utl::cat(samp::h2), 1) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << bitrotr("0x" + utl::cat(samp::himax), 2) =
+  tests << brotr("0x" + utl::cat(samp::h1), 0) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::h1), 1) = ("0x" + utl::cat(samp::himin)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::h2), 1) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::himax), 2) =
       ("0xD" + utl::cat(svect(conf::word_size - 1, "F"))) >> docs;
 
   auto params{utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ")};
-
-  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) {
-    std::vector<std::string> res{};
-    std::ranges::transform(args, std::back_inserter(res),
-                           [&](auto&& v) { return impl::hex(v, "BITS"); });
-    return utl::cat(res, ", ");
-  };
 
   def _0 = def{"0(" + params + ")"} = [&](pack args) {
     std::array<std::string, conf::word_size> res{};
@@ -83,9 +75,9 @@ decltype(bitrotr) bitrotr = NIFTY_DEF(bitrotr, [&](va args) {
         def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
               cat(utl::slice(_0, -1),
-                  bitand_(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
+                  band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
-        }}(n, esc(bin + " " + xword(v))),
+        }}(n, bdump(v)),
         typeof(v));
   }}(args);
 });

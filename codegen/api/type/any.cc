@@ -44,7 +44,7 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
 
   return def<"o(e, ...)">{[&](arg e, va some) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_any_o(some + ".")), e, some);
-  }}(icstr("[" + any + "] any cannot describe multiple args : " + args), some(args));
+  }}(va_str("[" + any + "] any cannot describe multiple args : " + args), some(args));
 });
 
 } // namespace api

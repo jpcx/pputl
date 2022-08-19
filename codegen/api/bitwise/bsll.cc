@@ -33,26 +33,21 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bitsrl) bitsrl = NIFTY_DEF(bitsrl, [&](va args) {
-  docs << "performs a logical bitwise right shift by n places.";
+decltype(bsll) bsll = NIFTY_DEF(bsll, [&](va args) {
+  docs << "performs a logical bitwise left shift by n places.";
 
-  tests << bitsrl(0, 1)                            = "0" >> docs;
-  tests << bitsrl(1, 1)                            = "0";
-  tests << bitsrl(2, 1)                            = "1" >> docs;
-  tests << bitsrl(3, 1)                            = "1";
-  tests << bitsrl(4, 1)                            = "2" >> docs;
-  tests << bitsrl(4, 2)                            = "1" >> docs;
-  tests << bitsrl(int_min_s, conf::bit_length - 1) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << bitsrl(int_min_s, conf::bit_length - 0) =
-      ("0x" + utl::cat(samp::hmin)) >> docs;
-
-  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) {
-    std::vector<std::string> res{};
-    std::ranges::transform(args, std::back_inserter(res),
-                           [&](auto&& v) { return impl::hex(v, "BITS"); });
-    return utl::cat(res, ", ");
-  };
+  tests << bsll(0, 1)                         = "0" >> docs;
+  tests << bsll("1u", 1)                      = "2u" >> docs;
+  tests << bsll("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h8)) >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << bsll("0x" + utl::cat(samp::h2), 3) = ("0x" + utl::cat(samp::h16)) >> docs;
+  tests << bsll(uint_max_s, 3) =
+      (std::to_string((conf::uint_max << 3) xor 0x7000) + "u") >> docs;
+  if constexpr (conf::word_size > 2)
+    tests << bsll(1, conf::bit_length - 2) = "1024" >> docs;
+  tests << bsll(1, conf::bit_length - 1) = int_min_s >> docs;
+  tests << bsll(1, conf::bit_length)     = "0" >> docs;
+  tests << bsll(1, conf::bit_length + 1) = "0" >> docs;
 
   auto params = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -72,9 +67,9 @@ decltype(bitsrl) bitsrl = NIFTY_DEF(bitsrl, [&](va args) {
         docs << "bit shifts";
 
       svect shifted{args.begin(), args.end()};
-      std::shift_right(shifted.begin(), shifted.end(), i);
-      for (std::size_t j = 0; j < i; ++j)
-        shifted[j] = "0";
+      for (auto it = std::shift_left(shifted.begin(), shifted.end(), i);
+           it != shifted.end(); ++it)
+        *it = "0";
       svect res{};
       for (std::size_t j = 0; j < shifted.size(); j += 4) {
         res.push_back(
@@ -105,7 +100,7 @@ decltype(bitsrl) bitsrl = NIFTY_DEF(bitsrl, [&](va args) {
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);
                     }}(args);
                   }}(i, lt(i, conf::bit_length), bin);
-                }}(idec(ct), bin + " " + xword(v)),
+                }}(idec(ct), bdump(v)),
                 typeof(v));
   }}(args);
 });

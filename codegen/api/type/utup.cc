@@ -31,20 +31,26 @@ namespace api {
 
 using namespace codegen;
 
-decltype(xword) xword = NIFTY_DEF(xword, [&](va args) {
+decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
   docs << "[inherits from " + some + "] a tuple of exactly " + word_size + " ("
               + std::to_string(conf::word_size) + ") nybls."
        << "constructibe from any word.";
 
-  tests << xword(0)          = pp::tup(std::vector<std::string>(conf::word_size, "0")) >> docs;
-  tests << xword(uint_max_s) = pp::tup(std::vector<std::string>(conf::word_size, "F")) >> docs;
+  tests << utup(0) = pp::tup(std::vector<std::string>(conf::word_size, "0")) >> docs;
+  tests << utup(uint_max_s) =
+      pp::tup(std::vector<std::string>(conf::word_size, "F")) >> docs;
   if constexpr (conf::word_size > 1) {
-    tests << xword(int_min_s) =
-        pp::tup("8, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", ")) >> docs;
-    tests << xword(int_max_s) =
-        pp::tup("7, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"), ", ")) >> docs;
-    auto cpy = pp::tup("1, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", "));
-    tests << xword(cpy) = cpy >> docs;
+    tests << utup(int_min_s) =
+        pp::tup("8, "
+                + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", "))
+        >> docs;
+    tests << utup(int_max_s) =
+        pp::tup("7, "
+                + utl::cat(std::vector<std::string>(conf::word_size - 1, "F"), ", "))
+        >> docs;
+    auto cpy = pp::tup(
+        "1, " + utl::cat(std::vector<std::string>(conf::word_size - 1, "0"), ", "));
+    tests << utup(cpy) = cpy >> docs;
   }
 
   def<"0(e, ...)"> _0 = [&](arg e, va some) {
@@ -53,11 +59,13 @@ decltype(xword) xword = NIFTY_DEF(xword, [&](va args) {
     def<"<1(e, atom)">{} = [&](arg e, arg atom) {
       def<"<0(e, atom)"> _0 = [&](arg e, arg atom) {
         def<"<0(e, atom)"> _0 = [&](arg e, arg) { return fail(e); };
-        def<"<1(e, uint)">{}  = [&](arg, arg uint) { return impl::uhex(uhex(uint), "XWORD"); };
+        def<"<1(e, uint)">{}  = [&](arg, arg uint) {
+          return impl::uhex(uhex(uint), "UTUP");
+        };
         return pp::call(cat(utl::slice(_0, -1), detail::is_uint_o(atom)), e, atom);
       };
 
-      def<"<1(e, int)">{} = [&](arg, arg int_) { return impl::uhex(uhex(int_), "XWORD"); };
+      def<"<1(e, int)">{} = [&](arg, arg int_) { return impl::uhex(uhex(int_), "UTUP"); };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_int_o(atom)), e, atom);
     };
@@ -68,8 +76,8 @@ decltype(xword) xword = NIFTY_DEF(xword, [&](va args) {
   def<"1(e, ...)">{} = [](arg, va word) { return word; };
 
   return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_xword_o(some)), e, some);
-  }}(icstr("[" + xword + "] invalid integer or word : " + args), some(args));
+    return pp::call(cat(utl::slice(_0, -1), detail::is_utup_o(some)), e, some);
+  }}(va_str("[" + utup + "] invalid integer or word : " + args), some(args));
 });
 
 } // namespace api

@@ -49,7 +49,7 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
   tests << is_word(pp::tup(samp::h8))                 = "1" >> docs;
 
   detail::is_word_o = def{"o(any)"} = [&](arg any) {
-    def<"0(any)"> _0 = [&](arg any) { return is_xword(any); };
+    def<"0(any)"> _0 = [&](arg any) { return is_utup(any); };
 
     def<"1(atom)">{} = [&](arg atom) {
       def<"<0(atom)"> _0 = [&](arg atom) { return detail::is_uint_o(atom); };

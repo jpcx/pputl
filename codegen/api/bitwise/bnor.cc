@@ -25,23 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "bitwise.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(irest) irest = NIFTY_DEF(irest, [&](arg, va args) {
-  docs << "immediately returns all args except for the first."
-       << "must have at least one argument."
-       << ""
-       << "useful for operating directly on __VA_ARGS__ or"
-       << "for quickly retrieving the rest tuple elements"
-       << "using an identity function such as " + esc + "."
-       << ""
-       << "e.g. " + irest("__VA_ARGS__") << "     " + esc(irest + " tup");
+decltype(bnor) bnor = NIFTY_DEF(bnor, [&](va args) {
+  docs << "bitwise NOR."
+       << "uses arg 'a' for result cast hint.";
 
-  return args;
+  tests << bnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bnor(0, 1) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
+  tests << bnor(5, 7) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
+  tests << bnor(7, 8) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
+
+  return word(impl::uhex(uhex(bor(args)), "BNOT"), typeof(va_first(args)));
 });
 
 } // namespace api

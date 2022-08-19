@@ -45,7 +45,7 @@ decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
     return impl::hexhex(pp::cat(7, args[0]), "LT");
   };
 
-  return def<"o(...)">{[&](va args) { return args; }}(res + " " + xword(int_(args)));
+  return def<"o(...)">{[&](va args) { return args; }}(res + " " + utup(int_(args)));
 });
 
 } // namespace api

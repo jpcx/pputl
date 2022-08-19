@@ -37,8 +37,8 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << "  | NONE | SOME | XWORD | TUP  | IDEC | IHEX"
-       << "  | UDEC | UHEX | HEX   | NYBL | ATOM";
+       << "  | NONE | SOME | UTUP | TUP  | IDEC | IHEX"
+       << "  | UDEC | UHEX | HEX  | NYBL | ATOM";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -58,9 +58,9 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   if constexpr (conf::word_size > 1)
     tests << typeof("(A)") = "TUP" >> docs;
   tests << typeof(pp::tup(
-      utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) = "XWORD" >> docs;
+      utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) = "UTUP" >> docs;
   tests << typeof(pp::tup(
-      utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "XWORD" >> docs;
+      utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "UTUP" >> docs;
   tests << typeof()                                                    = "NONE" >> docs;
 
   // !none
@@ -165,19 +165,19 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       def<"<1(tup)">{} = [&](arg tup_) {
         docs << "^!none → any → tup";
 
-        // !xword
+        // !utup
         def<"<0(tup)"> _0 = [&](arg) {
-          docs << "^!none → any → tup → !xword";
+          docs << "^!none → any → tup → !utup";
           return "TUP";
         };
 
-        // xword
-        def<"<1(xword)">{} = [&](arg) {
-          docs << "^!none → any → tup → xword";
-          return "XWORD";
+        // utup
+        def<"<1(utup)">{} = [&](arg) {
+          docs << "^!none → any → tup → utup";
+          return "UTUP";
         };
 
-        return pp::call(cat(utl::slice(_0, -1), detail::is_xword_o(tup_)), tup_);
+        return pp::call(cat(utl::slice(_0, -1), detail::is_utup_o(tup_)), tup_);
       };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), any);

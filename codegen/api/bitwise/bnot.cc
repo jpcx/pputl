@@ -25,28 +25,21 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "bitwise.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(icstr) icstr = NIFTY_DEF(icstr, [&](va args) {
-  docs << "immediately stringizes args.";
+decltype(bnot) bnot = NIFTY_DEF(bnot, [&](va args) {
+  docs << "bitwise NOT.";
 
-  tests << icstr()                  = "\"\"" >> docs;
-  tests << icstr("foo")             = "\"foo\"";
-  tests << icstr("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << icstr(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
-  tests << icstr(", ")              = "\",\"";
-  tests << icstr(", , ")            = "\", ,\"";
-  tests << icstr("a, ")             = "\"a,\"";
-  tests << icstr("a, , ")           = "\"a, ,\"";
-  tests << icstr(", a")             = "\", a\"";
-  tests << icstr(", a, ")           = "\", a,\"";
-  tests << icstr(", , a")           = "\", , a\"";
+  tests << bnot("0u")                 = uint_max_s >> docs;
+  tests << bnot(0)                    = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bnot(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
+  tests << bnot(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
 
-  return "#" + args;
+  return word(impl::uhex(uhex(args), "BNOT"), typeof(args));
 });
 
 } // namespace api

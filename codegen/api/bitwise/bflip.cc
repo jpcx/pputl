@@ -25,23 +25,27 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include <span>
+
 #include "bitwise.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bitnand) bitnand = NIFTY_DEF(bitnand, [&](va args) {
-  docs << "bitwise NAND."
-       << "uses arg 'a' for result cast hint.";
+decltype(bflip) bflip = NIFTY_DEF(bflip, [&](va args) {
+  docs << "flips the ith bit in the uint."
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
 
-  tests << bitnand(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bitnand(5, 7) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "A") >> docs;
-  tests << bitnand(pp::tup(samp::himax), pp::tup(samp::hmax)) =
-      pp::tup(samp::himin) >> docs;
+  tests << bflip(0, conf::bit_length - 1)    = "1" >> docs;
+  tests << bflip("1u", conf::bit_length - 2) = "3u" >> docs;
+  tests << bflip("0x" + utl::cat(samp::h2), conf::bit_length - 3) =
+      ("0x" + utl::cat(samp::h6)) >> docs;
+  tests << bflip("0x" + utl::cat(samp::h3) + "u", conf::bit_length - 4) =
+      ("0x" + utl::cat(samp::h11) + "u") >> docs;
+  tests << bflip(pp::tup(samp::hmax), 0) = pp::tup(samp::himax) >> docs;
 
-  return word(impl::uhex(uhex(bitand_(args)), "BNOT"), typeof(ifirst(args)));
+  return bset(args, not_(bget(args)));
 });
 
 } // namespace api

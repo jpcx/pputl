@@ -31,7 +31,7 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
+decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
   docs << "gets the ith bit from the word."
        << "i must be between 0 and " + bit_length + " ("
               + std::to_string(conf::bit_length) + ").";
@@ -39,23 +39,15 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
   auto maxless1 =
       "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "E";
 
-  tests << bitget(2, conf::bit_length - 3)                   = "0" >> docs;
-  tests << bitget(2, conf::bit_length - 2)                   = "1" >> docs;
-  tests << bitget(2, conf::bit_length - 1)                   = "0" >> docs;
-  tests << bitget("5u", conf::bit_length - 3)                = "1" >> docs;
-  tests << bitget(maxless1, conf::bit_length - 2)            = "1" >> docs;
-  tests << bitget(maxless1 + "u", conf::bit_length - 1)      = "0" >> docs;
-  tests << bitget(pp::tup(samp::hmax), conf::bit_length - 1) = "1" >> docs;
+  tests << bget(2, conf::bit_length - 3)                   = "0" >> docs;
+  tests << bget(2, conf::bit_length - 2)                   = "1" >> docs;
+  tests << bget(2, conf::bit_length - 1)                   = "0" >> docs;
+  tests << bget("5u", conf::bit_length - 3)                = "1" >> docs;
+  tests << bget(maxless1, conf::bit_length - 2)            = "1" >> docs;
+  tests << bget(maxless1 + "u", conf::bit_length - 1)      = "0" >> docs;
+  tests << bget(pp::tup(samp::hmax), conf::bit_length - 1) = "1" >> docs;
 
   auto bitparams = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
-
-  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) {
-    std::vector<std::string> res{};
-    std::ranges::transform(args, std::back_inserter(res),
-                           [&](auto&& v) { return bits(v); });
-    return utl::cat(res, ", ");
-  };
 
   def _0 = def{"0(" + bitparams + ")"} = [&](pack args) { return args[0]; };
 
@@ -78,8 +70,8 @@ decltype(bitget) bitget = NIFTY_DEF(bitget, [&](va args) {
           return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, args);
         }}(args);
       }}(e, i, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
-    }}(e, idec(i), bin + " " + xword(v));
-  }}(icstr("[" + bitget + "] invalid index; args : " + args), args);
+    }}(e, idec(i), bdump(v));
+  }}(va_str("[" + bget + "] invalid index; args : " + args), args);
 });
 
 } // namespace api

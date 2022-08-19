@@ -25,27 +25,30 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "util.h"
+#include "bitwise.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bits) bits = NIFTY_DEF(bits, [&](va args) {
-  docs << "extracts bits from hex or nybl values."
-       << "returns exactly 4 bools.";
+decltype(bdump) bdump = NIFTY_DEF(bdump, [&](va args) {
+  docs << "dumps the bits of a word."
+       << "returns exactly " + bit_length + " (" + std::to_string(conf::bit_length)
+              + ") bools.";
 
-  tests << bits("0")    = "0, 0, 0, 0" >> docs;
-  tests << bits("A")    = "1, 0, 1, 0" >> docs;
-  tests << bits("1100") = "1, 1, 0, 0" >> docs;
-  tests << bits("0010") = "0, 0, 1, 0" >> docs;
+  tests << bdump("0") = utl::cat(svect(conf::bit_length, "0"), ", ") >> docs;
+  tests << bdump("0x" + utl::cat(samp::himin)) =
+      ("1, " + utl::cat(svect(conf::bit_length - 1, "0"), ", ")) >> docs;
 
-  def<"00(e, ...)"> _00 = [&](arg e, va) { return fail(e); };
-  def<"01(e, nybl)">{}  = [&](arg, arg nybl) { return impl::nybl(nybl, "BITS"); };
-  def<"10(e, hex)">{}   = [&](arg, arg hex) { return impl::hex(hex, "BITS"); };
+  def bits = def{"bits(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
+                 + ")"} = [&](pack args) {
+    std::vector<std::string> res{};
+    std::ranges::transform(args, std::back_inserter(res),
+                           [&](auto&& v) { return impl::hex(v, "BITS"); });
+    return utl::cat(res, ", ");
+  };
 
-  return pp::call(cat(utl::slice(_00, -2), cat(is_hex(args), is_nybl(args))),
-                  icstr("[" + bits + "] invalid arguments : " + args), args);
+  return def<"o(...)">{[&](va args) { return args; }}(bits + " " + utup(args));
 });
 
 } // namespace api

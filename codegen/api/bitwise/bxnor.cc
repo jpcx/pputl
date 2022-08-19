@@ -25,27 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include <span>
-
 #include "bitwise.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(bitflip) bitflip = NIFTY_DEF(bitflip, [&](va args) {
-  docs << "flips the ith bit in the uint."
-       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
+decltype(bxnor) bxnor = NIFTY_DEF(bxnor, [&](va args) {
+  docs << "bitwise XNOR."
+       << "uses arg 'a' for result cast hint.";
 
-  tests << bitflip(0, conf::bit_length - 1)    = "1" >> docs;
-  tests << bitflip("1u", conf::bit_length - 2) = "3u" >> docs;
-  tests << bitflip("0x" + utl::cat(samp::h2), conf::bit_length - 3) =
-      ("0x" + utl::cat(samp::h6)) >> docs;
-  tests << bitflip("0x" + utl::cat(samp::h3) + "u", conf::bit_length - 4) =
-      ("0x" + utl::cat(samp::h11) + "u") >> docs;
-  tests << bitflip(pp::tup(samp::hmax), 0) = pp::tup(samp::himax) >> docs;
+  tests << bxnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bxnor(0, 1) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
+  tests << bxnor(5, 7) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "D") >> docs;
+  tests << bxnor(15, 8) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
 
-  return bitset(args, not_(bitget(args)));
+  return word(impl::uhex(uhex(bxor(args)), "BNOT"), typeof(va_first(args)));
 });
 
 } // namespace api

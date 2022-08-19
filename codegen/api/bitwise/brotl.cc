@@ -33,24 +33,16 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bitrotl) bitrotl = NIFTY_DEF(bitrotl, [&](va args) {
+decltype(brotl) brotl = NIFTY_DEF(brotl, [&](va args) {
   docs << "bitwise left rotation by n places.";
 
-  tests << bitrotl("0x" + utl::cat(samp::hmin), 0) =
+  tests << brotl("0x" + utl::cat(samp::hmin), 0) =
       ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << bitrotl("0x" + utl::cat(samp::h1), 1) = ("0x" + utl::cat(samp::h2)) >> docs;
-  tests << bitrotl("0x" + utl::cat(samp::h1), 2) = ("0x" + utl::cat(samp::h4)) >> docs;
-  tests << bitrotl("0x" + utl::cat(samp::h3), 2) = ("0x" + utl::cat(samp::h12)) >> docs;
+  tests << brotl("0x" + utl::cat(samp::h1), 1) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << brotl("0x" + utl::cat(samp::h1), 2) = ("0x" + utl::cat(samp::h4)) >> docs;
+  tests << brotl("0x" + utl::cat(samp::h3), 2) = ("0x" + utl::cat(samp::h12)) >> docs;
 
   auto params{utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ")};
-
-  def bin = def{"bin(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) {
-    std::vector<std::string> res{};
-    std::ranges::transform(args, std::back_inserter(res),
-                           [&](auto&& v) { return impl::hex(v, "BITS"); });
-    return utl::cat(res, ", ");
-  };
 
   def _0 = def{"0(" + params + ")"} = [&](pack args) {
     std::array<std::string, conf::word_size> res{};
@@ -81,9 +73,9 @@ decltype(bitrotl) bitrotl = NIFTY_DEF(bitrotl, [&](va args) {
         def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
               cat(utl::slice(_0, -1),
-                  bitand_(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
+                  band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
-        }}(n, esc(bin + " " + xword(v))),
+        }}(n, esc(bdump(v))),
         typeof(v));
   }}(args);
 });

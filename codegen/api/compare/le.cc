@@ -34,23 +34,23 @@ using namespace codegen;
 decltype(le) le = NIFTY_DEF(le, [&](va args) {
   docs << "word less-than-or-equal-to comparison."
        << "prohibits comparison of different signedness."
-       << "xwords are interpreted as (and are comparable with) unsigned.";
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
   using std::to_string;
   using conf::uint_max;
   using conf::int_max;
 
-  tests << le("0, 0")                                                             = "1" >> docs;
-  tests << le("0, 1")                                                             = "1" >> docs;
-  tests << le("7u, 8u")                                                           = "1" >> docs;
-  tests << le("8u, 7u")                                                           = "0";
-  tests << le(int_(uint_max_s), "0")                                              = "1" >> docs;
-  tests << le(int_max_s, int_min_s)                                               = "0" >> docs;
-  tests << le(int_min_s, int_max_s)                                               = "1";
-  tests << le(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "1" >> docs;
-  tests << le(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "1" >> docs;
-  tests << le("0u", uint_max_s)                                                   = "1";
-  tests << le(uint_max_s, "0u")                                                   = "0";
+  tests << le("0, 0")                                        = "1" >> docs;
+  tests << le("0, 1")                                        = "1" >> docs;
+  tests << le("7u, 8u")                                      = "1" >> docs;
+  tests << le("8u, 7u")                                      = "0";
+  tests << le(int_(uint_max_s), "0")                         = "1" >> docs;
+  tests << le(int_max_s, int_min_s)                          = "0" >> docs;
+  tests << le(int_min_s, int_max_s)                          = "1";
+  tests << le(int_min_s, int_(to_string(int_max + 1) + "u")) = "1" >> docs;
+  tests << le(int_min_s, int_(to_string(int_max + 2) + "u")) = "1" >> docs;
+  tests << le("0u", uint_max_s)                              = "1";
+  tests << le(uint_max_s, "0u")                              = "0";
   tests << le(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "0";
   tests << le(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "1";
   tests << le(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";

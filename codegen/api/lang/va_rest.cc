@@ -31,17 +31,17 @@ namespace api {
 
 using namespace codegen;
 
-decltype(ifirst) ifirst = NIFTY_DEF(ifirst, [&](arg first, va) {
-  docs << "immediately returns the first argument."
+decltype(va_rest) va_rest = NIFTY_DEF(va_rest, [&](arg, va args) {
+  docs << "immediately returns all args except for the first."
        << "must have at least one argument."
        << ""
        << "useful for operating directly on __VA_ARGS__ or"
-       << "for quickly retrieving the first tuple element"
+       << "for quickly retrieving the rest tuple elements"
        << "using an identity function such as " + esc + "."
        << ""
-       << "e.g. " + ifirst("__VA_ARGS__") << "     " + esc(ifirst + " tup");
+       << "e.g. " + va_rest("__VA_ARGS__") << "     " + esc(va_rest + " tup");
 
-  return first;
+  return args;
 });
 
 } // namespace api

@@ -33,17 +33,19 @@ namespace api {
 
 inline codegen::category<"lang"> lang;
 
-extern codegen::def<"eat(...) -> <nothing>"> const&                              eat;
-extern codegen::def<"esc(...: v: any...) -> ...v"> const&                        esc;
-extern codegen::def<"cat(...: [a]: any, [b]: any) -> a##b"> const&               cat;
-extern codegen::def<"icstr(...: v: any...) -> <c string literal #...v>"> const&  icstr;
-extern codegen::def<"cstr(...: v: any...) -> <c string literal #...v>"> const&   cstr;
-extern codegen::def<"ifirst(_, ...: first: any, rest: any...) -> first"> const&  ifirst;
-extern codegen::def<"first(...: v: any...) -> v[0]"> const&                      first;
-extern codegen::def<"irest(_, ...: first: any, rest: any...) -> ...rest"> const& irest;
-extern codegen::def<"rest(...:  v: any...) -> ...v"> const&                      rest;
+extern codegen::def<"eat(...) -> <nothing>"> const&                            eat;
+extern codegen::def<"esc(...: ...v: any) -> ...v"> const&                      esc;
+extern codegen::def<"cat(...: [a]: any, [b]: any) -> a##b"> const&             cat;
+extern codegen::def<"va_str(...: ...v: any) -> <string literal #...v>"> const& va_str;
+extern codegen::def<"str(...: ...v: any) -> <string literal #...v>"> const&    str;
+extern codegen::def<"va_first(_, ...: first: any, rest: any...) -> first"> const&
+                                                            va_first;
+extern codegen::def<"first(...: ...v: any) -> v[0]"> const& first;
+extern codegen::def<"va_rest(_, ...: first: any, rest: any...) -> ...rest"> const&
+                                                           va_rest;
+extern codegen::def<"rest(...: ...v: any) -> ...v"> const& rest;
 extern codegen::def<
-    "trim(...: v: any...) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
+    "trim(...: ...v: any) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
 extern codegen::def<"default(...: default: <any>, ...argument: <any...>) -> "> const&
                                                    default_;
 extern codegen::def<"fail(...: msg: <tokens or string literal>, [stringize=1]: bool) -> "
@@ -54,11 +56,11 @@ extern codegen::def<"fail(...: msg: <tokens or string literal>, [stringize=1]: b
 NIFTY_DECL(eat);
 NIFTY_DECL(esc);
 NIFTY_DECL(cat);
-NIFTY_DECL(icstr);
-NIFTY_DECL(cstr);
-NIFTY_DECL(ifirst);
+NIFTY_DECL(va_str);
+NIFTY_DECL(str);
+NIFTY_DECL(va_first);
 NIFTY_DECL(first);
-NIFTY_DECL(irest);
+NIFTY_DECL(va_rest);
 NIFTY_DECL(rest);
 NIFTY_DECL(trim);
 NIFTY_DECL(default_);

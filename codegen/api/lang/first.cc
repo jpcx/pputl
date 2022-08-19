@@ -39,7 +39,7 @@ decltype(first) first = NIFTY_DEF(first, [&](va args) {
   tests << first("a")    = "a" >> docs;
   tests << first("a, b") = "a" >> docs;
 
-  return pp::va_opt(ifirst(args));
+  return pp::va_opt(va_first(args));
 });
 
 } // namespace api

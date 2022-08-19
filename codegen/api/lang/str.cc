@@ -31,22 +31,22 @@ namespace api {
 
 using namespace codegen;
 
-decltype(cstr) cstr = NIFTY_DEF(cstr, [&](va args) {
+decltype(str) str = NIFTY_DEF(str, [&](va args) {
   docs << "stringizes args after an expansion.";
 
-  tests << cstr()                  = "\"\"" >> docs;
-  tests << cstr("foo")             = "\"foo\"";
-  tests << cstr("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << cstr(cat("foo", "bar")) = pp::str("foobar") >> docs;
-  tests << cstr(", ")              = "\",\"";
-  tests << cstr(", , ")            = "\", ,\"";
-  tests << cstr("a, ")             = "\"a,\"";
-  tests << cstr("a, , ")           = "\"a, ,\"";
-  tests << cstr(", a")             = "\", a\"";
-  tests << cstr(", a, ")           = "\", a,\"";
-  tests << cstr(", , a")           = "\", , a\"";
+  tests << str()                  = "\"\"" >> docs;
+  tests << str("foo")             = "\"foo\"";
+  tests << str("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << str(cat("foo", "bar")) = pp::str("foobar") >> docs;
+  tests << str(", ")              = "\",\"";
+  tests << str(", , ")            = "\", ,\"";
+  tests << str("a, ")             = "\"a,\"";
+  tests << str("a, , ")           = "\"a, ,\"";
+  tests << str(", a")             = "\", a\"";
+  tests << str(", a, ")           = "\", a,\"";
+  tests << str(", , a")           = "\", , a\"";
 
-  return icstr(args);
+  return va_str(args);
 });
 
 } // namespace api

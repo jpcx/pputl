@@ -164,7 +164,7 @@ uhex(std::array<std::string, conf::word_size * 4> const& bin) {
 }
 
 inline std::string
-xword(std::array<std::string, conf::word_size * 4> const& bin) {
+utup(std::array<std::string, conf::word_size * 4> const& bin) {
   std::vector<std::string> res{};
   for (std::size_t ofs = 0; ofs < bin.size(); ofs += 4)
     res.push_back(hex(bin[ofs + 0], bin[ofs + 1], bin[ofs + 2], bin[ofs + 3]));
