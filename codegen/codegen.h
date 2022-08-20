@@ -74,7 +74,7 @@ constexpr std::array<char const*, 2> impl_shortnames[]{
 // hex representations are fixed at this length.
 constexpr std::uint8_t word_size = 3;
 static_assert(word_size >= 1);
-static_assert(word_size <= 3);
+static_assert(word_size <= 4);
 
 // the number of bits that can be used to describes integers.
 // based on the word size.
@@ -218,6 +218,9 @@ constexpr char const project_header[]{
     "//           xx_lp  xx_rp                                                     //\n"
     "//       ‐ inline recursive stack construction                      [meta]    //\n"
     "//           recur_lp  recur_rp                                               //\n"
+    "//     ◆ configuration details                                    [config]    //\n"
+    "//           build    word_size  bit_length  int_min                          //\n"
+    "//           int_max  uint_max   size_max                                     //\n"
     "//                                                                            //\n"
     "//    USAGE                                                                   //\n"
     "//    -----                                                                   //\n"
@@ -230,8 +233,8 @@ constexpr char const project_header[]{
     "//    pputl is completely generated and tested  by a custom C++ framework.    //\n"
     "//    See the codegen/ folder for the full source.                            //\n"
     "//                                                                            //\n"
-    "//    Word size, naming preferences, and minification can be configured by    //\n"
-    "//    modifying the head of codegen/codegen.h and running `make`.             //\n"
+    "//    Various settings including word size and naming rules may be changed    //\n"
+    "//    by modifying the head of codegen/codegen.h and running `make`.          //\n"
     "//                                                                            //\n"
     "//    Supported integer modes:                                                //\n"
     "//                                    ⋮  minify=none       ⋮ minify=all       //\n"
@@ -240,7 +243,13 @@ constexpr char const project_header[]{
     "//      word_size=3 ⋮ 12-bit integers ⋮ [~? MiB (default)] ⋮ ~? MiB           //\n"
     "//      word_size=4 ⋮ 16-bit integers ⋮  ~? MiB            ⋮ ~? MiB           //\n"
     "//                                                                            //\n"
-    "//    Run `make test` to validate the library on your system.                 //\n"
+    "//    The default pputl build  is fully compliant with the C++20 standard,    //\n"
+    "//    which requires preprocessor support for at least 256 macro arguments    //\n"
+    "//    and parameters.  As such, pputl range algorithms and tuple sizes are    //\n"
+    "//    capped at this limit but may be configured to support larger ranges.    //\n"
+    "//                                                                            //\n"
+    "//    pputl has been tested with gcc 11.2.1 and clang 13.                     //\n"
+    "//    Run `make test` to validate on your system.                             //\n"
     "//                                                                            //\n"
     "//    TERMINOLOGY                                                             //\n"
     "//    -----------                                                             //\n"
@@ -300,8 +309,8 @@ using svect = std::vector<std::string>;
 
 // samples for docs and tests
 namespace samp {
-inline auto hmin  = std::vector<std::string>(conf::word_size, "0");
-inline auto hmax  = std::vector<std::string>(conf::word_size, "F");
+inline auto hmin  = svect(conf::word_size, "0");
+inline auto hmax  = svect(conf::word_size, "F");
 inline auto himax = ([] {
   auto _ = hmax;
   _[0]   = "7";
@@ -393,7 +402,7 @@ inline auto h16   = ([] {
     *(res.rbegin() + 1) = "1";
     return res;
   } else {
-    return nullptr;
+    return svect();
   }
 })();
 } // namespace samp

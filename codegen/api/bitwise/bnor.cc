@@ -36,12 +36,11 @@ decltype(bnor) bnor = NIFTY_DEF(bnor, [&](va args) {
        << "uses arg 'a' for result cast hint.";
 
   tests << bnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bnor(0, 1) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
-  tests << bnor(5, 7) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
-  tests << bnor(7, 8) =
-      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
+  tests << bnor(0, 1) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
+  tests << bnor(5, 7) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << bnor(7, 8) =
+        ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
 
   return word(impl::uhex(uhex(bor(args)), "BNOT"), typeof(va_first(args)));
 });

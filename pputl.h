@@ -110,6 +110,9 @@
 //           xx_lp  xx_rp                                                     //
 //       ‐ inline recursive stack construction                      [meta]    //
 //           recur_lp  recur_rp                                               //
+//     ◆ configuration details                                    [config]    //
+//           build    word_size  bit_length  int_min                          //
+//           int_max  uint_max   size_max                                     //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
@@ -122,8 +125,8 @@
 //    pputl is completely generated and tested  by a custom C++ framework.    //
 //    See the codegen/ folder for the full source.                            //
 //                                                                            //
-//    Word size, naming preferences, and minification can be configured by    //
-//    modifying the head of codegen/codegen.h and running `make`.             //
+//    Various settings including word size and naming rules may be changed    //
+//    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
 //    Supported integer modes:                                                //
 //                                    ⋮  minify=none       ⋮ minify=all       //
@@ -132,7 +135,13 @@
 //      word_size=3 ⋮ 12-bit integers ⋮ [~? MiB (default)] ⋮ ~? MiB           //
 //      word_size=4 ⋮ 16-bit integers ⋮  ~? MiB            ⋮ ~? MiB           //
 //                                                                            //
-//    Run `make test` to validate the library on your system.                 //
+//    The default pputl build  is fully compliant with the C++20 standard,    //
+//    which requires preprocessor support for at least 256 macro arguments    //
+//    and parameters.  As such, pputl range algorithms and tuple sizes are    //
+//    capped at this limit but may be configured to support larger ranges.    //
+//                                                                            //
+//    pputl has been tested with gcc 11.2.1 and clang 13.                     //
+//    Run `make test` to validate on your system.                             //
 //                                                                            //
 //    TERMINOLOGY                                                             //
 //    -----------                                                             //
@@ -188,11 +197,11 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220819
+#define PTL_BUILD /* -> <c++ int> */ 20220820
 
 /// [config.word_size]
 /// ------------------
-/// the number of nybls used to represent pputl integers.
+/// the number of hex digits used to represent pputl integers.
 /// hex representations of integers are fixed at this length.
 /// see the readme code generation section to configure.
 #define PTL_WORD_SIZE /* -> idec */ 3
@@ -1643,7 +1652,7 @@
 /// PTL_INC(0x7FF) // 0x800
 /// PTL_INC(15u)   // 16u
 /// PTL_INC(4095u) // 0u
-#define PTL_INC(/* n: word */...) /* -> word{n + 1} */ \
+#define PTL_INC(/* v: word */...) /* -> word{v + 1} */ \
   PPUTLINC_RES(PTL_TYPEOF(__VA_ARGS__),                \
                PPUTLINC_o(PPUTLINC_X(PPUTLINC_INIT PTL_UTUP(__VA_ARGS__))))
 
@@ -1674,7 +1683,7 @@
 /// PTL_DEC(0x800) // 0x7FF
 /// PTL_DEC(16u)   // 15u
 /// PTL_DEC(0u)    // 4095u
-#define PTL_DEC(/* n: word */...) /* -> word{n - 1} */ \
+#define PTL_DEC(/* v: word */...) /* -> word{v - 1} */ \
   PPUTLDEC_RES(PTL_TYPEOF(__VA_ARGS__),                \
                PPUTLDEC_o(PPUTLDEC_X(PPUTLDEC_INIT PTL_UTUP(__VA_ARGS__))))
 
@@ -1708,7 +1717,7 @@
 /// PTL_EQZ(2)         // 0
 /// PTL_EQZ(4095u)     // 0
 /// PTL_EQZ(0x800)     // 0
-#define PTL_EQZ(/* n: word */...) /* -> bool{n == 0} */ \
+#define PTL_EQZ(/* v: word */...) /* -> bool{v == 0} */ \
   PTL_IS_NONE(PTL_CAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1730,7 +1739,7 @@
 /// PTL_NEZ(2)         // 1
 /// PTL_NEZ(4095u)     // 1
 /// PTL_NEZ(0x800)     // 1
-#define PTL_NEZ(/* n: word */...) /* -> bool{n != 0} */ \
+#define PTL_NEZ(/* v: word */...) /* -> bool{v != 0} */ \
   PTL_IS_SOME(PTL_CAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
 
 /// [numeric.ltz]
@@ -1742,7 +1751,7 @@
 /// PTL_LTZ(2047)          // 0
 /// PTL_LTZ(0x800)         // 1
 /// PTL_LTZ(PTL_INC(2047)) // 1
-#define PTL_LTZ(/* n: int */...) /* -> bool{n < 0} */ \
+#define PTL_LTZ(/* v: int */...) /* -> bool{v < 0} */ \
   PPUTLLTZ_o(PPUTLLTZ_RES PTL_UTUP(PTL_INT(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1761,7 +1770,7 @@
 /// PTL_GTZ(2047)          // 1
 /// PTL_GTZ(0x800)         // 0
 /// PTL_GTZ(PTL_INC(2047)) // 0
-#define PTL_GTZ(/* n: int */...) /* -> bool{n > 0} */ \
+#define PTL_GTZ(/* v: int */...) /* -> bool{v > 0} */ \
   PTL_NOR(PTL_LTZ(__VA_ARGS__), PTL_EQZ(__VA_ARGS__))
 
 /// [numeric.lez]
@@ -1773,7 +1782,7 @@
 /// PTL_LEZ(2047)          // 0
 /// PTL_LEZ(0x800)         // 1
 /// PTL_LEZ(PTL_INC(2047)) // 1
-#define PTL_LEZ(/* n: int */...) /* -> bool{n >= 0} */ \
+#define PTL_LEZ(/* v: int */...) /* -> bool{v >= 0} */ \
   PTL_OR(PTL_LTZ(__VA_ARGS__), PTL_EQZ(__VA_ARGS__))
 
 /// [numeric.gez]
@@ -1785,7 +1794,7 @@
 /// PTL_GEZ(2047)          // 1
 /// PTL_GEZ(0x800)         // 0
 /// PTL_GEZ(PTL_INC(2047)) // 0
-#define PTL_GEZ(/* n: int */...) /* -> bool{n >= 0} */ PTL_NOT(PTL_LTZ(__VA_ARGS__))
+#define PTL_GEZ(/* v: int */...) /* -> bool{v >= 0} */ PTL_NOT(PTL_LTZ(__VA_ARGS__))
 
 /// [compare.lt]
 /// ------------

@@ -39,12 +39,22 @@ decltype(bsll) bsll = NIFTY_DEF(bsll, [&](va args) {
   tests << bsll(0, 1)                         = "0" >> docs;
   tests << bsll("1u", 1)                      = "2u" >> docs;
   tests << bsll("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h8)) >> docs;
-  if constexpr (conf::word_size > 1)
+
+  if constexpr (conf::word_size > 1) {
     tests << bsll("0x" + utl::cat(samp::h2), 3) = ("0x" + utl::cat(samp::h16)) >> docs;
-  tests << bsll(uint_max_s, 3) =
-      (std::to_string((conf::uint_max << 3) xor 0x7000) + "u") >> docs;
+    if constexpr (conf::word_size > 2)
+      tests << bsll(uint_max_s, 3) =
+          (std::to_string((conf::uint_max << 3) xor 0x7000) + "u") >> docs;
+    else
+      tests << bsll(uint_max_s, 3) =
+          (std::to_string((conf::uint_max << 3) xor 0x700) + "u") >> docs;
+  } else {
+    tests << bsll(uint_max_s, 3) = "8u" >> docs;
+  }
+
   if constexpr (conf::word_size > 2)
     tests << bsll(1, conf::bit_length - 2) = "1024" >> docs;
+
   tests << bsll(1, conf::bit_length - 1) = int_min_s >> docs;
   tests << bsll(1, conf::bit_length)     = "0" >> docs;
   tests << bsll(1, conf::bit_length + 1) = "0" >> docs;

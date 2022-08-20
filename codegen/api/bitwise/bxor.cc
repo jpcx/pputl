@@ -35,8 +35,6 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
   docs << "bitwise XOR operation."
        << "uses arg 'a' for result cast hint.";
 
-  static_assert(conf::word_size > 1, "TODO");
-
   tests << bxor(0, 0) = "0" >> docs;
   tests << bxor(0, 1) = "1" >> docs;
   tests << bxor(2, 1) = "3" >> docs;
@@ -46,40 +44,49 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
   tests << bxor(int_min_s, ("0x" + utl::cat(samp::hmax))) =
       ("0x" + utl::cat(samp::himax)) >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  if constexpr (conf::word_size > 1) {
+    def<"x(...)"> x = [&](va args) { return args; };
 
-  def<"r(...)"> r = [&](va args) {
-    def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
-                + ")"} = [&](pack args) {
-      std::array<std::string, conf::word_size * 2> res{};
-      res[0] = impl::hexhex(
-          pp::cat(args[conf::word_size - 1], args[conf::word_size * 2 - 1]), "XOR");
-      for (std::size_t i = 1; i < res.size() / 2; ++i)
-        res[i] = args[i - 1];
-      res[res.size() / 2] = args.back();
-      for (std::size_t i = res.size() / 2 + 1; i < res.size(); ++i)
-        res[i] = args[i - 1];
-      return utl::cat(res, ", ");
+    def<"r(...)"> r = [&](va args) {
+      def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
+                  + ")"} = [&](pack args) {
+        std::array<std::string, conf::word_size * 2> res{};
+        res[0] = impl::hexhex(
+            pp::cat(args[conf::word_size - 1], args[conf::word_size * 2 - 1]), "XOR");
+        for (std::size_t i = 1; i < res.size() / 2; ++i)
+          res[i] = args[i - 1];
+        res[res.size() / 2] = args.back();
+        for (std::size_t i = res.size() / 2 + 1; i < res.size(); ++i)
+          res[i] = args[i - 1];
+        return utl::cat(res, ", ");
+      };
+
+      return o(args);
     };
 
-    return o(args);
-  };
-
-  def<"res(...)"> res = [&](va args) {
-    def o = def{"o(_type, " + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
-                + ")"} = [&](pack args) { //
-      auto res = svect{next(args.begin()), std::prev(args.end(), conf::word_size)};
-      return word(pp::tup(res), args.front());
+    def<"res(...)"> res = [&](va args) {
+      def o = def{"o(_type, " + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
+                  + ")"} = [&](pack args) { //
+        auto res = svect{next(args.begin()), std::prev(args.end(), conf::word_size)};
+        return word(pp::tup(res), args.front());
+      };
+      return o(args);
     };
-    return o(args);
-  };
 
-  return def<"o(a, b)">{[&](arg a, arg b) {
-    return res(typeof(a), def<"<o(...)">{[&](va args) {
-                 return utl::cat(svect(conf::word_size, r + "(")) + args
-                      + utl::cat(svect(conf::word_size, ")"));
-               }}(x(esc + " " + utup(a), esc + " " + utup(b))));
-  }}(args);
+    return def<"o(a, b)">{[&](arg a, arg b) {
+      return res(typeof(a), def<"<o(...)">{[&](va args) {
+                   return utl::cat(svect(conf::word_size, r + "(")) + args
+                        + utl::cat(svect(conf::word_size, ")"));
+                 }}(x(esc + " " + utup(a), esc + " " + utup(b))));
+    }}(args);
+  } else {
+    return def<"o(a, b)">{[&](arg a, arg b) {
+      return word(pp::tup(def<"<o(a, b)">{[&](arg a, arg b) {
+                    return impl::hexhex(cat(a, b), "XOR");
+                  }}(esc + " " + utup(a), esc + " " + utup(b))),
+                  typeof(a));
+    }}(args);
+  }
 });
 
 } // namespace api

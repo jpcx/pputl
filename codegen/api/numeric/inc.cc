@@ -34,8 +34,6 @@ using namespace codegen;
 decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
   docs << "numerical increment w/ overflow.";
 
-  static_assert(conf::word_size > 1, "TODO");
-
   tests << inc(0)                            = "1" >> docs;
   tests << inc("1u")                         = "2u" >> docs;
   tests << inc(int_max_s)                    = int_min_s >> docs;
@@ -48,48 +46,63 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
     tests << inc("15u") = "0u" >> docs;
   }
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  if constexpr (conf::word_size > 1) {
+    def<"x(...)"> x = [&](va args) { return args; };
 
-  def init =
-      def{"init(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ") + ")"} = [&](pack args) {
-        svect head = svect(args.begin(), std::prev(args.end()));
-        return utl::cat(head, ", ") + ", " + esc + " " + impl::hex(args.back(), "INC");
+    def init = def{"init(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
+                   + ")"} = [&](pack args) {
+      svect head = svect(args.begin(), std::prev(args.end()));
+      return utl::cat(head, ", ") + ", " + esc + " " + impl::hex(args.back(), "INC");
+    };
+
+    def<"r0(...)"> r0 = [&](va args) {
+      def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
+                  + ", _carry, _inc)"} = [&](pack args) {
+        def<"0(b)"> _0 = [&](arg b) { return "0, " + b; };
+        def<"1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "INC")); };
+
+        return args.back() + ", "
+             + utl::cat(svect{args.begin(), args.begin() + conf::word_size - 2}, ", ")
+             + (conf::word_size > 2 ? ", " : "")
+             + pp::call(pp::cat(utl::slice(_0, -1), *(args.rbegin() + 1)),
+                        *(args.rbegin() + 2));
       };
 
-  def<"r0(...)"> r0 = [&](va args) {
-    def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-                + ", _carry, _inc)"} = [&](pack args) {
-      def<"0(b)"> _0 = [&](arg b) { return "0, " + b; };
-      def<"1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "INC")); };
-
-      return args.back() + ", " + args.front() + ", "
-           + pp::call(pp::cat(utl::slice(_0, -1), *(args.rbegin() + 1)), args[1]);
+      return o(args);
     };
 
-    return o(args);
-  };
+    def<"r1(...)"> r1 = [&](va args) {
+      def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
+                  + ", _carry, _inc)"} = [&](pack args) { //
+        return args.back() + ", "
+             + utl::cat(svect{args.begin(), args.begin() + conf::word_size - 2}, ", ")
+             + (conf::word_size > 2 ? ", " : "") + "0, " + *(args.rbegin() + 2);
+      };
 
-  def<"r1(...)"> r1 = [&](va args) {
-    def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-                + ", _carry, _inc)"} = [&](pack args) { //
-      return args.back() + ", " + args.front() + ", 0, " + args[1];
+      return o(args);
     };
 
-    return o(args);
-  };
-
-  def<"res(...)"> res = [&](va args) {
-    def o = def{"o(_hint, " + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-                + ", _carry, _inc)"} = [&](pack args) { //
-      return word(pp::tup(args[1], args[2], args.back()), args.front());
+    def<"res(...)"> res = [&](va args) {
+      def o = def{"o(_hint, " + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
+                  + ", _carry, _inc)"} = [&](pack args) { //
+        return word(pp::tup(utl::cat(svect{args.begin() + 1,
+                                           args.begin() + 1 + conf::word_size - 1},
+                                     ", "),
+                            args.back()),
+                    args.front());
+      };
+      return o(args);
     };
-    return o(args);
-  };
 
-  return res(typeof(args), def<"o(...)">{[&](va args) {
-               return r1(utl::cat(svect(conf::word_size - 1, r0 + "(")) + args
-                         + utl::cat(svect(conf::word_size - 1, ")")));
-             }}(x(init + " " + utup(args))));
+    return res(typeof(args), def<"o(...)">{[&](va args) {
+                 return r1(utl::cat(svect(conf::word_size - 1, r0 + "(")) + args
+                           + utl::cat(svect(conf::word_size - 1, ")")));
+               }}(x(init + " " + utup(args))));
+
+  } else {
+    return word(pp::tup(esc(va_rest + " " + impl::hex(esc + " " + utup(args), "INC"))),
+                typeof(args));
+  }
 });
 
 } // namespace api

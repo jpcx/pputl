@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(word_size) word_size = NIFTY_DEF(word_size, [&] {
-  docs << "the number of nybls used to represent pputl integers."
+  docs << "the number of hex digits used to represent pputl integers."
        << "hex representations of integers are fixed at this length."
        << "see the readme code generation section to configure.";
   return std::to_string(conf::word_size);

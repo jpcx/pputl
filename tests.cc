@@ -108,6 +108,9 @@
 //           xx_lp  xx_rp                                                     //
 //       ‐ inline recursive stack construction                      [meta]    //
 //           recur_lp  recur_rp                                               //
+//     ◆ configuration details                                    [config]    //
+//           build    word_size  bit_length  int_min                          //
+//           int_max  uint_max   size_max                                     //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
@@ -120,8 +123,8 @@
 //    pputl is completely generated and tested  by a custom C++ framework.    //
 //    See the codegen/ folder for the full source.                            //
 //                                                                            //
-//    Word size, naming preferences, and minification can be configured by    //
-//    modifying the head of codegen/codegen.h and running `make`.             //
+//    Various settings including word size and naming rules may be changed    //
+//    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
 //    Supported integer modes:                                                //
 //                                    ⋮  minify=none       ⋮ minify=all       //
@@ -130,7 +133,13 @@
 //      word_size=3 ⋮ 12-bit integers ⋮ [~? MiB (default)] ⋮ ~? MiB           //
 //      word_size=4 ⋮ 16-bit integers ⋮  ~? MiB            ⋮ ~? MiB           //
 //                                                                            //
-//    Run `make test` to validate the library on your system.                 //
+//    The default pputl build  is fully compliant with the C++20 standard,    //
+//    which requires preprocessor support for at least 256 macro arguments    //
+//    and parameters.  As such, pputl range algorithms and tuple sizes are    //
+//    capped at this limit but may be configured to support larger ranges.    //
+//                                                                            //
+//    pputl has been tested with gcc 11.2.1 and clang 13.                     //
+//    Run `make test` to validate on your system.                             //
 //                                                                            //
 //    TERMINOLOGY                                                             //
 //    -----------                                                             //
