@@ -161,10 +161,10 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
         def<"1\\UTUP">{}      = [&] { return ""; };
         def<"1">{}            = [&] { return ""; };
 
-        def<"00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
-        def<"01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"11(e, t, ...)">{}   = [&](arg, arg t, va hint) { return default_(t, hint); };
+        def<"\\00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
+        def<"\\01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+        def<"\\10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+        def<"\\11(e, t, ...)">{} = [&](arg, arg t, va hint) { return default_(t, hint); };
 
         return pp::call(
             cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),

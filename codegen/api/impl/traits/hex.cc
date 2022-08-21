@@ -65,12 +65,12 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
   {
     std::size_t i = 0;
     for (; i < 16 - 1; ++i) {
-      digits[i] = def{std::string{alpha[i]}} = [&] {
+      digits[i] = def{"\\" + std::string{alpha[i]}} = [&] {
         return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + to_nybl(i) + ", "
              + detail::bits(i);
       };
     }
-    digits[i] = def{std::string{alpha[i]}} = [&] {
+    digits[i] = def{"\\" + std::string{alpha[i]}} = [&] {
       docs << "not, (dec carry, dec), (inc carry, inc), nybl, ...bits";
       return not_(i) + ", " + dec(i) + ", " + inc(i) + ", " + to_nybl(i) + ", "
            + detail::bits(i);
@@ -78,8 +78,8 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
   }
 
   def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"0"> _0 = [&] { return "0"; };
-    def<"01">{} = [&] { return "1"; };
+    def<"\\0"> _0 = [&] { return "0"; };
+    def<"\\01">{} = [&] { return "1"; };
     return pp::cat(_0, pp::va_opt("1"));
   };
 

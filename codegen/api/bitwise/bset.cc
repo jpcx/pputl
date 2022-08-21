@@ -86,8 +86,8 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
                   return def<"<o(...)">{[&](va args) {
                     return def<"<o(e, i, b, gelt, ...)">{
                         [&](arg e, arg i, arg b, arg gelt, va args) {
-                          def<"0(e, ...)"> gelt0   = [&](arg e, va) { return fail(e); };
-                          def<"1(e, i, b, ...)">{} = [&](arg, arg i, arg b, va args) {
+                          def<"\\0(e, ...)"> gelt0   = [&](arg e, va) { return fail(e); };
+                          def<"\\1(e, i, b, ...)">{} = [&](arg, arg i, arg b, va args) {
                             return pp::call(pp::cat(utl::slice(_0, -1), i), b, args);
                           };
 

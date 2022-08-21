@@ -60,20 +60,6 @@ constexpr enum class name_case {
   pascal,    // PascalCase
 } name_case{name_case::screaming};
 
-namespace minification {
-enum : std::uint8_t {
-  none      = 0,      // no minification
-  comments  = 1 << 0, // remove comments except for license
-  implnames = 1 << 1, // mangles implementation names
-  noformat  = 1 << 2, // disables clang-format
-  newlines  = 1 << 3, // removes all double newlines
-  all       = comments | implnames | noformat | newlines,
-};
-};
-
-// configure minification
-constexpr auto minify = minification::none;
-
 // the number of hex digits used to describes integers.
 // hex representations are fixed at this length.
 // word_size may range from 1 to 4 inclusive.
@@ -235,11 +221,11 @@ constexpr char const project_header[]{
     "//    by modifying the head of codegen/codegen.h and running `make`.          //\n"
     "//                                                                            //\n"
     "//    Supported integer modes:                                                //\n"
-    "//                                      ⋮  minify=none       ⋮ minify=all     //\n"
-    "//      word_size=1   ⋮  4-bit integers ⋮  ~? KiB            ⋮ ~? KiB         //\n"
-    "//      word_size=2   ⋮  8-bit integers ⋮  ~? KiB            ⋮ ~? KiB         //\n"
-    "//      word_size=3   ⋮ 12-bit integers ⋮ [~? MiB (default)] ⋮ ~? MiB         //\n"
-    "//      word_size=4 † ⋮ 16-bit integers ⋮  ~? MiB            ⋮ ~? MiB         //\n"
+    "//                                                                            //\n"
+    "//      word_size=1    ⋮   4-bit integers  ⋮   ~? KiB                         //\n"
+    "//      word_size=2    ⋮   8-bit integers  ⋮   ~? KiB                         //\n"
+    "//      word_size=3    ⋮  12-bit integers  ⋮  [~? MiB (default)]              //\n"
+    "//      word_size=4 †  ⋮  16-bit integers  ⋮   ~? MiB                         //\n"
     "//                                          ________________________________  //\n"
     "//                                          †: requires cpp20_deflimit=false  //\n"
     "//                                                                            //\n"

@@ -42,23 +42,25 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
     for (; i < udecs.size() - 1; ++i) {
       auto bin = detail::binary(i);
       udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
-        return utl::cat(
-            std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i), detail::fact(i)}, ", ");
+        return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
+                                   detail::fact(i)},
+                        ", ");
       };
     }
     {
       auto bin = detail::binary(i);
       udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
         docs << "UHEX, LOG2, SQRT, FACT";
-        return utl::cat(
-            std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i), detail::fact(i)}, ", ");
+        return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
+                                   detail::fact(i)},
+                        ", ");
       };
     }
   }
 
   def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"0"> _0 = [&] { return "0"; };
-    def<"01">{} = [&] { return "1"; };
+    def<"\\0"> _0 = [&] { return "0"; };
+    def<"\\01">{} = [&] { return "1"; };
     return pp::cat(_0, pp::va_opt("1"));
   };
 

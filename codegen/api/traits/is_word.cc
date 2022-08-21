@@ -49,11 +49,11 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
   tests << is_word(pp::tup(samp::h8))                 = "1" >> docs;
 
   detail::is_word_o = def{"o(any)"} = [&](arg any) {
-    def<"0(any)"> _0 = [&](arg any) { return is_utup(any); };
+    def<"\\0(any)"> _0 = [&](arg any) { return is_utup(any); };
 
-    def<"1(atom)">{} = [&](arg atom) {
-      def<"<0(atom)"> _0 = [&](arg atom) { return detail::is_uint_o(atom); };
-      def<"<1(int)">{}   = [&](arg) { return "1"; };
+    def<"\\1(atom)">{} = [&](arg atom) {
+      def<"<\\0(atom)"> _0 = [&](arg atom) { return detail::is_uint_o(atom); };
+      def<"<\\1(int)">{}   = [&](arg) { return "1"; };
 
       return pp::call(cat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
     };
@@ -61,8 +61,8 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_atom_o(any)), any);
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_word_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_word_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
 });

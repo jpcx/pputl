@@ -47,8 +47,8 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   tests << udec(max)  = uint_max_s >> docs;
   tests << udec(in1)  = uint_max_s >> docs;
 
-  def<"0(uhex)"> _0 = [&](arg uhex) { return impl::uhex(uhex, "UDEC"); };
-  def<"1(udec)">{}  = [&](arg udec) { return udec; };
+  def<"\\0(uhex)"> _0 = [&](arg uhex) { return impl::uhex(uhex, "UDEC"); };
+  def<"\\1(udec)">{}  = [&](arg udec) { return udec; };
 
   return def<"o(uint)">{[&](arg uint) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_udec_o(uint)), uint);

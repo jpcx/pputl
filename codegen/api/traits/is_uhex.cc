@@ -38,7 +38,8 @@ decltype(is_uhex_o) is_uhex_o = NIFTY_DEF(is_uhex_o);
 decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
   docs << "[extends " + is_uint
               + "] detects if args is an unsigned int in hex form (requires 'u' suffix)."
-       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size) + ").";
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size)
+              + ").";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -50,14 +51,14 @@ decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
   tests << is_uhex("(), ()")  = "0" >> docs;
 
   detail::is_uhex_o = def{"o(uint)"} = [&](arg uint) {
-    def<"0"> _0 = [&] { return "0"; };
-    def<"1">{}  = [&] { return "1"; };
+    def<"\\0"> _0 = [&] { return "0"; };
+    def<"\\1">{}  = [&] { return "1"; };
 
     return cat(utl::slice(_0, -1), impl::uhex(uint, "IS"));
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_uhex_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_uhex_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
 });

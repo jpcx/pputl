@@ -39,8 +39,8 @@ decltype(some) some = NIFTY_DEF(some, [&](va args) {
   tests << some("foo", 42, pp::tup("", "", "")) = "foo, 42, (, , )" >> docs;
   tests << some("", "")                         = "," >> docs;
 
-  def<"0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"1(e, ...)">{}  = [](arg, va args) { return args; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
+  def<"\\1(e, ...)">{}  = [](arg, va args) { return args; };
 
   return pp::call(cat(utl::slice(_0, -1), is_some(args)),
                   str("[" + some + "] some cannot describe nothing : " + args), args);

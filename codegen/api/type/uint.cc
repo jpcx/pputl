@@ -108,10 +108,10 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
         def<"1\\UHEX">{}      = [&] { return ""; };
         def<"1">{}            = [&] { return ""; };
 
-        def<"00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
-        def<"01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
+        def<"\\00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
+        def<"\\01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+        def<"\\10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+        def<"\\11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
           def<"\\IDECUDEC"> idecidec = [&] { return "ID_UD"; };
           def<"\\IDECUHEX">{}        = [&] { return "ID_UH"; };
           def<"\\IDEC">{}            = [&] { return "ID_UD"; };

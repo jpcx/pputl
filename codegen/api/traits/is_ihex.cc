@@ -37,7 +37,8 @@ decltype(is_ihex_o) is_ihex_o = NIFTY_DEF(is_ihex_o);
 
 decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
   docs << "[extends " + is_int + "] detects if args is a signed int in hex form."
-       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size) + ").";
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size)
+              + ").";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -50,14 +51,14 @@ decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
   tests << is_ihex("(), ()")  = "0" >> docs;
 
   detail::is_ihex_o = def{"o(int)"} = [&](arg int_) {
-    def<"0"> _0 = [&] { return "0"; };
-    def<"1">{}  = [&] { return "1"; };
+    def<"\\0"> _0 = [&] { return "0"; };
+    def<"\\1">{}  = [&] { return "1"; };
 
     return cat(utl::slice(_0, -1), impl::uhex(pp::cat(int_, 'u'), "IS"));
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_ihex_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_ihex_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_int(args)), args);
 });

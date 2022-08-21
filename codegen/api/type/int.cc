@@ -111,10 +111,10 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
         def<"1\\IHEX">{}      = [&] { return ""; };
         def<"1">{}            = [&] { return ""; };
 
-        def<"00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
-        def<"01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
+        def<"\\00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
+        def<"\\01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+        def<"\\10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
+        def<"\\11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
           def<"\\IDECIDEC"> idecidec = [&] { return "ID_ID"; };
           def<"\\IDECIHEX">{}        = [&] { return "ID_IH"; };
           def<"\\IDEC">{}            = [&] { return "ID_ID"; };

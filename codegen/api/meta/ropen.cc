@@ -116,10 +116,10 @@
 //   // 9: f( f( f( f( f( f( f( f( f( ) ) ) ) ) ) ) ) ) 9/4=2 9%4=1 -> f( o2 c2 )
 // 
 //   return def<"x(n, f)">{[&](arg n_, arg f) {
-//     def<"0(n, f)"> _0 = [&](arg n_, arg f) {
+//     def<"\\0(n, f)"> _0 = [&](arg n_, arg f) {
 //       return pp::call(cat(utl::slice(n[0], -1), div2(div2(n_))), f);
 //     };
-//     def<"1(n, f)">{} = [&](arg n_, arg f) {
+//     def<"\\1(n, f)">{} = [&](arg n_, arg f) {
 //       return f + " " + lp() + " " + pp::call(cat(utl::slice(n[0], -1), div2(div2(dec(n_)))), f);
 //     };
 //     def<"2(n, f)">{} = [&](arg n_, arg f) {

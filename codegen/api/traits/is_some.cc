@@ -46,13 +46,8 @@ decltype(is_some) is_some = NIFTY_DEF(is_some, [&](va) {
   tests << is_some(", a, ")    = "1";
   tests << is_some(", , a")    = "1";
 
-  def<"0"> _0 = [&] {
-    return "0";
-  };
-
-  def<"01">{} = [&] {
-    return "1";
-  };
+  def<"\\0"> _0 = [&] { return "0"; };
+  def<"\\01">{} = [&] { return "1"; };
 
   return pp::cat(_0, pp::va_opt("1"));
 });

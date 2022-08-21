@@ -124,11 +124,11 @@
 //    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
 //    Supported integer modes:                                                //
-//                                      ⋮  minify=none       ⋮ minify=all     //
-//      word_size=1   ⋮  4-bit integers ⋮  ~? KiB            ⋮ ~? KiB         //
-//      word_size=2   ⋮  8-bit integers ⋮  ~? KiB            ⋮ ~? KiB         //
-//      word_size=3   ⋮ 12-bit integers ⋮ [~? MiB (default)] ⋮ ~? MiB         //
-//      word_size=4 † ⋮ 16-bit integers ⋮  ~? MiB            ⋮ ~? MiB         //
+//                                                                            //
+//      word_size=1    ⋮   4-bit integers  ⋮   ~? KiB                         //
+//      word_size=2    ⋮   8-bit integers  ⋮   ~? KiB                         //
+//      word_size=3    ⋮  12-bit integers  ⋮  [~? MiB (default)]              //
+//      word_size=4 †  ⋮  16-bit integers  ⋮   ~? MiB                         //
 //                                          ________________________________  //
 //                                          †: requires cpp20_deflimit=false  //
 //                                                                            //
@@ -1009,10 +1009,16 @@ ASSERT_PP_EQ((PTL_XSTR(PTL_RP(1))), ("PPUTLRP_B ( 0 )"));
 ASSERT_PP_EQ((PTL_XSTR(PTL_RP(2))), ("PPUTLRP_B ( 1 )"));
 ASSERT_PP_EQ((PTL_XSTR(PTL_RP(3))), ("PPUTLRP_B ( 2 )"));
 
-ASSERT_PP_EQ((PTL_XSTR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
-ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
-ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
-ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
+ASSERT_PP_EQ((PTL_XSTR(PTL_XTRACE)), ("PPUTLXTRACE_A ( , )"));
+ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_XTRACE))), ("PPUTLXTRACE_B ( ,, )"));
+ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_ESC(PTL_XTRACE)))), ("PPUTLXTRACE_A ( ,,, )"));
+ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE))))), ("PPUTLXTRACE_B ( ,,,, )"));
+
+ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_XTRACE)), (0u));
+ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_ESC(PTL_XTRACE))), (1u));
+ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_ESC(PTL_ESC(PTL_XTRACE)))), (2u));
+ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE))))), (3u));
+ASSERT_PP_EQ((PTL_XTRACE_READ(PPUTLXTRACE_A ( ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, ))), (255u));
 
 ASSERT_PP_EQ((PTL_ITEMS(())), ());
 ASSERT_PP_EQ((PTL_ITEMS((a))), (a));

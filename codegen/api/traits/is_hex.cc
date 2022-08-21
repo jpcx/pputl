@@ -48,8 +48,8 @@ decltype(is_hex) is_hex = NIFTY_DEF(is_hex, [&](va args) {
 
   detail::is_hex_o = def{"o(atom)"} = [&](arg atom) { return impl::hex(atom, "IS"); };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_hex_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_hex_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
 });

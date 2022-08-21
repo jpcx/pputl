@@ -42,18 +42,18 @@ decltype(lp) lp = NIFTY_DEF(lp, [&](va args) {
   tests << xstr(lp(3)) = pp::str(b + " ( 2 )") >> docs;
 
   a = [&](arg n) {
-    def<"0(n)"> _0 = [&](arg n) {
+    def<"\\0(n)"> _0 = [&](arg n) {
       return b + " " + impl::lp + " " + dec(n) + " " + impl::rp;
     };
-    def<"1(n)">{} = [&](arg) { return impl::lp; };
+    def<"\\1(n)">{} = [&](arg) { return impl::lp; };
     return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
   };
 
   b = [&](arg n) {
-    def<"0(n)"> _0 = [&](arg n) {
+    def<"\\0(n)"> _0 = [&](arg n) {
       return a + " " + impl::lp + " " + dec(n) + " " + impl::rp;
     };
-    def<"1(n)">{} = [&](arg) { return impl::lp; };
+    def<"\\1(n)">{} = [&](arg) { return impl::lp; };
     return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
   };
 

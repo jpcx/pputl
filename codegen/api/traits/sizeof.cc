@@ -78,9 +78,8 @@ decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
     read = [&](pack args) {
       def res = def{prefix + "(...)"} = [&](va args) { return args; };
 
-      def<"0(_sz)"> _0 = [&](arg) { return "FAIL"; };
-
-      def<"1(_sz)">{} = [&](arg sz) {
+      def<"\\0(_sz)"> _0 = [&](arg) { return "FAIL"; };
+      def<"\\1(_sz)">{}  = [&](arg sz) {
         return pp::cat(utl::slice(res, -prefix.size()), sz);
       };
 
@@ -91,9 +90,9 @@ decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
     };
 
     def<"res(e, ...)"> res = [&](arg e, va args) {
-      def<"\\FAIL">   fail_ = [&] { return ""; };
-      def<"0(e, sz)"> _0    = [&](arg, arg sz) { return sz; };
-      def<"1(e, ...)">{}    = [&](arg e, va) { return fail(e); };
+      def<"\\FAIL">     fail_ = [&] { return ""; };
+      def<"\\0(e, sz)"> _0    = [&](arg, arg sz) { return sz; };
+      def<"\\1(e, ...)">{}    = [&](arg e, va) { return fail(e); };
       return pp::call(
           cat(utl::slice(_0, -1), is_none(pp::cat(utl::slice(fail_, -4), args))), e,
           args);

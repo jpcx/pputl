@@ -37,7 +37,8 @@ decltype(is_int_o) is_int_o = NIFTY_DEF(is_int_o);
 
 decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   docs << "[extends " + is_atom + "] detects if args is a signed integer."
-       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size) + ")."
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size)
+              + ")."
        << "decimals must be smaller than " + int_max + " (" + int_max_s + ")."
        << "negative values must be hex; concatenation with '-' is not supported.";
 
@@ -56,11 +57,11 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   tests << is_int("(), ()") = "0" >> docs;
 
   detail::is_int_o = def{"o(atom)"} = [&](arg atom) {
-    def<"00(...)"> _00 = [&] { return "0"; };
-    def<"01(uhex)">{}  = [&](arg) { return "1"; };
-    def<"10(udec)">{}  = [&](arg udec) {
-      def<"0"> _0 = [&] { return "1"; };
-      def<"1">{}  = [&] { return "0"; };
+    def<"\\00(...)"> _00 = [&] { return "0"; };
+    def<"\\01(uhex)">{}  = [&](arg) { return "1"; };
+    def<"\\10(udec)">{}  = [&](arg udec) {
+      def<"<\\0"> _0 = [&] { return "1"; };
+      def<"<\\1">{}  = [&] { return "0"; };
 
       return cat(utl::slice(_0, -1), impl::uhex(impl::udec(udec, "UHEX"), "ILTZ"));
     };
@@ -70,8 +71,8 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
                     pp::cat(atom, 'u'));
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_int_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_int_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
 });

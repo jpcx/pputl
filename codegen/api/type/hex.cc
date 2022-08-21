@@ -41,9 +41,9 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
   tests << hex("0110") = "6" >> docs;
   tests << hex("1010") = "A" >> docs;
 
-  def<"00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
-  def<"01(e, nybl)">{}  = [](arg, arg nybl) { return impl::nybl(nybl, "HEX"); };
-  def<"10(e, hex)">{}   = [](arg, arg hex) { return hex; };
+  def<"\\00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
+  def<"\\01(e, nybl)">{}  = [](arg, arg nybl) { return impl::nybl(nybl, "HEX"); };
+  def<"\\10(e, hex)">{}   = [](arg, arg hex) { return hex; };
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(

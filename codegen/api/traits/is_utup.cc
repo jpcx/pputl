@@ -63,9 +63,9 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
   def<> r;
   if constexpr (conf::word_size > 1) {
     _00 = def{"00"} = [&] { return "0"; };
-    def<"01">{}     = [&] { return "0"; };
-    def<"10">{}     = [&] { return "0"; };
-    def<"11">{}     = [&] { return "1"; };
+    def<"\\01">{}   = [&] { return "0"; };
+    def<"\\10">{}   = [&] { return "0"; };
+    def<"\\11">{}   = [&] { return "1"; };
 
     chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
               + ", ...)"} = [&](pack args) {
@@ -102,8 +102,8 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
     }
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_utup_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_utup_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_tup(args)), args);
 });

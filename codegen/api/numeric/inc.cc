@@ -58,8 +58,8 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
     def<"r0(...)"> r0 = [&](va args) {
       def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
                   + ", _carry, _inc)"} = [&](pack args) {
-        def<"0(b)"> _0 = [&](arg b) { return "0, " + b; };
-        def<"1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "INC")); };
+        def<"\\0(b)"> _0 = [&](arg b) { return "0, " + b; };
+        def<"\\1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "INC")); };
 
         return args.back() + ", "
              + utl::cat(svect{args.begin(), args.begin() + conf::word_size - 2}, ", ")

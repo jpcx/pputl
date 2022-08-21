@@ -64,14 +64,14 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   tests << lt(std::to_string(conf::int_max + 1) + "u", pp::tup(samp::himax)) =
       "0" >> docs;
 
-  def<"000"> _000 = [&] { return "0"; };
-  def<"001">{}    = [&] { return "1"; };
-  def<"010">{}    = [&] { return "0"; };
-  def<"011">{}    = [&] { return "0"; };
-  def<"100">{}    = [&] { return "1"; };
-  def<"101">{}    = [&] { return "1"; };
-  def<"110">{}    = [&] { return "1"; };
-  def<"111">{}    = [&] { return "1"; };
+  def<"\\000"> _000 = [&] { return "0"; };
+  def<"\\001">{}    = [&] { return "1"; };
+  def<"\\010">{}    = [&] { return "0"; };
+  def<"\\011">{}    = [&] { return "0"; };
+  def<"\\100">{}    = [&] { return "1"; };
+  def<"\\101">{}    = [&] { return "1"; };
+  def<"\\110">{}    = [&] { return "1"; };
+  def<"\\111">{}    = [&] { return "1"; };
 
   def<"r(...)"> recur = [&](va args) {
     return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {
@@ -104,10 +104,10 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
     return def<"o(...)">{[&](va args) {
       def o = def{"<o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
                   + ")"} = [&](pack args) {
-        def<"00(...)"> _00 = [&](va args) { return ucmp(args); };
-        def<"01(...)">{}   = [&](va) { return "0"; };
-        def<"10(...)">{}   = [&](va) { return "1"; };
-        def<"11(...)">{}   = [&](va args) { return ucmp(args); };
+        def<"\\00(...)"> _00 = [&](va args) { return ucmp(args); };
+        def<"\\01(...)">{}   = [&](va) { return "0"; };
+        def<"\\10(...)">{}   = [&](va) { return "1"; };
+        def<"\\11(...)">{}   = [&](va args) { return ucmp(args); };
 
         return pp::call(cat(utl::slice(_00, -2),
                             cat(impl::hexhex(pp::cat("7", args[0]), "LT"),
@@ -120,13 +120,13 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   };
 
   def<"signof(word)"> signof = [&](arg word) {
-    def<"0(atom)"> _0 = [&](arg atom) {
-      def<"01"> _01 = [&] { return "U"; };
-      def<"10">{}   = [&] { return "I"; };
+    def<"\\0(atom)"> _0 = [&](arg atom) {
+      def<"<\\01"> _01 = [&] { return "U"; };
+      def<"<\\10">{}   = [&] { return "I"; };
       return cat(utl::slice(_01, -2),
                  cat(detail::is_int_o(atom), detail::is_uint_o(atom)));
     };
-    def<"1(tup)">{} = [&](arg) { return "U"; };
+    def<"\\1(tup)">{} = [&](arg) { return "U"; };
     return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
   };
 

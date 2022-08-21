@@ -70,13 +70,13 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       };
     }
 
-    def<"0(atom)"> _0 = [&](arg atom) {
-      def<"<0(uint)"> _0 = [&](arg uint) {
+    def<"\\0(atom)"> _0 = [&](arg atom) {
+      def<"<\\0(uint)"> _0 = [&](arg uint) {
         if constexpr (size_lt_max) {
-          def<"<0(uhex)"> _0 = [&](arg uhex) {
+          def<"<\\0(uhex)"> _0 = [&](arg uhex) {
             return esc(chk + " " + impl::uhex(uhex, "UTUP"));
           };
-          def<"<1(udec)">{} = [&](arg udec) {
+          def<"<\\1(udec)">{} = [&](arg udec) {
             return esc(chk + " " + impl::uhex(impl::udec(udec, "UHEX"), "UTUP"));
           };
 
@@ -86,22 +86,22 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
         }
       };
 
-      def<"<1(int)">{} = [&](arg int_) {
-        def<"<0(ihex)"> _0 = [&](arg ihex) {
+      def<"<\\1(int)">{} = [&](arg int_) {
+        def<"<\\0(ihex)"> _0 = [&](arg ihex) {
           if constexpr (size_lt_max) {
-            def<"0"> _0 = [&] { return "1"; };
-            def<"1">{}  = [&] { return "0"; };
+            def<"<\\0"> _0 = [&] { return "1"; };
+            def<"<\\1">{}  = [&] { return "0"; };
             return cat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ"));
           } else {
-            def<"0"> _0 = [&] { return "1"; };
-            def<"1">{}  = [&] { return "0"; };
+            def<"<\\0"> _0 = [&] { return "1"; };
+            def<"<\\1">{}  = [&] { return "0"; };
             return cat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ"));
           }
         };
-        def<"<1(idec)">{} = [&](arg idec) {
+        def<"<\\1(idec)">{} = [&](arg idec) {
           if constexpr (size_lt_max) {
-            def<"0"> _0 = [&] { return "1"; };
-            def<"1">{}  = [&] { return "0"; };
+            def<"<\\0"> _0 = [&] { return "1"; };
+            def<"<\\1">{}  = [&] { return "0"; };
             return cat(utl::slice(_0, -1),
                        impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "ILTZ"));
           } else {
@@ -115,7 +115,7 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       return pp::call(cat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
     };
 
-    def<"1(utup)">{} = [&](arg utup) {
+    def<"\\1(utup)">{} = [&](arg utup) {
       if constexpr (size_lt_max) {
         return esc(chk + " " + utup);
       } else {
@@ -126,8 +126,8 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_size_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_size_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_word(args)), args);
 });

@@ -52,14 +52,16 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
   tests << is_idec("(), ()")       = "0" >> docs;
 
   detail::is_idec_o = def{"o(int)"} = [&](arg int_) {
-    def<"0"> _0 = [&] { return "0"; };
-    def<"1">{}  = [&] { return "1"; };
+    def<"\\0"> _0 = [&] { return "0"; };
+    def<"\\1">{}  = [&] { return "1"; };
 
     return cat(utl::slice(_0, -1), impl::udec(pp::cat(int_, 'u'), "IS"));
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_idec_o; };
+  def<"fail(...)"> fail = [&](va) { return "0"; };
+
+  def<"\\0"> _0 = [&] { return fail; };
+  def<"\\1">{}  = [&] { return detail::is_idec_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_int(args)), args);
 });

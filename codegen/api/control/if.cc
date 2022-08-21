@@ -41,11 +41,11 @@
 //   tests << if_(1, "(a), (b, c)") = "a" >> docs;
 //   tests << if_(0, "(a), (b, c)") = "b, c" >> docs;
 // 
-//   def<"0(_, t, f)"> _0 = [&](arg, arg t, arg f) {
+//   def<"\\0(_, t, f)"> _0 = [&](arg, arg t, arg f) {
 //     return rest(pp::tup(tup(t)), items(f));
 //   };
 // 
-//   def<"1(_, t, f)">{} = [&](arg, arg t, arg f) {
+//   def<"\\1(_, t, f)">{} = [&](arg, arg t, arg f) {
 //     return rest(pp::tup(tup(f)), items(t));
 //   };
 // 

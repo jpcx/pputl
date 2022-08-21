@@ -45,18 +45,18 @@ decltype(rp) rp = NIFTY_DEF(rp, [&](va args) {
   tests << xstr(rp(3))             = pp::str(b + " ( 2 )") >> docs;
 
   a = [&](arg n) {
-    def<"0(n)"> _0 = [&](arg n) {
+    def<"\\0(n)"> _0 = [&](arg n) {
       return b + " " + impl::lp + " " + dec(n) + " " + impl::rp;
     };
-    def<"1(n)">{} = [&](arg) { return impl::rp; };
+    def<"\\1(n)">{} = [&](arg) { return impl::rp; };
     return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
   };
 
   b = [&](arg n) {
-    def<"0(n)"> _0 = [&](arg n) {
+    def<"\\0(n)"> _0 = [&](arg n) {
       return a + " " + impl::lp + " " + dec(n) + " " + impl::rp;
     };
-    def<"1(n)">{} = [&](arg) { return impl::rp; };
+    def<"\\1(n)">{} = [&](arg) { return impl::rp; };
     return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
   };
 

@@ -37,7 +37,8 @@ decltype(is_udec_o) is_udec_o = NIFTY_DEF(is_udec_o);
 
 decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   docs << "[extends " + is_uint
-              + "] detects if args is an unsigned int in deicmal form (requires 'u' suffix).";
+              + "] detects if args is an unsigned int in deicmal form (requires 'u' "
+                "suffix).";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -51,14 +52,13 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   tests << is_udec("(), ()")       = "0" >> docs;
 
   detail::is_udec_o = def{"o(uint)"} = [&](arg uint) {
-    def<"0"> _0 = [&] { return "0"; };
-    def<"1">{}  = [&] { return "1"; };
-
+    def<"\\0"> _0 = [&] { return "0"; };
+    def<"\\1">{}  = [&] { return "1"; };
     return cat(utl::slice(_0, -1), impl::udec(uint, "IS"));
   };
 
-  def<"0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"1">{}  = [&] { return detail::is_udec_o; };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_udec_o; };
 
   return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
 });

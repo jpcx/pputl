@@ -43,8 +43,7 @@ decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
   tests << bsrl(4, 1)                            = "2" >> docs;
   tests << bsrl(4, 2)                            = "1" >> docs;
   tests << bsrl(int_min_s, conf::bit_length - 1) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << bsrl(int_min_s, conf::bit_length - 0) =
-      ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << bsrl(int_min_s, conf::bit_length - 0) = ("0x" + utl::cat(samp::hmin)) >> docs;
 
   auto params = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -89,8 +88,8 @@ decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
     return word(def<"<o(i, ...)">{[&](arg i, va bin) {
                   return def<"<o(...)">{[&](va args) {
                     return def<"<o(i, gelt, ...)">{[&](arg i, arg gelt, va args) {
-                      def<"0(...)"> gelt0 = [&](va) { return "0"; };
-                      def<"1(i, ...)">{}  = [&](arg i, va args) {
+                      def<"\\0(...)"> gelt0 = [&](va) { return "0"; };
+                      def<"\\1(i, ...)">{}  = [&](arg i, va args) {
                         return pp::call(pp::cat(utl::slice(_0, -1), i), args);
                       };
 

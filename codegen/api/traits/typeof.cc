@@ -65,11 +65,11 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof()                                                    = "NONE" >> docs;
 
   // !none
-  def<"0(...)"> _0 = [&](va some_) {
+  def<"\\0(...)"> _0 = [&](va some_) {
     docs << "^!none";
 
     // !any
-    def<"<0(...)"> _0 = [&](va) {
+    def<"<\\0(...)"> _0 = [&](va) {
       docs << "^!none → !any";
       return "SOME";
     };
@@ -79,23 +79,23 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       docs << "^!none → any";
 
       // !tup
-      def<"<0(atom)"> _0 = [&](arg atom_) {
+      def<"<\\0(atom)"> _0 = [&](arg atom_) {
         docs << "^!none → any → !tup";
 
         // !int
-        def<"<0(atom)"> _0 = [&](arg atom_) {
+        def<"<\\0(atom)"> _0 = [&](arg atom_) {
           docs << "^!none → any → !tup → !int";
 
           // !uint
-          def<"<0(atom)"> _0 = [&](arg atom_) {
+          def<"<\\0(atom)"> _0 = [&](arg atom_) {
             docs << "^!none → any → !tup → !int → !uint";
 
             // !hex
-            def<"<0(atom)"> _0 = [&](arg atom_) {
+            def<"<\\0(atom)"> _0 = [&](arg atom_) {
               docs << "^!none → any → !tup → !int → !uint → !hex";
 
               // !nybl
-              def<"<0(atom)"> _0 = [&](arg) {
+              def<"<\\0(atom)"> _0 = [&](arg) {
                 docs << "^!none → any → !tup → !int → !uint → !hex → !nybl";
                 return "ATOM";
               };
@@ -123,7 +123,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
             docs << "^!none → any → !tup → !int → uint";
 
             // !udec
-            def<"<0(uhex)"> _0 = [&](arg) {
+            def<"<\\0(uhex)"> _0 = [&](arg) {
               docs << "^!none → any → !tup → !int → uint → !udec";
               return "UHEX";
             };
@@ -145,7 +145,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
           docs << "^!none → any → !tup → int";
 
           // !idec
-          def<"<0(ihex)"> _0 = [&](arg) {
+          def<"<\\0(ihex)"> _0 = [&](arg) {
             docs << "^!none → any → !tup → int → !idec";
             return "IHEX";
           };
@@ -167,7 +167,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
         docs << "^!none → any → tup";
 
         // !utup
-        def<"<0(tup)"> _0 = [&](arg) {
+        def<"<\\0(tup)"> _0 = [&](arg) {
           docs << "^!none → any → tup → !utup";
           return "TUP";
         };
@@ -188,7 +188,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   };
 
   // nothing
-  def<"1(...)">{} = [&](va) {
+  def<"\\1(...)">{} = [&](va) {
     docs << "none";
     return "NONE";
   };

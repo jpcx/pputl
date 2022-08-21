@@ -56,8 +56,8 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
     def<"r0(...)"> r0 = [&](va args) {
       def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
                   + ", _carry, _dec)"} = [&](pack args) {
-        def<"0(b)"> _0 = [&](arg b) { return "0, " + b; };
-        def<"1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "DEC")); };
+        def<"\\0(b)"> _0 = [&](arg b) { return "0, " + b; };
+        def<"\\1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "DEC")); };
 
         return args.back() + ", "
              + utl::cat(svect{args.begin(), args.begin() + conf::word_size - 2}, ", ")

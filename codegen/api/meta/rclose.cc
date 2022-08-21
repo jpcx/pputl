@@ -131,10 +131,10 @@
 //   // 9: f( f( f( f( f( f( f( f( f( ) ) ) ) ) ) ) ) ) 9/4=2 9%4=1 -> f( o2 c2 )
 // 
 //   return def<"x(n)">{[&](arg n_) {
-//     def<"0(n)"> _0 = [&](arg n_) {
+//     def<"\\0(n)"> _0 = [&](arg n_) {
 //       return cat(utl::slice(n[0], -1), div2(div2(n_)));
 //     };
-//     def<"1(n)">{} = [&](arg n_) {
+//     def<"\\1(n)">{} = [&](arg n_) {
 //       return cat(utl::slice(n[0], -1), div2(div2(n_))) + " " + rp();
 //     };
 //     def<"2(n)">{} = [&](arg n_) {

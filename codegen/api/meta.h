@@ -42,9 +42,9 @@ inline codegen::category<"meta"> meta;
 extern codegen::def<"id(...: v: any...) -> ...v"> const&                     id;
 extern codegen::def<"lp(...: [n=0]: idec) -> <deferred left paren>"> const&  lp;
 extern codegen::def<"rp(...: [n=0]: idec) -> <deferred right paren>"> const& rp;
-std::string                              xct_expected(unsigned n);
-extern codegen::def<"xct -> xct"> const& xct;
-// extern codegen::def<"xct_size(...: xct) -> uint"> const&                xct_size;
+std::string                                    xtrace_expected(unsigned n);
+extern codegen::def<"xtrace -> xtrace"> const& xtrace;
+extern codegen::def<"xtrace_read(...: xtrace) -> udec&size"> const& xtrace_read;
 // extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
 // extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
 
@@ -62,13 +62,13 @@ NIFTY_DECL(id);
 NIFTY_DECL(lp);
 NIFTY_DECL(rp);
 namespace detail {
-extern codegen::def<>& xct_a;
-extern codegen::def<>& xct_b;
-NIFTY_DECL(xct_a);
-NIFTY_DECL(xct_b);
+extern codegen::def<>& xtrace_a;
+extern codegen::def<>& xtrace_b;
+NIFTY_DECL(xtrace_a);
+NIFTY_DECL(xtrace_b);
 } // namespace detail
-NIFTY_DECL(xct);
-// NIFTY_DECL(xct_size);
+NIFTY_DECL(xtrace);
+NIFTY_DECL(xtrace_read);
 // NIFTY_DECL(ropen);
 // NIFTY_DECL(rclose);
 

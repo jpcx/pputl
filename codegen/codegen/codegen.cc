@@ -305,12 +305,6 @@ libname(std::string const& short_name, std::string const& prefix) {
 }
 } // namespace impl
 
-// auto dunder = std::ranges::find(short_name, '_');
-// while (dunder != short_name.end() and *(dunder + 1) != '_')
-//   dunder = std::ranges::find(dunder + 1, short_name.end(), '_');
-// std::string pre_esc{short_name.begin(), dunder};
-// std::string post_esc{dunder + (pre_esc.size() < short_name.size()), short_name.end()};
-
 std::string
 apiname(std::string const& short_name) {
   std::string pre_esc{short_name.begin(), std::ranges::find(short_name, '\\')};
@@ -772,6 +766,7 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   id = std::regex_replace(id, removed_uscore, "");
 
   // apply naming scheme
+
   if (_cur_category.starts_with("impl.") or not _exec_stack.empty()) {
     id = implname(id);
   } else {
@@ -788,6 +783,11 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
         id[it->position(1) + i] = 'o';
     }
   }
+
+  // remove format backslashes
+
+  static std::regex bs{"\\\\", std::regex_constants::optimize};
+  id = std::regex_replace(id, bs, "");
 
   // return the macro associated with this id if it exists
   // (and check for exec_stack discrepancies to ensure no id collisions)

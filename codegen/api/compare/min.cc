@@ -43,13 +43,14 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
   using std::vector;
   using std::string;
 
-  tests << min("0, 0")                = "0" >> docs;
-  tests << min("0, 1")                = "0" >> docs;
-  tests << min("7u, 8u")              = "7u" >> docs;
-  tests << min("8u, 7u")              = "7u";
-  tests << min(int_(uint_max_s), "0") = ("0x" + utl::cat(vector<string>(word_size, "F"))) >> docs;
-  tests << min(int_max_s, int_min_s)  = int_min_s >> docs;
-  tests << min(int_min_s, int_max_s)  = int_min_s;
+  tests << min("0, 0")   = "0" >> docs;
+  tests << min("0, 1")   = "0" >> docs;
+  tests << min("7u, 8u") = "7u" >> docs;
+  tests << min("8u, 7u") = "7u";
+  tests << min(int_(uint_max_s), "0") =
+      ("0x" + utl::cat(vector<string>(word_size, "F"))) >> docs;
+  tests << min(int_max_s, int_min_s)                          = int_min_s >> docs;
+  tests << min(int_min_s, int_max_s)                          = int_min_s;
   tests << min(int_min_s, int_(to_string(int_max + 1) + "u")) = int_min_s >> docs;
   tests << min(int_min_s, int_(to_string(int_max + 2) + "u")) = int_min_s >> docs;
   tests << min("0u", uint_max_s)                              = "0u";
@@ -60,13 +61,15 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
       to_string(uint_max / 2) + "u";
   tests << min(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") =
       to_string(uint_max / 2) + "u";
-  tests << min(to_string(int_max / 2), to_string((int_max / 2) - 1)) = to_string((int_max / 2) - 1);
-  tests << min(to_string(int_max / 2), to_string((int_max / 2)))     = to_string((int_max / 2));
-  tests << min(to_string(int_max / 2), to_string((int_max / 2) + 1)) = to_string(int_max / 2);
+  tests << min(to_string(int_max / 2), to_string((int_max / 2) - 1)) =
+      to_string((int_max / 2) - 1);
+  tests << min(to_string(int_max / 2), to_string((int_max / 2))) =
+      to_string((int_max / 2));
+  tests << min(to_string(int_max / 2), to_string((int_max / 2) + 1)) =
+      to_string(int_max / 2);
 
-  def<"0(a, b)"> _0 = [&](arg, arg b) { return b; };
-
-  def<"1(a, b)">{} = [&](arg a, arg) { return a; };
+  def<"\\0(a, b)"> _0 = [&](arg, arg b) { return b; };
+  def<"\\1(a, b)">{}  = [&](arg a, arg) { return a; };
 
   return pp::call(cat(utl::slice(_0, -1), lt(args)), args);
 });

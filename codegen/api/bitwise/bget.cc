@@ -61,9 +61,9 @@ decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
     return def<"<o(e, i, ...)">{[&](arg e, arg i, va bin) {
       return def<"<o(...)">{[&](va args) {
         return def<"<o(e, i, gelt, ...)">{[&](arg e, arg i, arg gelt, va args) {
-          def<"0(e, ...)"> gelt0 = [&](arg e, va) { return fail(e); };
+          def<"\\0(e, ...)"> gelt0 = [&](arg e, va) { return fail(e); };
 
-          def<"1(e, i, ...)">{} = [&](arg, arg i, va args) {
+          def<"\\1(e, i, ...)">{} = [&](arg, arg i, va args) {
             return pp::call(pp::cat(utl::slice(_0, -1), i), args);
           };
 
