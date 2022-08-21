@@ -25,20 +25,35 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
-  docs << "executes an invalid preprocessor operation to indicate a failure."
-       << "can accept either."
-       << ""
-       << "usage: " + fail("\"something bad happened\"")
-       << "       " + fail(str("[myfun] invalid args : __VA_ARGS__"));
+decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
+  docs << "counts the number of tuple items."
+       << "fails if larger than " + size_max + " (" + size_max_s + ")";
 
-  return pp::cat(fail, args);
+  tests << sizeof_(pp::tup())          = "0u" >> docs;
+  tests << sizeof_(pp::tup("a"))       = "1u" >> docs;
+  tests << sizeof_(pp::tup("a, b"))    = "2u" >> docs;
+  tests << sizeof_(pp::tup("a, b, c")) = "3u";
+  tests << sizeof_(pp::tup(utl::cat(std::array<std::string, conf::size_max>{}, ","))) =
+      size_max_s;
+  tests << sizeof_(pp::tup(", "))    = "2u" >> docs;
+  tests << sizeof_(pp::tup(", , "))  = "3u";
+  tests << sizeof_(pp::tup("a, "))   = "2u";
+  tests << sizeof_(pp::tup("a, , ")) = "3u";
+  tests << sizeof_(pp::tup(", a"))   = "2u";
+  tests << sizeof_(pp::tup(", a, ")) = "3u";
+  tests << sizeof_(pp::tup(", , a")) = "3u";
+
+  def<"0(e, ...)"> _0 = [&](arg e, va) { return fail(e); };
+  def<"1(e, tup)">{}  = [&](arg, arg tup) { return countof + " " + tup; };
+
+  return pp::call(cat(utl::slice(_0, -1), is_tup(args)),
+                  str("[" + sizeof_ + "] invalid tuple : " + args), args);
 });
 
 } // namespace api

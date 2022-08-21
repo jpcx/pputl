@@ -95,9 +95,9 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   };
 
   def<"ucmp(...)"> ucmp = [&](va args) {
-    return first(utl::cat(std::vector<std::string>(conf::word_size, recur + "("))
-                 + "0, 0, " + zip(args)
-                 + utl::cat(std::vector<std::string>(conf::word_size, ")")));
+    return xfirst(utl::cat(std::vector<std::string>(conf::word_size, recur + "("))
+                  + "0, 0, " + zip(args)
+                  + utl::cat(std::vector<std::string>(conf::word_size, ")")));
   };
 
   def<"icmp(...)"> icmp = [&](va args) {
@@ -121,30 +121,18 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
   return pp::call(
       def<"o(l, r)">{[&](arg l, arg r) {
-        def<"\\INTINT(e, l, r)"> intint = [&](arg, arg l, arg r) {
+        def<"\\II(e, l, r)"> intint = [&](arg, arg l, arg r) {
           return icmp(esc + " " + utup(l), esc + " " + utup(r));
         };
-        def<"\\INTUINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-        def<"\\INTNONE(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-        def<"\\UINTINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-        def<"\\UINTUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
+        def<"\\IU(e, l, r)">{} = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\UI(e, l, r)">{} = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\UU(e, l, r)">{} = [&](arg, arg l, arg r) {
           return ucmp(esc + " " + utup(l), esc + " " + utup(r));
         };
-        def<"\\UINTNONE(e, l, r)">{} = [&](arg, arg l, arg r) {
-          return ucmp(esc + " " + utup(l), esc + " " + r);
-        };
-        def<"\\NONEINT(e, l, r)">{}  = [&](arg e, arg, arg) { return fail(e); };
-        def<"\\NONEUINT(e, l, r)">{} = [&](arg, arg l, arg r) {
-          return ucmp(esc + " " + l, esc + " " + utup(r));
-        };
-        def<"\\NONENONE(e, l, r)">{} = [&](arg, arg l, arg r) {
-          return ucmp(esc + " " + l, esc + " " + r);
-        };
 
-        return cat(utl::slice(intint, -6), cat(signof(word(l)), signof(word(r))));
+        return cat(utl::slice(intint, -2), cat(signof(word(l)), signof(word(r))));
       }}(args),
-      va_str("[" + lt + "] comparison of different signedness not allowed : " + args),
-      args);
+      str("[" + lt + "] comparison of different signedness not allowed : " + args), args);
 });
 
 } // namespace api

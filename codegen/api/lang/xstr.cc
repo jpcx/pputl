@@ -31,17 +31,22 @@ namespace api {
 
 using namespace codegen;
 
-decltype(va_first) va_first = NIFTY_DEF(va_first, [&](arg first, va) {
-  docs << "immediately returns the first argument."
-       << "must have at least one argument."
-       << ""
-       << "useful for operating directly on __VA_ARGS__ or"
-       << "for quickly retrieving the first tuple element"
-       << "using an identity function such as " + esc + "."
-       << ""
-       << "e.g. " + va_first("__VA_ARGS__") << "     " + esc(va_first + " tup");
+decltype(xstr) xstr = NIFTY_DEF(xstr, [&](va args) {
+  docs << "stringizes args after an expansion.";
 
-  return first;
+  tests << xstr()                  = "\"\"" >> docs;
+  tests << xstr("foo")             = "\"foo\"";
+  tests << xstr("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << xstr(cat("foo", "bar")) = pp::str("foobar") >> docs;
+  tests << xstr(", ")              = "\",\"";
+  tests << xstr(", , ")            = "\", ,\"";
+  tests << xstr("a, ")             = "\"a,\"";
+  tests << xstr("a, , ")           = "\"a, ,\"";
+  tests << xstr(", a")             = "\", a\"";
+  tests << xstr(", a, ")           = "\", a,\"";
+  tests << xstr(", , a")           = "\", , a\"";
+
+  return str(args);
 });
 
 } // namespace api

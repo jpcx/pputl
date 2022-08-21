@@ -33,17 +33,15 @@ namespace api {
 
 inline codegen::category<"lang"> lang;
 
-extern codegen::def<"eat(...) -> <nothing>"> const&                            eat;
-extern codegen::def<"esc(...: ...v: any) -> ...v"> const&                      esc;
-extern codegen::def<"cat(...: [a]: any, [b]: any) -> a##b"> const&             cat;
-extern codegen::def<"va_str(...: ...v: any) -> <string literal #...v>"> const& va_str;
-extern codegen::def<"str(...: ...v: any) -> <string literal #...v>"> const&    str;
-extern codegen::def<"va_first(_, ...: first: any, rest: any...) -> first"> const&
-                                                            va_first;
-extern codegen::def<"first(...: ...v: any) -> v[0]"> const& first;
-extern codegen::def<"va_rest(_, ...: first: any, rest: any...) -> ...rest"> const&
-                                                           va_rest;
-extern codegen::def<"rest(...: ...v: any) -> ...v"> const& rest;
+extern codegen::def<"eat(...) -> <nothing>"> const&                             eat;
+extern codegen::def<"esc(...: ...v: any) -> ...v"> const&                       esc;
+extern codegen::def<"cat(...: [a]: any, [b]: any) -> a##b"> const&              cat;
+extern codegen::def<"str(...: ...v: any) -> <string literal #...v>"> const&     str;
+extern codegen::def<"xstr(...: ...v: any) -> <string literal #...v>"> const&    xstr;
+extern codegen::def<"first(_, ...: first: any, rest: any...) -> first"> const&  first;
+extern codegen::def<"xfirst(...: ...v: any) -> v[0]"> const&                    xfirst;
+extern codegen::def<"rest(_, ...: first: any, rest: any...) -> ...rest"> const& rest;
+extern codegen::def<"xrest(...: ...v: any) -> ...v"> const&                     xrest;
 extern codegen::def<
     "trim(...: ...v: any) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
 extern codegen::def<"default(...: default: <any>, ...argument: <any...>) -> "> const&
@@ -56,12 +54,12 @@ extern codegen::def<"fail(...: msg: <tokens or string literal>, [stringize=1]: b
 NIFTY_DECL(eat);
 NIFTY_DECL(esc);
 NIFTY_DECL(cat);
-NIFTY_DECL(va_str);
 NIFTY_DECL(str);
-NIFTY_DECL(va_first);
+NIFTY_DECL(xstr);
 NIFTY_DECL(first);
-NIFTY_DECL(va_rest);
+NIFTY_DECL(xfirst);
 NIFTY_DECL(rest);
+NIFTY_DECL(xrest);
 NIFTY_DECL(trim);
 NIFTY_DECL(default_);
 NIFTY_DECL(fail);

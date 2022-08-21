@@ -66,7 +66,7 @@ decltype(trim) trim = NIFTY_DEF(trim, [&](va args) {
     return pp::cat(0, pp::va_opt(1));
   };
 
-  return pp::call(cat(utl::slice(_00, -2), cat(sel(first(args)), sel(rest(args)))), args);
+  return pp::call(cat(utl::slice(_00, -2), cat(sel(xfirst(args)), sel(xrest(args)))), args);
 });
 
 } // namespace api

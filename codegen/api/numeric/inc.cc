@@ -100,7 +100,7 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
                }}(x(init + " " + utup(args))));
 
   } else {
-    return word(pp::tup(esc(va_rest + " " + impl::hex(esc + " " + utup(args), "INC"))),
+    return word(pp::tup(esc(rest + " " + impl::hex(esc + " " + utup(args), "INC"))),
                 typeof(args));
   }
 });

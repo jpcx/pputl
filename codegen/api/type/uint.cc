@@ -137,8 +137,8 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
             e, t, hint);
       };
 
-  auto hword_params = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : hword_params)
+  auto utup_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : utup_params)
     if (v == "u" or v == "x") {
       v = "_" + v;
     }
@@ -150,27 +150,27 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   def<"\\IH_UD(ihex)">{} = [&](arg ihex) {
     return impl::uhex(pp::cat(ihex, 'u'), "UDEC");
   };
-  def<"\\IH_UH(ihex)">{}  = [&](arg ihex) { return pp::cat(ihex, 'u'); };
-  def<"\\UD_UD(udec)">{}  = [&](arg udec) { return udec; };
-  def<"\\UD_UH(udec)">{}  = [&](arg udec) { return impl::udec(udec, "UHEX"); };
-  def<"\\UH_UD(uhex)">{}  = [&](arg uhex) { return impl::uhex(uhex, "UDEC"); };
-  def<"\\UH_UH(uhex)">{}  = [&](arg uhex) { return uhex; };
-  def<"\\XW_UD(hword)">{} = [&](arg hword) {
-    def o = def{"o(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+  def<"\\IH_UH(ihex)">{} = [&](arg ihex) { return pp::cat(ihex, 'u'); };
+  def<"\\UD_UD(udec)">{} = [&](arg udec) { return udec; };
+  def<"\\UD_UH(udec)">{} = [&](arg udec) { return impl::udec(udec, "UHEX"); };
+  def<"\\UH_UD(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "UDEC"); };
+  def<"\\UH_UH(uhex)">{} = [&](arg uhex) { return uhex; };
+  def<"\\XW_UD(utup)">{} = [&](arg utup) {
+    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
       return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "UDEC");
     };
-    return o + " " + hword;
+    return o + " " + utup;
   };
-  def<"\\XW_UH(hword)">{} = [&](arg hword) {
-    def o = def{"o(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+  def<"\\XW_UH(utup)">{} = [&](arg utup) {
+    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
       return pp::cat("0x", pp::cat(args), "u");
     };
-    return o + " " + hword;
+    return o + " " + utup;
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(cat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
-  }}(va_str("[" + uint + "] invalid arguments : " + args), args);
+  }}(str("[" + uint + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

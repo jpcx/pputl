@@ -31,14 +31,15 @@ namespace api {
 
 using namespace codegen;
 
-decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
-  docs << "executes an invalid preprocessor operation to indicate a failure."
-       << "can accept either."
-       << ""
-       << "usage: " + fail("\"something bad happened\"")
-       << "       " + fail(str("[myfun] invalid args : __VA_ARGS__"));
+decltype(xfirst) xfirst = NIFTY_DEF(xfirst, [&](va args) {
+  docs << "returns the first argument.";
 
-  return pp::cat(fail, args);
+  tests << xfirst("")     = "" >> docs;
+  tests << xfirst(", ")   = "" >> docs;
+  tests << xfirst("a")    = "a" >> docs;
+  tests << xfirst("a, b") = "a" >> docs;
+
+  return pp::va_opt(first(args));
 });
 
 } // namespace api

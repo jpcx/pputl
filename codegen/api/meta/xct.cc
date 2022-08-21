@@ -58,10 +58,10 @@ decltype(xct) xct = NIFTY_DEF(xct, [&] {
     return detail::xct_a + " " + lp() + " " + args + ", " + rp();
   };
 
-  tests << str(xct)                = pp::str(xct_expected(0)) >> docs;
-  tests << str(esc(xct))           = pp::str(xct_expected(1)) >> docs;
-  tests << str(esc(esc(xct)))      = pp::str(xct_expected(2)) >> docs;
-  tests << str(esc(esc(esc(xct)))) = pp::str(xct_expected(3)) >> docs;
+  tests << xstr(xct)                = pp::str(xct_expected(0)) >> docs;
+  tests << xstr(esc(xct))           = pp::str(xct_expected(1)) >> docs;
+  tests << xstr(esc(esc(xct)))      = pp::str(xct_expected(2)) >> docs;
+  tests << xstr(esc(esc(esc(xct)))) = pp::str(xct_expected(3)) >> docs;
 
   return detail::xct_a + " " + lp() + " /**/, " + rp();
 });

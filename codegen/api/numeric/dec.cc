@@ -97,7 +97,7 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
                            + utl::cat(svect(conf::word_size - 1, ")")));
                }}(x(init + " " + utup(args))));
   } else {
-    return word(pp::tup(esc(va_rest + " " + impl::hex(esc + " " + utup(args), "DEC"))),
+    return word(pp::tup(esc(rest + " " + impl::hex(esc + " " + utup(args), "DEC"))),
                 typeof(args));
   }
 });

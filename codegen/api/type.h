@@ -52,6 +52,8 @@ extern codegen::def<"tup(...: v: tup) -> t"> const&                            t
 extern codegen::def<"utup(...: v: word) -> utup{n}"> const&                    utup;
 extern codegen::def<
     "word(...: v: word, [hint]: UTUP|IDEC|IHEX|UDEC|UHEX) -> word{n}"> const& word;
+extern codegen::def<
+    "size(...: v: word, [hint]: UTUP|IDEC|IHEX|UDEC|UHEX) -> size{n}"> const& size;
 
 // TODO: ctor
 
@@ -71,6 +73,7 @@ NIFTY_DECL(uhex);
 NIFTY_DECL(tup);
 NIFTY_DECL(utup);
 NIFTY_DECL(word);
+NIFTY_DECL(size);
 
 inline codegen::end_category<"type"> type_end;
 

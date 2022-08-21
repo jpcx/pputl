@@ -43,7 +43,7 @@ decltype(some) some = NIFTY_DEF(some, [&](va args) {
   def<"1(e, ...)">{}  = [](arg, va args) { return args; };
 
   return pp::call(cat(utl::slice(_0, -1), is_some(args)),
-                  va_str("[" + some + "] some cannot describe nothing : " + args), args);
+                  str("[" + some + "] some cannot describe nothing : " + args), args);
 });
 
 } // namespace api

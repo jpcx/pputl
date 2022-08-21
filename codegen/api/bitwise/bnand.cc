@@ -41,7 +41,7 @@ decltype(bnand) bnand = NIFTY_DEF(bnand, [&](va args) {
   tests << bnand(pp::tup(samp::himax), pp::tup(samp::hmax)) =
       pp::tup(samp::himin) >> docs;
 
-  return word(impl::uhex(uhex(band(args)), "BNOT"), typeof(va_first(args)));
+  return word(impl::uhex(uhex(band(args)), "BNOT"), typeof(first(args)));
 });
 
 } // namespace api

@@ -77,7 +77,7 @@ decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
 
   return def<"o(e, ...)">{[&](arg e, va some) {
     return pp::call(cat(utl::slice(_0, -1), detail::is_utup_o(some)), e, some);
-  }}(va_str("[" + utup + "] invalid integer or word : " + args), some(args));
+  }}(str("[" + utup + "] invalid integer or word : " + args), some(args));
 });
 
 } // namespace api

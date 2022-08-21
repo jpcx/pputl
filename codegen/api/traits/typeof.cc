@@ -34,6 +34,7 @@ using namespace codegen;
 decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   docs << "detects the value type. must be compatible with the ## operator."
        << "literal 0 through 9 are considered ibase10 rather than bool or hex."
+       << "words less than the word size are not considered as size types."
        << ""
        << "returns one of:"
        << ""

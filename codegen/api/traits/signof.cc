@@ -32,23 +32,27 @@ namespace api {
 using namespace codegen;
 
 decltype(signof) signof = NIFTY_DEF(signof, [&](va args) {
-  docs << "detects if a value is signed, unsigned, or a non-integral."
-       << "returns literal INT, UINT, or NONE.";
+  docs << "detects the signedness of a word."
+       << "returns literal I or U."
+       << "utup is considered unsigned."
+       << "fails if args is not a word.";
 
-  tests << signof(0)                               = "INT" >> docs;
-  tests << signof(int_max_s)                       = "INT";
-  tests << signof(int_min_s)                       = "INT" >> docs;
-  tests << signof("1u")                            = "UINT" >> docs;
-  tests << signof(uint_max_s)                      = "UINT" >> docs;
-  tests << signof("0x" + utl::cat(samp::h7) + "u") = "UINT" >> docs;
-  tests << signof("foo")                           = "NONE" >> docs;
-  tests << signof(pp::tup(samp::himax))            = "NONE" >> docs;
+  tests << signof(0)                               = "I" >> docs;
+  tests << signof(int_max_s)                       = "I";
+  tests << signof(int_min_s)                       = "I" >> docs;
+  tests << signof("1u")                            = "U" >> docs;
+  tests << signof(uint_max_s)                      = "U" >> docs;
+  tests << signof("0x" + utl::cat(samp::h7) + "u") = "U" >> docs;
+  tests << signof(pp::tup(samp::himax))            = "U" >> docs;
 
-  def<"00"> _00 = [&] { return "NONE"; };
-  def<"10">{}   = [&] { return "INT"; };
-  def<"01">{}   = [&] { return "UINT"; };
+  def<"000(e)"> _000 = [&](arg e) { return fail(e); };
+  def<"100(e)">{}    = [&](arg) { return "I"; };
+  def<"010(e)">{}    = [&](arg) { return "U"; };
+  def<"001(e)">{}    = [&](arg) { return "U"; };
 
-  return cat(utl::slice(_00, -2), cat(is_int(args), is_uint(args)));
+  return pp::call(
+      cat(cat(utl::slice(_000, -3), is_int(args)), cat(is_uint(args), is_utup(args))),
+      str("[" + signof + "] invalid word : " + args));
 });
 
 } // namespace api

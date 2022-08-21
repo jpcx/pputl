@@ -140,8 +140,8 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
             e, t, h);
       };
 
-  auto hword_params = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : hword_params)
+  auto utup_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : utup_params)
     if (v == "u" or v == "x") {
       v = "_" + v;
     }
@@ -160,24 +160,24 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   def<"\\UD_IH(udec)">{} = [&](arg udec) {
     return impl::uhex(impl::udec(udec, "UHEX"), "IHEX");
   };
-  def<"\\UH_IC(uhex)">{}  = [&](arg uhex) { return impl::uhex(uhex, "ICAST"); };
-  def<"\\UH_IH(uhex)">{}  = [&](arg uhex) { return impl::uhex(uhex, "IHEX"); };
-  def<"\\XW_IC(hword)">{} = [&](arg hword) {
-    def o = def{"o(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+  def<"\\UH_IC(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "ICAST"); };
+  def<"\\UH_IH(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "IHEX"); };
+  def<"\\XW_IC(utup)">{} = [&](arg utup) {
+    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
       return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "ICAST");
     };
-    return o + " " + hword;
+    return o + " " + utup;
   };
-  def<"\\XW_IH(hword)">{} = [&](arg hword) {
-    def o = def{"o(" + utl::cat(hword_params, ", ") + ")"} = [&](pack args) {
+  def<"\\XW_IH(utup)">{} = [&](arg utup) {
+    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
       return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "IHEX");
     };
-    return o + " " + hword;
+    return o + " " + utup;
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(cat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
-  }}(va_str("[" + int_ + "] invalid arguments : " + args), args);
+  }}(str("[" + int_ + "] invalid arguments : " + args), args);
 });
 
 } // namespace api

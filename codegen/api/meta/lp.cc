@@ -37,9 +37,9 @@ decltype(lp) lp = NIFTY_DEF(lp, [&](va args) {
   def<"a(n)"> a;
   def<"b(n)"> b;
 
-  tests << str(lp(1)) = pp::str(b + " ( 0 )") >> docs;
-  tests << str(lp(2)) = pp::str(b + " ( 1 )") >> docs;
-  tests << str(lp(3)) = pp::str(b + " ( 2 )") >> docs;
+  tests << xstr(lp(1)) = pp::str(b + " ( 0 )") >> docs;
+  tests << xstr(lp(2)) = pp::str(b + " ( 1 )") >> docs;
+  tests << xstr(lp(3)) = pp::str(b + " ( 2 )") >> docs;
 
   a = [&](arg n) {
     def<"0(n)"> _0 = [&](arg n) {

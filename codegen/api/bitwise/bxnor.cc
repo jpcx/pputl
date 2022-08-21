@@ -42,7 +42,7 @@ decltype(bxnor) bxnor = NIFTY_DEF(bxnor, [&](va args) {
     tests << bxnor(15, 8) =
         ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
 
-  return word(impl::uhex(uhex(bxor(args)), "BNOT"), typeof(va_first(args)));
+  return word(impl::uhex(uhex(bxor(args)), "BNOT"), typeof(first(args)));
 });
 
 } // namespace api

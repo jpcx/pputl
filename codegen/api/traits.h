@@ -52,9 +52,12 @@ extern codegen::def<"is_uhex(...: <unknown>) -> bool"> const& is_uhex;
 extern codegen::def<"is_tup(...: <unknown>) -> bool"> const&  is_tup;
 extern codegen::def<"is_utup(...: <unknown>) -> bool"> const& is_utup;
 extern codegen::def<"is_word(...: <unknown>) -> bool"> const& is_word;
+extern codegen::def<"is_size(...: <unknown>) -> bool"> const& is_size;
 extern codegen::def<"typeof(...: <unknown>) -> "
                     "NONE|SOME|UTUP|TUP|IDEC|IHEX|UDEC|UHEX|HEX|NYBL|ATOM"> const& typeof;
-extern codegen::def<"signof(...: <unknown>) -> INT|UINT|NONE"> const& signof;
+extern codegen::def<"signof(...: word) -> I|U"> const&                   signof;
+extern codegen::def<"countof(...: ...v: none|some) -> udec&size"> const& countof;
+extern codegen::def<"sizeof(...: v: tup) -> udec&size"> const&           sizeof_;
 
 namespace detail {
 extern codegen::def<>& is_any_o;
@@ -71,6 +74,7 @@ extern codegen::def<>& is_uhex_o;
 extern codegen::def<>& is_tup_o;
 extern codegen::def<>& is_utup_o;
 extern codegen::def<>& is_word_o;
+extern codegen::def<>& is_size_o;
 NIFTY_DECL(is_any_o);
 NIFTY_DECL(is_atom_o);
 NIFTY_DECL(is_bool_o);
@@ -85,6 +89,7 @@ NIFTY_DECL(is_uhex_o);
 NIFTY_DECL(is_tup_o);
 NIFTY_DECL(is_utup_o);
 NIFTY_DECL(is_word_o);
+NIFTY_DECL(is_size_o);
 } // namespace detail
 
 NIFTY_DECL(is_none);
@@ -103,8 +108,11 @@ NIFTY_DECL(is_uhex);
 NIFTY_DECL(is_tup);
 NIFTY_DECL(is_utup);
 NIFTY_DECL(is_word);
+NIFTY_DECL(is_size);
 NIFTY_DECL(typeof);
 NIFTY_DECL(signof);
+NIFTY_DECL(countof);
+NIFTY_DECL(sizeof_);
 
 inline codegen::end_category<"traits"> traits_end;
 

@@ -25,28 +25,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "config.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(va_str) va_str = NIFTY_DEF(va_str, [&](va args) {
-  docs << "immediately stringizes args.";
-
-  tests << va_str()                  = "\"\"" >> docs;
-  tests << va_str("foo")             = "\"foo\"";
-  tests << va_str("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << va_str(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
-  tests << va_str(", ")              = "\",\"";
-  tests << va_str(", , ")            = "\", ,\"";
-  tests << va_str("a, ")             = "\"a,\"";
-  tests << va_str("a, , ")           = "\"a, ,\"";
-  tests << va_str(", a")             = "\", a\"";
-  tests << va_str(", a, ")           = "\", a,\"";
-  tests << va_str(", , a")           = "\", , a\"";
-
-  return "#" + args;
+decltype(size_max) size_max = NIFTY_DEF(size_max, [&] {
+  docs << "the maximum allowed number of arguments and tuple size."
+       << "set to min(255, uint_max) unless built with cpp20_arglimit=false,"
+       << "in which case size_max is the uint_max.";
+  return size_max_s;
 });
 
 } // namespace api

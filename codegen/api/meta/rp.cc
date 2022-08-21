@@ -40,9 +40,9 @@ decltype(rp) rp = NIFTY_DEF(rp, [&](va args) {
   tests << lp() + " " + rp()       = "( )" >> docs;
   tests << lp(0) + " " + rp(0)     = "( )" >> docs;
   tests << id(lp(1) + " " + rp(1)) = "( )" >> docs;
-  tests << str(rp(1))             = pp::str(b + " ( 0 )") >> docs;
-  tests << str(rp(2))             = pp::str(b + " ( 1 )") >> docs;
-  tests << str(rp(3))             = pp::str(b + " ( 2 )") >> docs;
+  tests << xstr(rp(1))             = pp::str(b + " ( 0 )") >> docs;
+  tests << xstr(rp(2))             = pp::str(b + " ( 1 )") >> docs;
+  tests << xstr(rp(3))             = pp::str(b + " ( 2 )") >> docs;
 
   a = [&](arg n) {
     def<"0(n)"> _0 = [&](arg n) {

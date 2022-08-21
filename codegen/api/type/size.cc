@@ -25,20 +25,42 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
-  docs << "executes an invalid preprocessor operation to indicate a failure."
-       << "can accept either."
+decltype(size) size = NIFTY_DEF(size, [&](va args) {
+  docs << "[inherits from " + word + "] a word within 0 and " + size_max + " ("
+              + size_max_s + ")."
+       << "constructibe from any word."
        << ""
-       << "usage: " + fail("\"something bad happened\"")
-       << "       " + fail(str("[myfun] invalid args : __VA_ARGS__"));
+       << "cannot parse negative decimals; use math.neg instead."
+       << "hex length is fixed. cannot parse shorter hex lengths."
+       << ""
+       << "see type.word for available cast modes."
+       << ""
+       << "attempts to preserve hex/decimal representation by default, but"
+       << "will output hex if casting the input yields a negative number."
+       << "hint is ignored only if the result is negative and the hint is IDEC."
+       << ""
+       << "cast between signed and unsigned reinterprets bits."
+       << ""
+       << "values above the int max must have a 'u' suffix; implicit interpretation"
+       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+              + " is not a valid integer).";
 
-  return pp::cat(fail, args);
+  tests << size(0) = "0" >> docs;
+
+  return def<"o(e, w)">{[&](arg e, arg w) {
+    def<"0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };
+    def<"1(e, w)">{}  = [&](arg, arg w) { return w; };
+
+    return pp::call(cat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
+  }}(str("[" + size + "] invalid size; must be within 0 and " + size_max + " ("
+         + size_max_s + ") : " + args),
+     word(args));
 });
 
 } // namespace api

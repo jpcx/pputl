@@ -71,7 +71,7 @@ decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
         }}(args);
       }}(e, i, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
     }}(e, idec(i), bdump(v));
-  }}(va_str("[" + bget + "] invalid index; args : " + args), args);
+  }}(str("[" + bget + "] invalid index; args : " + args), args);
 });
 
 } // namespace api

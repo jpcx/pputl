@@ -172,8 +172,8 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
             e, t, hint);
       };
 
-  auto hword_params = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : hword_params)
+  auto utup_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : utup_params)
     if (v == "u" or v == "x") {
       v = "_" + v;
     }
@@ -186,7 +186,7 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(cat(utl::slice(idec, -4), mode(e, typeof(v), hint)), v);
-  }}(va_str("[" + word + "] invalid arguments : " + args), args);
+  }}(str("[" + word + "] invalid arguments : " + args), args);
 });
 
 } // namespace api
