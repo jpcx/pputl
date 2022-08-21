@@ -119,6 +119,17 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
     }}(args);
   };
 
+  def<"signof(word)"> signof = [&](arg word) {
+    def<"0(atom)"> _0 = [&](arg atom) {
+      def<"01"> _01 = [&] { return "U"; };
+      def<"10">{}   = [&] { return "I"; };
+      return cat(utl::slice(_01, -2),
+                 cat(detail::is_int_o(atom), detail::is_uint_o(atom)));
+    };
+    def<"1(tup)">{} = [&](arg) { return "U"; };
+    return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
+  };
+
   return pp::call(
       def<"o(l, r)">{[&](arg l, arg r) {
         def<"\\II(e, l, r)"> intint = [&](arg, arg l, arg r) {

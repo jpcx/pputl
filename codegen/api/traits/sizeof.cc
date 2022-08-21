@@ -32,28 +32,86 @@ namespace api {
 using namespace codegen;
 
 decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
-  docs << "counts the number of tuple items."
+  docs << "counts the number of arguments."
        << "fails if larger than " + size_max + " (" + size_max_s + ")";
 
-  tests << sizeof_(pp::tup())          = "0u" >> docs;
-  tests << sizeof_(pp::tup("a"))       = "1u" >> docs;
-  tests << sizeof_(pp::tup("a, b"))    = "2u" >> docs;
-  tests << sizeof_(pp::tup("a, b, c")) = "3u";
-  tests << sizeof_(pp::tup(utl::cat(std::array<std::string, conf::size_max>{}, ","))) =
-      size_max_s;
-  tests << sizeof_(pp::tup(", "))    = "2u" >> docs;
-  tests << sizeof_(pp::tup(", , "))  = "3u";
-  tests << sizeof_(pp::tup("a, "))   = "2u";
-  tests << sizeof_(pp::tup("a, , ")) = "3u";
-  tests << sizeof_(pp::tup(", a"))   = "2u";
-  tests << sizeof_(pp::tup(", a, ")) = "3u";
-  tests << sizeof_(pp::tup(", , a")) = "3u";
+  tests << sizeof_()          = "0u" >> docs;
+  tests << sizeof_("a")       = "1u" >> docs;
+  tests << sizeof_("a, b")    = "2u" >> docs;
+  tests << sizeof_("a, b, c") = "3u";
+  tests << sizeof_(utl::cat(std::array<std::string, conf::size_max>{}, ",")) = size_max_s;
+  tests << sizeof_(", ")    = "2u" >> docs;
+  tests << sizeof_(", , ")  = "3u";
+  tests << sizeof_("a, ")   = "2u";
+  tests << sizeof_("a, , ") = "3u";
+  tests << sizeof_(", a")   = "2u";
+  tests << sizeof_(", a, ") = "3u";
+  tests << sizeof_(", , a") = "3u";
 
-  def<"0(e, ...)"> _0 = [&](arg e, va) { return fail(e); };
-  def<"1(e, tup)">{}  = [&](arg, arg tup) { return countof + " " + tup; };
+  if constexpr (conf::cpp20_arglimit) { // slower implementation but ensures
+                                        // that no more than size_max args are passed
+    std::array<def<>, conf::size_max> n{};
+    n[0] = def{"n" + std::to_string(conf::size_max) + "(e, _, ...)"} =
+        [&](arg e, arg, va) { return pp::va_opt(fail(e) + ", ") + " " + size_max_s; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_tup(args)),
-                  str("[" + sizeof_ + "] invalid tuple : " + args), args);
+    for (std::size_t i = 1; i < n.size(); ++i) {
+      n[i] = def{"n" + std::to_string(conf::size_max - i)
+                 + "(e, _, ...)"} = [&](arg e, arg, va args) {
+        return pp::va_opt(n[i - 1](e, args) + ", ") + " "
+             + std::to_string(conf::size_max - i) + "u";
+      };
+    }
+
+    return def<"o(e, ...)">{[&](arg e, va args) {
+      return xfirst(pp::va_opt(n.back()(e, args + ".") + ", ") + " 0u");
+    }}(str("[" + sizeof_ + "] too many arguments : " + args), args);
+  } else {
+    def read = def{"read(" + utl::cat(utl::alpha_base52_seq(conf::size_max), ", ")
+                   + ", _sz, ...)"};
+
+    std::string prefix = utl::slice(read, -4);
+    if (prefix.back() == '_')
+      prefix.pop_back();
+
+    def verifier = def{prefix + "(...)"} = [&] { return ""; };
+
+    read = [&](pack args) {
+      def res = def{prefix + "(...)"} = [&](va args) { return args; };
+
+      def<"0(_sz)"> _0 = [&](arg) { return "FAIL"; };
+
+      def<"1(_sz)">{} = [&](arg sz) {
+        return pp::cat(utl::slice(res, -prefix.size()), sz);
+      };
+
+      auto sz = args[args.size() - 2];
+      return pp::call(cat(utl::slice(_0, -1),
+                          is_none(pp::cat(utl::slice(verifier, -prefix.size()), sz))),
+                      sz);
+    };
+
+    def<"res(e, ...)"> res = [&](arg e, va args) {
+      def<"\\FAIL">   fail_ = [&] { return ""; };
+      def<"0(e, sz)"> _0    = [&](arg, arg sz) { return sz; };
+      def<"1(e, ...)">{}    = [&](arg e, va) { return fail(e); };
+      return pp::call(
+          cat(utl::slice(_0, -1), is_none(pp::cat(utl::slice(fail_, -4), args))), e,
+          args);
+    };
+
+    return def<"o(e, ...)">{[&](arg e, va args) {
+      return res(e, def<"<o(_, ...)">{[&](arg op, va args) {
+                   auto rseq = utl::base10_seq(conf::size_max + 1);
+                   for (auto&& v : rseq)
+                     v = v + "u";
+                   std::ranges::reverse(rseq);
+                   for (auto&& v : rseq)
+                     v = pp::call(op, v);
+                   return read(args + " " + pp::va_opt(", ") + " "
+                               + utl::cat(rseq, ", "));
+                 }}(prefix, args));
+    }}(str("[" + sizeof_ + "] too many arguments : " + args), args);
+  }
 });
 
 } // namespace api

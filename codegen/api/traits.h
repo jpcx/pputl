@@ -55,9 +55,7 @@ extern codegen::def<"is_word(...: <unknown>) -> bool"> const& is_word;
 extern codegen::def<"is_size(...: <unknown>) -> bool"> const& is_size;
 extern codegen::def<"typeof(...: <unknown>) -> "
                     "NONE|SOME|UTUP|TUP|IDEC|IHEX|UDEC|UHEX|HEX|NYBL|ATOM"> const& typeof;
-extern codegen::def<"signof(...: word) -> I|U"> const&                   signof;
-extern codegen::def<"countof(...: ...v: none|some) -> udec&size"> const& countof;
-extern codegen::def<"sizeof(...: v: tup) -> udec&size"> const&           sizeof_;
+extern codegen::def<"sizeof(...: <unknown>) -> udec&size"> const& sizeof_;
 
 namespace detail {
 extern codegen::def<>& is_any_o;
@@ -110,8 +108,6 @@ NIFTY_DECL(is_utup);
 NIFTY_DECL(is_word);
 NIFTY_DECL(is_size);
 NIFTY_DECL(typeof);
-NIFTY_DECL(signof);
-NIFTY_DECL(countof);
 NIFTY_DECL(sizeof_);
 
 inline codegen::end_category<"traits"> traits_end;

@@ -34,7 +34,6 @@
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
-#include "util.h"
 
 namespace api {
 

@@ -74,10 +74,10 @@
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           none  some  any   atom  bool  hex   nybl  int  idec              //
 //           ihex  uint  udec  uhex  tup   utup  word  size                   //
-//       ‐ traits detection                                 [traits, util]    //
+//       ‐ traits detection                                       [traits]    //
 //           is_none  is_some  is_any   is_atom  is_bool  is_hex   is_nybl    //
 //           is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex  is_tup     //
-//           is_utup  is_word  is_size  typeof   signof   countof  sizeof     //
+//           is_utup  is_word  is_size  typeof   sizeof                       //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -93,7 +93,7 @@
 //           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //
 //           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //
 //     ◆ range algorithms                                                     //
-//       ‐ element access                                    [util, range]    //
+//       ‐ element access                                          [range]    //
 //           items  bisect  unite  get  set  push  pop  slice                 //
 //       ‐ generation                                               [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
@@ -242,9 +242,9 @@
 
 /// [config.size_max]
 /// -----------------
-/// the maximum allowed number of arguments and tuple size.
-/// set to min(255, uint_max) unless built with cpp20_arglimit=false,
-/// in which case size_max is the uint_max.
+/// the maximum number of arguments bounded by the C++20 standard.
+/// set to min(255, uint_max) unless built with cpp20_arglimit=false
+/// (which sets size_max to uint_max).
 #define PTL_SIZE_MAX /* -> udec&size */ 255u
 
 /// [lang.eat]
@@ -938,324 +938,277 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.signof]
+/// [traits.sizeof]
 /// ---------------
-/// detects the signedness of a word.
-/// returns literal I or U.
-/// utup is considered unsigned.
-/// fails if args is not a word.
-///
-/// PTL_SIGNOF(0)         // I
-/// PTL_SIGNOF(0x800)     // I
-/// PTL_SIGNOF(1u)        // U
-/// PTL_SIGNOF(4095u)     // U
-/// PTL_SIGNOF(0x007u)    // U
-/// PTL_SIGNOF((7, F, F)) // U
-#define PTL_SIGNOF(/* word */...) /* -> I|U */                         \
-  PTL_CAT(PTL_CAT(PPUTLSIGNOF_, PTL_IS_INT(__VA_ARGS__)),              \
-          PTL_CAT(PTL_IS_UINT(__VA_ARGS__), PTL_IS_UTUP(__VA_ARGS__))) \
-  (PTL_STR([PTL_SIGNOF] invalid word : __VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLSIGNOF_001(e) U
-#define PPUTLSIGNOF_010(e) U
-#define PPUTLSIGNOF_100(e) I
-#define PPUTLSIGNOF_000(e) PTL_FAIL(e)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [traits.countof]
-/// ----------------
 /// counts the number of arguments.
 /// fails if larger than PTL_SIZE_MAX (255u)
 ///
-/// PTL_COUNTOF()     // 0u
-/// PTL_COUNTOF(a)    // 1u
-/// PTL_COUNTOF(a, b) // 2u
-/// PTL_COUNTOF(, )   // 2u
-#define PTL_COUNTOF(/* ...v: none|some */...) /* -> udec&size */ \
-  PPUTLCOUNTOF_o(PTL_STR([PTL_COUNTOF] too many arguments : __VA_ARGS__), __VA_ARGS__)
+/// PTL_SIZEOF()     // 0u
+/// PTL_SIZEOF(a)    // 1u
+/// PTL_SIZEOF(a, b) // 2u
+/// PTL_SIZEOF(, )   // 2u
+#define PTL_SIZEOF(/* <unknown> */...) /* -> udec&size */ \
+  PPUTLSIZEOF_o(PTL_STR([PTL_SIZEOF] too many arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLCOUNTOF_o(e, ...) \
-  PTL_XFIRST(__VA_OPT__(PPUTLCOUNTOF_1(e, __VA_ARGS__.), ) 0u)
-#define PPUTLCOUNTOF_1(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_2(e, __VA_ARGS__), ) 1u
-#define PPUTLCOUNTOF_2(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_3(e, __VA_ARGS__), ) 2u
-#define PPUTLCOUNTOF_3(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_4(e, __VA_ARGS__), ) 3u
-#define PPUTLCOUNTOF_4(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_5(e, __VA_ARGS__), ) 4u
-#define PPUTLCOUNTOF_5(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_6(e, __VA_ARGS__), ) 5u
-#define PPUTLCOUNTOF_6(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_7(e, __VA_ARGS__), ) 6u
-#define PPUTLCOUNTOF_7(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_8(e, __VA_ARGS__), ) 7u
-#define PPUTLCOUNTOF_8(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_9(e, __VA_ARGS__), ) 8u
-#define PPUTLCOUNTOF_9(e, _, ...)   __VA_OPT__(PPUTLCOUNTOF_10(e, __VA_ARGS__), ) 9u
-#define PPUTLCOUNTOF_10(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_11(e, __VA_ARGS__), ) 10u
-#define PPUTLCOUNTOF_11(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_12(e, __VA_ARGS__), ) 11u
-#define PPUTLCOUNTOF_12(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_13(e, __VA_ARGS__), ) 12u
-#define PPUTLCOUNTOF_13(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_14(e, __VA_ARGS__), ) 13u
-#define PPUTLCOUNTOF_14(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_15(e, __VA_ARGS__), ) 14u
-#define PPUTLCOUNTOF_15(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_16(e, __VA_ARGS__), ) 15u
-#define PPUTLCOUNTOF_16(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_17(e, __VA_ARGS__), ) 16u
-#define PPUTLCOUNTOF_17(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_18(e, __VA_ARGS__), ) 17u
-#define PPUTLCOUNTOF_18(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_19(e, __VA_ARGS__), ) 18u
-#define PPUTLCOUNTOF_19(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_20(e, __VA_ARGS__), ) 19u
-#define PPUTLCOUNTOF_20(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_21(e, __VA_ARGS__), ) 20u
-#define PPUTLCOUNTOF_21(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_22(e, __VA_ARGS__), ) 21u
-#define PPUTLCOUNTOF_22(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_23(e, __VA_ARGS__), ) 22u
-#define PPUTLCOUNTOF_23(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_24(e, __VA_ARGS__), ) 23u
-#define PPUTLCOUNTOF_24(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_25(e, __VA_ARGS__), ) 24u
-#define PPUTLCOUNTOF_25(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_26(e, __VA_ARGS__), ) 25u
-#define PPUTLCOUNTOF_26(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_27(e, __VA_ARGS__), ) 26u
-#define PPUTLCOUNTOF_27(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_28(e, __VA_ARGS__), ) 27u
-#define PPUTLCOUNTOF_28(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_29(e, __VA_ARGS__), ) 28u
-#define PPUTLCOUNTOF_29(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_30(e, __VA_ARGS__), ) 29u
-#define PPUTLCOUNTOF_30(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_31(e, __VA_ARGS__), ) 30u
-#define PPUTLCOUNTOF_31(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_32(e, __VA_ARGS__), ) 31u
-#define PPUTLCOUNTOF_32(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_33(e, __VA_ARGS__), ) 32u
-#define PPUTLCOUNTOF_33(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_34(e, __VA_ARGS__), ) 33u
-#define PPUTLCOUNTOF_34(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_35(e, __VA_ARGS__), ) 34u
-#define PPUTLCOUNTOF_35(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_36(e, __VA_ARGS__), ) 35u
-#define PPUTLCOUNTOF_36(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_37(e, __VA_ARGS__), ) 36u
-#define PPUTLCOUNTOF_37(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_38(e, __VA_ARGS__), ) 37u
-#define PPUTLCOUNTOF_38(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_39(e, __VA_ARGS__), ) 38u
-#define PPUTLCOUNTOF_39(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_40(e, __VA_ARGS__), ) 39u
-#define PPUTLCOUNTOF_40(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_41(e, __VA_ARGS__), ) 40u
-#define PPUTLCOUNTOF_41(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_42(e, __VA_ARGS__), ) 41u
-#define PPUTLCOUNTOF_42(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_43(e, __VA_ARGS__), ) 42u
-#define PPUTLCOUNTOF_43(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_44(e, __VA_ARGS__), ) 43u
-#define PPUTLCOUNTOF_44(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_45(e, __VA_ARGS__), ) 44u
-#define PPUTLCOUNTOF_45(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_46(e, __VA_ARGS__), ) 45u
-#define PPUTLCOUNTOF_46(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_47(e, __VA_ARGS__), ) 46u
-#define PPUTLCOUNTOF_47(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_48(e, __VA_ARGS__), ) 47u
-#define PPUTLCOUNTOF_48(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_49(e, __VA_ARGS__), ) 48u
-#define PPUTLCOUNTOF_49(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_50(e, __VA_ARGS__), ) 49u
-#define PPUTLCOUNTOF_50(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_51(e, __VA_ARGS__), ) 50u
-#define PPUTLCOUNTOF_51(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_52(e, __VA_ARGS__), ) 51u
-#define PPUTLCOUNTOF_52(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_53(e, __VA_ARGS__), ) 52u
-#define PPUTLCOUNTOF_53(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_54(e, __VA_ARGS__), ) 53u
-#define PPUTLCOUNTOF_54(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_55(e, __VA_ARGS__), ) 54u
-#define PPUTLCOUNTOF_55(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_56(e, __VA_ARGS__), ) 55u
-#define PPUTLCOUNTOF_56(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_57(e, __VA_ARGS__), ) 56u
-#define PPUTLCOUNTOF_57(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_58(e, __VA_ARGS__), ) 57u
-#define PPUTLCOUNTOF_58(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_59(e, __VA_ARGS__), ) 58u
-#define PPUTLCOUNTOF_59(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_60(e, __VA_ARGS__), ) 59u
-#define PPUTLCOUNTOF_60(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_61(e, __VA_ARGS__), ) 60u
-#define PPUTLCOUNTOF_61(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_62(e, __VA_ARGS__), ) 61u
-#define PPUTLCOUNTOF_62(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_63(e, __VA_ARGS__), ) 62u
-#define PPUTLCOUNTOF_63(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_64(e, __VA_ARGS__), ) 63u
-#define PPUTLCOUNTOF_64(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_65(e, __VA_ARGS__), ) 64u
-#define PPUTLCOUNTOF_65(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_66(e, __VA_ARGS__), ) 65u
-#define PPUTLCOUNTOF_66(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_67(e, __VA_ARGS__), ) 66u
-#define PPUTLCOUNTOF_67(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_68(e, __VA_ARGS__), ) 67u
-#define PPUTLCOUNTOF_68(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_69(e, __VA_ARGS__), ) 68u
-#define PPUTLCOUNTOF_69(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_70(e, __VA_ARGS__), ) 69u
-#define PPUTLCOUNTOF_70(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_71(e, __VA_ARGS__), ) 70u
-#define PPUTLCOUNTOF_71(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_72(e, __VA_ARGS__), ) 71u
-#define PPUTLCOUNTOF_72(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_73(e, __VA_ARGS__), ) 72u
-#define PPUTLCOUNTOF_73(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_74(e, __VA_ARGS__), ) 73u
-#define PPUTLCOUNTOF_74(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_75(e, __VA_ARGS__), ) 74u
-#define PPUTLCOUNTOF_75(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_76(e, __VA_ARGS__), ) 75u
-#define PPUTLCOUNTOF_76(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_77(e, __VA_ARGS__), ) 76u
-#define PPUTLCOUNTOF_77(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_78(e, __VA_ARGS__), ) 77u
-#define PPUTLCOUNTOF_78(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_79(e, __VA_ARGS__), ) 78u
-#define PPUTLCOUNTOF_79(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_80(e, __VA_ARGS__), ) 79u
-#define PPUTLCOUNTOF_80(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_81(e, __VA_ARGS__), ) 80u
-#define PPUTLCOUNTOF_81(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_82(e, __VA_ARGS__), ) 81u
-#define PPUTLCOUNTOF_82(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_83(e, __VA_ARGS__), ) 82u
-#define PPUTLCOUNTOF_83(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_84(e, __VA_ARGS__), ) 83u
-#define PPUTLCOUNTOF_84(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_85(e, __VA_ARGS__), ) 84u
-#define PPUTLCOUNTOF_85(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_86(e, __VA_ARGS__), ) 85u
-#define PPUTLCOUNTOF_86(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_87(e, __VA_ARGS__), ) 86u
-#define PPUTLCOUNTOF_87(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_88(e, __VA_ARGS__), ) 87u
-#define PPUTLCOUNTOF_88(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_89(e, __VA_ARGS__), ) 88u
-#define PPUTLCOUNTOF_89(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_90(e, __VA_ARGS__), ) 89u
-#define PPUTLCOUNTOF_90(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_91(e, __VA_ARGS__), ) 90u
-#define PPUTLCOUNTOF_91(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_92(e, __VA_ARGS__), ) 91u
-#define PPUTLCOUNTOF_92(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_93(e, __VA_ARGS__), ) 92u
-#define PPUTLCOUNTOF_93(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_94(e, __VA_ARGS__), ) 93u
-#define PPUTLCOUNTOF_94(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_95(e, __VA_ARGS__), ) 94u
-#define PPUTLCOUNTOF_95(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_96(e, __VA_ARGS__), ) 95u
-#define PPUTLCOUNTOF_96(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_97(e, __VA_ARGS__), ) 96u
-#define PPUTLCOUNTOF_97(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_98(e, __VA_ARGS__), ) 97u
-#define PPUTLCOUNTOF_98(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_99(e, __VA_ARGS__), ) 98u
-#define PPUTLCOUNTOF_99(e, _, ...)  __VA_OPT__(PPUTLCOUNTOF_100(e, __VA_ARGS__), ) 99u
-#define PPUTLCOUNTOF_100(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_101(e, __VA_ARGS__), ) 100u
-#define PPUTLCOUNTOF_101(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_102(e, __VA_ARGS__), ) 101u
-#define PPUTLCOUNTOF_102(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_103(e, __VA_ARGS__), ) 102u
-#define PPUTLCOUNTOF_103(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_104(e, __VA_ARGS__), ) 103u
-#define PPUTLCOUNTOF_104(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_105(e, __VA_ARGS__), ) 104u
-#define PPUTLCOUNTOF_105(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_106(e, __VA_ARGS__), ) 105u
-#define PPUTLCOUNTOF_106(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_107(e, __VA_ARGS__), ) 106u
-#define PPUTLCOUNTOF_107(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_108(e, __VA_ARGS__), ) 107u
-#define PPUTLCOUNTOF_108(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_109(e, __VA_ARGS__), ) 108u
-#define PPUTLCOUNTOF_109(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_110(e, __VA_ARGS__), ) 109u
-#define PPUTLCOUNTOF_110(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_111(e, __VA_ARGS__), ) 110u
-#define PPUTLCOUNTOF_111(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_112(e, __VA_ARGS__), ) 111u
-#define PPUTLCOUNTOF_112(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_113(e, __VA_ARGS__), ) 112u
-#define PPUTLCOUNTOF_113(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_114(e, __VA_ARGS__), ) 113u
-#define PPUTLCOUNTOF_114(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_115(e, __VA_ARGS__), ) 114u
-#define PPUTLCOUNTOF_115(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_116(e, __VA_ARGS__), ) 115u
-#define PPUTLCOUNTOF_116(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_117(e, __VA_ARGS__), ) 116u
-#define PPUTLCOUNTOF_117(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_118(e, __VA_ARGS__), ) 117u
-#define PPUTLCOUNTOF_118(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_119(e, __VA_ARGS__), ) 118u
-#define PPUTLCOUNTOF_119(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_120(e, __VA_ARGS__), ) 119u
-#define PPUTLCOUNTOF_120(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_121(e, __VA_ARGS__), ) 120u
-#define PPUTLCOUNTOF_121(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_122(e, __VA_ARGS__), ) 121u
-#define PPUTLCOUNTOF_122(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_123(e, __VA_ARGS__), ) 122u
-#define PPUTLCOUNTOF_123(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_124(e, __VA_ARGS__), ) 123u
-#define PPUTLCOUNTOF_124(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_125(e, __VA_ARGS__), ) 124u
-#define PPUTLCOUNTOF_125(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_126(e, __VA_ARGS__), ) 125u
-#define PPUTLCOUNTOF_126(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_127(e, __VA_ARGS__), ) 126u
-#define PPUTLCOUNTOF_127(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_128(e, __VA_ARGS__), ) 127u
-#define PPUTLCOUNTOF_128(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_129(e, __VA_ARGS__), ) 128u
-#define PPUTLCOUNTOF_129(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_130(e, __VA_ARGS__), ) 129u
-#define PPUTLCOUNTOF_130(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_131(e, __VA_ARGS__), ) 130u
-#define PPUTLCOUNTOF_131(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_132(e, __VA_ARGS__), ) 131u
-#define PPUTLCOUNTOF_132(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_133(e, __VA_ARGS__), ) 132u
-#define PPUTLCOUNTOF_133(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_134(e, __VA_ARGS__), ) 133u
-#define PPUTLCOUNTOF_134(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_135(e, __VA_ARGS__), ) 134u
-#define PPUTLCOUNTOF_135(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_136(e, __VA_ARGS__), ) 135u
-#define PPUTLCOUNTOF_136(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_137(e, __VA_ARGS__), ) 136u
-#define PPUTLCOUNTOF_137(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_138(e, __VA_ARGS__), ) 137u
-#define PPUTLCOUNTOF_138(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_139(e, __VA_ARGS__), ) 138u
-#define PPUTLCOUNTOF_139(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_140(e, __VA_ARGS__), ) 139u
-#define PPUTLCOUNTOF_140(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_141(e, __VA_ARGS__), ) 140u
-#define PPUTLCOUNTOF_141(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_142(e, __VA_ARGS__), ) 141u
-#define PPUTLCOUNTOF_142(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_143(e, __VA_ARGS__), ) 142u
-#define PPUTLCOUNTOF_143(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_144(e, __VA_ARGS__), ) 143u
-#define PPUTLCOUNTOF_144(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_145(e, __VA_ARGS__), ) 144u
-#define PPUTLCOUNTOF_145(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_146(e, __VA_ARGS__), ) 145u
-#define PPUTLCOUNTOF_146(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_147(e, __VA_ARGS__), ) 146u
-#define PPUTLCOUNTOF_147(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_148(e, __VA_ARGS__), ) 147u
-#define PPUTLCOUNTOF_148(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_149(e, __VA_ARGS__), ) 148u
-#define PPUTLCOUNTOF_149(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_150(e, __VA_ARGS__), ) 149u
-#define PPUTLCOUNTOF_150(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_151(e, __VA_ARGS__), ) 150u
-#define PPUTLCOUNTOF_151(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_152(e, __VA_ARGS__), ) 151u
-#define PPUTLCOUNTOF_152(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_153(e, __VA_ARGS__), ) 152u
-#define PPUTLCOUNTOF_153(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_154(e, __VA_ARGS__), ) 153u
-#define PPUTLCOUNTOF_154(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_155(e, __VA_ARGS__), ) 154u
-#define PPUTLCOUNTOF_155(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_156(e, __VA_ARGS__), ) 155u
-#define PPUTLCOUNTOF_156(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_157(e, __VA_ARGS__), ) 156u
-#define PPUTLCOUNTOF_157(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_158(e, __VA_ARGS__), ) 157u
-#define PPUTLCOUNTOF_158(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_159(e, __VA_ARGS__), ) 158u
-#define PPUTLCOUNTOF_159(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_160(e, __VA_ARGS__), ) 159u
-#define PPUTLCOUNTOF_160(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_161(e, __VA_ARGS__), ) 160u
-#define PPUTLCOUNTOF_161(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_162(e, __VA_ARGS__), ) 161u
-#define PPUTLCOUNTOF_162(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_163(e, __VA_ARGS__), ) 162u
-#define PPUTLCOUNTOF_163(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_164(e, __VA_ARGS__), ) 163u
-#define PPUTLCOUNTOF_164(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_165(e, __VA_ARGS__), ) 164u
-#define PPUTLCOUNTOF_165(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_166(e, __VA_ARGS__), ) 165u
-#define PPUTLCOUNTOF_166(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_167(e, __VA_ARGS__), ) 166u
-#define PPUTLCOUNTOF_167(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_168(e, __VA_ARGS__), ) 167u
-#define PPUTLCOUNTOF_168(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_169(e, __VA_ARGS__), ) 168u
-#define PPUTLCOUNTOF_169(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_170(e, __VA_ARGS__), ) 169u
-#define PPUTLCOUNTOF_170(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_171(e, __VA_ARGS__), ) 170u
-#define PPUTLCOUNTOF_171(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_172(e, __VA_ARGS__), ) 171u
-#define PPUTLCOUNTOF_172(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_173(e, __VA_ARGS__), ) 172u
-#define PPUTLCOUNTOF_173(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_174(e, __VA_ARGS__), ) 173u
-#define PPUTLCOUNTOF_174(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_175(e, __VA_ARGS__), ) 174u
-#define PPUTLCOUNTOF_175(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_176(e, __VA_ARGS__), ) 175u
-#define PPUTLCOUNTOF_176(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_177(e, __VA_ARGS__), ) 176u
-#define PPUTLCOUNTOF_177(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_178(e, __VA_ARGS__), ) 177u
-#define PPUTLCOUNTOF_178(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_179(e, __VA_ARGS__), ) 178u
-#define PPUTLCOUNTOF_179(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_180(e, __VA_ARGS__), ) 179u
-#define PPUTLCOUNTOF_180(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_181(e, __VA_ARGS__), ) 180u
-#define PPUTLCOUNTOF_181(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_182(e, __VA_ARGS__), ) 181u
-#define PPUTLCOUNTOF_182(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_183(e, __VA_ARGS__), ) 182u
-#define PPUTLCOUNTOF_183(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_184(e, __VA_ARGS__), ) 183u
-#define PPUTLCOUNTOF_184(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_185(e, __VA_ARGS__), ) 184u
-#define PPUTLCOUNTOF_185(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_186(e, __VA_ARGS__), ) 185u
-#define PPUTLCOUNTOF_186(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_187(e, __VA_ARGS__), ) 186u
-#define PPUTLCOUNTOF_187(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_188(e, __VA_ARGS__), ) 187u
-#define PPUTLCOUNTOF_188(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_189(e, __VA_ARGS__), ) 188u
-#define PPUTLCOUNTOF_189(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_190(e, __VA_ARGS__), ) 189u
-#define PPUTLCOUNTOF_190(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_191(e, __VA_ARGS__), ) 190u
-#define PPUTLCOUNTOF_191(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_192(e, __VA_ARGS__), ) 191u
-#define PPUTLCOUNTOF_192(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_193(e, __VA_ARGS__), ) 192u
-#define PPUTLCOUNTOF_193(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_194(e, __VA_ARGS__), ) 193u
-#define PPUTLCOUNTOF_194(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_195(e, __VA_ARGS__), ) 194u
-#define PPUTLCOUNTOF_195(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_196(e, __VA_ARGS__), ) 195u
-#define PPUTLCOUNTOF_196(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_197(e, __VA_ARGS__), ) 196u
-#define PPUTLCOUNTOF_197(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_198(e, __VA_ARGS__), ) 197u
-#define PPUTLCOUNTOF_198(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_199(e, __VA_ARGS__), ) 198u
-#define PPUTLCOUNTOF_199(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_200(e, __VA_ARGS__), ) 199u
-#define PPUTLCOUNTOF_200(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_201(e, __VA_ARGS__), ) 200u
-#define PPUTLCOUNTOF_201(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_202(e, __VA_ARGS__), ) 201u
-#define PPUTLCOUNTOF_202(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_203(e, __VA_ARGS__), ) 202u
-#define PPUTLCOUNTOF_203(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_204(e, __VA_ARGS__), ) 203u
-#define PPUTLCOUNTOF_204(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_205(e, __VA_ARGS__), ) 204u
-#define PPUTLCOUNTOF_205(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_206(e, __VA_ARGS__), ) 205u
-#define PPUTLCOUNTOF_206(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_207(e, __VA_ARGS__), ) 206u
-#define PPUTLCOUNTOF_207(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_208(e, __VA_ARGS__), ) 207u
-#define PPUTLCOUNTOF_208(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_209(e, __VA_ARGS__), ) 208u
-#define PPUTLCOUNTOF_209(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_210(e, __VA_ARGS__), ) 209u
-#define PPUTLCOUNTOF_210(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_211(e, __VA_ARGS__), ) 210u
-#define PPUTLCOUNTOF_211(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_212(e, __VA_ARGS__), ) 211u
-#define PPUTLCOUNTOF_212(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_213(e, __VA_ARGS__), ) 212u
-#define PPUTLCOUNTOF_213(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_214(e, __VA_ARGS__), ) 213u
-#define PPUTLCOUNTOF_214(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_215(e, __VA_ARGS__), ) 214u
-#define PPUTLCOUNTOF_215(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_216(e, __VA_ARGS__), ) 215u
-#define PPUTLCOUNTOF_216(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_217(e, __VA_ARGS__), ) 216u
-#define PPUTLCOUNTOF_217(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_218(e, __VA_ARGS__), ) 217u
-#define PPUTLCOUNTOF_218(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_219(e, __VA_ARGS__), ) 218u
-#define PPUTLCOUNTOF_219(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_220(e, __VA_ARGS__), ) 219u
-#define PPUTLCOUNTOF_220(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_221(e, __VA_ARGS__), ) 220u
-#define PPUTLCOUNTOF_221(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_222(e, __VA_ARGS__), ) 221u
-#define PPUTLCOUNTOF_222(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_223(e, __VA_ARGS__), ) 222u
-#define PPUTLCOUNTOF_223(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_224(e, __VA_ARGS__), ) 223u
-#define PPUTLCOUNTOF_224(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_225(e, __VA_ARGS__), ) 224u
-#define PPUTLCOUNTOF_225(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_226(e, __VA_ARGS__), ) 225u
-#define PPUTLCOUNTOF_226(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_227(e, __VA_ARGS__), ) 226u
-#define PPUTLCOUNTOF_227(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_228(e, __VA_ARGS__), ) 227u
-#define PPUTLCOUNTOF_228(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_229(e, __VA_ARGS__), ) 228u
-#define PPUTLCOUNTOF_229(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_230(e, __VA_ARGS__), ) 229u
-#define PPUTLCOUNTOF_230(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_231(e, __VA_ARGS__), ) 230u
-#define PPUTLCOUNTOF_231(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_232(e, __VA_ARGS__), ) 231u
-#define PPUTLCOUNTOF_232(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_233(e, __VA_ARGS__), ) 232u
-#define PPUTLCOUNTOF_233(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_234(e, __VA_ARGS__), ) 233u
-#define PPUTLCOUNTOF_234(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_235(e, __VA_ARGS__), ) 234u
-#define PPUTLCOUNTOF_235(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_236(e, __VA_ARGS__), ) 235u
-#define PPUTLCOUNTOF_236(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_237(e, __VA_ARGS__), ) 236u
-#define PPUTLCOUNTOF_237(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_238(e, __VA_ARGS__), ) 237u
-#define PPUTLCOUNTOF_238(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_239(e, __VA_ARGS__), ) 238u
-#define PPUTLCOUNTOF_239(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_240(e, __VA_ARGS__), ) 239u
-#define PPUTLCOUNTOF_240(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_241(e, __VA_ARGS__), ) 240u
-#define PPUTLCOUNTOF_241(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_242(e, __VA_ARGS__), ) 241u
-#define PPUTLCOUNTOF_242(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_243(e, __VA_ARGS__), ) 242u
-#define PPUTLCOUNTOF_243(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_244(e, __VA_ARGS__), ) 243u
-#define PPUTLCOUNTOF_244(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_245(e, __VA_ARGS__), ) 244u
-#define PPUTLCOUNTOF_245(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_246(e, __VA_ARGS__), ) 245u
-#define PPUTLCOUNTOF_246(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_247(e, __VA_ARGS__), ) 246u
-#define PPUTLCOUNTOF_247(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_248(e, __VA_ARGS__), ) 247u
-#define PPUTLCOUNTOF_248(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_249(e, __VA_ARGS__), ) 248u
-#define PPUTLCOUNTOF_249(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_250(e, __VA_ARGS__), ) 249u
-#define PPUTLCOUNTOF_250(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_251(e, __VA_ARGS__), ) 250u
-#define PPUTLCOUNTOF_251(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_252(e, __VA_ARGS__), ) 251u
-#define PPUTLCOUNTOF_252(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_253(e, __VA_ARGS__), ) 252u
-#define PPUTLCOUNTOF_253(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_254(e, __VA_ARGS__), ) 253u
-#define PPUTLCOUNTOF_254(e, _, ...) __VA_OPT__(PPUTLCOUNTOF_255(e, __VA_ARGS__), ) 254u
-#define PPUTLCOUNTOF_255(e, _, ...) __VA_OPT__(PTL_FAIL(e), ) 255u
+#define PPUTLSIZEOF_o(e, ...) PTL_XFIRST(__VA_OPT__(PPUTLSIZEOF_N1(e, __VA_ARGS__.), ) 0u)
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [traits.sizeof]
-/// ---------------
-/// counts the number of tuple items.
-/// fails if larger than PTL_SIZE_MAX (255u)
-///
-/// PTL_SIZEOF(())     // 0u
-/// PTL_SIZEOF((a))    // 1u
-/// PTL_SIZEOF((a, b)) // 2u
-/// PTL_SIZEOF((, ))   // 2u
-#define PTL_SIZEOF(/* v: tup */...) /* -> udec&size */ \
-  PTL_CAT(PPUTLSIZEOF_, PTL_IS_TUP(__VA_ARGS__))       \
-  (PTL_STR([PTL_SIZEOF] invalid tuple : __VA_ARGS__), __VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLSIZEOF_1(e, tup) PTL_COUNTOF tup
-#define PPUTLSIZEOF_0(e, ...) PTL_FAIL(e)
+#define PPUTLSIZEOF_N1(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N2(e, __VA_ARGS__), ) 1u
+#define PPUTLSIZEOF_N2(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N3(e, __VA_ARGS__), ) 2u
+#define PPUTLSIZEOF_N3(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N4(e, __VA_ARGS__), ) 3u
+#define PPUTLSIZEOF_N4(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N5(e, __VA_ARGS__), ) 4u
+#define PPUTLSIZEOF_N5(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N6(e, __VA_ARGS__), ) 5u
+#define PPUTLSIZEOF_N6(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N7(e, __VA_ARGS__), ) 6u
+#define PPUTLSIZEOF_N7(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N8(e, __VA_ARGS__), ) 7u
+#define PPUTLSIZEOF_N8(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N9(e, __VA_ARGS__), ) 8u
+#define PPUTLSIZEOF_N9(e, _, ...)   __VA_OPT__(PPUTLSIZEOF_N10(e, __VA_ARGS__), ) 9u
+#define PPUTLSIZEOF_N10(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N11(e, __VA_ARGS__), ) 10u
+#define PPUTLSIZEOF_N11(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N12(e, __VA_ARGS__), ) 11u
+#define PPUTLSIZEOF_N12(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N13(e, __VA_ARGS__), ) 12u
+#define PPUTLSIZEOF_N13(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N14(e, __VA_ARGS__), ) 13u
+#define PPUTLSIZEOF_N14(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N15(e, __VA_ARGS__), ) 14u
+#define PPUTLSIZEOF_N15(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N16(e, __VA_ARGS__), ) 15u
+#define PPUTLSIZEOF_N16(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N17(e, __VA_ARGS__), ) 16u
+#define PPUTLSIZEOF_N17(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N18(e, __VA_ARGS__), ) 17u
+#define PPUTLSIZEOF_N18(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N19(e, __VA_ARGS__), ) 18u
+#define PPUTLSIZEOF_N19(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N20(e, __VA_ARGS__), ) 19u
+#define PPUTLSIZEOF_N20(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N21(e, __VA_ARGS__), ) 20u
+#define PPUTLSIZEOF_N21(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N22(e, __VA_ARGS__), ) 21u
+#define PPUTLSIZEOF_N22(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N23(e, __VA_ARGS__), ) 22u
+#define PPUTLSIZEOF_N23(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N24(e, __VA_ARGS__), ) 23u
+#define PPUTLSIZEOF_N24(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N25(e, __VA_ARGS__), ) 24u
+#define PPUTLSIZEOF_N25(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N26(e, __VA_ARGS__), ) 25u
+#define PPUTLSIZEOF_N26(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N27(e, __VA_ARGS__), ) 26u
+#define PPUTLSIZEOF_N27(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N28(e, __VA_ARGS__), ) 27u
+#define PPUTLSIZEOF_N28(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N29(e, __VA_ARGS__), ) 28u
+#define PPUTLSIZEOF_N29(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N30(e, __VA_ARGS__), ) 29u
+#define PPUTLSIZEOF_N30(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N31(e, __VA_ARGS__), ) 30u
+#define PPUTLSIZEOF_N31(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N32(e, __VA_ARGS__), ) 31u
+#define PPUTLSIZEOF_N32(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N33(e, __VA_ARGS__), ) 32u
+#define PPUTLSIZEOF_N33(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N34(e, __VA_ARGS__), ) 33u
+#define PPUTLSIZEOF_N34(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N35(e, __VA_ARGS__), ) 34u
+#define PPUTLSIZEOF_N35(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N36(e, __VA_ARGS__), ) 35u
+#define PPUTLSIZEOF_N36(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N37(e, __VA_ARGS__), ) 36u
+#define PPUTLSIZEOF_N37(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N38(e, __VA_ARGS__), ) 37u
+#define PPUTLSIZEOF_N38(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N39(e, __VA_ARGS__), ) 38u
+#define PPUTLSIZEOF_N39(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N40(e, __VA_ARGS__), ) 39u
+#define PPUTLSIZEOF_N40(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N41(e, __VA_ARGS__), ) 40u
+#define PPUTLSIZEOF_N41(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N42(e, __VA_ARGS__), ) 41u
+#define PPUTLSIZEOF_N42(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N43(e, __VA_ARGS__), ) 42u
+#define PPUTLSIZEOF_N43(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N44(e, __VA_ARGS__), ) 43u
+#define PPUTLSIZEOF_N44(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N45(e, __VA_ARGS__), ) 44u
+#define PPUTLSIZEOF_N45(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N46(e, __VA_ARGS__), ) 45u
+#define PPUTLSIZEOF_N46(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N47(e, __VA_ARGS__), ) 46u
+#define PPUTLSIZEOF_N47(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N48(e, __VA_ARGS__), ) 47u
+#define PPUTLSIZEOF_N48(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N49(e, __VA_ARGS__), ) 48u
+#define PPUTLSIZEOF_N49(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N50(e, __VA_ARGS__), ) 49u
+#define PPUTLSIZEOF_N50(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N51(e, __VA_ARGS__), ) 50u
+#define PPUTLSIZEOF_N51(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N52(e, __VA_ARGS__), ) 51u
+#define PPUTLSIZEOF_N52(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N53(e, __VA_ARGS__), ) 52u
+#define PPUTLSIZEOF_N53(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N54(e, __VA_ARGS__), ) 53u
+#define PPUTLSIZEOF_N54(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N55(e, __VA_ARGS__), ) 54u
+#define PPUTLSIZEOF_N55(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N56(e, __VA_ARGS__), ) 55u
+#define PPUTLSIZEOF_N56(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N57(e, __VA_ARGS__), ) 56u
+#define PPUTLSIZEOF_N57(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N58(e, __VA_ARGS__), ) 57u
+#define PPUTLSIZEOF_N58(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N59(e, __VA_ARGS__), ) 58u
+#define PPUTLSIZEOF_N59(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N60(e, __VA_ARGS__), ) 59u
+#define PPUTLSIZEOF_N60(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N61(e, __VA_ARGS__), ) 60u
+#define PPUTLSIZEOF_N61(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N62(e, __VA_ARGS__), ) 61u
+#define PPUTLSIZEOF_N62(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N63(e, __VA_ARGS__), ) 62u
+#define PPUTLSIZEOF_N63(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N64(e, __VA_ARGS__), ) 63u
+#define PPUTLSIZEOF_N64(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N65(e, __VA_ARGS__), ) 64u
+#define PPUTLSIZEOF_N65(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N66(e, __VA_ARGS__), ) 65u
+#define PPUTLSIZEOF_N66(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N67(e, __VA_ARGS__), ) 66u
+#define PPUTLSIZEOF_N67(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N68(e, __VA_ARGS__), ) 67u
+#define PPUTLSIZEOF_N68(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N69(e, __VA_ARGS__), ) 68u
+#define PPUTLSIZEOF_N69(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N70(e, __VA_ARGS__), ) 69u
+#define PPUTLSIZEOF_N70(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N71(e, __VA_ARGS__), ) 70u
+#define PPUTLSIZEOF_N71(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N72(e, __VA_ARGS__), ) 71u
+#define PPUTLSIZEOF_N72(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N73(e, __VA_ARGS__), ) 72u
+#define PPUTLSIZEOF_N73(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N74(e, __VA_ARGS__), ) 73u
+#define PPUTLSIZEOF_N74(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N75(e, __VA_ARGS__), ) 74u
+#define PPUTLSIZEOF_N75(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N76(e, __VA_ARGS__), ) 75u
+#define PPUTLSIZEOF_N76(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N77(e, __VA_ARGS__), ) 76u
+#define PPUTLSIZEOF_N77(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N78(e, __VA_ARGS__), ) 77u
+#define PPUTLSIZEOF_N78(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N79(e, __VA_ARGS__), ) 78u
+#define PPUTLSIZEOF_N79(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N80(e, __VA_ARGS__), ) 79u
+#define PPUTLSIZEOF_N80(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N81(e, __VA_ARGS__), ) 80u
+#define PPUTLSIZEOF_N81(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N82(e, __VA_ARGS__), ) 81u
+#define PPUTLSIZEOF_N82(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N83(e, __VA_ARGS__), ) 82u
+#define PPUTLSIZEOF_N83(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N84(e, __VA_ARGS__), ) 83u
+#define PPUTLSIZEOF_N84(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N85(e, __VA_ARGS__), ) 84u
+#define PPUTLSIZEOF_N85(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N86(e, __VA_ARGS__), ) 85u
+#define PPUTLSIZEOF_N86(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N87(e, __VA_ARGS__), ) 86u
+#define PPUTLSIZEOF_N87(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N88(e, __VA_ARGS__), ) 87u
+#define PPUTLSIZEOF_N88(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N89(e, __VA_ARGS__), ) 88u
+#define PPUTLSIZEOF_N89(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N90(e, __VA_ARGS__), ) 89u
+#define PPUTLSIZEOF_N90(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N91(e, __VA_ARGS__), ) 90u
+#define PPUTLSIZEOF_N91(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N92(e, __VA_ARGS__), ) 91u
+#define PPUTLSIZEOF_N92(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N93(e, __VA_ARGS__), ) 92u
+#define PPUTLSIZEOF_N93(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N94(e, __VA_ARGS__), ) 93u
+#define PPUTLSIZEOF_N94(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N95(e, __VA_ARGS__), ) 94u
+#define PPUTLSIZEOF_N95(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N96(e, __VA_ARGS__), ) 95u
+#define PPUTLSIZEOF_N96(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N97(e, __VA_ARGS__), ) 96u
+#define PPUTLSIZEOF_N97(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N98(e, __VA_ARGS__), ) 97u
+#define PPUTLSIZEOF_N98(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N99(e, __VA_ARGS__), ) 98u
+#define PPUTLSIZEOF_N99(e, _, ...)  __VA_OPT__(PPUTLSIZEOF_N100(e, __VA_ARGS__), ) 99u
+#define PPUTLSIZEOF_N100(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N101(e, __VA_ARGS__), ) 100u
+#define PPUTLSIZEOF_N101(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N102(e, __VA_ARGS__), ) 101u
+#define PPUTLSIZEOF_N102(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N103(e, __VA_ARGS__), ) 102u
+#define PPUTLSIZEOF_N103(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N104(e, __VA_ARGS__), ) 103u
+#define PPUTLSIZEOF_N104(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N105(e, __VA_ARGS__), ) 104u
+#define PPUTLSIZEOF_N105(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N106(e, __VA_ARGS__), ) 105u
+#define PPUTLSIZEOF_N106(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N107(e, __VA_ARGS__), ) 106u
+#define PPUTLSIZEOF_N107(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N108(e, __VA_ARGS__), ) 107u
+#define PPUTLSIZEOF_N108(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N109(e, __VA_ARGS__), ) 108u
+#define PPUTLSIZEOF_N109(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N110(e, __VA_ARGS__), ) 109u
+#define PPUTLSIZEOF_N110(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N111(e, __VA_ARGS__), ) 110u
+#define PPUTLSIZEOF_N111(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N112(e, __VA_ARGS__), ) 111u
+#define PPUTLSIZEOF_N112(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N113(e, __VA_ARGS__), ) 112u
+#define PPUTLSIZEOF_N113(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N114(e, __VA_ARGS__), ) 113u
+#define PPUTLSIZEOF_N114(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N115(e, __VA_ARGS__), ) 114u
+#define PPUTLSIZEOF_N115(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N116(e, __VA_ARGS__), ) 115u
+#define PPUTLSIZEOF_N116(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N117(e, __VA_ARGS__), ) 116u
+#define PPUTLSIZEOF_N117(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N118(e, __VA_ARGS__), ) 117u
+#define PPUTLSIZEOF_N118(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N119(e, __VA_ARGS__), ) 118u
+#define PPUTLSIZEOF_N119(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N120(e, __VA_ARGS__), ) 119u
+#define PPUTLSIZEOF_N120(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N121(e, __VA_ARGS__), ) 120u
+#define PPUTLSIZEOF_N121(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N122(e, __VA_ARGS__), ) 121u
+#define PPUTLSIZEOF_N122(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N123(e, __VA_ARGS__), ) 122u
+#define PPUTLSIZEOF_N123(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N124(e, __VA_ARGS__), ) 123u
+#define PPUTLSIZEOF_N124(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N125(e, __VA_ARGS__), ) 124u
+#define PPUTLSIZEOF_N125(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N126(e, __VA_ARGS__), ) 125u
+#define PPUTLSIZEOF_N126(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N127(e, __VA_ARGS__), ) 126u
+#define PPUTLSIZEOF_N127(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N128(e, __VA_ARGS__), ) 127u
+#define PPUTLSIZEOF_N128(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N129(e, __VA_ARGS__), ) 128u
+#define PPUTLSIZEOF_N129(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N130(e, __VA_ARGS__), ) 129u
+#define PPUTLSIZEOF_N130(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N131(e, __VA_ARGS__), ) 130u
+#define PPUTLSIZEOF_N131(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N132(e, __VA_ARGS__), ) 131u
+#define PPUTLSIZEOF_N132(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N133(e, __VA_ARGS__), ) 132u
+#define PPUTLSIZEOF_N133(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N134(e, __VA_ARGS__), ) 133u
+#define PPUTLSIZEOF_N134(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N135(e, __VA_ARGS__), ) 134u
+#define PPUTLSIZEOF_N135(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N136(e, __VA_ARGS__), ) 135u
+#define PPUTLSIZEOF_N136(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N137(e, __VA_ARGS__), ) 136u
+#define PPUTLSIZEOF_N137(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N138(e, __VA_ARGS__), ) 137u
+#define PPUTLSIZEOF_N138(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N139(e, __VA_ARGS__), ) 138u
+#define PPUTLSIZEOF_N139(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N140(e, __VA_ARGS__), ) 139u
+#define PPUTLSIZEOF_N140(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N141(e, __VA_ARGS__), ) 140u
+#define PPUTLSIZEOF_N141(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N142(e, __VA_ARGS__), ) 141u
+#define PPUTLSIZEOF_N142(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N143(e, __VA_ARGS__), ) 142u
+#define PPUTLSIZEOF_N143(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N144(e, __VA_ARGS__), ) 143u
+#define PPUTLSIZEOF_N144(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N145(e, __VA_ARGS__), ) 144u
+#define PPUTLSIZEOF_N145(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N146(e, __VA_ARGS__), ) 145u
+#define PPUTLSIZEOF_N146(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N147(e, __VA_ARGS__), ) 146u
+#define PPUTLSIZEOF_N147(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N148(e, __VA_ARGS__), ) 147u
+#define PPUTLSIZEOF_N148(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N149(e, __VA_ARGS__), ) 148u
+#define PPUTLSIZEOF_N149(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N150(e, __VA_ARGS__), ) 149u
+#define PPUTLSIZEOF_N150(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N151(e, __VA_ARGS__), ) 150u
+#define PPUTLSIZEOF_N151(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N152(e, __VA_ARGS__), ) 151u
+#define PPUTLSIZEOF_N152(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N153(e, __VA_ARGS__), ) 152u
+#define PPUTLSIZEOF_N153(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N154(e, __VA_ARGS__), ) 153u
+#define PPUTLSIZEOF_N154(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N155(e, __VA_ARGS__), ) 154u
+#define PPUTLSIZEOF_N155(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N156(e, __VA_ARGS__), ) 155u
+#define PPUTLSIZEOF_N156(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N157(e, __VA_ARGS__), ) 156u
+#define PPUTLSIZEOF_N157(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N158(e, __VA_ARGS__), ) 157u
+#define PPUTLSIZEOF_N158(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N159(e, __VA_ARGS__), ) 158u
+#define PPUTLSIZEOF_N159(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N160(e, __VA_ARGS__), ) 159u
+#define PPUTLSIZEOF_N160(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N161(e, __VA_ARGS__), ) 160u
+#define PPUTLSIZEOF_N161(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N162(e, __VA_ARGS__), ) 161u
+#define PPUTLSIZEOF_N162(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N163(e, __VA_ARGS__), ) 162u
+#define PPUTLSIZEOF_N163(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N164(e, __VA_ARGS__), ) 163u
+#define PPUTLSIZEOF_N164(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N165(e, __VA_ARGS__), ) 164u
+#define PPUTLSIZEOF_N165(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N166(e, __VA_ARGS__), ) 165u
+#define PPUTLSIZEOF_N166(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N167(e, __VA_ARGS__), ) 166u
+#define PPUTLSIZEOF_N167(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N168(e, __VA_ARGS__), ) 167u
+#define PPUTLSIZEOF_N168(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N169(e, __VA_ARGS__), ) 168u
+#define PPUTLSIZEOF_N169(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N170(e, __VA_ARGS__), ) 169u
+#define PPUTLSIZEOF_N170(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N171(e, __VA_ARGS__), ) 170u
+#define PPUTLSIZEOF_N171(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N172(e, __VA_ARGS__), ) 171u
+#define PPUTLSIZEOF_N172(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N173(e, __VA_ARGS__), ) 172u
+#define PPUTLSIZEOF_N173(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N174(e, __VA_ARGS__), ) 173u
+#define PPUTLSIZEOF_N174(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N175(e, __VA_ARGS__), ) 174u
+#define PPUTLSIZEOF_N175(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N176(e, __VA_ARGS__), ) 175u
+#define PPUTLSIZEOF_N176(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N177(e, __VA_ARGS__), ) 176u
+#define PPUTLSIZEOF_N177(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N178(e, __VA_ARGS__), ) 177u
+#define PPUTLSIZEOF_N178(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N179(e, __VA_ARGS__), ) 178u
+#define PPUTLSIZEOF_N179(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N180(e, __VA_ARGS__), ) 179u
+#define PPUTLSIZEOF_N180(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N181(e, __VA_ARGS__), ) 180u
+#define PPUTLSIZEOF_N181(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N182(e, __VA_ARGS__), ) 181u
+#define PPUTLSIZEOF_N182(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N183(e, __VA_ARGS__), ) 182u
+#define PPUTLSIZEOF_N183(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N184(e, __VA_ARGS__), ) 183u
+#define PPUTLSIZEOF_N184(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N185(e, __VA_ARGS__), ) 184u
+#define PPUTLSIZEOF_N185(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N186(e, __VA_ARGS__), ) 185u
+#define PPUTLSIZEOF_N186(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N187(e, __VA_ARGS__), ) 186u
+#define PPUTLSIZEOF_N187(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N188(e, __VA_ARGS__), ) 187u
+#define PPUTLSIZEOF_N188(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N189(e, __VA_ARGS__), ) 188u
+#define PPUTLSIZEOF_N189(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N190(e, __VA_ARGS__), ) 189u
+#define PPUTLSIZEOF_N190(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N191(e, __VA_ARGS__), ) 190u
+#define PPUTLSIZEOF_N191(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N192(e, __VA_ARGS__), ) 191u
+#define PPUTLSIZEOF_N192(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N193(e, __VA_ARGS__), ) 192u
+#define PPUTLSIZEOF_N193(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N194(e, __VA_ARGS__), ) 193u
+#define PPUTLSIZEOF_N194(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N195(e, __VA_ARGS__), ) 194u
+#define PPUTLSIZEOF_N195(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N196(e, __VA_ARGS__), ) 195u
+#define PPUTLSIZEOF_N196(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N197(e, __VA_ARGS__), ) 196u
+#define PPUTLSIZEOF_N197(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N198(e, __VA_ARGS__), ) 197u
+#define PPUTLSIZEOF_N198(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N199(e, __VA_ARGS__), ) 198u
+#define PPUTLSIZEOF_N199(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N200(e, __VA_ARGS__), ) 199u
+#define PPUTLSIZEOF_N200(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N201(e, __VA_ARGS__), ) 200u
+#define PPUTLSIZEOF_N201(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N202(e, __VA_ARGS__), ) 201u
+#define PPUTLSIZEOF_N202(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N203(e, __VA_ARGS__), ) 202u
+#define PPUTLSIZEOF_N203(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N204(e, __VA_ARGS__), ) 203u
+#define PPUTLSIZEOF_N204(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N205(e, __VA_ARGS__), ) 204u
+#define PPUTLSIZEOF_N205(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N206(e, __VA_ARGS__), ) 205u
+#define PPUTLSIZEOF_N206(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N207(e, __VA_ARGS__), ) 206u
+#define PPUTLSIZEOF_N207(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N208(e, __VA_ARGS__), ) 207u
+#define PPUTLSIZEOF_N208(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N209(e, __VA_ARGS__), ) 208u
+#define PPUTLSIZEOF_N209(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N210(e, __VA_ARGS__), ) 209u
+#define PPUTLSIZEOF_N210(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N211(e, __VA_ARGS__), ) 210u
+#define PPUTLSIZEOF_N211(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N212(e, __VA_ARGS__), ) 211u
+#define PPUTLSIZEOF_N212(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N213(e, __VA_ARGS__), ) 212u
+#define PPUTLSIZEOF_N213(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N214(e, __VA_ARGS__), ) 213u
+#define PPUTLSIZEOF_N214(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N215(e, __VA_ARGS__), ) 214u
+#define PPUTLSIZEOF_N215(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N216(e, __VA_ARGS__), ) 215u
+#define PPUTLSIZEOF_N216(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N217(e, __VA_ARGS__), ) 216u
+#define PPUTLSIZEOF_N217(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N218(e, __VA_ARGS__), ) 217u
+#define PPUTLSIZEOF_N218(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N219(e, __VA_ARGS__), ) 218u
+#define PPUTLSIZEOF_N219(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N220(e, __VA_ARGS__), ) 219u
+#define PPUTLSIZEOF_N220(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N221(e, __VA_ARGS__), ) 220u
+#define PPUTLSIZEOF_N221(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N222(e, __VA_ARGS__), ) 221u
+#define PPUTLSIZEOF_N222(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N223(e, __VA_ARGS__), ) 222u
+#define PPUTLSIZEOF_N223(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N224(e, __VA_ARGS__), ) 223u
+#define PPUTLSIZEOF_N224(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N225(e, __VA_ARGS__), ) 224u
+#define PPUTLSIZEOF_N225(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N226(e, __VA_ARGS__), ) 225u
+#define PPUTLSIZEOF_N226(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N227(e, __VA_ARGS__), ) 226u
+#define PPUTLSIZEOF_N227(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N228(e, __VA_ARGS__), ) 227u
+#define PPUTLSIZEOF_N228(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N229(e, __VA_ARGS__), ) 228u
+#define PPUTLSIZEOF_N229(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N230(e, __VA_ARGS__), ) 229u
+#define PPUTLSIZEOF_N230(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N231(e, __VA_ARGS__), ) 230u
+#define PPUTLSIZEOF_N231(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N232(e, __VA_ARGS__), ) 231u
+#define PPUTLSIZEOF_N232(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N233(e, __VA_ARGS__), ) 232u
+#define PPUTLSIZEOF_N233(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N234(e, __VA_ARGS__), ) 233u
+#define PPUTLSIZEOF_N234(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N235(e, __VA_ARGS__), ) 234u
+#define PPUTLSIZEOF_N235(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N236(e, __VA_ARGS__), ) 235u
+#define PPUTLSIZEOF_N236(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N237(e, __VA_ARGS__), ) 236u
+#define PPUTLSIZEOF_N237(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N238(e, __VA_ARGS__), ) 237u
+#define PPUTLSIZEOF_N238(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N239(e, __VA_ARGS__), ) 238u
+#define PPUTLSIZEOF_N239(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N240(e, __VA_ARGS__), ) 239u
+#define PPUTLSIZEOF_N240(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N241(e, __VA_ARGS__), ) 240u
+#define PPUTLSIZEOF_N241(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N242(e, __VA_ARGS__), ) 241u
+#define PPUTLSIZEOF_N242(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N243(e, __VA_ARGS__), ) 242u
+#define PPUTLSIZEOF_N243(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N244(e, __VA_ARGS__), ) 243u
+#define PPUTLSIZEOF_N244(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N245(e, __VA_ARGS__), ) 244u
+#define PPUTLSIZEOF_N245(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N246(e, __VA_ARGS__), ) 245u
+#define PPUTLSIZEOF_N246(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N247(e, __VA_ARGS__), ) 246u
+#define PPUTLSIZEOF_N247(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N248(e, __VA_ARGS__), ) 247u
+#define PPUTLSIZEOF_N248(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N249(e, __VA_ARGS__), ) 248u
+#define PPUTLSIZEOF_N249(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N250(e, __VA_ARGS__), ) 249u
+#define PPUTLSIZEOF_N250(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N251(e, __VA_ARGS__), ) 250u
+#define PPUTLSIZEOF_N251(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N252(e, __VA_ARGS__), ) 251u
+#define PPUTLSIZEOF_N252(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N253(e, __VA_ARGS__), ) 252u
+#define PPUTLSIZEOF_N253(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N254(e, __VA_ARGS__), ) 253u
+#define PPUTLSIZEOF_N254(e, _, ...) __VA_OPT__(PPUTLSIZEOF_N255(e, __VA_ARGS__), ) 254u
+#define PPUTLSIZEOF_N255(e, _, ...) __VA_OPT__(PTL_FAIL(e), ) 255u
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2213,13 +2166,19 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLLT_o(l, r) \
-  PTL_CAT(PPUTLLT_o_, PTL_CAT(PTL_SIGNOF(PTL_WORD(l)), PTL_SIGNOF(PTL_WORD(r))))
+  PTL_CAT(PPUTLLT_o_, PTL_CAT(PPUTLLT_SIGNOF(PTL_WORD(l)), PPUTLLT_SIGNOF(PTL_WORD(r))))
 #define PPUTLLT_o_UU(e, l, r) PPUTLLT_UCMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
 #define PPUTLLT_o_UI(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_IU(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_II(e, l, r) PPUTLLT_ICMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
-#define PPUTLLT_ICMP(...)     PPUTLLT_ICMP_o(__VA_ARGS__)
-#define PPUTLLT_ICMP_o(...)   PPUTLLT_ICMP_oo(__VA_ARGS__)
+#define PPUTLLT_SIGNOF(word)  PTL_CAT(PPUTLLT_SIGNOF_, PPUTLIS_TUP_o(word))(word)
+#define PPUTLLT_SIGNOF_1(tup) U
+#define PPUTLLT_SIGNOF_0(atom) \
+  PTL_CAT(PPUTLLT_SIGNOF_0_, PTL_CAT(PPUTLIS_INT_o(atom), PPUTLIS_UINT_o(atom)))
+#define PPUTLLT_SIGNOF_0_10 I
+#define PPUTLLT_SIGNOF_0_01 U
+#define PPUTLLT_ICMP(...)   PPUTLLT_ICMP_o(__VA_ARGS__)
+#define PPUTLLT_ICMP_o(...) PPUTLLT_ICMP_oo(__VA_ARGS__)
 #define PPUTLLT_ICMP_oo(a, b, c, d, e, f)                                  \
   PTL_CAT(PPUTLLT_ICMP_oo_,                                                \
           PTL_CAT(PPUTLIMPL_HEXHEX(7##a, LT), PPUTLIMPL_HEXHEX(7##d, LT))) \
@@ -2376,22 +2335,6 @@
 
 #define PPUTLMAX_1(a, b) a
 #define PPUTLMAX_0(a, b) b
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [util.items]
-/// ------------
-/// extracts tuple items.
-///
-/// PTL_ITEMS(())        // <nothing>
-/// PTL_ITEMS((a))       // a
-/// PTL_ITEMS((a, b))    // a, b
-/// PTL_ITEMS((a, b, c)) // a, b, c
-#define PTL_ITEMS(/* v: tup */...) /* -> ...v */ PPUTLITEMS_X(PTL_TUP(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLITEMS_X(...) PTL_ESC __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3039,6 +2982,22 @@
 
 #define PPUTLXCT_B(...) PPUTLXCT_A PTL_LP() __VA_ARGS__, PTL_RP()
 #define PPUTLXCT_A(...) PPUTLXCT_B PTL_LP() __VA_ARGS__, PTL_RP()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [range.items]
+/// -------------
+/// extracts tuple items.
+///
+/// PTL_ITEMS(())        // <nothing>
+/// PTL_ITEMS((a))       // a
+/// PTL_ITEMS((a, b))    // a, b
+/// PTL_ITEMS((a, b, c)) // a, b, c
+#define PTL_ITEMS(/* v: tup */...) /* -> ...v */ PPUTLITEMS_X(PTL_TUP(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLITEMS_X(...) PTL_ESC __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

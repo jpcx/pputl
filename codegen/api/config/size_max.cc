@@ -32,9 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(size_max) size_max = NIFTY_DEF(size_max, [&] {
-  docs << "the maximum allowed number of arguments and tuple size."
-       << "set to min(255, uint_max) unless built with cpp20_arglimit=false,"
-       << "in which case size_max is the uint_max.";
+  docs << "the maximum number of arguments bounded by the C++20 standard."
+       << "set to min(255, uint_max) unless built with cpp20_arglimit=false"
+       << "(which sets size_max to uint_max).";
   return size_max_s;
 });
 

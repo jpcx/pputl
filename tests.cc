@@ -72,10 +72,10 @@
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           none  some  any   atom  bool  hex   nybl  int  idec              //
 //           ihex  uint  udec  uhex  tup   utup  word  size                   //
-//       ‐ traits detection                                 [traits, util]    //
+//       ‐ traits detection                                       [traits]    //
 //           is_none  is_some  is_any   is_atom  is_bool  is_hex   is_nybl    //
 //           is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex  is_tup     //
-//           is_utup  is_word  is_size  typeof   signof   countof  sizeof     //
+//           is_utup  is_word  is_size  typeof   sizeof                       //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -91,7 +91,7 @@
 //           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //
 //           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //
 //     ◆ range algorithms                                                     //
-//       ‐ element access                                    [util, range]    //
+//       ‐ element access                                          [range]    //
 //           items  bisect  unite  get  set  push  pop  slice                 //
 //       ‐ generation                                               [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
@@ -520,39 +520,18 @@ ASSERT_PP_EQ((PTL_TYPEOF((0, 0, 0))), (UTUP));
 ASSERT_PP_EQ((PTL_TYPEOF((F, F, F))), (UTUP));
 ASSERT_PP_EQ((PTL_TYPEOF()), (NONE));
 
-ASSERT_PP_EQ((PTL_SIGNOF(0)), (I));
-ASSERT_PP_EQ((PTL_SIGNOF(0x800)), (I));
-ASSERT_PP_EQ((PTL_SIGNOF(1u)), (U));
-ASSERT_PP_EQ((PTL_SIGNOF(4095u)), (U));
-ASSERT_PP_EQ((PTL_SIGNOF(0x007u)), (U));
-ASSERT_PP_EQ((PTL_SIGNOF((7, F, F))), (U));
-ASSERT_PP_EQ((PTL_SIGNOF(2047)), (I));
-
-ASSERT_PP_EQ((PTL_COUNTOF()), (0u));
-ASSERT_PP_EQ((PTL_COUNTOF(a)), (1u));
-ASSERT_PP_EQ((PTL_COUNTOF(a, b)), (2u));
-ASSERT_PP_EQ((PTL_COUNTOF(, )), (2u));
-ASSERT_PP_EQ((PTL_COUNTOF(a, b, c)), (3u));
-ASSERT_PP_EQ((PTL_COUNTOF(,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,)), (255u));
-ASSERT_PP_EQ((PTL_COUNTOF(, , )), (3u));
-ASSERT_PP_EQ((PTL_COUNTOF(a, )), (2u));
-ASSERT_PP_EQ((PTL_COUNTOF(a, , )), (3u));
-ASSERT_PP_EQ((PTL_COUNTOF(, a)), (2u));
-ASSERT_PP_EQ((PTL_COUNTOF(, a, )), (3u));
-ASSERT_PP_EQ((PTL_COUNTOF(, , a)), (3u));
-
-ASSERT_PP_EQ((PTL_SIZEOF(())), (0u));
-ASSERT_PP_EQ((PTL_SIZEOF((a))), (1u));
-ASSERT_PP_EQ((PTL_SIZEOF((a, b))), (2u));
-ASSERT_PP_EQ((PTL_SIZEOF((, ))), (2u));
-ASSERT_PP_EQ((PTL_SIZEOF((a, b, c))), (3u));
-ASSERT_PP_EQ((PTL_SIZEOF((,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,))), (255u));
-ASSERT_PP_EQ((PTL_SIZEOF((, , ))), (3u));
-ASSERT_PP_EQ((PTL_SIZEOF((a, ))), (2u));
-ASSERT_PP_EQ((PTL_SIZEOF((a, , ))), (3u));
-ASSERT_PP_EQ((PTL_SIZEOF((, a))), (2u));
-ASSERT_PP_EQ((PTL_SIZEOF((, a, ))), (3u));
-ASSERT_PP_EQ((PTL_SIZEOF((, , a))), (3u));
+ASSERT_PP_EQ((PTL_SIZEOF()), (0u));
+ASSERT_PP_EQ((PTL_SIZEOF(a)), (1u));
+ASSERT_PP_EQ((PTL_SIZEOF(a, b)), (2u));
+ASSERT_PP_EQ((PTL_SIZEOF(, )), (2u));
+ASSERT_PP_EQ((PTL_SIZEOF(a, b, c)), (3u));
+ASSERT_PP_EQ((PTL_SIZEOF(,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,)), (255u));
+ASSERT_PP_EQ((PTL_SIZEOF(, , )), (3u));
+ASSERT_PP_EQ((PTL_SIZEOF(a, )), (2u));
+ASSERT_PP_EQ((PTL_SIZEOF(a, , )), (3u));
+ASSERT_PP_EQ((PTL_SIZEOF(, a)), (2u));
+ASSERT_PP_EQ((PTL_SIZEOF(, a, )), (3u));
+ASSERT_PP_EQ((PTL_SIZEOF(, , a)), (3u));
 
 ASSERT_PP_EQ((PTL_NONE()), ());
 
@@ -911,19 +890,6 @@ ASSERT_PP_EQ((PTL_MAX(1023, 1022)), (1023));
 ASSERT_PP_EQ((PTL_MAX(1023, 1023)), (1023));
 ASSERT_PP_EQ((PTL_MAX(1023, 1024)), (1024));
 
-ASSERT_PP_EQ((PTL_ITEMS(())), ());
-ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
-ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
-ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
-ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
-ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
-ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
-ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
-ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
-ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
-ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
-ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
-
 ASSERT_PP_EQ((PTL_BDUMP(0)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 ASSERT_PP_EQ((PTL_BDUMP(0x800)), (1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 
@@ -1047,4 +1013,17 @@ ASSERT_PP_EQ((PTL_XSTR(PTL_XCT)), ("PPUTLXCT_A ( , )"));
 ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_XCT))), ("PPUTLXCT_B ( ,, )"));
 ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_ESC(PTL_XCT)))), ("PPUTLXCT_A ( ,,, )"));
 ASSERT_PP_EQ((PTL_XSTR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XCT))))), ("PPUTLXCT_B ( ,,,, )"));
+
+ASSERT_PP_EQ((PTL_ITEMS(())), ());
+ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
+ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
+ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
+ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
+ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
+ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
+ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
+ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
+ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
+ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
+ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
 // clang-format on

@@ -81,7 +81,7 @@ constexpr auto minify = minification::none;
 constexpr std::uint8_t word_size = 3;
 
 // obeys maximum 256 args in all cases, in compliance with the C++20 standard.
-// setting false makes type.size describe up to uint_max arguments.
+// setting false allows type.size to describe tuples with up to uint_max items.
 constexpr bool cpp20_arglimit = true;
 
 // obeys maximum 65536 macro definitions in compliance with the C++20 standard.
@@ -183,10 +183,10 @@ constexpr char const project_header[]{
     "//       ‐ type casting                            [type; see TERMINOLOGY]    //\n"
     "//           none  some  any   atom  bool  hex   nybl  int  idec              //\n"
     "//           ihex  uint  udec  uhex  tup   utup  word  size                   //\n"
-    "//       ‐ traits detection                                 [traits, util]    //\n"
+    "//       ‐ traits detection                                       [traits]    //\n"
     "//           is_none  is_some  is_any   is_atom  is_bool  is_hex   is_nybl    //\n"
     "//           is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex  is_tup     //\n"
-    "//           is_utup  is_word  is_size  typeof   signof   countof  sizeof     //\n"
+    "//           is_utup  is_word  is_size  typeof   sizeof                       //\n"
     "//       ‐ boolean logic                                           [logic]    //\n"
     "//           not  and  or  xor  nand  nor  xnor                               //\n"
     "//       ‐ paste formatting                                    [lang, fmt]    //\n"
@@ -202,7 +202,7 @@ constexpr char const project_header[]{
     "//           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //\n"
     "//           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //\n"
     "//     ◆ range algorithms                                                     //\n"
-    "//       ‐ element access                                    [util, range]    //\n"
+    "//       ‐ element access                                          [range]    //\n"
     "//           items  bisect  unite  get  set  push  pop  slice                 //\n"
     "//       ‐ generation                                               [algo]    //\n"
     "//           seq  repeat  gen_lp  gen_rp                                      //\n"

@@ -26,26 +26,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "bitwise.h"
 #include "codegen.h"
+#include "compare.h"
 #include "config.h"
 #include "lang.h"
+#include "logic.h"
+#include "math.h"
+#include "numeric.h"
 #include "traits.h"
 #include "type.h"
 
 namespace api {
 
-inline codegen::category<"util"> util;
-
-// TODO: try_cast: attempts to cast arguments with the given ctor.
-//                 will succeed in all reasonable cases except casts from negative
-//                 ihex to idec, in which case the original ihex will be returned.
-//
-// TODO: bin
+inline codegen::category<"range"> range;
 
 extern codegen::def<"items(...: v: tup) -> ...v"> const& items;
 
 NIFTY_DECL(items);
 
-inline codegen::end_category<"util"> util_end;
+inline codegen::end_category<"range"> range_end;
 
 } // namespace api
