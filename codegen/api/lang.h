@@ -45,9 +45,9 @@ extern codegen::def<"xrest(...: ...v: any) -> ...v"> const&                     
 extern codegen::def<
     "trim(...: ...v: any) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
 extern codegen::def<"default(...: default: <any>, ...argument: <any...>) -> "> const&
-                                                   default_;
-extern codegen::def<"fail(...: msg: <tokens or string literal>, [stringize=1]: bool) -> "
-                    "<preprocessor error>"> const& fail;
+    default_;
+extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&
+    fail;
 
 // TODO fmt.hex
 

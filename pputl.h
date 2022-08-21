@@ -394,13 +394,11 @@
 /// [lang.fail]
 /// -----------
 /// executes an invalid preprocessor operation to indicate a failure.
-/// can accept either.
+/// must provide a string literal message.
 ///
 /// usage: PTL_FAIL("something bad happened")
 ///        PTL_FAIL(PTL_STR([myfun] invalid args : __VA_ARGS__))
-#define PTL_FAIL(                                                                         \
-    /* msg: <tokens or string literal>, [stringize=1]: bool */...)    /* -> <preprocessor \
-                                                                         error> */        \
+#define PTL_FAIL(/* msg: <string literal> */...) /* -> <preprocessor error> */ \
   PTL_FAIL##__VA_ARGS__
 
 /// [traits.is_none]

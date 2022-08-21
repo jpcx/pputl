@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
   docs << "executes an invalid preprocessor operation to indicate a failure."
-       << "can accept either."
+       << "must provide a string literal message."
        << ""
        << "usage: " + fail("\"something bad happened\"")
        << "       " + fail(str("[myfun] invalid args : __VA_ARGS__"));
