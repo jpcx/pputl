@@ -31,7 +31,7 @@ namespace api {
 
 using namespace codegen;
 
-decltype(first) first = NIFTY_DEF(first, [&](arg _0, va) {
+decltype(first) first = NIFTY_DEF(first, [&](arg first_, va) {
   docs << "immediately returns the first argument."
        << "must have at least one argument."
        << ""
@@ -41,7 +41,7 @@ decltype(first) first = NIFTY_DEF(first, [&](arg _0, va) {
        << ""
        << "e.g. " + first("__VA_ARGS__") << "     " + esc(first + " tup");
 
-  return _0;
+  return first_;
 });
 
 } // namespace api

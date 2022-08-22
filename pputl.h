@@ -72,16 +72,16 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
-//           none  some  any   atom  bool  hex   nybl  int  idec              //
-//           ihex  uint  udec  uhex  tup   utup  word  size                   //
+//           none  some  obj   atom  bool  hex   nybl  int   idec             //
+//           ihex  uint  udec  uhex  tup   utup  word  size  any              //
 //       ‐ traits detection                                       [traits]    //
-//           is_none  is_some  is_any   is_atom  is_bool  is_hex   is_nybl    //
+//           is_none  is_some  is_obj   is_atom  is_bool  is_hex   is_nybl    //
 //           is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex  is_tup     //
-//           is_utup  is_word  is_size  typeof   sizeof                       //
+//           is_utup  is_word  is_size  is_any   typeof   sizeof              //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
-//           str  xstr  cat  join  c_int  c_hex  c_bin                        //
+//           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                                      [numeric, math]    //
 //           inc  dec  add   sub   mul   divr                                 //
@@ -156,19 +156,13 @@
 //    TERMINOLOGY                                                             //
 //    -----------                                                             //
 //                                                                            //
-//    pputl defines several types  to describe different kinds of variadic    //
-//    arguments (potentially empty, comma-delimited tokens of any kind).      //
-//                                                                            //
-//    Type identification and conversion is used extensively.                 //
-//                                                                            //
-//    Each type  is represented by  two functions:  a predicate for traits    //
-//    testing, and a constructor that validates, converts, or fails.   All    //
-//    functions that use these types in their parameter docs  assert their    //
-//    argument sanity by invoking their constructors or traits functions.     //
+//    pputl defines several types and uses type casting and traits testing    //
+//    for control flow and safety;  parameters documented with these types    //
+//    are verified by invoking the appropriate cast or traits function.       //
 //                                                                            //
 //      none: an absence of tokens                                            //
-//      some: <abstract> something; not nothing                               //
-//       └─ any: exactly one generic value                                    //
+//      some: <abstract> something; not nothing [e.g. foo] [e.g. ,,,]         //
+//       └─ obj: exactly one generic value                                    //
 //          ├─ atom: a generic value not surrounded by parentheses            //
 //          │   ├─ bool: a literal '1' or '0'                                 //
 //          │   ├─ hex:  a literal uppercase hexadecimal digit [e.g. B]       //
@@ -183,6 +177,7 @@
 //          │   └─ utup: an unsigned word as a tup of hex [e.g. (6, D, 2)]    //
 //          └─ word: <union> int | uint | utup                                //
 //              └─ size: an unsigned word capped by the argument limit        //
+//      any: <union> none | obj; any kind of individual macro argument        //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -192,10 +187,10 @@
 //    errors  triggered by  pputl functions  will include  the macro name,    //
 //    a textual description, and its primary expansion arguments.             //
 //                                                                            //
-//    With the exception of lang.first and lang.rest,  all non-nullary API    //
-//    functions are  fully variadic and chainable such that the outputs of    //
-//    one may be used as inputs to another. Inputs must be distinguishable    //
-//    after the primary expansion; deferred input behavior is undefined.      //
+//    With a few exceptions in [lang], non-nullary API functions are fully    //
+//    variadic and chainable  such that the outputs of one  may be used as    //
+//    inputs to another.  Inputs must be distinguishable after the primary    //
+//    expansion; deferred input behavior is undefined.                        //
 //                                                                            //
 //    Hexadecimal integers are always represented by fixed-length strings.    //
 //    Negative ints cannot be represented in decimal  due to concatenation    //
@@ -258,23 +253,26 @@
 ///
 /// PTL_ESC ()        // <nothing>
 /// PTL_ESC (a, b, c) // a, b, c
-#define PTL_ESC(/* ...v: any */...) /* -> ...v */ __VA_ARGS__
+#define PTL_ESC(...) /* -> __VA_ARGS__ */ __VA_ARGS__
 
 /// [lang.cat]
 /// ----------
-/// concatenates two args after an expansion.
+/// immediately concatenates a with b.
+/// must provide at least one arg.
 /// args must be compatible with the ## operator.
 ///
 /// PTL_CAT(foo, bar)          // foobar
-/// PTL_CAT(foo, PTL_EAT(bar)) // foo
-#define PTL_CAT(/* [a]: any, [b]: any */...) /* -> a##b */ \
-  __VA_OPT__(PPUTLCAT_X(__VA_ARGS__))
+/// PTL_CAT(foo, PTL_EAT(bar)) // fooPTL_EAT(bar)
+#define PTL_CAT(a, b) /* -> a##b */ a##b
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLCAT_X(a, b) a##b
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+/// [lang.xcat]
+/// -----------
+/// concatenates two args after an expansion.
+/// args must be compatible with the ## operator.
+///
+/// PTL_XCAT(foo, bar)          // foobar
+/// PTL_XCAT(foo, PTL_EAT(bar)) // foo
+#define PTL_XCAT(...) /* -> cat(__VA_ARGS__) */ __VA_OPT__(PTL_CAT(__VA_ARGS__))
 
 /// [lang.str]
 /// ----------
@@ -283,7 +281,7 @@
 /// PTL_STR()                  // ""
 /// PTL_STR(foo, bar)          // "foo, bar"
 /// PTL_STR(PTL_CAT(foo, bar)) // "PTL_CAT(foo, bar)"
-#define PTL_STR(/* ...v: any */...) /* -> <string literal #...v> */ #__VA_ARGS__
+#define PTL_STR(...) /* -> #__VA_ARGS__ */ #__VA_ARGS__
 
 /// [lang.xstr]
 /// -----------
@@ -292,7 +290,7 @@
 /// PTL_XSTR()                  // ""
 /// PTL_XSTR(foo, bar)          // "foo, bar"
 /// PTL_XSTR(PTL_CAT(foo, bar)) // "foobar"
-#define PTL_XSTR(/* ...v: any */...) /* -> <string literal #...v> */ PTL_STR(__VA_ARGS__)
+#define PTL_XSTR(...) /* -> str(__VA_ARGS__) */ PTL_STR(__VA_ARGS__)
 
 /// [lang.first]
 /// ------------
@@ -305,7 +303,7 @@
 ///
 /// e.g. PTL_FIRST(__VA_ARGS__)
 ///      PTL_ESC(PTL_FIRST tup)
-#define PTL_FIRST(/* first: any, rest: any... */ _, ...) /* -> first */ _
+#define PTL_FIRST(first, ...) /* -> first */ first
 
 /// [lang.xfirst]
 /// -------------
@@ -315,7 +313,7 @@
 /// PTL_XFIRST(, )   // <nothing>
 /// PTL_XFIRST(a)    // a
 /// PTL_XFIRST(a, b) // a
-#define PTL_XFIRST(/* ...v: any */...) /* -> v[0] */ __VA_OPT__(PTL_FIRST(__VA_ARGS__))
+#define PTL_XFIRST(...) /* -> first(__VA_ARGS__) */ __VA_OPT__(PTL_FIRST(__VA_ARGS__))
 
 /// [lang.rest]
 /// -----------
@@ -328,7 +326,7 @@
 ///
 /// e.g. PTL_REST(__VA_ARGS__)
 ///      PTL_ESC(PTL_REST tup)
-#define PTL_REST(/* first: any, rest: any... */ _, ...) /* -> ...rest */ __VA_ARGS__
+#define PTL_REST(first, ...) /* -> __VA_ARGS__ */ __VA_ARGS__
 
 /// [lang.xrest]
 /// ------------
@@ -342,7 +340,7 @@
 /// PTL_XREST(PTL_XREST(a, b, c)) // c
 /// PTL_XREST(a, , )              // ,
 /// PTL_XREST(a, b, , )           // b, ,
-#define PTL_XREST(/* ...v: any */...) /* -> ...v */ __VA_OPT__(PTL_REST(__VA_ARGS__))
+#define PTL_XREST(...) /* -> rest(__VA_ARGS__) */ __VA_OPT__(PTL_REST(__VA_ARGS__))
 
 /// [lang.trim]
 /// -----------
@@ -356,9 +354,10 @@
 /// PTL_TRIM(a, )    // a
 /// PTL_TRIM(, b, c) // b, c
 /// PTL_TRIM(a, b, ) // a, b,
-#define PTL_TRIM(/* ...v: any */...) /* -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:] */ \
-  PTL_CAT(PPUTLTRIM_, PTL_CAT(PPUTLTRIM_SEL(PTL_XFIRST(__VA_ARGS__)),                 \
-                              PPUTLTRIM_SEL(PTL_XREST(__VA_ARGS__))))                 \
+#define PTL_TRIM(                                                              \
+    /* ...v: <unknown> */...) /* -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:] */ \
+  PTL_XCAT(PPUTLTRIM_, PTL_XCAT(PPUTLTRIM_SEL(PTL_XFIRST(__VA_ARGS__)),        \
+                                PPUTLTRIM_SEL(PTL_XREST(__VA_ARGS__))))        \
   (__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -380,7 +379,8 @@
 /// PTL_DEFAULT(a,)      // a
 /// PTL_DEFAULT(a, b)    // b
 /// PTL_DEFAULT(a, b, c) // b, c
-#define PTL_DEFAULT(/* default: <any>, ...argument: <any...> */...) \
+#define PTL_DEFAULT(                                                             \
+    /* default: <unknown>, ...args: <unknown> */...) /* -> ...args || default */ \
   PPUTLDEFAULT_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -409,7 +409,7 @@
 /// PTL_IS_NONE(foo)       // 0
 /// PTL_IS_NONE(foo, bar)  // 0
 /// PTL_IS_NONE(PTL_ESC()) // 1
-#define PTL_IS_NONE(/* <unknown> */...) /* -> bool */ PPUTLIS_NONE_0##__VA_OPT__(1)
+#define PTL_IS_NONE(...) /* -> bool */ PPUTLIS_NONE_0##__VA_OPT__(1)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -426,7 +426,7 @@
 /// PTL_IS_SOME(foo)       // 1
 /// PTL_IS_SOME(foo, bar)  // 1
 /// PTL_IS_SOME(PTL_ESC()) // 0
-#define PTL_IS_SOME(/* <unknown> */...) /* -> bool */ PPUTLIS_SOME_0##__VA_OPT__(1)
+#define PTL_IS_SOME(...) /* -> bool */ PPUTLIS_SOME_0##__VA_OPT__(1)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -435,40 +435,40 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_any]
+/// [traits.is_obj]
 /// ---------------
 /// [extends PTL_IS_SOME] detects if args is exactly one generic value.
 ///
-/// PTL_IS_ANY()         // 0
-/// PTL_IS_ANY(,)        // 0
-/// PTL_IS_ANY(foo,)     // 0
-/// PTL_IS_ANY(foo, bar) // 0
-/// PTL_IS_ANY(foo)      // 1
-/// PTL_IS_ANY((42))     // 1
-#define PTL_IS_ANY(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_ANY_, PTL_IS_SOME(__VA_ARGS__))(__VA_ARGS__.)
+/// PTL_IS_OBJ()         // 0
+/// PTL_IS_OBJ(,)        // 0
+/// PTL_IS_OBJ(foo,)     // 0
+/// PTL_IS_OBJ(foo, bar) // 0
+/// PTL_IS_OBJ(foo)      // 1
+/// PTL_IS_OBJ((42))     // 1
+#define PTL_IS_OBJ(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_OBJ_, PTL_IS_SOME(__VA_ARGS__))(__VA_ARGS__.)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_ANY_1           PPUTLIS_ANY_o
-#define PPUTLIS_ANY_0           PPUTLIS_ANY_0_fail
-#define PPUTLIS_ANY_0_fail(...) 0
+#define PPUTLIS_OBJ_1           PPUTLIS_OBJ_o
+#define PPUTLIS_OBJ_0           PPUTLIS_OBJ_0_fail
+#define PPUTLIS_OBJ_0_fail(...) 0
 
 /// must be called with tokens after __VA_ARGS__ to detect empty ending arg
-#define PPUTLIS_ANY_o(/* <some + token; e.g. __VA_ARGS__.foo> */ _, ...) \
-  PTL_CAT(PPUTLIS_ANY_o##__VA_OPT__(_NOT)##_OK, PTL_IS_SOME(_))
-#define PPUTLIS_ANY_o_NOT_OK   PPUTLIS_ANY_o_NOT_OK_
-#define PPUTLIS_ANY_o_NOT_OK_1 0
-#define PPUTLIS_ANY_o_NOT_OK_0 0
-#define PPUTLIS_ANY_o_OK       PPUTLIS_ANY_o_OK_
-#define PPUTLIS_ANY_o_OK_1     1
-#define PPUTLIS_ANY_o_OK_0     0
+#define PPUTLIS_OBJ_o(/* <some + token; e.g. __VA_ARGS__.foo> */ _, ...) \
+  PTL_XCAT(PPUTLIS_OBJ_o##__VA_OPT__(_NOT)##_OK, PTL_IS_SOME(_))
+#define PPUTLIS_OBJ_o_NOT_OK   PPUTLIS_OBJ_o_NOT_OK_
+#define PPUTLIS_OBJ_o_NOT_OK_1 0
+#define PPUTLIS_OBJ_o_NOT_OK_0 0
+#define PPUTLIS_OBJ_o_OK       PPUTLIS_OBJ_o_OK_
+#define PPUTLIS_OBJ_o_OK_1     1
+#define PPUTLIS_OBJ_o_OK_0     0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [traits.is_atom]
 /// ----------------
-/// [extends PTL_IS_ANY] detects if args is a generic, non-tuple, singular value.
+/// [extends PTL_IS_OBJ] detects if args is a generic, non-tuple, singular value.
 ///
 /// PTL_IS_ATOM()       // 0
 /// PTL_IS_ATOM(foo)    // 1
@@ -476,15 +476,15 @@
 /// PTL_IS_ATOM(1, 2)   // 0
 /// PTL_IS_ATOM(())     // 0
 /// PTL_IS_ATOM((1, 2)) // 0
-#define PTL_IS_ATOM(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_ATOM_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_ATOM(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_ATOM_, PTL_IS_OBJ(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_ATOM_1           PPUTLIS_ATOM_o
 #define PPUTLIS_ATOM_0           PPUTLIS_ATOM_0_fail
 #define PPUTLIS_ATOM_0_fail(...) 0
-#define PPUTLIS_ATOM_o(any)      PTL_CAT(PPUTLIS_ATOM_o_, PTL_IS_NONE(PTL_EAT any))
+#define PPUTLIS_ATOM_o(obj)      PTL_XCAT(PPUTLIS_ATOM_o_, PTL_IS_NONE(PTL_EAT obj))
 #define PPUTLIS_ATOM_o_1         0
 #define PPUTLIS_ATOM_o_0         1
 
@@ -501,15 +501,15 @@
 /// PTL_IS_BOOL(0x000) // 0
 /// PTL_IS_BOOL(0, 1)  // 0
 /// PTL_IS_BOOL((0))   // 0
-#define PTL_IS_BOOL(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_BOOL_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_BOOL(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_BOOL_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_BOOL_1           PPUTLIS_BOOL_o
 #define PPUTLIS_BOOL_0           PPUTLIS_BOOL_0_fail
 #define PPUTLIS_BOOL_0_fail(...) 0
-#define PPUTLIS_BOOL_o(atom)     PTL_IS_NONE(PTL_CAT(PPUTLIS_BOOL_o_, atom))
+#define PPUTLIS_BOOL_o(atom)     PTL_IS_NONE(PTL_XCAT(PPUTLIS_BOOL_o_, atom))
 #define PPUTLIS_BOOL_o_1
 #define PPUTLIS_BOOL_o_0
 
@@ -526,8 +526,8 @@
 /// PTL_IS_HEX(B)   // 1
 /// PTL_IS_HEX(b)   // 0
 /// PTL_IS_HEX(F)   // 1
-#define PTL_IS_HEX(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_HEX_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_HEX(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_HEX_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -548,8 +548,8 @@
 /// PTL_IS_NYBL(000)  // 0
 /// PTL_IS_NYBL(0000) // 1
 /// PTL_IS_NYBL(0110) // 1
-#define PTL_IS_NYBL(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_NYBL_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_NYBL(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_NYBL_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -576,20 +576,20 @@
 /// PTL_IS_INT(0xFFF)  // 1
 /// PTL_IS_INT(0xF)    // 0
 /// PTL_IS_INT((), ()) // 0
-#define PTL_IS_INT(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_INT_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_INT(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_INT_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_INT_1           PPUTLIS_INT_o
 #define PPUTLIS_INT_0           PPUTLIS_INT_0_fail
 #define PPUTLIS_INT_0_fail(...) 0
-#define PPUTLIS_INT_o(atom)                                                  \
-  PTL_CAT(PPUTLIS_INT_o_,                                                    \
-          PTL_CAT(PPUTLIMPL_UDEC(atom##u, IS), PPUTLIMPL_UHEX(atom##u, IS))) \
+#define PPUTLIS_INT_o(atom)                                                    \
+  PTL_XCAT(PPUTLIS_INT_o_,                                                     \
+           PTL_XCAT(PPUTLIMPL_UDEC(atom##u, IS), PPUTLIMPL_UHEX(atom##u, IS))) \
   (atom##u)
 #define PPUTLIS_INT_o_10(udec) \
-  PTL_CAT(PPUTLIS_INT_o_10, PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(udec, UHEX), ILTZ))
+  PTL_XCAT(PPUTLIS_INT_o_10, PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(udec, UHEX), ILTZ))
 #define PPUTLIS_INT_o_101      0
 #define PPUTLIS_INT_o_100      1
 #define PPUTLIS_INT_o_01(uhex) 1
@@ -610,15 +610,15 @@
 /// PTL_IS_IDEC(0x000u) // 0
 /// PTL_IS_IDEC(0xFFF)  // 0
 /// PTL_IS_IDEC((), ()) // 0
-#define PTL_IS_IDEC(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_IDEC_, PTL_IS_INT(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_IDEC(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_IDEC_, PTL_IS_INT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_IDEC_1         PPUTLIS_IDEC_o
 #define PPUTLIS_IDEC_0         PPUTLIS_IDEC_FAIL
 #define PPUTLIS_IDEC_FAIL(...) 0
-#define PPUTLIS_IDEC_o(int)    PTL_CAT(PPUTLIS_IDEC_o_, PPUTLIMPL_UDEC(int##u, IS))
+#define PPUTLIS_IDEC_o(int)    PTL_XCAT(PPUTLIS_IDEC_o_, PPUTLIMPL_UDEC(int##u, IS))
 #define PPUTLIS_IDEC_o_1       1
 #define PPUTLIS_IDEC_o_0       0
 
@@ -635,15 +635,15 @@
 /// PTL_IS_IHEX(0xFFF)  // 1
 /// PTL_IS_IHEX(0xFFFu) // 0
 /// PTL_IS_IHEX((), ()) // 0
-#define PTL_IS_IHEX(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_IHEX_, PTL_IS_INT(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_IHEX(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_IHEX_, PTL_IS_INT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_IHEX_1           PPUTLIS_IHEX_o
 #define PPUTLIS_IHEX_0           PPUTLIS_IHEX_0_fail
 #define PPUTLIS_IHEX_0_fail(...) 0
-#define PPUTLIS_IHEX_o(int)      PTL_CAT(PPUTLIS_IHEX_o_, PPUTLIMPL_UHEX(int##u, IS))
+#define PPUTLIS_IHEX_o(int)      PTL_XCAT(PPUTLIS_IHEX_o_, PPUTLIMPL_UHEX(int##u, IS))
 #define PPUTLIS_IHEX_o_1         1
 #define PPUTLIS_IHEX_o_0         0
 
@@ -664,8 +664,8 @@
 /// PTL_IS_UINT(0xFFF)  // 0
 /// PTL_IS_UINT(0b110u) // 0
 /// PTL_IS_UINT((), ()) // 0
-#define PTL_IS_UINT(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UINT_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_UINT(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_UINT_, PTL_IS_ATOM(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -673,7 +673,7 @@
 #define PPUTLIS_UINT_0           PPUTLIS_UINT_0_fail
 #define PPUTLIS_UINT_0_fail(...) 0
 #define PPUTLIS_UINT_o(atom) \
-  PTL_CAT(PPUTLIS_UINT_o_, PTL_CAT(PPUTLIMPL_UDEC(atom, IS), PPUTLIMPL_UHEX(atom, IS)))
+  PTL_XCAT(PPUTLIS_UINT_o_, PTL_XCAT(PPUTLIMPL_UDEC(atom, IS), PPUTLIMPL_UHEX(atom, IS)))
 #define PPUTLIS_UINT_o_10 1
 #define PPUTLIS_UINT_o_01 1
 #define PPUTLIS_UINT_o_00 0
@@ -692,15 +692,15 @@
 /// PTL_IS_UDEC(0x000u) // 0
 /// PTL_IS_UDEC(0xFFF)  // 0
 /// PTL_IS_UDEC((), ()) // 0
-#define PTL_IS_UDEC(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UDEC_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_UDEC(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_UDEC_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_UDEC_1           PPUTLIS_UDEC_o
 #define PPUTLIS_UDEC_0           PPUTLIS_UDEC_0_fail
 #define PPUTLIS_UDEC_0_fail(...) 0
-#define PPUTLIS_UDEC_o(uint)     PTL_CAT(PPUTLIS_UDEC_o_, PPUTLIMPL_UDEC(uint, IS))
+#define PPUTLIS_UDEC_o(uint)     PTL_XCAT(PPUTLIS_UDEC_o_, PPUTLIMPL_UDEC(uint, IS))
 #define PPUTLIS_UDEC_o_1         1
 #define PPUTLIS_UDEC_o_0         0
 
@@ -716,15 +716,15 @@
 /// PTL_IS_UHEX(0x000u) // 1
 /// PTL_IS_UHEX(0xFFF)  // 0
 /// PTL_IS_UHEX((), ()) // 0
-#define PTL_IS_UHEX(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UHEX_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_UHEX(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_UHEX_, PTL_IS_UINT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_UHEX_1           PPUTLIS_UHEX_o
 #define PPUTLIS_UHEX_0           PPUTLIS_UHEX_0_fail
 #define PPUTLIS_UHEX_0_fail(...) 0
-#define PPUTLIS_UHEX_o(uint)     PTL_CAT(PPUTLIS_UHEX_o_, PPUTLIMPL_UHEX(uint, IS))
+#define PPUTLIS_UHEX_o(uint)     PTL_XCAT(PPUTLIS_UHEX_o_, PPUTLIMPL_UHEX(uint, IS))
 #define PPUTLIS_UHEX_o_1         1
 #define PPUTLIS_UHEX_o_0         0
 
@@ -732,21 +732,21 @@
 
 /// [traits.is_tup]
 /// ---------------
-/// [extends PTL_IS_ANY] detects if args is a tuple (parenthesized args).
+/// [extends PTL_IS_OBJ] detects if args is a tuple (parenthesized args).
 ///
 /// PTL_IS_TUP()       // 0
 /// PTL_IS_TUP(1, 2)   // 0
 /// PTL_IS_TUP(())     // 1
 /// PTL_IS_TUP((1, 2)) // 1
-#define PTL_IS_TUP(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_TUP_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_TUP(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_TUP_, PTL_IS_OBJ(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_TUP_1           PPUTLIS_TUP_o
 #define PPUTLIS_TUP_0           PPUTLIS_TUP_0_fail
 #define PPUTLIS_TUP_0_fail(...) 0
-#define PPUTLIS_TUP_o(any)      PTL_IS_NONE(PTL_EAT any)
+#define PPUTLIS_TUP_o(obj)      PTL_IS_NONE(PTL_EAT obj)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -761,8 +761,8 @@
 /// PTL_IS_UTUP((9, B, C))    // 1
 /// PTL_IS_UTUP((9, B, C,))   // 0
 /// PTL_IS_UTUP((9, B, C, E)) // 0
-#define PTL_IS_UTUP(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_UTUP_, PTL_IS_TUP(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_UTUP(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_UTUP_, PTL_IS_TUP(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -789,7 +789,7 @@
 
 /// [traits.is_word]
 /// ----------------
-/// [extends PTL_IS_ANY] detects if args is one of int|uint|utup.
+/// [extends PTL_IS_OBJ] detects if args is one of int|uint|utup.
 ///
 /// PTL_IS_WORD(0)         // 1
 /// PTL_IS_WORD(0u)        // 1
@@ -800,19 +800,19 @@
 /// PTL_IS_WORD(4095u)     // 1
 /// PTL_IS_WORD(0xFFFu)    // 1
 /// PTL_IS_WORD((0, 0, 8)) // 1
-#define PTL_IS_WORD(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_WORD_, PTL_IS_ANY(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_WORD(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_WORD_, PTL_IS_OBJ(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_WORD_1           PPUTLIS_WORD_o
 #define PPUTLIS_WORD_0           PPUTLIS_WORD_0_fail
 #define PPUTLIS_WORD_0_fail(...) 0
-#define PPUTLIS_WORD_o(any)      PTL_CAT(PPUTLIS_WORD_o_, PPUTLIS_ATOM_o(any))(any)
-#define PPUTLIS_WORD_o_1(atom)   PTL_CAT(PPUTLIS_WORD_o_1, PPUTLIS_INT_o(atom))(atom)
+#define PPUTLIS_WORD_o(obj)      PTL_XCAT(PPUTLIS_WORD_o_, PPUTLIS_ATOM_o(obj))(obj)
+#define PPUTLIS_WORD_o_1(atom)   PTL_XCAT(PPUTLIS_WORD_o_1, PPUTLIS_INT_o(atom))(atom)
 #define PPUTLIS_WORD_o_11(int)   1
 #define PPUTLIS_WORD_o_10(atom)  PPUTLIS_UINT_o(atom)
-#define PPUTLIS_WORD_o_0(any)    PTL_IS_UTUP(any)
+#define PPUTLIS_WORD_o_0(obj)    PTL_IS_UTUP(obj)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -830,27 +830,27 @@
 /// PTL_IS_SIZE(0xFFFu)    // 0
 /// PTL_IS_SIZE(255u)      // 1
 /// PTL_IS_SIZE((0, 0, 8)) // 1
-#define PTL_IS_SIZE(/* <unknown> */...) /* -> bool */ \
-  PTL_CAT(PPUTLIS_SIZE_, PTL_IS_WORD(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_IS_SIZE(...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_SIZE_, PTL_IS_WORD(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_SIZE_1           PPUTLIS_SIZE_o
 #define PPUTLIS_SIZE_0           PPUTLIS_SIZE_0_fail
 #define PPUTLIS_SIZE_0_fail(...) 0
-#define PPUTLIS_SIZE_o(word)     PTL_CAT(PPUTLIS_SIZE_o_, PPUTLIS_TUP_o(word))(word)
+#define PPUTLIS_SIZE_o(word)     PTL_XCAT(PPUTLIS_SIZE_o_, PPUTLIS_TUP_o(word))(word)
 #define PPUTLIS_SIZE_o_1(utup)   PTL_ESC(PPUTLIS_SIZE_o_CHK utup)
-#define PPUTLIS_SIZE_o_0(atom)   PTL_CAT(PPUTLIS_SIZE_o_0, PPUTLIS_INT_o(atom))(atom)
-#define PPUTLIS_SIZE_o_01(int)   PTL_CAT(PPUTLIS_SIZE_o_01, PPUTLIS_IDEC_o(int))(int)
+#define PPUTLIS_SIZE_o_0(atom)   PTL_XCAT(PPUTLIS_SIZE_o_0, PPUTLIS_INT_o(atom))(atom)
+#define PPUTLIS_SIZE_o_01(int)   PTL_XCAT(PPUTLIS_SIZE_o_01, PPUTLIS_IDEC_o(int))(int)
 #define PPUTLIS_SIZE_o_011(idec) \
-  PTL_CAT(PPUTLIS_SIZE_o_011, PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(idec##u, UHEX), ILTZ))
+  PTL_XCAT(PPUTLIS_SIZE_o_011, PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(idec##u, UHEX), ILTZ))
 #define PPUTLIS_SIZE_o_0111 0
 #define PPUTLIS_SIZE_o_0110 1
 #define PPUTLIS_SIZE_o_010(ihex) \
-  PTL_CAT(PPUTLIS_SIZE_o_010, PPUTLIMPL_UHEX(ihex##u, ILTZ))
+  PTL_XCAT(PPUTLIS_SIZE_o_010, PPUTLIMPL_UHEX(ihex##u, ILTZ))
 #define PPUTLIS_SIZE_o_0101     0
 #define PPUTLIS_SIZE_o_0100     1
-#define PPUTLIS_SIZE_o_00(uint) PTL_CAT(PPUTLIS_SIZE_o_00, PPUTLIS_UDEC_o(uint))(uint)
+#define PPUTLIS_SIZE_o_00(uint) PTL_XCAT(PPUTLIS_SIZE_o_00, PPUTLIS_UDEC_o(uint))(uint)
 #define PPUTLIS_SIZE_o_001(udec) \
   PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(udec, UHEX), UTUP))
 #define PPUTLIS_SIZE_o_000(uhex)    PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(uhex, UTUP))
@@ -859,11 +859,33 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [traits.is_any]
+/// ---------------
+/// detects if args is any kind of individual macro argument.
+///
+/// PTL_IS_ANY()       // 1
+/// PTL_IS_ANY(foo)    // 1
+/// PTL_IS_ANY((a, b)) // 1
+/// PTL_IS_ANY(,)      // 0
+/// PTL_IS_ANY(,,)     // 0
+/// PTL_IS_ANY(a, b)   // 0
+#define PTL_IS_ANY(...) /* -> bool */ PPUTLIS_ANY_o(__VA_ARGS__.)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_ANY_o(_, ...) PPUTLIS_ANY_0##__VA_OPT__(1)
+#define PPUTLIS_ANY_01        0
+#define PPUTLIS_ANY_0         1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.typeof]
 /// ---------------
 /// detects the value type. must be compatible with the ## operator.
-/// literal 0 through 9 are considered ibase10 rather than bool or hex.
-/// words less than the word size are not considered as size types.
+///
+/// note: literal 0-9 are always considered idec, not hex.
+///       literal 1000-1111 are considered idec (not nybl) iff less than PTL_INT_MAX.
+///       words less than PTL_SIZE_MAX are not specially considered to be size values.
 ///
 /// returns one of:
 ///
@@ -886,9 +908,8 @@
 /// PTL_TYPEOF((0, 0, 0)) // UTUP
 /// PTL_TYPEOF((F, F, F)) // UTUP
 /// PTL_TYPEOF()          // NONE
-#define PTL_TYPEOF(                                                                   \
-    /* <unknown> */...) /* -> NONE|SOME|UTUP|TUP|IDEC|IHEX|UDEC|UHEX|HEX|NYBL|ATOM */ \
-  PTL_CAT(PPUTLTYPEOF_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
+#define PTL_TYPEOF(...) /* -> NONE|SOME|UTUP|TUP|IDEC|IHEX|UDEC|UHEX|HEX|NYBL|ATOM */ \
+  PTL_XCAT(PPUTLTYPEOF_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -896,42 +917,42 @@
 #define PPUTLTYPEOF_1(...) NONE
 /// !none
 #define PPUTLTYPEOF_0(...) \
-  PTL_CAT(PPUTLTYPEOF_0, PPUTLIS_ANY_o(__VA_ARGS__.))(__VA_ARGS__)
-/// !none → any
-#define PPUTLTYPEOF_01(any)       PTL_CAT(PPUTLTYPEOF_01, PPUTLIS_TUP_o(any))(any)
-/// !none → any → tup
-#define PPUTLTYPEOF_011(tup)      PTL_CAT(PPUTLTYPEOF_011, PPUTLIS_UTUP_o(tup))(tup)
-/// !none → any → tup → utup
+  PTL_XCAT(PPUTLTYPEOF_0, PPUTLIS_OBJ_o(__VA_ARGS__.))(__VA_ARGS__)
+/// !none → obj
+#define PPUTLTYPEOF_01(obj)       PTL_XCAT(PPUTLTYPEOF_01, PPUTLIS_TUP_o(obj))(obj)
+/// !none → obj → tup
+#define PPUTLTYPEOF_011(tup)      PTL_XCAT(PPUTLTYPEOF_011, PPUTLIS_UTUP_o(tup))(tup)
+/// !none → obj → tup → utup
 #define PPUTLTYPEOF_0111(utup)    UTUP
-/// !none → any → tup → !utup
+/// !none → obj → tup → !utup
 #define PPUTLTYPEOF_0110(tup)     TUP
-/// !none → any → !tup
-#define PPUTLTYPEOF_010(atom)     PTL_CAT(PPUTLTYPEOF_010, PPUTLIS_INT_o(atom))(atom)
-/// !none → any → !tup → int
-#define PPUTLTYPEOF_0101(int)     PTL_CAT(PPUTLTYPEOF_0101, PPUTLIS_IDEC_o(int))(int)
-/// !none → any → !tup → int → idec
+/// !none → obj → !tup
+#define PPUTLTYPEOF_010(atom)     PTL_XCAT(PPUTLTYPEOF_010, PPUTLIS_INT_o(atom))(atom)
+/// !none → obj → !tup → int
+#define PPUTLTYPEOF_0101(int)     PTL_XCAT(PPUTLTYPEOF_0101, PPUTLIS_IDEC_o(int))(int)
+/// !none → obj → !tup → int → idec
 #define PPUTLTYPEOF_01011(idec)   IDEC
-/// !none → any → !tup → int → !idec
+/// !none → obj → !tup → int → !idec
 #define PPUTLTYPEOF_01010(ihex)   IHEX
-/// !none → any → !tup → !int
-#define PPUTLTYPEOF_0100(atom)    PTL_CAT(PPUTLTYPEOF_0100, PPUTLIS_UINT_o(atom))(atom)
-/// !none → any → !tup → !int → uint
-#define PPUTLTYPEOF_01001(uint)   PTL_CAT(PPUTLTYPEOF_01001, PPUTLIS_UDEC_o(uint))(uint)
-/// !none → any → !tup → !int → uint → udec
+/// !none → obj → !tup → !int
+#define PPUTLTYPEOF_0100(atom)    PTL_XCAT(PPUTLTYPEOF_0100, PPUTLIS_UINT_o(atom))(atom)
+/// !none → obj → !tup → !int → uint
+#define PPUTLTYPEOF_01001(uint)   PTL_XCAT(PPUTLTYPEOF_01001, PPUTLIS_UDEC_o(uint))(uint)
+/// !none → obj → !tup → !int → uint → udec
 #define PPUTLTYPEOF_010011(udec)  UDEC
-/// !none → any → !tup → !int → uint → !udec
+/// !none → obj → !tup → !int → uint → !udec
 #define PPUTLTYPEOF_010010(uhex)  UHEX
-/// !none → any → !tup → !int → !uint
-#define PPUTLTYPEOF_01000(atom)   PTL_CAT(PPUTLTYPEOF_01000, PPUTLIS_HEX_o(atom))(atom)
-/// !none → any → !tup → !int → !uint → hex
+/// !none → obj → !tup → !int → !uint
+#define PPUTLTYPEOF_01000(atom)   PTL_XCAT(PPUTLTYPEOF_01000, PPUTLIS_HEX_o(atom))(atom)
+/// !none → obj → !tup → !int → !uint → hex
 #define PPUTLTYPEOF_010001(hex)   HEX
-/// !none → any → !tup → !int → !uint → !hex
-#define PPUTLTYPEOF_010000(atom)  PTL_CAT(PPUTLTYPEOF_010000, PPUTLIS_NYBL_o(atom))(atom)
-/// !none → any → !tup → !int → !uint → !hex → nybl
+/// !none → obj → !tup → !int → !uint → !hex
+#define PPUTLTYPEOF_010000(atom)  PTL_XCAT(PPUTLTYPEOF_010000, PPUTLIS_NYBL_o(atom))(atom)
+/// !none → obj → !tup → !int → !uint → !hex → nybl
 #define PPUTLTYPEOF_0100001(nybl) NYBL
-/// !none → any → !tup → !int → !uint → !hex → !nybl
+/// !none → obj → !tup → !int → !uint → !hex → !nybl
 #define PPUTLTYPEOF_0100000(atom) ATOM
-/// !none → !any
+/// !none → !obj
 #define PPUTLTYPEOF_00(...)       SOME
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
@@ -945,7 +966,7 @@
 /// PTL_SIZEOF(a)    // 1u
 /// PTL_SIZEOF(a, b) // 2u
 /// PTL_SIZEOF(, )   // 2u
-#define PTL_SIZEOF(/* <unknown> */...) /* -> udec&size */ \
+#define PTL_SIZEOF(...) /* -> udec&size */ \
   PPUTLSIZEOF_o(PTL_STR([PTL_SIZEOF] too many arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1215,8 +1236,8 @@
 /// nothing. fails if something.
 ///
 /// PTL_NONE() // <nothing>
-#define PTL_NONE(/* <nothing> */...) /* -> none */ \
-  PTL_CAT(PPUTLNONE_, PTL_IS_NONE(__VA_ARGS__))    \
+#define PTL_NONE(/* <nothing> */...) /* -> none{} */ \
+  PTL_XCAT(PPUTLNONE_, PTL_IS_NONE(__VA_ARGS__))     \
   (PTL_STR([PTL_NONE] none cannot describe something : __VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1234,8 +1255,8 @@
 /// PTL_SOME(foo, bar)        // foo, bar
 /// PTL_SOME(foo, 42, (, , )) // foo, 42, (, , )
 /// PTL_SOME(, )              // ,
-#define PTL_SOME(/* args: <something>... */...) /* -> some{...args} */ \
-  PTL_CAT(PPUTLSOME_, PTL_IS_SOME(__VA_ARGS__))                        \
+#define PTL_SOME(/* v: some */...) /* -> some{v} */ \
+  PTL_XCAT(PPUTLSOME_, PTL_IS_SOME(__VA_ARGS__))    \
   (PTL_STR([PTL_SOME] some cannot describe nothing : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1245,40 +1266,39 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.any]
+/// [type.obj]
 /// ----------
-/// [inherits from PTL_SOME] any type (generic data). returns arg.
-/// describes exactly one generic value.
-///
+/// [inherits from PTL_SOME] exactly one generic value.
 /// fails if not exactly one arg.
 ///
-/// PTL_ANY(foo) // foo
-#define PTL_ANY(/* v: any */...) /* -> any{v} */                 \
-  PPUTLANY_o(PTL_STR([PTL_ANY] any cannot describe multiple args \
+/// PTL_OBJ(foo) // foo
+#define PTL_OBJ(/* v: obj */...) /* -> obj{v} */                 \
+  PPUTLOBJ_o(PTL_STR([PTL_OBJ] obj cannot describe multiple args \
                      : __VA_ARGS__),                             \
              PTL_SOME(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLANY_o(e, ...) PTL_CAT(PPUTLANY_, PPUTLIS_ANY_o(__VA_ARGS__.))(e, __VA_ARGS__)
-#define PPUTLANY_1(e, any) any
-#define PPUTLANY_0(e, ...) PTL_FAIL(e)
+#define PPUTLOBJ_o(e, ...) \
+  PTL_XCAT(PPUTLOBJ_, PPUTLIS_OBJ_o(__VA_ARGS__.))(e, __VA_ARGS__)
+#define PPUTLOBJ_1(e, obj) obj
+#define PPUTLOBJ_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [type.atom]
 /// -----------
-/// [inherits from PTL_ANY] a generic, non-tuple, singular value.
+/// [inherits from PTL_OBJ] a generic, non-tuple, singular value.
 ///
 /// PTL_ATOM(foo) // foo
-#define PTL_ATOM(/* v: any */...) /* -> v */                 \
+#define PTL_ATOM(/* v: obj */...) /* -> atom{v} */           \
   PPUTLATOM_o(PTL_STR([PTL_ATOM] atom cannot describe tuples \
                       : __VA_ARGS__),                        \
-              PTL_ANY(__VA_ARGS__))
+              PTL_OBJ(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLATOM_o(e, any)  PTL_CAT(PPUTLATOM_, PPUTLIS_ATOM_o(any))(e, any)
+#define PPUTLATOM_o(e, obj)  PTL_XCAT(PPUTLATOM_, PPUTLIS_ATOM_o(obj))(e, obj)
 #define PPUTLATOM_1(e, atom) atom
 #define PPUTLATOM_0(e, ...)  PTL_FAIL(e)
 
@@ -1291,7 +1311,7 @@
 ///
 /// PTL_BOOL(0) // 0
 /// PTL_BOOL(1) // 1
-#define PTL_BOOL(/* v: 0|1 */...) /* -> b */                                       \
+#define PTL_BOOL(/* v: 0|1 */...) /* -> bool{b} */                                 \
   PPUTLBOOL_o(                                                                     \
       PTL_STR([PTL_BOOL] bool cannot describe anything but the literal '1' and '0' \
               : __VA_ARGS__),                                                      \
@@ -1299,7 +1319,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBOOL_o(e, atom) PTL_CAT(PPUTLBOOL_, PPUTLIS_BOOL_o(atom))(e, atom)
+#define PPUTLBOOL_o(e, atom) PTL_XCAT(PPUTLBOOL_, PPUTLIS_BOOL_o(atom))(e, atom)
 #define PPUTLBOOL_1(e, bool) bool
 #define PPUTLBOOL_0(e, ...)  PTL_FAIL(e)
 
@@ -1323,7 +1343,7 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLHEX_o(e, atom) \
-  PTL_CAT(PPUTLHEX_, PTL_CAT(PPUTLIS_HEX_o(atom), PPUTLIS_NYBL_o(atom)))(e, atom)
+  PTL_XCAT(PPUTLHEX_, PTL_XCAT(PPUTLIS_HEX_o(atom), PPUTLIS_NYBL_o(atom)))(e, atom)
 #define PPUTLHEX_10(e, hex)  hex
 #define PPUTLHEX_01(e, nybl) PPUTLIMPL_NYBL(nybl, HEX)
 #define PPUTLHEX_00(e, ...)  PTL_FAIL(e)
@@ -1348,7 +1368,7 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLNYBL_o(e, atom) \
-  PTL_CAT(PPUTLNYBL_, PTL_CAT(PPUTLIS_NYBL_o(atom), PPUTLIS_HEX_o(atom)))(e, atom)
+  PTL_XCAT(PPUTLNYBL_, PTL_XCAT(PPUTLIS_NYBL_o(atom), PPUTLIS_HEX_o(atom)))(e, atom)
 #define PPUTLNYBL_10(e, nybl) nybl
 #define PPUTLNYBL_01(e, hex)  PPUTLIMPL_HEX(hex, NYBL)
 #define PPUTLNYBL_00(e, ...)  PTL_FAIL(e)
@@ -1404,13 +1424,13 @@
 /// PTL_INT((0, 0, 0))       // 0x000
 /// PTL_INT((8, 0, 0), IDEC) // 0x800
 /// PTL_INT((7, F, F), IDEC) // 2047
-#define PTL_INT(/* v: word, [hint]: IDEC|IHEX */...) /* -> int{n} */ \
+#define PTL_INT(/* v: word, hint?: IDEC|IHEX */...) /* -> int{n} */ \
   PPUTLINT_o(PTL_STR([PTL_INT] invalid arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLINT_o(e, v, ...) \
-  PTL_CAT(PPUTLINT_, PPUTLINT_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
+  PTL_XCAT(PPUTLINT_, PPUTLINT_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
 #define PPUTLINT_XW_IH(utup)      PPUTLINT_XW_IH_o utup
 #define PPUTLINT_XW_IH_o(a, b, c) PPUTLIMPL_UHEX(0x##a##b##c##u, IHEX)
 #define PPUTLINT_XW_IC(utup)      PPUTLINT_XW_IC_o utup
@@ -1426,8 +1446,8 @@
 
 /// cast mode selector and error detector
 #define PPUTLINT_MODE(/* <err>, <typeof v>, <hint> */ e, t, ...) /* -> <cast mode> */ \
-  PTL_CAT(PPUTLINT_MODE_, PTL_CAT(PTL_IS_NONE(PTL_CAT(PPUTLINT_MODE_0, t)),           \
-                                  PTL_IS_NONE(PPUTLINT_MODE_1##__VA_ARGS__)))         \
+  PTL_XCAT(PPUTLINT_MODE_, PTL_XCAT(PTL_IS_NONE(PTL_XCAT(PPUTLINT_MODE_0, t)),        \
+                                    PTL_IS_NONE(PPUTLINT_MODE_1##__VA_ARGS__)))       \
   (e, t, __VA_ARGS__)
 #define PPUTLINT_MODE_11(e, t, ...) PPUTLINT_MODE_11_##t##__VA_ARGS__
 #define PPUTLINT_MODE_11_UTUP       XW_IH
@@ -1478,10 +1498,10 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIDEC_o(e, int)  PTL_CAT(PPUTLIDEC_, PPUTLIS_IDEC_o(int))(e, int)
+#define PPUTLIDEC_o(e, int)  PTL_XCAT(PPUTLIDEC_, PPUTLIS_IDEC_o(int))(e, int)
 #define PPUTLIDEC_1(e, idec) idec
 #define PPUTLIDEC_0(e, ihex) \
-  PTL_CAT(PPUTLIDEC_0, PPUTLIMPL_UHEX(ihex##u, ILTZ))(e, ihex##u)
+  PTL_XCAT(PPUTLIDEC_0, PPUTLIMPL_UHEX(ihex##u, ILTZ))(e, ihex##u)
 #define PPUTLIDEC_01(e, uhex) PTL_FAIL(e)
 #define PPUTLIDEC_00(e, uhex) PPUTLIMPL_UHEX(uhex, ICAST)
 
@@ -1500,7 +1520,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIHEX_o(int)  PTL_CAT(PPUTLIHEX_, PPUTLIS_IHEX_o(int))(int)
+#define PPUTLIHEX_o(int)  PTL_XCAT(PPUTLIHEX_, PPUTLIS_IHEX_o(int))(int)
 #define PPUTLIHEX_1(ihex) ihex
 #define PPUTLIHEX_0(idec) PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(idec##u, UHEX), IHEX)
 
@@ -1553,13 +1573,13 @@
 /// PTL_UINT(0x004u, UDEC)    // 4u
 /// PTL_UINT((0, 0, 0))       // 0x000u
 /// PTL_UINT((F, F, F), UDEC) // 4095u
-#define PTL_UINT(/* v: word, [hint]: UDEC|UHEX */...) /* -> uint{n} */ \
+#define PTL_UINT(/* v: word, hint?: UDEC|UHEX */...) /* -> uint{n} */ \
   PPUTLUINT_o(PTL_STR([PTL_UINT] invalid arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLUINT_o(e, v, ...) \
-  PTL_CAT(PPUTLUINT_, PPUTLUINT_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
+  PTL_XCAT(PPUTLUINT_, PPUTLUINT_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
 #define PPUTLUINT_XW_UH(utup)      PPUTLUINT_XW_UH_o utup
 #define PPUTLUINT_XW_UH_o(a, b, c) 0x##a##b##c##u
 #define PPUTLUINT_XW_UD(utup)      PPUTLUINT_XW_UD_o utup
@@ -1575,8 +1595,8 @@
 
 /// cast mode selector and error detector
 #define PPUTLUINT_MODE(/* <err>, <typeof v>, <hint> */ e, t, ...) /* -> <cast mode> */ \
-  PTL_CAT(PPUTLUINT_MODE_, PTL_CAT(PTL_IS_NONE(PTL_CAT(PPUTLUINT_MODE_0, t)),          \
-                                   PTL_IS_NONE(PPUTLUINT_MODE_1##__VA_ARGS__)))        \
+  PTL_XCAT(PPUTLUINT_MODE_, PTL_XCAT(PTL_IS_NONE(PTL_XCAT(PPUTLUINT_MODE_0, t)),       \
+                                     PTL_IS_NONE(PPUTLUINT_MODE_1##__VA_ARGS__)))      \
   (e, t, __VA_ARGS__)
 #define PPUTLUINT_MODE_11(e, t, ...) PPUTLUINT_MODE_11_##t##__VA_ARGS__
 #define PPUTLUINT_MODE_11_UTUP       XW_UH
@@ -1622,7 +1642,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLUDEC_o(uint) PTL_CAT(PPUTLUDEC_, PPUTLIS_UDEC_o(uint))(uint)
+#define PPUTLUDEC_o(uint) PTL_XCAT(PPUTLUDEC_, PPUTLIS_UDEC_o(uint))(uint)
 #define PPUTLUDEC_1(udec) udec
 #define PPUTLUDEC_0(uhex) PPUTLIMPL_UHEX(uhex, UDEC)
 
@@ -1643,7 +1663,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLUHEX_o(uint) PTL_CAT(PPUTLUHEX_, PPUTLIS_UHEX_o(uint))(uint)
+#define PPUTLUHEX_o(uint) PTL_XCAT(PPUTLUHEX_, PPUTLIS_UHEX_o(uint))(uint)
 #define PPUTLUHEX_1(uhex) uhex
 #define PPUTLUHEX_0(udec) PPUTLIMPL_UDEC(udec, UHEX)
 
@@ -1651,7 +1671,7 @@
 
 /// [type.tup]
 /// ----------
-/// [inherits from PTL_ANY] tuple type (parenthesized args).
+/// [inherits from PTL_OBJ] tuple type (parenthesized args).
 /// expands to t if valid, else fails.
 ///
 /// PTL_TUP(())     // ()
@@ -1659,11 +1679,11 @@
 #define PTL_TUP(/* v: tup */...) /* -> t */                         \
   PPUTLTUP_o(PTL_STR([PTL_TUP] tuple must be wrapped in parentheses \
                      : __VA_ARGS__),                                \
-             PTL_ANY(__VA_ARGS__))
+             PTL_OBJ(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLTUP_o(e, any) PTL_CAT(PPUTLTUP_, PPUTLIS_TUP_o(any))(e, any)
+#define PPUTLTUP_o(e, obj) PTL_XCAT(PPUTLTUP_, PPUTLIS_TUP_o(obj))(e, obj)
 #define PPUTLTUP_1(e, tup) tup
 #define PPUTLTUP_0(e, ...) PTL_FAIL(e)
 
@@ -1687,12 +1707,13 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLUTUP_o(e, ...) \
-  PTL_CAT(PPUTLUTUP_, PPUTLIS_UTUP_o(__VA_ARGS__))(e, __VA_ARGS__)
-#define PPUTLUTUP_1(e, ...)     __VA_ARGS__
-#define PPUTLUTUP_0(e, ...)     PTL_CAT(PPUTLUTUP_0, PTL_IS_ATOM(__VA_ARGS__))(e, __VA_ARGS__)
-#define PPUTLUTUP_01(e, atom)   PTL_CAT(PPUTLUTUP_01, PPUTLIS_INT_o(atom))(e, atom)
+  PTL_XCAT(PPUTLUTUP_, PPUTLIS_UTUP_o(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLUTUP_1(e, ...) __VA_ARGS__
+#define PPUTLUTUP_0(e, ...) \
+  PTL_XCAT(PPUTLUTUP_0, PTL_IS_ATOM(__VA_ARGS__))(e, __VA_ARGS__)
+#define PPUTLUTUP_01(e, atom)   PTL_XCAT(PPUTLUTUP_01, PPUTLIS_INT_o(atom))(e, atom)
 #define PPUTLUTUP_011(e, int)   PPUTLIMPL_UHEX(PTL_UHEX(int), UTUP)
-#define PPUTLUTUP_010(e, atom)  PTL_CAT(PPUTLUTUP_010, PPUTLIS_UINT_o(atom))(e, atom)
+#define PPUTLUTUP_010(e, atom)  PTL_XCAT(PPUTLUTUP_010, PPUTLIS_UINT_o(atom))(e, atom)
 #define PPUTLUTUP_0101(e, uint) PPUTLIMPL_UHEX(PTL_UHEX(uint), UTUP)
 #define PPUTLUTUP_0100(e, atom) PTL_FAIL(e)
 #define PPUTLUTUP_00(e, ...)    PTL_FAIL(e)
@@ -1701,7 +1722,7 @@
 
 /// [type.word]
 /// -----------
-/// [inherits from PTL_ANY] a union of int|uint|utup.
+/// [inherits from PTL_OBJ] a union of int|uint|utup.
 /// constructibe from any word.
 ///
 /// cannot parse negative decimals; use math.neg instead.
@@ -1783,7 +1804,7 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLWORD_o(e, v, ...) \
-  PTL_CAT(PPUTLWORD_, PPUTLWORD_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
+  PTL_XCAT(PPUTLWORD_, PPUTLWORD_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
 #define PPUTLWORD_UTUP(word) PTL_UTUP(word)
 #define PPUTLWORD_UHEX(word) PTL_UINT(word, UHEX)
 #define PPUTLWORD_UDEC(word) PTL_UINT(word, UDEC)
@@ -1792,8 +1813,8 @@
 
 /// cast mode selector and error detector
 #define PPUTLWORD_MODE(/* <err>, <typeof v>, <hint> */ e, t, ...) /* -> <cast mode> */ \
-  PTL_CAT(PPUTLWORD_MODE_, PTL_CAT(PTL_IS_NONE(PTL_CAT(PPUTLWORD_MODE_0, t)),          \
-                                   PTL_IS_NONE(PPUTLWORD_MODE_1##__VA_ARGS__)))        \
+  PTL_XCAT(PPUTLWORD_MODE_, PTL_XCAT(PTL_IS_NONE(PTL_XCAT(PPUTLWORD_MODE_0, t)),       \
+                                     PTL_IS_NONE(PPUTLWORD_MODE_1##__VA_ARGS__)))      \
   (e, t, __VA_ARGS__)
 #define PPUTLWORD_MODE_11(e, t, ...) PTL_DEFAULT(t, __VA_ARGS__)
 #define PPUTLWORD_MODE_10(e, t, ...) PTL_FAIL(e)
@@ -1840,9 +1861,28 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSIZE_o(e, w)   PTL_CAT(PPUTLSIZE_o_, PPUTLIS_SIZE_o(w))(e, w)
+#define PPUTLSIZE_o(e, w)   PTL_XCAT(PPUTLSIZE_o_, PPUTLIS_SIZE_o(w))(e, w)
 #define PPUTLSIZE_o_1(e, w) w
 #define PPUTLSIZE_o_0(e, w) PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.any]
+/// ----------
+/// (none|obj) a potentially-empty, individual macro argument.
+/// fails if not exactly one arg.
+///
+/// PTL_ANY()           // <nothing>
+/// PTL_ANY(PTL_NONE()) // <nothing>
+/// PTL_ANY(foo)        // foo
+#define PTL_ANY(/* v: any */...) /* -> any{v} */ \
+  PTL_XCAT(PPUTLANY_, PTL_IS_ANY(PTL_SOME))      \
+  (PTL_STR([PTL_ANY] any cannot describe multiple args : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLANY_1(e, obj) obj
+#define PPUTLANY_0(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1853,7 +1893,7 @@
 /// PTL_NOT(0) // 1
 /// PTL_NOT(1) // 0
 #define PTL_NOT(/* v: bool */...) /* -> bool{!v} */ \
-  PTL_CAT(PPUTLNOT_, PTL_BOOL(__VA_ARGS__))
+  PTL_XCAT(PPUTLNOT_, PTL_BOOL(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1874,7 +1914,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLAND_X(a, b) PTL_CAT(PPUTLAND_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLAND_X(a, b) PTL_XCAT(PPUTLAND_, PTL_XCAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLAND_11      1
 #define PPUTLAND_10      0
 #define PPUTLAND_01      0
@@ -1894,7 +1934,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLOR_X(a, b) PTL_CAT(PPUTLOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLOR_X(a, b) PTL_XCAT(PPUTLOR_, PTL_XCAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLOR_11      1
 #define PPUTLOR_10      1
 #define PPUTLOR_01      1
@@ -1914,7 +1954,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXOR_X(a, b) PTL_CAT(PPUTLXOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLXOR_X(a, b) PTL_XCAT(PPUTLXOR_, PTL_XCAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLXOR_11      0
 #define PPUTLXOR_10      1
 #define PPUTLXOR_01      1
@@ -1935,7 +1975,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLNAND_X(a, b) PTL_CAT(PPUTLNAND_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLNAND_X(a, b) PTL_XCAT(PPUTLNAND_, PTL_XCAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLNAND_11      0
 #define PPUTLNAND_10      1
 #define PPUTLNAND_01      1
@@ -1956,7 +1996,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLNOR_X(a, b) PTL_CAT(PPUTLNOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLNOR_X(a, b) PTL_XCAT(PPUTLNOR_, PTL_XCAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLNOR_11      0
 #define PPUTLNOR_10      0
 #define PPUTLNOR_01      0
@@ -1977,7 +2017,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLXNOR_X(a, b) PTL_CAT(PPUTLXNOR_, PTL_CAT(PTL_BOOL(a), PTL_BOOL(b)))
+#define PPUTLXNOR_X(a, b) PTL_XCAT(PPUTLXNOR_, PTL_XCAT(PTL_BOOL(a), PTL_BOOL(b)))
 #define PPUTLXNOR_11      1
 #define PPUTLXNOR_10      0
 #define PPUTLXNOR_01      0
@@ -2061,7 +2101,7 @@
 /// PTL_EQZ(4095u)     // 0
 /// PTL_EQZ(0x800)     // 0
 #define PTL_EQZ(/* v: word */...) /* -> bool{v == 0} */ \
-  PTL_IS_NONE(PTL_CAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
+  PTL_IS_NONE(PTL_XCAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2083,7 +2123,7 @@
 /// PTL_NEZ(4095u)     // 1
 /// PTL_NEZ(0x800)     // 1
 #define PTL_NEZ(/* v: word */...) /* -> bool{v != 0} */ \
-  PTL_IS_SOME(PTL_CAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
+  PTL_IS_SOME(PTL_XCAT(PPUTLEQZ_, PTL_UDEC(__VA_ARGS__)))
 
 /// [numeric.ltz]
 /// -------------
@@ -2164,22 +2204,22 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLLT_o(l, r) \
-  PTL_CAT(PPUTLLT_o_, PTL_CAT(PPUTLLT_SIGNOF(PTL_WORD(l)), PPUTLLT_SIGNOF(PTL_WORD(r))))
+  PTL_XCAT(PPUTLLT_o_, PTL_XCAT(PPUTLLT_SIGNOF(PTL_WORD(l)), PPUTLLT_SIGNOF(PTL_WORD(r))))
 #define PPUTLLT_o_UU(e, l, r) PPUTLLT_UCMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
 #define PPUTLLT_o_UI(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_IU(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_II(e, l, r) PPUTLLT_ICMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
-#define PPUTLLT_SIGNOF(word)  PTL_CAT(PPUTLLT_SIGNOF_, PPUTLIS_TUP_o(word))(word)
+#define PPUTLLT_SIGNOF(word)  PTL_XCAT(PPUTLLT_SIGNOF_, PPUTLIS_TUP_o(word))(word)
 #define PPUTLLT_SIGNOF_1(tup) U
 #define PPUTLLT_SIGNOF_0(atom) \
-  PTL_CAT(PPUTLLT_SIGNOF_0, PTL_CAT(PPUTLIS_INT_o(atom), PPUTLIS_UINT_o(atom)))
+  PTL_XCAT(PPUTLLT_SIGNOF_0, PTL_XCAT(PPUTLIS_INT_o(atom), PPUTLIS_UINT_o(atom)))
 #define PPUTLLT_SIGNOF_010  I
 #define PPUTLLT_SIGNOF_001  U
 #define PPUTLLT_ICMP(...)   PPUTLLT_ICMP_o(__VA_ARGS__)
 #define PPUTLLT_ICMP_o(...) PPUTLLT_ICMP_oo(__VA_ARGS__)
-#define PPUTLLT_ICMP_oo(a, b, c, d, e, f)                                  \
-  PTL_CAT(PPUTLLT_ICMP_oo_,                                                \
-          PTL_CAT(PPUTLIMPL_HEXHEX(7##a, LT), PPUTLIMPL_HEXHEX(7##d, LT))) \
+#define PPUTLLT_ICMP_oo(a, b, c, d, e, f)                                    \
+  PTL_XCAT(PPUTLLT_ICMP_oo_,                                                 \
+           PTL_XCAT(PPUTLIMPL_HEXHEX(7##a, LT), PPUTLIMPL_HEXHEX(7##d, LT))) \
   (a, b, c, d, e, f)
 #define PPUTLLT_ICMP_oo_11(...) PPUTLLT_UCMP(__VA_ARGS__)
 #define PPUTLLT_ICMP_oo_10(...) 1
@@ -2190,9 +2230,9 @@
 #define PPUTLLT_ZIP(...)                PPUTLLT_ZIP_o(__VA_ARGS__)
 #define PPUTLLT_ZIP_o(a, b, c, d, e, f) a, d, b, e, c, f
 #define PPUTLLT_R(...)                  PPUTLLT_R_o(__VA_ARGS__)
-#define PPUTLLT_R_o(fl, fg, a, b, ...)                   \
-  PTL_CAT(PPUTLLT_##fl##fg, PPUTLIMPL_HEXHEX(a##b, LT)), \
-      PTL_CAT(PPUTLLT_##fg##fl, PPUTLIMPL_HEXHEX(b##a, LT)), __VA_ARGS__
+#define PPUTLLT_R_o(fl, fg, a, b, ...)                    \
+  PTL_XCAT(PPUTLLT_##fl##fg, PPUTLIMPL_HEXHEX(a##b, LT)), \
+      PTL_XCAT(PPUTLLT_##fg##fl, PPUTLIMPL_HEXHEX(b##a, LT)), __VA_ARGS__
 #define PPUTLLT_111 1
 #define PPUTLLT_110 1
 #define PPUTLLT_101 1
@@ -2304,7 +2344,7 @@
 /// PTL_MIN(0x800, PTL_INT(2048u)) // 0x800
 /// PTL_MIN(0x800, PTL_INT(2049u)) // 0x800
 #define PTL_MIN(/* l: word, r: word<signof l> */...) /* -> a < b ? a : b */ \
-  PTL_CAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
+  PTL_XCAT(PPUTLMIN_, PTL_LT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2327,7 +2367,7 @@
 /// PTL_MAX(0x800, PTL_INT(2048u)) // 0x800
 /// PTL_MAX(0x800, PTL_INT(2049u)) // 0x801
 #define PTL_MAX(/* l: word, r: word<signof l> */...) /* -> a > b ? a : b */ \
-  PTL_CAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
+  PTL_XCAT(PPUTLMAX_, PTL_GT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2790,7 +2830,7 @@
 
 #define PPUTLBROTL_o(v, n) \
   PTL_WORD(PPUTLBROTL_oo(n, PTL_ESC(PTL_BDUMP(v))), PTL_TYPEOF(v))
-#define PPUTLBROTL_oo(n, ...) PTL_CAT(PPUTLBROTL_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
+#define PPUTLBROTL_oo(n, ...) PTL_XCAT(PPUTLBROTL_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
 #define PPUTLBROTL_15(a, b, c, d, e, f, g, h, i, j, k, l)            \
   (PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
    PPUTLIMPL_NYBL(l##a##b##c, HEX))
@@ -2856,7 +2896,7 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLBROTR_o(v, n)    PTL_WORD(PPUTLBROTR_oo(n, PTL_BDUMP(v)), PTL_TYPEOF(v))
-#define PPUTLBROTR_oo(n, ...) PTL_CAT(PPUTLBROTR_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
+#define PPUTLBROTR_oo(n, ...) PTL_XCAT(PPUTLBROTR_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
 #define PPUTLBROTR_15(a, b, c, d, e, f, g, h, i, j, k, l)            \
   (PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
    PPUTLIMPL_NYBL(f##g##h##i, HEX))
@@ -2962,9 +3002,9 @@
 /// PTL_XTRACE_READ(PTL_X(PTL_XTRACE))               // 1u
 /// PTL_XTRACE_READ(PTL_X(PTL_X(PTL_XTRACE)))        // 2u
 /// PTL_XTRACE_READ(PTL_X(PTL_X(PTL_X(PTL_XTRACE)))) // 3u
-#define PTL_XTRACE_READ(/* xtrace */...) /* -> udec&size */            \
-  PTL_CAT(PPUTLXTRACE_READ_,                                           \
-          PTL_IS_NONE(PTL_CAT(PPUTLXTRACE_READ_DETECT_, __VA_ARGS__))) \
+#define PTL_XTRACE_READ(/* xtrace */...) /* -> udec&size */              \
+  PTL_XCAT(PPUTLXTRACE_READ_,                                            \
+           PTL_IS_NONE(PTL_XCAT(PPUTLXTRACE_READ_DETECT_, __VA_ARGS__))) \
   (PTL_STR([PTL_XTRACE_READ] invalid xtrace expr : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -3019,11 +3059,11 @@
 
 #define PPUTLRLP_o(n, f) PPUTLRLP_oo(PTL_SIZE(n, UDEC), f)
 #define PPUTLRLP_oo(n, f) \
-  PTL_CAT(PPUTLRLP_oo_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)), f)
-#define PPUTLRLP_oo_3u(n, f) f PTL_LP() f PTL_LP() f PTL_LP() PTL_CAT(PPUTLRLP_, n)(f)
-#define PPUTLRLP_oo_2u(n, f) f PTL_LP() f PTL_LP() PTL_CAT(PPUTLRLP_, n)(f)
-#define PPUTLRLP_oo_1u(n, f) f PTL_LP() PTL_CAT(PPUTLRLP_, n)(f)
-#define PPUTLRLP_oo_0u(n, f) PTL_CAT(PPUTLRLP_, n)(f)
+  PTL_XCAT(PPUTLRLP_oo_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)), f)
+#define PPUTLRLP_oo_3u(n, f) f PTL_LP() f PTL_LP() f PTL_LP() PTL_XCAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_oo_2u(n, f) f PTL_LP() f PTL_LP() PTL_XCAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_oo_1u(n, f) f PTL_LP() PTL_XCAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_oo_0u(n, f) PTL_XCAT(PPUTLRLP_, n)(f)
 #define PPUTLRLP_63(f)       PPUTLRLP_15(f) PPUTLRLP_16(f) PPUTLRLP_16(f) PPUTLRLP_16(f)
 #define PPUTLRLP_62(f)       PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_16(f) PPUTLRLP_16(f)
 #define PPUTLRLP_61(f)       PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_16(f)
@@ -3135,11 +3175,11 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLRRP_o(n)    PTL_CAT(PPUTLRRP_o_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)))
-#define PPUTLRRP_o_3u(n) PTL_CAT(PPUTLRRP_, n) PTL_RP() PTL_RP() PTL_RP()
-#define PPUTLRRP_o_2u(n) PTL_CAT(PPUTLRRP_, n) PTL_RP() PTL_RP()
-#define PPUTLRRP_o_1u(n) PTL_CAT(PPUTLRRP_, n) PTL_RP()
-#define PPUTLRRP_o_0u(n) PTL_CAT(PPUTLRRP_, n)
+#define PPUTLRRP_o(n)    PTL_XCAT(PPUTLRRP_o_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)))
+#define PPUTLRRP_o_3u(n) PTL_XCAT(PPUTLRRP_, n) PTL_RP() PTL_RP() PTL_RP()
+#define PPUTLRRP_o_2u(n) PTL_XCAT(PPUTLRRP_, n) PTL_RP() PTL_RP()
+#define PPUTLRRP_o_1u(n) PTL_XCAT(PPUTLRRP_, n) PTL_RP()
+#define PPUTLRRP_o_0u(n) PTL_XCAT(PPUTLRRP_, n)
 #define PPUTLRRP_63      PPUTLRRP_15 PPUTLRRP_16 PPUTLRRP_16 PPUTLRRP_16
 #define PPUTLRRP_62      PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_16 PPUTLRRP_16
 #define PPUTLRRP_61      PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_16
@@ -3232,7 +3272,7 @@
 /// -----------------
 /// [internal] hex traits
 #define PPUTLIMPL_HEX(/* {<atom>, IS}|{<hex>, NOT|DEC|INC|NYBL|BITS} */ v, t) \
-  PPUTLIMPL_HEX_o(t, PTL_CAT(PPUTLIMPL_HEX_, v))
+  PPUTLIMPL_HEX_o(t, PTL_XCAT(PPUTLIMPL_HEX_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -3270,7 +3310,7 @@
 /// --------------------
 /// [internal] hex pair (hex##hex) traits
 #define PPUTLIMPL_HEXHEX(/* {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD} */ v, t) \
-  PPUTLIMPL_HEXHEX_o(t, PTL_CAT(PPUTLIMPL_HEXHEX_, v))
+  PPUTLIMPL_HEXHEX_o(t, PTL_XCAT(PPUTLIMPL_HEXHEX_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -3551,7 +3591,7 @@
 /// ------------------
 /// [internal] nybl traits
 #define PPUTLIMPL_NYBL(/* {<atom>, IS}|{<nybl>, HEX|BITS} */ v, t) \
-  PPUTLIMPL_NYBL_o(t, PTL_CAT(PPUTLIMPL_NYBL_, v))
+  PPUTLIMPL_NYBL_o(t, PTL_XCAT(PPUTLIMPL_NYBL_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -3584,7 +3624,7 @@
 /// ------------------
 /// [internal] udec traits
 #define PPUTLIMPL_UDEC(/* {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT} */ v, t) \
-  PPUTLIMPL_UDEC_o(t, PTL_CAT(PPUTLIMPL_UDEC_, v))
+  PPUTLIMPL_UDEC_o(t, PTL_XCAT(PPUTLIMPL_UDEC_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -7703,7 +7743,7 @@
 /// ------------------
 /// [internal] uhex traits
 #define PPUTLIMPL_UHEX(/* {<atom>, IS}|{<uhex>, UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT} */ v, t) \
-  PPUTLIMPL_UHEX_o(t, PTL_CAT(PPUTLIMPL_UHEX_, v))
+  PPUTLIMPL_UHEX_o(t, PTL_XCAT(PPUTLIMPL_UHEX_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 

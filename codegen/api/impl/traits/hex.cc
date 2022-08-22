@@ -91,7 +91,7 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, cat(utl::slice(digits[0], -1), v));
+  }}(t, xcat(utl::slice(digits[0], -1), v));
 });
 
 } // namespace impl

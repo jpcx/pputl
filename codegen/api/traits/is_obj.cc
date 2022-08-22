@@ -32,35 +32,48 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_uhex_o) is_uhex_o = NIFTY_DEF(is_uhex_o);
+decltype(is_obj_o) is_obj_o = NIFTY_DEF(is_obj_o);
 }
 
-decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
-  docs << "[extends " + is_uint
-              + "] detects if args is an unsigned int in hex form (requires 'u' suffix)."
-       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size)
-              + ").";
+decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va args) {
+  docs << "[extends " + is_some + "] detects if args is exactly one generic value.";
 
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
+  tests << is_obj("")         = "0" >> docs;
+  tests << is_obj(",")        = "0" >> docs;
+  tests << is_obj("foo,")     = "0" >> docs;
+  tests << is_obj("foo, bar") = "0" >> docs;
+  tests << is_obj("foo")      = "1" >> docs;
+  tests << is_obj("(42)")     = "1" >> docs;
 
-  tests << is_uhex("1")       = "0" >> docs;
-  tests << is_uhex("1u")      = "0" >> docs;
-  tests << is_uhex(min + "u") = "1" >> docs;
-  tests << is_uhex(max)       = "0" >> docs;
-  tests << is_uhex("(), ()")  = "0" >> docs;
+  detail::is_obj_o =
+      def{"o(_, ...: <some + token; e.g. __VA_ARGS__.foo>)"} = [&](arg first, va) {
+        docs << "must be called with tokens after __VA_ARGS__ to detect empty ending arg";
+        def<"ok"> pass = [&] {
+          def<"\\0"> _0 = [&] { return "0"; };
+          def<"\\1">{}  = [&] { return "1"; };
+          return utl::slice(_0, -1);
+        };
 
-  detail::is_uhex_o = def{"o(uint)"} = [&](arg uint) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\1">{}  = [&] { return "1"; };
+        def<"not_ok"> no_pass = [&] {
+          def<"\\0"> _0 = [&] { return "0"; };
+          def<"\\1">{}  = [&] { return "0"; };
+          return utl::slice(_0, -1);
+        };
 
-    return xcat(utl::slice(_0, -1), impl::uhex(uint, "IS"));
-  };
+        auto prefix = utl::slice(pass, -2);
+        if (prefix.back() == '_')
+          prefix.pop_back();
+        auto small = utl::slice(pass, prefix.size(), 0);
+        auto large = utl::slice(no_pass, prefix.size(), 0);
+        auto diff  = utl::slice(large, -small.size());
+
+        return xcat(pp::cat(prefix, pp::va_opt(diff), small), is_some(first));
+      };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_uhex_o; };
+  def<"\\1">{}  = [&] { return detail::is_obj_o; };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_uint(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_some(args)), args + ".");
 });
 
 } // namespace api

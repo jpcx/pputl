@@ -72,6 +72,8 @@ decltype(recur_rp) recur_rp = NIFTY_DEF(recur_rp, [&](va args) {
   tests << xstr(recur_lp(3, inc) + " 0 " + recur_rp(3)) =
       pp::str(inc + " ( " + inc + " ( " + inc + " ( 0 ) ) )");
   tests << x(recur_lp(3, inc) + " 0 " + recur_rp(3)) = "3" >> docs;
+  tests << x(recur_lp(2, dec) + " " + recur_lp(3, inc) + " 0 " + recur_rp(3) + " "
+             + recur_rp(2))                          = "1";
   tests << xtrace_read(x(recur_lp(0, esc) + " " + xtrace + " " + recur_rp(0))) = "1u";
   tests << xtrace_read(x(recur_lp(1, esc) + " " + xtrace + " " + recur_rp(1))) = "2u";
   tests << xtrace_read(x(recur_lp(2, esc) + " " + xtrace + " " + recur_rp(2))) = "3u";
@@ -80,7 +82,7 @@ decltype(recur_rp) recur_rp = NIFTY_DEF(recur_rp, [&](va args) {
   tests << xtrace_read(x(recur_lp(5, esc) + " " + xtrace + " " + recur_rp(5))) = "6u";
   tests << xtrace_read(x(recur_lp(6, esc) + " " + xtrace + " " + recur_rp(6))) = "7u";
   tests << xtrace_read(x(recur_lp(conf::size_max - 1, esc) + " " + xtrace + " "
-                          + recur_rp(conf::size_max - 1))) = size_max_s;
+                         + recur_rp(conf::size_max - 1))) = size_max_s;
 
   std::array<def<>, (conf::size_max + 1) / 4> n{};
 
@@ -119,15 +121,17 @@ decltype(recur_rp) recur_rp = NIFTY_DEF(recur_rp, [&](va args) {
   // 9: f( f( f( f( f( f( f( f( f( ) ) ) ) ) ) ) ) ) 9/4=2 9%4=1 -> f( o2 c2 )
 
   return def<"o(n)">{[&](arg n_) {
-    def<"\\0u(n)"> _0u = [&](arg n_) { return cat(utl::slice(n[0], -1), n_); };
-    def<"\\1u(n)">{} = [&](arg n_) { return cat(utl::slice(n[0], -1), n_) + " " + rp(); };
+    def<"\\0u(n)"> _0u = [&](arg n_) { return xcat(utl::slice(n[0], -1), n_); };
+    def<"\\1u(n)">{}   = [&](arg n_) {
+      return xcat(utl::slice(n[0], -1), n_) + " " + rp();
+    };
     def<"\\2u(n)">{} = [&](arg n_) {
-      return cat(utl::slice(n[0], -1), n_) + " " + rp() + " " + rp();
+      return xcat(utl::slice(n[0], -1), n_) + " " + rp() + " " + rp();
     };
     def<"\\3u(n)">{} = [&](arg n_) {
-      return cat(utl::slice(n[0], -1), n_) + " " + rp() + " " + rp() + " " + rp();
+      return xcat(utl::slice(n[0], -1), n_) + " " + rp() + " " + rp() + " " + rp();
     };
-    return pp::call(cat(utl::slice(_0u, -2), band(n_, 0b11)), idec(bsrl(n_, 2)));
+    return pp::call(xcat(utl::slice(_0u, -2), band(n_, 0b11)), idec(bsrl(n_, 2)));
   }}(size(args, "UDEC"));
 });
 

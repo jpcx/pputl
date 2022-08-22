@@ -42,7 +42,7 @@ decltype(some) some = NIFTY_DEF(some, [&](va args) {
   def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
   def<"\\1(e, ...)">{}  = [](arg, va args) { return args; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_some(args)),
+  return pp::call(xcat(utl::slice(_0, -1), is_some(args)),
                   str("[" + some + "] some cannot describe nothing : " + args), args);
 });
 

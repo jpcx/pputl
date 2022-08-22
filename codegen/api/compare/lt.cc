@@ -75,9 +75,11 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
   def<"r(...)"> recur = [&](va args) {
     return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {
-      return cat(pp::cat(utl::slice(_000, -3), fl, fg), impl::hexhex(pp::cat(a, b), "LT"))
+      return xcat(pp::cat(utl::slice(_000, -3), fl, fg),
+                  impl::hexhex(pp::cat(a, b), "LT"))
            + ", "
-           + cat(pp::cat(utl::slice(_000, -3), fg, fl), impl::hexhex(pp::cat(b, a), "LT"))
+           + xcat(pp::cat(utl::slice(_000, -3), fg, fl),
+                  impl::hexhex(pp::cat(b, a), "LT"))
            + ", " + args;
     }}(args);
   };
@@ -109,10 +111,11 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
         def<"\\10(...)">{}   = [&](va) { return "1"; };
         def<"\\11(...)">{}   = [&](va args) { return ucmp(args); };
 
-        return pp::call(cat(utl::slice(_00, -2),
-                            cat(impl::hexhex(pp::cat("7", args[0]), "LT"),
-                                impl::hexhex(pp::cat("7", args[conf::word_size]), "LT"))),
-                        args);
+        return pp::call(
+            xcat(utl::slice(_00, -2),
+                 xcat(impl::hexhex(pp::cat("7", args[0]), "LT"),
+                      impl::hexhex(pp::cat("7", args[conf::word_size]), "LT"))),
+            args);
       };
 
       return o(args);
@@ -123,11 +126,11 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
     def<"\\0(atom)"> _0 = [&](arg atom) {
       def<"<\\01"> _01 = [&] { return "U"; };
       def<"<\\10">{}   = [&] { return "I"; };
-      return cat(utl::slice(_01, -2),
-                 cat(detail::is_int_o(atom), detail::is_uint_o(atom)));
+      return xcat(utl::slice(_01, -2),
+                  xcat(detail::is_int_o(atom), detail::is_uint_o(atom)));
     };
     def<"\\1(tup)">{} = [&](arg) { return "U"; };
-    return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
   };
 
   return pp::call(
@@ -141,7 +144,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
           return ucmp(esc + " " + utup(l), esc + " " + utup(r));
         };
 
-        return cat(utl::slice(intint, -2), cat(signof(word(l)), signof(word(r))));
+        return xcat(utl::slice(intint, -2), xcat(signof(word(l)), signof(word(r))));
       }}(args),
       str("[" + lt + "] comparison of different signedness not allowed : " + args), args);
 });

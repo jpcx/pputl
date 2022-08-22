@@ -54,13 +54,13 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   detail::is_udec_o = def{"o(uint)"} = [&](arg uint) {
     def<"\\0"> _0 = [&] { return "0"; };
     def<"\\1">{}  = [&] { return "1"; };
-    return cat(utl::slice(_0, -1), impl::udec(uint, "IS"));
+    return xcat(utl::slice(_0, -1), impl::udec(uint, "IS"));
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_udec_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_uint(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_uint(args)), args);
 });
 
 } // namespace api

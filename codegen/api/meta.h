@@ -49,15 +49,13 @@ extern codegen::def<"xtrace_read(...: xtrace) -> udec&size"> const&        xtrac
 extern codegen::def<"recur_lp(...: n: size, f: <fn>) -> 'f lp'{n}"> const& recur_lp;
 extern codegen::def<"recur_rp(...: n: size) -> 'rp'{n}"> const&            recur_rp;
 
-// template<std::convertible_to<std::string>... Args>
-// inline std::string
-// meta_recur(std::string const& x, std::string const& n, std::string const& f, Args&&...
-// args) {
-//   return x + "(" + recur_lp(n, f) + " "
-//        + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ")
-//        + " "
-//        + recur_rp(n) + ")";
-// }
+template<std::convertible_to<std::string>... Args>
+inline std::string
+recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
+  return x + "(" + recur_lp(n, f) + " "
+       + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ")
+       + " " + recur_rp(n) + ")";
+}
 
 NIFTY_DECL(lp);
 NIFTY_DECL(rp);

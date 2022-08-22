@@ -45,7 +45,7 @@ decltype(and_) and_ = NIFTY_DEF(and_, [&](va args) {
   def<"\\11">{}   = [&] { return "1"; };
 
   return def<"x(a, b)">{[&](arg a, arg b) {
-    return cat(utl::slice(_00, -2), cat(bool_(a), bool_(b)));
+    return xcat(utl::slice(_00, -2), xcat(bool_(a), bool_(b)));
   }}(args);
 });
 

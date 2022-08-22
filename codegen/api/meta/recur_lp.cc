@@ -107,20 +107,20 @@ decltype(recur_lp) recur_lp = NIFTY_DEF(recur_lp, [&](va args) {
   return def<"o(n, f)">{[&](arg n_, arg f) {
     return def<"<o(n, f)">{[&](arg n_, arg f) {
       def<"\\0u(n, f)"> _0u = [&](arg n_, arg f) {
-        return pp::call(cat(utl::slice(n[0], -1), n_), f);
+        return pp::call(xcat(utl::slice(n[0], -1), n_), f);
       };
       def<"\\1u(n, f)">{} = [&](arg n_, arg f) {
-        return f + " " + lp() + " " + pp::call(cat(utl::slice(n[0], -1), n_), f);
+        return f + " " + lp() + " " + pp::call(xcat(utl::slice(n[0], -1), n_), f);
       };
       def<"\\2u(n, f)">{} = [&](arg n_, arg f) {
         return f + " " + lp() + " " + f + " " + lp() + " "
-             + pp::call(cat(utl::slice(n[0], -1), n_), f);
+             + pp::call(xcat(utl::slice(n[0], -1), n_), f);
       };
       def<"\\3u(n, f)">{} = [&](arg n_, arg f) {
         return f + " " + lp() + " " + f + " " + lp() + " " + f + " " + lp() + " "
-             + pp::call(cat(utl::slice(n[0], -1), n_), f);
+             + pp::call(xcat(utl::slice(n[0], -1), n_), f);
       };
-      return pp::call(cat(utl::slice(_0u, -2), band(n_, 0b11)), idec(bsrl(n_, 2)), f);
+      return pp::call(xcat(utl::slice(_0u, -2), band(n_, 0b11)), idec(bsrl(n_, 2)), f);
     }}(size(n_, "UDEC"), f);
   }}(args);
 });

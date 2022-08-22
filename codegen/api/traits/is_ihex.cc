@@ -54,13 +54,13 @@ decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
     def<"\\0"> _0 = [&] { return "0"; };
     def<"\\1">{}  = [&] { return "1"; };
 
-    return cat(utl::slice(_0, -1), impl::uhex(pp::cat(int_, 'u'), "IS"));
+    return xcat(utl::slice(_0, -1), impl::uhex(pp::cat(int_, 'u'), "IS"));
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_ihex_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_int(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), args);
 });
 
 } // namespace api

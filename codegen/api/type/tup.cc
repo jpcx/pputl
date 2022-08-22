@@ -32,18 +32,18 @@ namespace api {
 using namespace codegen;
 
 decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
-  docs << "[inherits from " + any + "] tuple type (parenthesized args)."
+  docs << "[inherits from " + obj + "] tuple type (parenthesized args)."
        << "expands to t if valid, else fails.";
 
   tests << tup(pp::tup())     = "()" >> docs;
   tests << tup(pp::tup(1, 2)) = "(1, 2)" >> docs;
 
   def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, tup)">{} = [](arg, arg tup) { return tup; };
+  def<"\\1(e, tup)">{}  = [](arg, arg tup) { return tup; };
 
-  return def<"o(e, any)">{[&](arg e, arg any) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_tup_o(any)), e, any);
-  }}(str("[" + tup + "] tuple must be wrapped in parentheses : " + args), any(args));
+  return def<"o(e, obj)">{[&](arg e, arg obj) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), e, obj);
+  }}(str("[" + tup + "] tuple must be wrapped in parentheses : " + args), obj(args));
 });
 
 } // namespace api

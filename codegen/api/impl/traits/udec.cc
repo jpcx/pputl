@@ -71,7 +71,7 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, cat(utl::slice(udecs[0], -2), v));
+  }}(t, xcat(utl::slice(udecs[0], -2), v));
 });
 
 } // namespace impl

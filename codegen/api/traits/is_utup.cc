@@ -105,7 +105,7 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_utup_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_tup(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_tup(args)), args);
 });
 
 } // namespace api

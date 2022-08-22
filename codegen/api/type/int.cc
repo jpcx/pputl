@@ -135,8 +135,8 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
         };
 
         return pp::call(
-            cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),
-                                         is_none(pp::cat(utl::slice(_1idec, -4), h)))),
+            xcat(utl::slice(_00, -2), xcat(is_none(xcat(utl::slice(_0idec, -4), t)),
+                                           is_none(pp::cat(utl::slice(_1idec, -4), h)))),
             e, t, h);
       };
 
@@ -176,7 +176,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(cat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
+    return pp::call(xcat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
   }}(str("[" + int_ + "] invalid arguments : " + args), args);
 });
 

@@ -57,7 +57,7 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
     def<"\\0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };
     def<"\\1(e, w)">{}  = [&](arg, arg w) { return w; };
 
-    return pp::call(cat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
   }}(str("[" + size + "] invalid size; must be within 0 and " + size_max + " ("
          + size_max_s + ") : " + args),
      word(args));

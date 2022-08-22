@@ -131,10 +131,10 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
           return pp::cat(utl::slice(idecidec, -8), t, hint);
         };
 
-        return pp::call(
-            cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),
-                                         is_none(pp::cat(utl::slice(_1udec, -4), hint)))),
-            e, t, hint);
+        return pp::call(xcat(utl::slice(_00, -2),
+                             xcat(is_none(xcat(utl::slice(_0idec, -4), t)),
+                                  is_none(pp::cat(utl::slice(_1udec, -4), hint)))),
+                        e, t, hint);
       };
 
   auto utup_params = utl::alpha_base52_seq(conf::word_size);
@@ -169,7 +169,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(cat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
+    return pp::call(xcat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
   }}(str("[" + uint + "] invalid arguments : " + args), args);
 });
 

@@ -50,7 +50,7 @@ decltype(is_nybl) is_nybl = NIFTY_DEF(is_nybl, [&](va args) {
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_nybl_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

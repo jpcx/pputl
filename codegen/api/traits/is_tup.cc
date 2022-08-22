@@ -36,7 +36,7 @@ decltype(is_tup_o) is_tup_o = NIFTY_DEF(is_tup_o);
 }
 
 decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
-  docs << "[extends " + is_any + "] detects if args is a tuple (parenthesized args).";
+  docs << "[extends " + is_obj + "] detects if args is a tuple (parenthesized args).";
 
   tests << is_tup()                 = "0" >> docs;
   tests << is_tup("1, 2")           = "0" >> docs;
@@ -60,12 +60,12 @@ decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
   tests << is_tup("(, a, )")        = "1";
   tests << is_tup("(, , a)")        = "1";
 
-  detail::is_tup_o = def{"o(any)"} = [&](arg any) { return is_none(eat + " " + any); };
+  detail::is_tup_o = def{"o(obj)"} = [&](arg obj) { return is_none(eat + " " + obj); };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_tup_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });
 
 } // namespace api

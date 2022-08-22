@@ -64,7 +64,7 @@ decltype(nybl) nybl = NIFTY_DEF(nybl, [&](arg v, arg t) {
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, cat(utl::slice(nybls[0], -4), v));
+  }}(t, xcat(utl::slice(nybls[0], -4), v));
 });
 
 } // namespace impl

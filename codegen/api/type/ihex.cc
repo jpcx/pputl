@@ -52,7 +52,7 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   def<"\\1(ihex)">{} = [&](arg ihex) { return ihex; };
 
   return def<"o(int)">{[&](arg int_) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_ihex_o(int_)), int_);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_ihex_o(int_)), int_);
   }}(int_(args));
 });
 

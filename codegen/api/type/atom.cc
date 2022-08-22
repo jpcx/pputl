@@ -32,16 +32,16 @@ namespace api {
 using namespace codegen;
 
 decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
-  docs << "[inherits from " + any + "] a generic, non-tuple, singular value.";
+  docs << "[inherits from " + obj + "] a generic, non-tuple, singular value.";
 
   tests << atom("foo") = "foo" >> docs;
 
   def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
   def<"\\1(e, atom)">{} = [](arg, arg atom) { return atom; };
 
-  return def<"o(e, any)">{[&](arg e, arg any) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_atom_o(any)), e, any);
-  }}(str("[" + atom + "] atom cannot describe tuples : " + args), any(args));
+  return def<"o(e, obj)">{[&](arg e, arg obj) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_atom_o(obj)), e, obj);
+  }}(str("[" + atom + "] atom cannot describe tuples : " + args), obj(args));
 });
 
 } // namespace api

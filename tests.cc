@@ -70,16 +70,16 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
-//           none  some  any   atom  bool  hex   nybl  int  idec              //
-//           ihex  uint  udec  uhex  tup   utup  word  size                   //
+//           none  some  obj   atom  bool  hex   nybl  int   idec             //
+//           ihex  uint  udec  uhex  tup   utup  word  size  any              //
 //       ‐ traits detection                                       [traits]    //
-//           is_none  is_some  is_any   is_atom  is_bool  is_hex   is_nybl    //
+//           is_none  is_some  is_obj   is_atom  is_bool  is_hex   is_nybl    //
 //           is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex  is_tup     //
-//           is_utup  is_word  is_size  typeof   sizeof                       //
+//           is_utup  is_word  is_size  is_any   typeof   sizeof              //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
-//           str  xstr  cat  join  c_int  c_hex  c_bin                        //
+//           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                                      [numeric, math]    //
 //           inc  dec  add   sub   mul   divr                                 //
@@ -154,19 +154,13 @@
 //    TERMINOLOGY                                                             //
 //    -----------                                                             //
 //                                                                            //
-//    pputl defines several types  to describe different kinds of variadic    //
-//    arguments (potentially empty, comma-delimited tokens of any kind).      //
-//                                                                            //
-//    Type identification and conversion is used extensively.                 //
-//                                                                            //
-//    Each type  is represented by  two functions:  a predicate for traits    //
-//    testing, and a constructor that validates, converts, or fails.   All    //
-//    functions that use these types in their parameter docs  assert their    //
-//    argument sanity by invoking their constructors or traits functions.     //
+//    pputl defines several types and uses type casting and traits testing    //
+//    for control flow and safety;  parameters documented with these types    //
+//    are verified by invoking the appropriate cast or traits function.       //
 //                                                                            //
 //      none: an absence of tokens                                            //
-//      some: <abstract> something; not nothing                               //
-//       └─ any: exactly one generic value                                    //
+//      some: <abstract> something; not nothing [e.g. foo] [e.g. ,,,]         //
+//       └─ obj: exactly one generic value                                    //
 //          ├─ atom: a generic value not surrounded by parentheses            //
 //          │   ├─ bool: a literal '1' or '0'                                 //
 //          │   ├─ hex:  a literal uppercase hexadecimal digit [e.g. B]       //
@@ -181,6 +175,7 @@
 //          │   └─ utup: an unsigned word as a tup of hex [e.g. (6, D, 2)]    //
 //          └─ word: <union> int | uint | utup                                //
 //              └─ size: an unsigned word capped by the argument limit        //
+//      any: <union> none | obj; any kind of individual macro argument        //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -190,10 +185,10 @@
 //    errors  triggered by  pputl functions  will include  the macro name,    //
 //    a textual description, and its primary expansion arguments.             //
 //                                                                            //
-//    With the exception of lang.first and lang.rest,  all non-nullary API    //
-//    functions are  fully variadic and chainable such that the outputs of    //
-//    one may be used as inputs to another. Inputs must be distinguishable    //
-//    after the primary expansion; deferred input behavior is undefined.      //
+//    With a few exceptions in [lang], non-nullary API functions are fully    //
+//    variadic and chainable  such that the outputs of one  may be used as    //
+//    inputs to another.  Inputs must be distinguishable after the primary    //
+//    expansion; deferred input behavior is undefined.                        //
 //                                                                            //
 //    Hexadecimal integers are always represented by fixed-length strings.    //
 //    Negative ints cannot be represented in decimal  due to concatenation    //
@@ -256,7 +251,10 @@ ASSERT_PP_EQ((PTL_ESC ()), ());
 ASSERT_PP_EQ((PTL_ESC (a, b, c)), (a, b, c));
 
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
-ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
+ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (fooPTL_EAT(bar)));
+
+ASSERT_PP_EQ((PTL_XCAT(foo, bar)), (foobar));
+ASSERT_PP_EQ((PTL_XCAT(foo, PTL_EAT(bar))), (foo));
 
 ASSERT_PP_EQ((PTL_STR()), (""));
 ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
@@ -336,12 +334,12 @@ ASSERT_PP_EQ((PTL_IS_SOME(, a)), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, a, )), (1));
 ASSERT_PP_EQ((PTL_IS_SOME(, , a)), (1));
 
-ASSERT_PP_EQ((PTL_IS_ANY()), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(,)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(foo,)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(foo, bar)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_ANY((42))), (1));
+ASSERT_PP_EQ((PTL_IS_OBJ()), (0));
+ASSERT_PP_EQ((PTL_IS_OBJ(,)), (0));
+ASSERT_PP_EQ((PTL_IS_OBJ(foo,)), (0));
+ASSERT_PP_EQ((PTL_IS_OBJ(foo, bar)), (0));
+ASSERT_PP_EQ((PTL_IS_OBJ(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_OBJ((42))), (1));
 
 ASSERT_PP_EQ((PTL_IS_ATOM()), (0));
 ASSERT_PP_EQ((PTL_IS_ATOM(foo)), (1));
@@ -503,6 +501,13 @@ ASSERT_PP_EQ((PTL_IS_SIZE(0xFFFu)), (0));
 ASSERT_PP_EQ((PTL_IS_SIZE(255u)), (1));
 ASSERT_PP_EQ((PTL_IS_SIZE((0, 0, 8))), (1));
 
+ASSERT_PP_EQ((PTL_IS_ANY()), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(,)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(,,)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
+
 ASSERT_PP_EQ((PTL_TYPEOF((foo))), (TUP));
 ASSERT_PP_EQ((PTL_TYPEOF(0)), (IDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0u)), (UDEC));
@@ -540,7 +545,7 @@ ASSERT_PP_EQ((PTL_SOME(foo, bar)), (foo, bar));
 ASSERT_PP_EQ((PTL_SOME(foo, 42, (, , ))), (foo, 42, (, , )));
 ASSERT_PP_EQ((PTL_SOME(, )), (,));
 
-ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
+ASSERT_PP_EQ((PTL_OBJ(foo)), (foo));
 
 ASSERT_PP_EQ((PTL_ATOM(foo)), (foo));
 
@@ -650,6 +655,10 @@ ASSERT_PP_EQ((PTL_WORD((F, F, F), UDEC)), (4095u));
 ASSERT_PP_EQ((PTL_UINT((0, 0, 0), UHEX)), (0x000u));
 
 ASSERT_PP_EQ((PTL_SIZE(0)), (0));
+
+ASSERT_PP_EQ((PTL_ANY()), ());
+ASSERT_PP_EQ((PTL_ANY(PTL_NONE())), ());
+ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));
@@ -1018,6 +1027,7 @@ ASSERT_PP_EQ((PTL_XSTR(PTL_RECUR_LP(1, PTL_INC) 0 PTL_RECUR_RP(1))), ("PTL_INC (
 ASSERT_PP_EQ((PTL_XSTR(PTL_RECUR_LP(2, PTL_INC) 0 PTL_RECUR_RP(2))), ("PTL_INC ( PTL_INC ( 0 ) )"));
 ASSERT_PP_EQ((PTL_X(PTL_RECUR_LP(3, PTL_INC) 0 PTL_RECUR_RP(3))), (3));
 ASSERT_PP_EQ((PTL_XSTR(PTL_RECUR_LP(3, PTL_INC) 0 PTL_RECUR_RP(3))), ("PTL_INC ( PTL_INC ( PTL_INC ( 0 ) ) )"));
+ASSERT_PP_EQ((PTL_X(PTL_RECUR_LP(2, PTL_DEC) PTL_RECUR_LP(3, PTL_INC) 0 PTL_RECUR_RP(3) PTL_RECUR_RP(2))), (1));
 ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_X(PTL_RECUR_LP(0, PTL_ESC) PTL_XTRACE PTL_RECUR_RP(0)))), (1u));
 ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_X(PTL_RECUR_LP(1, PTL_ESC) PTL_XTRACE PTL_RECUR_RP(1)))), (2u));
 ASSERT_PP_EQ((PTL_XTRACE_READ(PTL_X(PTL_RECUR_LP(2, PTL_ESC) PTL_XTRACE PTL_RECUR_RP(2)))), (3u));

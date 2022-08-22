@@ -63,18 +63,18 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
       def<"<\\0"> _0 = [&] { return "1"; };
       def<"<\\1">{}  = [&] { return "0"; };
 
-      return cat(utl::slice(_0, -1), impl::uhex(impl::udec(udec, "UHEX"), "ILTZ"));
+      return xcat(utl::slice(_0, -1), impl::uhex(impl::udec(udec, "UHEX"), "ILTZ"));
     };
 
-    return pp::call(cat(utl::slice(_00, -2), cat(impl::udec(pp::cat(atom, 'u'), "IS"),
-                                                 impl::uhex(pp::cat(atom, 'u'), "IS"))),
+    return pp::call(xcat(utl::slice(_00, -2), xcat(impl::udec(pp::cat(atom, 'u'), "IS"),
+                                                   impl::uhex(pp::cat(atom, 'u'), "IS"))),
                     pp::cat(atom, 'u'));
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_int_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

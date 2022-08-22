@@ -62,23 +62,23 @@ decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
         def<"<\\1(e, uint)">{}  = [&](arg, arg uint) {
           return impl::uhex(uhex(uint), "UTUP");
         };
-        return pp::call(cat(utl::slice(_0, -1), detail::is_uint_o(atom)), e, atom);
+        return pp::call(xcat(utl::slice(_0, -1), detail::is_uint_o(atom)), e, atom);
       };
 
       def<"<\\1(e, int)">{} = [&](arg, arg int_) {
         return impl::uhex(uhex(int_), "UTUP");
       };
 
-      return pp::call(cat(utl::slice(_0, -1), detail::is_int_o(atom)), e, atom);
+      return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), e, atom);
     };
 
-    return pp::call(cat(utl::slice(_0, -1), is_atom(some)), e, some);
+    return pp::call(xcat(utl::slice(_0, -1), is_atom(some)), e, some);
   };
 
   def<"\\1(e, ...)">{} = [](arg, va word) { return word; };
 
   return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_utup_o(some)), e, some);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(some)), e, some);
   }}(str("[" + utup + "] invalid integer or word : " + args), some(args));
 });
 

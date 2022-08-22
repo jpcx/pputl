@@ -36,29 +36,30 @@ namespace api {
 
 inline codegen::category<"traits"> traits;
 
-extern codegen::def<"is_none(...: <unknown>) -> bool"> const& is_none;
-extern codegen::def<"is_some(...: <unknown>) -> bool"> const& is_some;
-extern codegen::def<"is_any(...: <unknown>) -> bool"> const&  is_any;
-extern codegen::def<"is_atom(...: <unknown>) -> bool"> const& is_atom;
-extern codegen::def<"is_bool(...: <unknown>) -> bool"> const& is_bool;
-extern codegen::def<"is_hex(...: <unknown>) -> bool"> const&  is_hex;
-extern codegen::def<"is_nybl(...: <unknown>) -> bool"> const& is_nybl;
-extern codegen::def<"is_int(...: <unknown>) -> bool"> const&  is_int;
-extern codegen::def<"is_idec(...: <unknown>) -> bool"> const& is_idec;
-extern codegen::def<"is_ihex(...: <unknown>) -> bool"> const& is_ihex;
-extern codegen::def<"is_uint(...: <unknown>) -> bool"> const& is_uint;
-extern codegen::def<"is_udec(...: <unknown>) -> bool"> const& is_udec;
-extern codegen::def<"is_uhex(...: <unknown>) -> bool"> const& is_uhex;
-extern codegen::def<"is_tup(...: <unknown>) -> bool"> const&  is_tup;
-extern codegen::def<"is_utup(...: <unknown>) -> bool"> const& is_utup;
-extern codegen::def<"is_word(...: <unknown>) -> bool"> const& is_word;
-extern codegen::def<"is_size(...: <unknown>) -> bool"> const& is_size;
-extern codegen::def<"typeof(...: <unknown>) -> "
+extern codegen::def<"is_none(...) -> bool"> const& is_none;
+extern codegen::def<"is_some(...) -> bool"> const& is_some;
+extern codegen::def<"is_obj(...) -> bool"> const&  is_obj;
+extern codegen::def<"is_atom(...) -> bool"> const& is_atom;
+extern codegen::def<"is_bool(...) -> bool"> const& is_bool;
+extern codegen::def<"is_hex(...) -> bool"> const&  is_hex;
+extern codegen::def<"is_nybl(...) -> bool"> const& is_nybl;
+extern codegen::def<"is_int(...) -> bool"> const&  is_int;
+extern codegen::def<"is_idec(...) -> bool"> const& is_idec;
+extern codegen::def<"is_ihex(...) -> bool"> const& is_ihex;
+extern codegen::def<"is_uint(...) -> bool"> const& is_uint;
+extern codegen::def<"is_udec(...) -> bool"> const& is_udec;
+extern codegen::def<"is_uhex(...) -> bool"> const& is_uhex;
+extern codegen::def<"is_tup(...) -> bool"> const&  is_tup;
+extern codegen::def<"is_utup(...) -> bool"> const& is_utup;
+extern codegen::def<"is_word(...) -> bool"> const& is_word;
+extern codegen::def<"is_size(...) -> bool"> const& is_size;
+extern codegen::def<"is_any(...) -> bool"> const&  is_any;
+extern codegen::def<"typeof(...) -> "
                     "NONE|SOME|UTUP|TUP|IDEC|IHEX|UDEC|UHEX|HEX|NYBL|ATOM"> const& typeof;
-extern codegen::def<"sizeof(...: <unknown>) -> udec&size"> const& sizeof_;
+extern codegen::def<"sizeof(...) -> udec&size"> const& sizeof_;
 
 namespace detail {
-extern codegen::def<>& is_any_o;
+extern codegen::def<>& is_obj_o;
 extern codegen::def<>& is_atom_o;
 extern codegen::def<>& is_bool_o;
 extern codegen::def<>& is_hex_o;
@@ -73,7 +74,7 @@ extern codegen::def<>& is_tup_o;
 extern codegen::def<>& is_utup_o;
 extern codegen::def<>& is_word_o;
 extern codegen::def<>& is_size_o;
-NIFTY_DECL(is_any_o);
+NIFTY_DECL(is_obj_o);
 NIFTY_DECL(is_atom_o);
 NIFTY_DECL(is_bool_o);
 NIFTY_DECL(is_hex_o);
@@ -92,7 +93,7 @@ NIFTY_DECL(is_size_o);
 
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_some);
-NIFTY_DECL(is_any);
+NIFTY_DECL(is_obj);
 NIFTY_DECL(is_atom);
 NIFTY_DECL(is_bool);
 NIFTY_DECL(is_hex);
@@ -107,6 +108,7 @@ NIFTY_DECL(is_tup);
 NIFTY_DECL(is_utup);
 NIFTY_DECL(is_word);
 NIFTY_DECL(is_size);
+NIFTY_DECL(is_any);
 NIFTY_DECL(typeof);
 NIFTY_DECL(sizeof_);
 

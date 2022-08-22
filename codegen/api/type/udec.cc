@@ -51,7 +51,7 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   def<"\\1(udec)">{}  = [&](arg udec) { return udec; };
 
   return def<"o(uint)">{[&](arg uint) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_udec_o(uint)), uint);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_udec_o(uint)), uint);
   }}(uint(args));
 });
 

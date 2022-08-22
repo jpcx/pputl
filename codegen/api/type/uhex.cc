@@ -52,7 +52,7 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   def<"\\1(uhex)">{}  = [&](arg uhex) { return uhex; };
 
   return def<"o(uint)">{[&](arg uint) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_uhex_o(uint)), uint);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_uhex_o(uint)), uint);
   }}(uint(args));
 });
 

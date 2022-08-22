@@ -39,7 +39,7 @@ decltype(none) none = NIFTY_DEF(none, [&](va args) {
   def<"\\0(e)"> _0 = [](arg e) { return fail(e); };
   def<"\\1(e)">{}  = [](arg) { return ""; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_none(args)),
+  return pp::call(xcat(utl::slice(_0, -1), is_none(args)),
                   str("[" + none + "] none cannot describe something : " + args));
 });
 

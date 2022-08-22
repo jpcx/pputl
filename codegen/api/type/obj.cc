@@ -25,28 +25,24 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "logic.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(or_) or_ = NIFTY_DEF(or_, [&](va args) {
-  docs << "logical OR.";
+decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
+  docs << "[inherits from " + some + "] exactly one generic value."
+       << "fails if not exactly one arg.";
 
-  tests << or_("0, 0") = "0" >> docs;
-  tests << or_("0, 1") = "1" >> docs;
-  tests << or_("1, 0") = "1" >> docs;
-  tests << or_("1, 1") = "1" >> docs;
+  tests << obj("foo") = "foo" >> docs;
 
-  def<"\\00"> _00 = [&] { return "0"; };
-  def<"\\01">{}   = [&] { return "1"; };
-  def<"\\10">{}   = [&] { return "1"; };
-  def<"\\11">{}   = [&] { return "1"; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
+  def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
 
-  return def<"x(a, b)">{[&](arg a, arg b) {
-    return xcat(utl::slice(_00, -2), xcat(bool_(a), bool_(b)));
-  }}(args);
+  return def<"o(e, ...)">{[&](arg e, va some) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_obj_o(some + ".")), e, some);
+  }}(str("[" + obj + "] obj cannot describe multiple args : " + args), some(args));
 });
 
 } // namespace api

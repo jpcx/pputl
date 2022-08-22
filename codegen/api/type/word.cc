@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
-  docs << "[inherits from " + any + "] a union of int|uint|utup."
+  docs << "[inherits from " + obj + "] a union of int|uint|utup."
        << "constructibe from any word."
        << ""
        << "cannot parse negative decimals; use math.neg instead."
@@ -166,10 +166,10 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
         def<"\\10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
         def<"\\11(e, t, ...)">{} = [&](arg, arg t, va hint) { return default_(t, hint); };
 
-        return pp::call(
-            cat(utl::slice(_00, -2), cat(is_none(cat(utl::slice(_0idec, -4), t)),
-                                         is_none(pp::cat(utl::slice(_1idec, -4), hint)))),
-            e, t, hint);
+        return pp::call(xcat(utl::slice(_00, -2),
+                             xcat(is_none(xcat(utl::slice(_0idec, -4), t)),
+                                  is_none(pp::cat(utl::slice(_1idec, -4), hint)))),
+                        e, t, hint);
       };
 
   auto utup_params = utl::alpha_base52_seq(conf::word_size);
@@ -185,7 +185,7 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   def<"\\UTUP(word)">{}    = [&](arg word) { return utup(word); };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(cat(utl::slice(idec, -4), mode(e, typeof(v), hint)), v);
+    return pp::call(xcat(utl::slice(idec, -4), mode(e, typeof(v), hint)), v);
   }}(str("[" + word + "] invalid arguments : " + args), args);
 });
 

@@ -73,7 +73,7 @@ decltype(max) max = NIFTY_DEF(max, [&](va args) {
   def<"\\0(a, b)"> _0 = [&](arg, arg b) { return b; };
   def<"\\1(a, b)">{}  = [&](arg a, arg) { return a; };
 
-  return pp::call(cat(utl::slice(_0, -1), gt(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), gt(args)), args);
 });
 
 } // namespace api

@@ -36,11 +36,10 @@ using namespace codegen;
 decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
   docs << "bitwise right rotation by n places.";
 
-  tests << brotr("0x" + utl::cat(samp::hmin), 0) =
-      ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h1), 0) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h1), 1) = ("0x" + utl::cat(samp::himin)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h2), 1) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::hmin), 0) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::h1), 0)   = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::h1), 1)   = ("0x" + utl::cat(samp::himin)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::h2), 1)   = ("0x" + utl::cat(samp::h1)) >> docs;
   tests << brotr("0x" + utl::cat(samp::himax), 2) =
       ("0xD" + utl::cat(svect(conf::word_size - 1, "F"))) >> docs;
 
@@ -74,8 +73,8 @@ decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
     return word(
         def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
-              cat(utl::slice(_0, -1),
-                  band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
+              xcat(utl::slice(_0, -1),
+                   band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
         }}(n, bdump(v)),
         typeof(v));

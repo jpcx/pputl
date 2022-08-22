@@ -62,10 +62,10 @@ decltype(xtrace_read) xtrace_read = NIFTY_DEF(xtrace_read, [&](va args) {
   };
 
   return pp::call(
-      cat(utl::slice(_0, -1),
-          is_none(
-              cat(utl::slice(detect_a, -((std::string const&)detail::xtrace_a).size()),
-                  args))),
+      xcat(utl::slice(_0, -1),
+           is_none(
+               xcat(utl::slice(detect_a, -((std::string const&)detail::xtrace_a).size()),
+                    args))),
       str("[" + xtrace_read + "] invalid xtrace expr : " + args), args);
 });
 

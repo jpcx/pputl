@@ -71,7 +71,7 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
   def<"\\0(a, b)"> _0 = [&](arg, arg b) { return b; };
   def<"\\1(a, b)">{}  = [&](arg a, arg) { return a; };
 
-  return pp::call(cat(utl::slice(_0, -1), lt(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), lt(args)), args);
 });
 
 } // namespace api

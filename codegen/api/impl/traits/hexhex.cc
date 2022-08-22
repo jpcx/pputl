@@ -115,7 +115,7 @@ decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, cat(utl::slice(pairs[0], -2), v));
+  }}(t, xcat(utl::slice(pairs[0], -2), v));
 });
 
 } // namespace impl

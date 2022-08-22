@@ -33,18 +33,20 @@ namespace api {
 
 inline codegen::category<"lang"> lang;
 
-extern codegen::def<"eat(...) -> <nothing>"> const&                             eat;
-extern codegen::def<"esc(...: ...v: any) -> ...v"> const&                       esc;
-extern codegen::def<"cat(...: [a]: any, [b]: any) -> a##b"> const&              cat;
-extern codegen::def<"str(...: ...v: any) -> <string literal #...v>"> const&     str;
-extern codegen::def<"xstr(...: ...v: any) -> <string literal #...v>"> const&    xstr;
-extern codegen::def<"first(_, ...: first: any, rest: any...) -> first"> const&  first;
-extern codegen::def<"xfirst(...: ...v: any) -> v[0]"> const&                    xfirst;
-extern codegen::def<"rest(_, ...: first: any, rest: any...) -> ...rest"> const& rest;
-extern codegen::def<"xrest(...: ...v: any) -> ...v"> const&                     xrest;
+extern codegen::def<"eat(...) -> <nothing>"> const&             eat;
+extern codegen::def<"esc(...) -> __VA_ARGS__"> const&           esc;
+extern codegen::def<"cat(a, b) -> a##b"> const&                 cat;
+extern codegen::def<"xcat(...) -> cat(__VA_ARGS__)"> const&     xcat;
+extern codegen::def<"str(...) -> #__VA_ARGS__"> const&          str;
+extern codegen::def<"xstr(...) -> str(__VA_ARGS__)"> const&     xstr;
+extern codegen::def<"first(first, ...) -> first"> const&        first;
+extern codegen::def<"xfirst(...) -> first(__VA_ARGS__)"> const& xfirst;
+extern codegen::def<"rest(first, ...) -> __VA_ARGS__"> const&   rest;
+extern codegen::def<"xrest(...) -> rest(__VA_ARGS__)"> const&   xrest;
 extern codegen::def<
-    "trim(...: ...v: any) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
-extern codegen::def<"default(...: default: <any>, ...argument: <any...>) -> "> const&
+    "trim(...: ...v: <unknown>) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
+extern codegen::def<
+    "default(...: default: <unknown>, ...args: <unknown>) -> ...args || default"> const&
     default_;
 extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&
     fail;
@@ -54,6 +56,7 @@ extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> 
 NIFTY_DECL(eat);
 NIFTY_DECL(esc);
 NIFTY_DECL(cat);
+NIFTY_DECL(xcat);
 NIFTY_DECL(str);
 NIFTY_DECL(xstr);
 NIFTY_DECL(first);

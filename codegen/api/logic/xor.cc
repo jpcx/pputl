@@ -45,7 +45,7 @@ decltype(xor_) xor_ = NIFTY_DEF(xor_, [&](va args) {
   def<"\\11">{}   = [&] { return "0"; };
 
   return def<"x(a, b)">{[&](arg a, arg b) {
-    return cat(utl::slice(_00, -2), cat(bool_(a), bool_(b)));
+    return xcat(utl::slice(_00, -2), xcat(bool_(a), bool_(b)));
   }}(args);
 });
 

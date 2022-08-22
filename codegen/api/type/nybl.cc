@@ -47,8 +47,8 @@ decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(
-        cat(utl::slice(_00, -2), cat(detail::is_nybl_o(atom), detail::is_hex_o(atom))), e,
-        atom);
+        xcat(utl::slice(_00, -2), xcat(detail::is_nybl_o(atom), detail::is_hex_o(atom))),
+        e, atom);
   }}(str("[" + nybl + "] invalid arguments; must be nybl or hex : " + args), atom(args));
 });
 

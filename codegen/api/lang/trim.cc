@@ -53,7 +53,7 @@ decltype(trim) trim = NIFTY_DEF(trim, [&](va args) {
 
   def<"sel(...)"> sel = [&](va) { return pp::cat(0, pp::va_opt(1)); };
 
-  return pp::call(cat(utl::slice(_00, -2), cat(sel(xfirst(args)), sel(xrest(args)))),
+  return pp::call(xcat(utl::slice(_00, -2), xcat(sel(xfirst(args)), sel(xrest(args)))),
                   args);
 });
 

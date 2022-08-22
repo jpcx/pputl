@@ -55,7 +55,7 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
     def<"\\0"> _0 = [&] { return "0"; };
     def<"\\1">{}  = [&] { return "1"; };
 
-    return cat(utl::slice(_0, -1), impl::udec(pp::cat(int_, 'u'), "IS"));
+    return xcat(utl::slice(_0, -1), impl::udec(pp::cat(int_, 'u'), "IS"));
   };
 
   def<"fail(...)"> fail = [&](va) { return "0"; };
@@ -63,7 +63,7 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
   def<"\\0"> _0 = [&] { return fail; };
   def<"\\1">{}  = [&] { return detail::is_idec_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_int(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), args);
 });
 
 } // namespace api

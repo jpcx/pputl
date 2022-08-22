@@ -25,28 +25,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "logic.h"
+#include "lang.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(or_) or_ = NIFTY_DEF(or_, [&](va args) {
-  docs << "logical OR.";
+decltype(xcat) xcat = NIFTY_DEF(xcat, [&](va args) {
+  docs << "concatenates two args after an expansion."
+       << "args must be compatible with the ## operator.";
 
-  tests << or_("0, 0") = "0" >> docs;
-  tests << or_("0, 1") = "1" >> docs;
-  tests << or_("1, 0") = "1" >> docs;
-  tests << or_("1, 1") = "1" >> docs;
+  tests << xcat("foo", "bar")      = "foobar" >> docs;
+  tests << xcat("foo", eat("bar")) = "foo" >> docs;
 
-  def<"\\00"> _00 = [&] { return "0"; };
-  def<"\\01">{}   = [&] { return "1"; };
-  def<"\\10">{}   = [&] { return "1"; };
-  def<"\\11">{}   = [&] { return "1"; };
-
-  return def<"x(a, b)">{[&](arg a, arg b) {
-    return xcat(utl::slice(_00, -2), xcat(bool_(a), bool_(b)));
-  }}(args);
+  return pp::va_opt(cat(args));
 });
 
 } // namespace api

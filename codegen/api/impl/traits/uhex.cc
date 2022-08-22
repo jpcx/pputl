@@ -75,7 +75,7 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](arg v, arg t) {
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, cat(utl::slice(uhexs[0], -(conf::word_size + 3)), v));
+  }}(t, xcat(utl::slice(uhexs[0], -(conf::word_size + 3)), v));
 });
 
 } // namespace impl

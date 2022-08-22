@@ -44,7 +44,7 @@ decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
   tests << nez(uint_max_s)                        = "1" >> docs;
   tests << nez(int_min_s)                         = "1" >> docs;
 
-  return is_some(cat(utl::slice(detail::eqz_0u, -2), udec(args)));
+  return is_some(xcat(utl::slice(detail::eqz_0u, -2), udec(args)));
 });
 
 } // namespace api

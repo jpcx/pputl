@@ -51,14 +51,14 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
   def<"\\0(e, ihex)"> _0 = [&](arg e, arg ihex) {
     def<"<\\0(e, uhex)"> _0 = [&](arg, arg uhex) { return impl::uhex(uhex, "ICAST"); };
     def<"<\\1(e, uhex)">{}  = [&](arg e, arg) { return fail(e); };
-    return pp::call(cat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ")), e,
+    return pp::call(xcat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ")), e,
                     pp::cat(ihex, 'u'));
   };
 
   def<"\\1(e, idec)">{} = [&](arg, arg idec) { return idec; };
 
   return def<"o(e, int)">{[&](arg e, arg int_) {
-    return pp::call(cat(utl::slice(_0, -1), detail::is_idec_o(int_)), e, int_);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_idec_o(int_)), e, int_);
   }}(str("[" + idec + "] cannot represent negative in base10 : " + args), int_(args));
 });
 

@@ -50,7 +50,7 @@ decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
 
   detail::eqz_0u = def{"\\0u"} = [&] { return ""; };
 
-  return is_none(cat(utl::slice(detail::eqz_0u, -2), udec(args)));
+  return is_none(xcat(utl::slice(detail::eqz_0u, -2), udec(args)));
 });
 
 } // namespace api

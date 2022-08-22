@@ -36,7 +36,7 @@ decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
 }
 
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
-  docs << "[extends " + is_any
+  docs << "[extends " + is_obj
               + "] detects if args is a generic, non-tuple, singular value.";
 
   tests << is_atom()                 = "0" >> docs;
@@ -63,16 +63,16 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   tests << is_atom("(, a, )")        = "0";
   tests << is_atom("(, , a)")        = "0";
 
-  detail::is_atom_o = def{"o(any)"} = [&](arg any) {
+  detail::is_atom_o = def{"o(obj)"} = [&](arg obj) {
     def<"\\0"> _0 = [] { return "1"; };
     def<"\\1">{}  = [] { return "0"; };
-    return cat(utl::slice(_0, -1), is_none(eat + " " + any));
+    return xcat(utl::slice(_0, -1), is_none(eat + " " + obj));
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_atom_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });
 
 } // namespace api

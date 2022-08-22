@@ -61,13 +61,13 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   detail::is_bool_o = def{"o(atom)"} = [&](arg atom) {
     def<"\\0"> _0 = [&] { return ""; };
     def<"\\1">{}  = [&] { return ""; };
-    return is_none(cat(utl::slice(_0, -1), atom));
+    return is_none(xcat(utl::slice(_0, -1), atom));
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_bool_o; };
 
-  return pp::call(cat(utl::slice(_0, -1), is_atom(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api
