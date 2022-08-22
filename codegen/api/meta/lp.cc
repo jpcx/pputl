@@ -31,33 +31,10 @@ namespace api {
 
 using namespace codegen;
 
-decltype(lp) lp = NIFTY_DEF(lp, [&](va args) {
-  docs << "hides a left paren behind n secondary expansions.";
+decltype(lp) lp = NIFTY_DEF(lp, [&] {
+  docs << "hides a left paren behind a secondary expansion.";
 
-  def<"a(n)"> a;
-  def<"b(n)"> b;
-
-  tests << xstr(lp(1)) = pp::str(b + " ( 0 )") >> docs;
-  tests << xstr(lp(2)) = pp::str(b + " ( 1 )") >> docs;
-  tests << xstr(lp(3)) = pp::str(b + " ( 2 )") >> docs;
-
-  a = [&](arg n) {
-    def<"\\0(n)"> _0 = [&](arg n) {
-      return b + " " + impl::lp + " " + dec(n) + " " + impl::rp;
-    };
-    def<"\\1(n)">{} = [&](arg) { return impl::lp; };
-    return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
-  };
-
-  b = [&](arg n) {
-    def<"\\0(n)"> _0 = [&](arg n) {
-      return a + " " + impl::lp + " " + dec(n) + " " + impl::rp;
-    };
-    def<"\\1(n)">{} = [&](arg) { return impl::lp; };
-    return pp::call(cat(utl::slice(_0, -1), eqz(n)), n);
-  };
-
-  return def<"o(n)">{[&](arg n) { return a(n); }}(idec(default_(0, args)));
+  return "(";
 });
 
 } // namespace api

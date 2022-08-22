@@ -74,6 +74,12 @@ constexpr bool cpp20_arglimit = true;
 // must be set false for word_size=4.
 constexpr bool cpp20_deflimit = true;
 
+// implementation name replacements for size reduction
+constexpr std::array<char const*, 2> impl_aliases[]{
+    {"recur_lp", "rlp"},
+    {"recur_rp", "rrp"},
+};
+
 // output file for all preprocessor definitions.
 constexpr char const lib_output[]{"./pputl.h"};
 

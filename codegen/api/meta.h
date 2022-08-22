@@ -26,41 +26,42 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "bitwise.h"
 #include "codegen.h"
+#include "compare.h"
 #include "config.h"
 #include "lang.h"
+#include "logic.h"
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
-//
-#include "impl/meta.h"
 
 namespace api {
 
 inline codegen::category<"meta"> meta;
 
-extern codegen::def<"id(...: v: any...) -> ...v"> const&                     id;
-extern codegen::def<"lp(...: [n=0]: idec) -> <deferred left paren>"> const&  lp;
-extern codegen::def<"rp(...: [n=0]: idec) -> <deferred right paren>"> const& rp;
-std::string                                    xtrace_expected(unsigned n);
-extern codegen::def<"xtrace -> xtrace"> const& xtrace;
-extern codegen::def<"xtrace_read(...: xtrace) -> udec&size"> const& xtrace_read;
-// extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
-// extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
+extern codegen::def<"lp() -> <deferred left paren>"> const&  lp;
+extern codegen::def<"rp() -> <deferred right paren>"> const& rp;
+extern codegen::def<"x(...: v: any...) -> ...v"> const&      x;
+std::string                                                  xtrace_expected(unsigned n);
+extern codegen::def<"xtrace -> xtrace"> const&               xtrace;
+extern codegen::def<"xtrace_read(...: xtrace) -> udec&size"> const&        xtrace_read;
+extern codegen::def<"recur_lp(...: n: size, f: <fn>) -> 'f lp'{n}"> const& recur_lp;
+extern codegen::def<"recur_rp(...: n: size) -> 'rp'{n}"> const&            recur_rp;
 
 // template<std::convertible_to<std::string>... Args>
 // inline std::string
 // meta_recur(std::string const& x, std::string const& n, std::string const& f, Args&&...
 // args) {
-//   return x + "(" + ropen(n, f) + " "
+//   return x + "(" + recur_lp(n, f) + " "
 //        + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ")
 //        + " "
-//        + rclose(n) + ")";
+//        + recur_rp(n) + ")";
 // }
 
-NIFTY_DECL(id);
 NIFTY_DECL(lp);
 NIFTY_DECL(rp);
+NIFTY_DECL(x);
 namespace detail {
 extern codegen::def<>& xtrace_a;
 extern codegen::def<>& xtrace_b;
@@ -69,8 +70,8 @@ NIFTY_DECL(xtrace_b);
 } // namespace detail
 NIFTY_DECL(xtrace);
 NIFTY_DECL(xtrace_read);
-// NIFTY_DECL(ropen);
-// NIFTY_DECL(rclose);
+NIFTY_DECL(recur_lp);
+NIFTY_DECL(recur_rp);
 
 inline codegen::end_category<"meta"> meta_end;
 

@@ -25,18 +25,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/meta.h"
+#include "meta.h"
 
 namespace api {
-namespace impl {
 
 using namespace codegen;
 
-decltype(rp) rp = NIFTY_DEF(rp, [&] {
-  docs << "expands to a right paren.";
+decltype(x) x = NIFTY_DEF(x, [&](va args) {
+  docs << "adds an additional expansion.";
 
-  return ")";
+  tests << x()                                      = "" >> docs;
+  tests << x("foo")                                 = "foo" >> docs;
+  tests << x("a, b, c")                             = "a, b, c" >> docs;
+  tests << xstr(inc + " " + lp() + " 3 " + rp())    = pp::str(inc + " ( 3 )") >> docs;
+  tests << xstr(x(inc + " " + lp() + " 3 " + rp())) = "\"4\"" >> docs;
+
+  return args;
 });
 
-} // namespace impl
 } // namespace api

@@ -320,6 +320,19 @@ implname(std::string short_name) {
   std::string post_esc{std::next(short_name.begin(),
                                  pre_esc.size() + (pre_esc.size() < short_name.size())),
                        short_name.end()};
+  static std::array<std::pair<std::regex, std::string>,
+                    (sizeof conf::impl_aliases) / (sizeof(std::array<char const*, 2>))>
+      repls = utl::ii << [&]() -> decltype(repls) {
+    decltype(repls) res{};
+    for (std::size_t i = 0; i < res.size(); ++i)
+      res[i] = {std::regex{conf::impl_aliases[i][0], std::regex_constants::optimize},
+                conf::impl_aliases[i][1]};
+    return res;
+  };
+
+  for (auto&& [r, s] : repls)
+    pre_esc = std::regex_replace(pre_esc, r, s);
+
   return impl::libname(pre_esc, conf::impl_prefix) + post_esc;
 }
 

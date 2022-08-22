@@ -209,7 +209,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220821
+#define PTL_BUILD /* -> <c++ int> */ 20220822
 
 /// [config.word_size]
 /// ------------------
@@ -2908,61 +2908,28 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [meta.id]
-/// ---------
-/// identity function. performs one expansion.
-///
-/// PTL_ID()        // <nothing>
-/// PTL_ID(foo)     // foo
-/// PTL_ID(a, b, c) // a, b, c
-#define PTL_ID(/* v: any... */...) /* -> ...v */ __VA_ARGS__
-
 /// [meta.lp]
 /// ---------
-/// hides a left paren behind n secondary expansions.
-///
-/// PTL_XSTR(PTL_LP(1)) // "PPUTLLP_B ( 0 )"
-/// PTL_XSTR(PTL_LP(2)) // "PPUTLLP_B ( 1 )"
-/// PTL_XSTR(PTL_LP(3)) // "PPUTLLP_B ( 2 )"
-#define PTL_LP(/* [n=0]: idec */...) /* -> <deferred left paren> */ \
-  PPUTLLP_o(PTL_IDEC(PTL_DEFAULT(0, __VA_ARGS__)))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLLP_o(n)   PPUTLLP_A(n)
-#define PPUTLLP_B(n)   PTL_CAT(PPUTLLP_B_, PTL_EQZ(n))(n)
-#define PPUTLLP_B_1(n) PPUTLIMPL_LP
-#define PPUTLLP_B_0(n) PPUTLLP_A PPUTLIMPL_LP PTL_DEC(n) PPUTLIMPL_RP
-#define PPUTLLP_A(n)   PTL_CAT(PPUTLLP_A_, PTL_EQZ(n))(n)
-#define PPUTLLP_A_1(n) PPUTLIMPL_LP
-#define PPUTLLP_A_0(n) PPUTLLP_B PPUTLIMPL_LP PTL_DEC(n) PPUTLIMPL_RP
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+/// hides a left paren behind a secondary expansion.
+#define PTL_LP() /* -> <deferred left paren> */ (
 
 /// [meta.rp]
 /// ---------
-/// hides a right paren behind n secondary expansions.
+/// hides a right paren behind a secondary expansion.
 ///
-/// PTL_LP() PTL_RP()           // ( )
-/// PTL_LP(0) PTL_RP(0)         // ( )
-/// PTL_ID(PTL_LP(1) PTL_RP(1)) // ( )
-/// PTL_XSTR(PTL_RP(1))         // "PPUTLRP_B ( 0 )"
-/// PTL_XSTR(PTL_RP(2))         // "PPUTLRP_B ( 1 )"
-/// PTL_XSTR(PTL_RP(3))         // "PPUTLRP_B ( 2 )"
-#define PTL_RP(/* [n=0]: idec */...) /* -> <deferred right paren> */ \
-  PPUTLRP_o(PTL_IDEC(PTL_DEFAULT(0, __VA_ARGS__)))
+/// PTL_LP() PTL_RP() // ( )
+#define PTL_RP() /* -> <deferred right paren> */ )
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLRP_o(n)   PPUTLRP_A(n)
-#define PPUTLRP_B(n)   PTL_CAT(PPUTLRP_B_, PTL_EQZ(n))(n)
-#define PPUTLRP_B_1(n) PPUTLIMPL_RP
-#define PPUTLRP_B_0(n) PPUTLRP_A PPUTLIMPL_LP PTL_DEC(n) PPUTLIMPL_RP
-#define PPUTLRP_A(n)   PTL_CAT(PPUTLRP_A_, PTL_EQZ(n))(n)
-#define PPUTLRP_A_1(n) PPUTLIMPL_RP
-#define PPUTLRP_A_0(n) PPUTLRP_B PPUTLIMPL_LP PTL_DEC(n) PPUTLIMPL_RP
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+/// [meta.x]
+/// --------
+/// adds an additional expansion.
+///
+/// PTL_X()                                      // <nothing>
+/// PTL_X(foo)                                   // foo
+/// PTL_X(a, b, c)                               // a, b, c
+/// PTL_XSTR(PTL_INC PTL_LP() 3 PTL_RP())        // "PTL_INC ( 3 )"
+/// PTL_XSTR(PTL_X(PTL_INC PTL_LP() 3 PTL_RP())) // "4"
+#define PTL_X(/* v: any... */...) /* -> ...v */ __VA_ARGS__
 
 /// [meta.xtrace]
 /// -------------
@@ -2970,10 +2937,10 @@
 /// uses mutual recursion; can track any number of expansions.
 /// the number of commas indicates the number of expansions.
 ///
-/// PTL_XSTR(PTL_XTRACE)                            // "PPUTLXTRACE_A ( , )"
-/// PTL_XSTR(PTL_ESC(PTL_XTRACE))                   // "PPUTLXTRACE_B ( ,, )"
-/// PTL_XSTR(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // "PPUTLXTRACE_A ( ,,, )"
-/// PTL_XSTR(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // "PPUTLXTRACE_B ( ,,,, )"
+/// PTL_XSTR(PTL_XTRACE)                      // "PPUTLXTRACE_A ( , )"
+/// PTL_XSTR(PTL_X(PTL_XTRACE))               // "PPUTLXTRACE_B ( ,, )"
+/// PTL_XSTR(PTL_X(PTL_X(PTL_XTRACE)))        // "PPUTLXTRACE_A ( ,,, )"
+/// PTL_XSTR(PTL_X(PTL_X(PTL_X(PTL_XTRACE)))) // "PPUTLXTRACE_B ( ,,,, )"
 #define PTL_XTRACE /* -> xtrace */ PPUTLXTRACE_A PTL_LP() /**/, PTL_RP()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -2991,10 +2958,10 @@
 /// fails if xtrace is not a valid xtrace expression.
 /// PTL_SIZE will fail if the xtrace expression is too large.
 ///
-/// PTL_XTRACE_READ(PTL_XTRACE)                            // 0u
-/// PTL_XTRACE_READ(PTL_ESC(PTL_XTRACE))                   // 1u
-/// PTL_XTRACE_READ(PTL_ESC(PTL_ESC(PTL_XTRACE)))          // 2u
-/// PTL_XTRACE_READ(PTL_ESC(PTL_ESC(PTL_ESC(PTL_XTRACE)))) // 3u
+/// PTL_XTRACE_READ(PTL_XTRACE)                      // 0u
+/// PTL_XTRACE_READ(PTL_X(PTL_XTRACE))               // 1u
+/// PTL_XTRACE_READ(PTL_X(PTL_X(PTL_XTRACE)))        // 2u
+/// PTL_XTRACE_READ(PTL_X(PTL_X(PTL_X(PTL_XTRACE)))) // 3u
 #define PTL_XTRACE_READ(/* xtrace */...) /* -> udec&size */            \
   PTL_CAT(PPUTLXTRACE_READ_,                                           \
           PTL_IS_NONE(PTL_CAT(PPUTLXTRACE_READ_DETECT_, __VA_ARGS__))) \
@@ -3009,6 +2976,234 @@
 #define PPUTLXTRACE_READ_RES(_, ...)           PTL_SIZEOF(__VA_ARGS__)
 #define PPUTLXTRACE_READ_DETECT_PPUTLXTRACE_B(...)
 #define PPUTLXTRACE_READ_DETECT_PPUTLXTRACE_A(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [meta.recur_lp]
+/// ---------------
+/// constructs an in-place recursive expression.
+/// the result must be expanded once to execute.
+///
+/// must be followed by an recur_rp expression with
+/// the same value of n.
+///
+/// recur_lp repeats the function and open parens;
+/// recur_rp repeats the close parens.
+///
+/// it is necessary to split the syntax of this
+/// operation into two separate function calls, as
+/// neither call can expand the target args without
+/// risking expansion termination. this structure
+/// allows recursive operations to process data
+/// obtained from other recursive operations.
+///
+/// example:
+///   madd(a, b) = add(a, b), b
+///   mul(a, b)  = first(id(recur_lp(a, madd) 0, b recur_rp(a)))
+///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
+///             -> first(madd(madd(0, 4)))
+///             -> first(madd(4, 4))
+///             -> first(8, 4)
+///             -> 8
+///
+/// neither f nor the final expansion function may be
+/// invoked anywhere within the recursive operation
+/// (and both functions must be distinct).
+///
+/// this operation can be used to perform an arbitrary
+/// number of expansions by using two identity functions.
+/// this is necessary to implement mutual recursion.
+#define PTL_RECUR_LP(/* n: size, f: <fn> */...) /* -> 'f lp'{n} */ PPUTLRLP_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLRLP_o(n, f) PPUTLRLP_oo(PTL_SIZE(n, UDEC), f)
+#define PPUTLRLP_oo(n, f) \
+  PTL_CAT(PPUTLRLP_oo_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)), f)
+#define PPUTLRLP_oo_3u(n, f) f PTL_LP() f PTL_LP() f PTL_LP() PTL_CAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_oo_2u(n, f) f PTL_LP() f PTL_LP() PTL_CAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_oo_1u(n, f) f PTL_LP() PTL_CAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_oo_0u(n, f) PTL_CAT(PPUTLRLP_, n)(f)
+#define PPUTLRLP_63(f)       PPUTLRLP_15(f) PPUTLRLP_16(f) PPUTLRLP_16(f) PPUTLRLP_16(f)
+#define PPUTLRLP_62(f)       PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_16(f) PPUTLRLP_16(f)
+#define PPUTLRLP_61(f)       PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_16(f)
+#define PPUTLRLP_60(f)       PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_15(f)
+#define PPUTLRLP_59(f)       PPUTLRLP_14(f) PPUTLRLP_15(f) PPUTLRLP_15(f) PPUTLRLP_15(f)
+#define PPUTLRLP_58(f)       PPUTLRLP_14(f) PPUTLRLP_14(f) PPUTLRLP_15(f) PPUTLRLP_15(f)
+#define PPUTLRLP_57(f)       PPUTLRLP_14(f) PPUTLRLP_14(f) PPUTLRLP_14(f) PPUTLRLP_15(f)
+#define PPUTLRLP_56(f)       PPUTLRLP_14(f) PPUTLRLP_14(f) PPUTLRLP_14(f) PPUTLRLP_14(f)
+#define PPUTLRLP_55(f)       PPUTLRLP_13(f) PPUTLRLP_14(f) PPUTLRLP_14(f) PPUTLRLP_14(f)
+#define PPUTLRLP_54(f)       PPUTLRLP_13(f) PPUTLRLP_13(f) PPUTLRLP_14(f) PPUTLRLP_14(f)
+#define PPUTLRLP_53(f)       PPUTLRLP_13(f) PPUTLRLP_13(f) PPUTLRLP_13(f) PPUTLRLP_14(f)
+#define PPUTLRLP_52(f)       PPUTLRLP_13(f) PPUTLRLP_13(f) PPUTLRLP_13(f) PPUTLRLP_13(f)
+#define PPUTLRLP_51(f)       PPUTLRLP_12(f) PPUTLRLP_13(f) PPUTLRLP_13(f) PPUTLRLP_13(f)
+#define PPUTLRLP_50(f)       PPUTLRLP_12(f) PPUTLRLP_12(f) PPUTLRLP_13(f) PPUTLRLP_13(f)
+#define PPUTLRLP_49(f)       PPUTLRLP_12(f) PPUTLRLP_12(f) PPUTLRLP_12(f) PPUTLRLP_13(f)
+#define PPUTLRLP_48(f)       PPUTLRLP_12(f) PPUTLRLP_12(f) PPUTLRLP_12(f) PPUTLRLP_12(f)
+#define PPUTLRLP_47(f)       PPUTLRLP_11(f) PPUTLRLP_12(f) PPUTLRLP_12(f) PPUTLRLP_12(f)
+#define PPUTLRLP_46(f)       PPUTLRLP_11(f) PPUTLRLP_11(f) PPUTLRLP_12(f) PPUTLRLP_12(f)
+#define PPUTLRLP_45(f)       PPUTLRLP_11(f) PPUTLRLP_11(f) PPUTLRLP_11(f) PPUTLRLP_12(f)
+#define PPUTLRLP_44(f)       PPUTLRLP_11(f) PPUTLRLP_11(f) PPUTLRLP_11(f) PPUTLRLP_11(f)
+#define PPUTLRLP_43(f)       PPUTLRLP_10(f) PPUTLRLP_11(f) PPUTLRLP_11(f) PPUTLRLP_11(f)
+#define PPUTLRLP_42(f)       PPUTLRLP_10(f) PPUTLRLP_10(f) PPUTLRLP_11(f) PPUTLRLP_11(f)
+#define PPUTLRLP_41(f)       PPUTLRLP_10(f) PPUTLRLP_10(f) PPUTLRLP_10(f) PPUTLRLP_11(f)
+#define PPUTLRLP_40(f)       PPUTLRLP_10(f) PPUTLRLP_10(f) PPUTLRLP_10(f) PPUTLRLP_10(f)
+#define PPUTLRLP_39(f)       PPUTLRLP_9(f) PPUTLRLP_10(f) PPUTLRLP_10(f) PPUTLRLP_10(f)
+#define PPUTLRLP_38(f)       PPUTLRLP_9(f) PPUTLRLP_9(f) PPUTLRLP_10(f) PPUTLRLP_10(f)
+#define PPUTLRLP_37(f)       PPUTLRLP_9(f) PPUTLRLP_9(f) PPUTLRLP_9(f) PPUTLRLP_10(f)
+#define PPUTLRLP_36(f)       PPUTLRLP_9(f) PPUTLRLP_9(f) PPUTLRLP_9(f) PPUTLRLP_9(f)
+#define PPUTLRLP_35(f)       PPUTLRLP_8(f) PPUTLRLP_9(f) PPUTLRLP_9(f) PPUTLRLP_9(f)
+#define PPUTLRLP_34(f)       PPUTLRLP_8(f) PPUTLRLP_8(f) PPUTLRLP_9(f) PPUTLRLP_9(f)
+#define PPUTLRLP_33(f)       PPUTLRLP_8(f) PPUTLRLP_8(f) PPUTLRLP_8(f) PPUTLRLP_9(f)
+#define PPUTLRLP_32(f)       PPUTLRLP_8(f) PPUTLRLP_8(f) PPUTLRLP_8(f) PPUTLRLP_8(f)
+#define PPUTLRLP_31(f)       PPUTLRLP_7(f) PPUTLRLP_8(f) PPUTLRLP_8(f) PPUTLRLP_8(f)
+#define PPUTLRLP_30(f)       PPUTLRLP_7(f) PPUTLRLP_7(f) PPUTLRLP_8(f) PPUTLRLP_8(f)
+#define PPUTLRLP_29(f)       PPUTLRLP_7(f) PPUTLRLP_7(f) PPUTLRLP_7(f) PPUTLRLP_8(f)
+#define PPUTLRLP_28(f)       PPUTLRLP_7(f) PPUTLRLP_7(f) PPUTLRLP_7(f) PPUTLRLP_7(f)
+#define PPUTLRLP_27(f)       PPUTLRLP_6(f) PPUTLRLP_7(f) PPUTLRLP_7(f) PPUTLRLP_7(f)
+#define PPUTLRLP_26(f)       PPUTLRLP_6(f) PPUTLRLP_6(f) PPUTLRLP_7(f) PPUTLRLP_7(f)
+#define PPUTLRLP_25(f)       PPUTLRLP_6(f) PPUTLRLP_6(f) PPUTLRLP_6(f) PPUTLRLP_7(f)
+#define PPUTLRLP_24(f)       PPUTLRLP_6(f) PPUTLRLP_6(f) PPUTLRLP_6(f) PPUTLRLP_6(f)
+#define PPUTLRLP_23(f)       PPUTLRLP_5(f) PPUTLRLP_6(f) PPUTLRLP_6(f) PPUTLRLP_6(f)
+#define PPUTLRLP_22(f)       PPUTLRLP_5(f) PPUTLRLP_5(f) PPUTLRLP_6(f) PPUTLRLP_6(f)
+#define PPUTLRLP_21(f)       PPUTLRLP_5(f) PPUTLRLP_5(f) PPUTLRLP_5(f) PPUTLRLP_6(f)
+#define PPUTLRLP_20(f)       PPUTLRLP_5(f) PPUTLRLP_5(f) PPUTLRLP_5(f) PPUTLRLP_5(f)
+#define PPUTLRLP_19(f)       PPUTLRLP_4(f) PPUTLRLP_5(f) PPUTLRLP_5(f) PPUTLRLP_5(f)
+#define PPUTLRLP_18(f)       PPUTLRLP_4(f) PPUTLRLP_4(f) PPUTLRLP_5(f) PPUTLRLP_5(f)
+#define PPUTLRLP_17(f)       PPUTLRLP_4(f) PPUTLRLP_4(f) PPUTLRLP_4(f) PPUTLRLP_5(f)
+#define PPUTLRLP_16(f)       PPUTLRLP_4(f) PPUTLRLP_4(f) PPUTLRLP_4(f) PPUTLRLP_4(f)
+#define PPUTLRLP_15(f)       PPUTLRLP_3(f) PPUTLRLP_4(f) PPUTLRLP_4(f) PPUTLRLP_4(f)
+#define PPUTLRLP_14(f)       PPUTLRLP_3(f) PPUTLRLP_3(f) PPUTLRLP_4(f) PPUTLRLP_4(f)
+#define PPUTLRLP_13(f)       PPUTLRLP_3(f) PPUTLRLP_3(f) PPUTLRLP_3(f) PPUTLRLP_4(f)
+#define PPUTLRLP_12(f)       PPUTLRLP_3(f) PPUTLRLP_3(f) PPUTLRLP_3(f) PPUTLRLP_3(f)
+#define PPUTLRLP_11(f)       PPUTLRLP_2(f) PPUTLRLP_3(f) PPUTLRLP_3(f) PPUTLRLP_3(f)
+#define PPUTLRLP_10(f)       PPUTLRLP_2(f) PPUTLRLP_2(f) PPUTLRLP_3(f) PPUTLRLP_3(f)
+#define PPUTLRLP_9(f)        PPUTLRLP_2(f) PPUTLRLP_2(f) PPUTLRLP_2(f) PPUTLRLP_3(f)
+#define PPUTLRLP_8(f)        PPUTLRLP_2(f) PPUTLRLP_2(f) PPUTLRLP_2(f) PPUTLRLP_2(f)
+#define PPUTLRLP_7(f)        PPUTLRLP_1(f) PPUTLRLP_2(f) PPUTLRLP_2(f) PPUTLRLP_2(f)
+#define PPUTLRLP_6(f)        PPUTLRLP_1(f) PPUTLRLP_1(f) PPUTLRLP_2(f) PPUTLRLP_2(f)
+#define PPUTLRLP_5(f)        PPUTLRLP_1(f) PPUTLRLP_1(f) PPUTLRLP_1(f) PPUTLRLP_2(f)
+#define PPUTLRLP_4(f)        PPUTLRLP_1(f) PPUTLRLP_1(f) PPUTLRLP_1(f) PPUTLRLP_1(f)
+#define PPUTLRLP_3(f)        PPUTLRLP_1(f) PPUTLRLP_1(f) PPUTLRLP_1(f)
+#define PPUTLRLP_2(f)        PPUTLRLP_1(f) PPUTLRLP_1(f)
+#define PPUTLRLP_1(f)        f PTL_LP() f PTL_LP() f PTL_LP() f PTL_LP()
+#define PPUTLRLP_0(f)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [meta.recur_rp]
+/// ---------------
+/// constructs an in-place recursive expression.
+/// the result must be expanded once to execute.
+///
+/// must be preceeded by an recur_lp expression with
+/// the same value of n.
+///
+/// recur_lp repeats the function and open parens;
+/// recur_rp repeats the close parens.
+///
+/// it is necessary to split the syntax of this
+/// operation into two separate function calls, as
+/// neither call can expand the target args without
+/// risking expansion termination. this structure
+/// allows recursive operations to process data
+/// obtained from other recursive operations.
+///
+/// example:
+///   madd(a, b) = add(a, b), b
+///   mul(a, b)  = first(id(recur_lp(a, madd) 0, 4 recur_rp(a)))
+///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
+///             -> first(madd(madd(0, 4)))
+///             -> first(madd(4, 4))
+///             -> first(8, 4)
+///             -> 8
+///
+/// neither f nor the final expansion function may be
+/// invoked anywhere within the recursive operation
+/// (and both functions must be distinct).
+///
+/// this operation can be used to perform an arbitrary
+/// number of expansions by using two identity functions.
+/// this is necessary to implement mutual recursion.
+///
+/// PTL_XSTR(PTL_RECUR_LP(0, PTL_INC) 0 PTL_RECUR_RP(0)) // "0"
+/// PTL_XSTR(PTL_RECUR_LP(1, PTL_INC) 0 PTL_RECUR_RP(1)) // "PTL_INC ( 0 )"
+/// PTL_XSTR(PTL_RECUR_LP(2, PTL_INC) 0 PTL_RECUR_RP(2)) // "PTL_INC ( PTL_INC ( 0 ) )"
+/// PTL_X(PTL_RECUR_LP(3, PTL_INC) 0 PTL_RECUR_RP(3))    // 3
+#define PTL_RECUR_RP(/* n: size */...) /* -> 'rp'{n} */ \
+  PPUTLRRP_o(PTL_SIZE(__VA_ARGS__, UDEC))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLRRP_o(n)    PTL_CAT(PPUTLRRP_o_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)))
+#define PPUTLRRP_o_3u(n) PTL_CAT(PPUTLRRP_, n) PTL_RP() PTL_RP() PTL_RP()
+#define PPUTLRRP_o_2u(n) PTL_CAT(PPUTLRRP_, n) PTL_RP() PTL_RP()
+#define PPUTLRRP_o_1u(n) PTL_CAT(PPUTLRRP_, n) PTL_RP()
+#define PPUTLRRP_o_0u(n) PTL_CAT(PPUTLRRP_, n)
+#define PPUTLRRP_63      PPUTLRRP_15 PPUTLRRP_16 PPUTLRRP_16 PPUTLRRP_16
+#define PPUTLRRP_62      PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_16 PPUTLRRP_16
+#define PPUTLRRP_61      PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_16
+#define PPUTLRRP_60      PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_15
+#define PPUTLRRP_59      PPUTLRRP_14 PPUTLRRP_15 PPUTLRRP_15 PPUTLRRP_15
+#define PPUTLRRP_58      PPUTLRRP_14 PPUTLRRP_14 PPUTLRRP_15 PPUTLRRP_15
+#define PPUTLRRP_57      PPUTLRRP_14 PPUTLRRP_14 PPUTLRRP_14 PPUTLRRP_15
+#define PPUTLRRP_56      PPUTLRRP_14 PPUTLRRP_14 PPUTLRRP_14 PPUTLRRP_14
+#define PPUTLRRP_55      PPUTLRRP_13 PPUTLRRP_14 PPUTLRRP_14 PPUTLRRP_14
+#define PPUTLRRP_54      PPUTLRRP_13 PPUTLRRP_13 PPUTLRRP_14 PPUTLRRP_14
+#define PPUTLRRP_53      PPUTLRRP_13 PPUTLRRP_13 PPUTLRRP_13 PPUTLRRP_14
+#define PPUTLRRP_52      PPUTLRRP_13 PPUTLRRP_13 PPUTLRRP_13 PPUTLRRP_13
+#define PPUTLRRP_51      PPUTLRRP_12 PPUTLRRP_13 PPUTLRRP_13 PPUTLRRP_13
+#define PPUTLRRP_50      PPUTLRRP_12 PPUTLRRP_12 PPUTLRRP_13 PPUTLRRP_13
+#define PPUTLRRP_49      PPUTLRRP_12 PPUTLRRP_12 PPUTLRRP_12 PPUTLRRP_13
+#define PPUTLRRP_48      PPUTLRRP_12 PPUTLRRP_12 PPUTLRRP_12 PPUTLRRP_12
+#define PPUTLRRP_47      PPUTLRRP_11 PPUTLRRP_12 PPUTLRRP_12 PPUTLRRP_12
+#define PPUTLRRP_46      PPUTLRRP_11 PPUTLRRP_11 PPUTLRRP_12 PPUTLRRP_12
+#define PPUTLRRP_45      PPUTLRRP_11 PPUTLRRP_11 PPUTLRRP_11 PPUTLRRP_12
+#define PPUTLRRP_44      PPUTLRRP_11 PPUTLRRP_11 PPUTLRRP_11 PPUTLRRP_11
+#define PPUTLRRP_43      PPUTLRRP_10 PPUTLRRP_11 PPUTLRRP_11 PPUTLRRP_11
+#define PPUTLRRP_42      PPUTLRRP_10 PPUTLRRP_10 PPUTLRRP_11 PPUTLRRP_11
+#define PPUTLRRP_41      PPUTLRRP_10 PPUTLRRP_10 PPUTLRRP_10 PPUTLRRP_11
+#define PPUTLRRP_40      PPUTLRRP_10 PPUTLRRP_10 PPUTLRRP_10 PPUTLRRP_10
+#define PPUTLRRP_39      PPUTLRRP_9 PPUTLRRP_10 PPUTLRRP_10 PPUTLRRP_10
+#define PPUTLRRP_38      PPUTLRRP_9 PPUTLRRP_9 PPUTLRRP_10 PPUTLRRP_10
+#define PPUTLRRP_37      PPUTLRRP_9 PPUTLRRP_9 PPUTLRRP_9 PPUTLRRP_10
+#define PPUTLRRP_36      PPUTLRRP_9 PPUTLRRP_9 PPUTLRRP_9 PPUTLRRP_9
+#define PPUTLRRP_35      PPUTLRRP_8 PPUTLRRP_9 PPUTLRRP_9 PPUTLRRP_9
+#define PPUTLRRP_34      PPUTLRRP_8 PPUTLRRP_8 PPUTLRRP_9 PPUTLRRP_9
+#define PPUTLRRP_33      PPUTLRRP_8 PPUTLRRP_8 PPUTLRRP_8 PPUTLRRP_9
+#define PPUTLRRP_32      PPUTLRRP_8 PPUTLRRP_8 PPUTLRRP_8 PPUTLRRP_8
+#define PPUTLRRP_31      PPUTLRRP_7 PPUTLRRP_8 PPUTLRRP_8 PPUTLRRP_8
+#define PPUTLRRP_30      PPUTLRRP_7 PPUTLRRP_7 PPUTLRRP_8 PPUTLRRP_8
+#define PPUTLRRP_29      PPUTLRRP_7 PPUTLRRP_7 PPUTLRRP_7 PPUTLRRP_8
+#define PPUTLRRP_28      PPUTLRRP_7 PPUTLRRP_7 PPUTLRRP_7 PPUTLRRP_7
+#define PPUTLRRP_27      PPUTLRRP_6 PPUTLRRP_7 PPUTLRRP_7 PPUTLRRP_7
+#define PPUTLRRP_26      PPUTLRRP_6 PPUTLRRP_6 PPUTLRRP_7 PPUTLRRP_7
+#define PPUTLRRP_25      PPUTLRRP_6 PPUTLRRP_6 PPUTLRRP_6 PPUTLRRP_7
+#define PPUTLRRP_24      PPUTLRRP_6 PPUTLRRP_6 PPUTLRRP_6 PPUTLRRP_6
+#define PPUTLRRP_23      PPUTLRRP_5 PPUTLRRP_6 PPUTLRRP_6 PPUTLRRP_6
+#define PPUTLRRP_22      PPUTLRRP_5 PPUTLRRP_5 PPUTLRRP_6 PPUTLRRP_6
+#define PPUTLRRP_21      PPUTLRRP_5 PPUTLRRP_5 PPUTLRRP_5 PPUTLRRP_6
+#define PPUTLRRP_20      PPUTLRRP_5 PPUTLRRP_5 PPUTLRRP_5 PPUTLRRP_5
+#define PPUTLRRP_19      PPUTLRRP_4 PPUTLRRP_5 PPUTLRRP_5 PPUTLRRP_5
+#define PPUTLRRP_18      PPUTLRRP_4 PPUTLRRP_4 PPUTLRRP_5 PPUTLRRP_5
+#define PPUTLRRP_17      PPUTLRRP_4 PPUTLRRP_4 PPUTLRRP_4 PPUTLRRP_5
+#define PPUTLRRP_16      PPUTLRRP_4 PPUTLRRP_4 PPUTLRRP_4 PPUTLRRP_4
+#define PPUTLRRP_15      PPUTLRRP_3 PPUTLRRP_4 PPUTLRRP_4 PPUTLRRP_4
+#define PPUTLRRP_14      PPUTLRRP_3 PPUTLRRP_3 PPUTLRRP_4 PPUTLRRP_4
+#define PPUTLRRP_13      PPUTLRRP_3 PPUTLRRP_3 PPUTLRRP_3 PPUTLRRP_4
+#define PPUTLRRP_12      PPUTLRRP_3 PPUTLRRP_3 PPUTLRRP_3 PPUTLRRP_3
+#define PPUTLRRP_11      PPUTLRRP_2 PPUTLRRP_3 PPUTLRRP_3 PPUTLRRP_3
+#define PPUTLRRP_10      PPUTLRRP_2 PPUTLRRP_2 PPUTLRRP_3 PPUTLRRP_3
+#define PPUTLRRP_9       PPUTLRRP_2 PPUTLRRP_2 PPUTLRRP_2 PPUTLRRP_3
+#define PPUTLRRP_8       PPUTLRRP_2 PPUTLRRP_2 PPUTLRRP_2 PPUTLRRP_2
+#define PPUTLRRP_7       PPUTLRRP_1 PPUTLRRP_2 PPUTLRRP_2 PPUTLRRP_2
+#define PPUTLRRP_6       PPUTLRRP_1 PPUTLRRP_1 PPUTLRRP_2 PPUTLRRP_2
+#define PPUTLRRP_5       PPUTLRRP_1 PPUTLRRP_1 PPUTLRRP_1 PPUTLRRP_2
+#define PPUTLRRP_4       PPUTLRRP_1 PPUTLRRP_1 PPUTLRRP_1 PPUTLRRP_1
+#define PPUTLRRP_3       PPUTLRRP_1 PPUTLRRP_1 PPUTLRRP_1
+#define PPUTLRRP_2       PPUTLRRP_1 PPUTLRRP_1
+#define PPUTLRRP_1       PTL_RP() PTL_RP() PTL_RP() PTL_RP()
+#define PPUTLRRP_0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -11625,15 +11820,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [impl.meta.lp]
-/// --------------
-/// expands to a left paren.
-#define PPUTLIMPL_LP /* -> <left paren> */ (
-
-/// [impl.meta.rp]
-/// --------------
-/// expands to a right paren.
-#define PPUTLIMPL_RP /* -> <right paren> */ )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // vim: fdm=marker:fmr={{{,}}}

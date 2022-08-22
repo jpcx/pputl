@@ -39,9 +39,9 @@ decltype(xtrace_read) xtrace_read = NIFTY_DEF(xtrace_read, [&](va args) {
        << size + " will fail if the xtrace expression is too large.";
 
   tests << xtrace_read(xtrace)                              = "0u" >> docs;
-  tests << xtrace_read(esc(xtrace))                         = "1u" >> docs;
-  tests << xtrace_read(esc(esc(xtrace)))                    = "2u" >> docs;
-  tests << xtrace_read(esc(esc(esc(xtrace))))               = "3u" >> docs;
+  tests << xtrace_read(x(xtrace))                           = "1u" >> docs;
+  tests << xtrace_read(x(x(xtrace)))                        = "2u" >> docs;
+  tests << xtrace_read(x(x(x(xtrace))))                     = "3u" >> docs;
   tests << xtrace_read(xtrace_expected(conf::size_max - 1)) = size_max_s;
 
   def detect_a = def{"detect_\\" + detail::xtrace_a + "(...)"} = [&] { return ""; };

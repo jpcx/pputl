@@ -58,10 +58,10 @@ decltype(xtrace) xtrace = NIFTY_DEF(xtrace, [&] {
     return detail::xtrace_a + " " + lp() + " " + args + ", " + rp();
   };
 
-  tests << xstr(xtrace)                = pp::str(xtrace_expected(0)) >> docs;
-  tests << xstr(esc(xtrace))           = pp::str(xtrace_expected(1)) >> docs;
-  tests << xstr(esc(esc(xtrace)))      = pp::str(xtrace_expected(2)) >> docs;
-  tests << xstr(esc(esc(esc(xtrace)))) = pp::str(xtrace_expected(3)) >> docs;
+  tests << xstr(xtrace)          = pp::str(xtrace_expected(0)) >> docs;
+  tests << xstr(x(xtrace))       = pp::str(xtrace_expected(1)) >> docs;
+  tests << xstr(x(x(xtrace)))    = pp::str(xtrace_expected(2)) >> docs;
+  tests << xstr(x(x(x(xtrace)))) = pp::str(xtrace_expected(3)) >> docs;
 
   return detail::xtrace_a + " " + lp() + " /**/, " + rp();
 });
