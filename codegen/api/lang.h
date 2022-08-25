@@ -33,21 +33,18 @@ namespace api {
 
 inline codegen::category<"lang"> lang;
 
-extern codegen::def<"eat(...) -> <nothing>"> const&             eat;
-extern codegen::def<"esc(...) -> __VA_ARGS__"> const&           esc;
-extern codegen::def<"cat(a, b) -> a##b"> const&                 cat;
-extern codegen::def<"xcat(...) -> cat(__VA_ARGS__)"> const&     xcat;
-extern codegen::def<"str(...) -> #__VA_ARGS__"> const&          str;
-extern codegen::def<"xstr(...) -> str(__VA_ARGS__)"> const&     xstr;
-extern codegen::def<"first(first, ...) -> first"> const&        first;
-extern codegen::def<"xfirst(...) -> first(__VA_ARGS__)"> const& xfirst;
-extern codegen::def<"rest(first, ...) -> __VA_ARGS__"> const&   rest;
-extern codegen::def<"xrest(...) -> rest(__VA_ARGS__)"> const&   xrest;
-extern codegen::def<
-    "trim(...: ...v: <unknown>) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
-extern codegen::def<
-    "default(...: default: <unknown>, ...args: <unknown>) -> ...args || default"> const&
-    default_;
+extern codegen::def<"eat(...) -> none"> const&                                   eat;
+extern codegen::def<"esc(...) -> any..."> const&                                 esc;
+extern codegen::def<"cat(a, b: a: any, b: any) -> any"> const&                   cat;
+extern codegen::def<"xcat(...: a: any, b: any) -> any"> const&                   xcat;
+extern codegen::def<"str(...: any...) -> obj"> const&                            str;
+extern codegen::def<"xstr(...: any...) -> obj"> const&                           xstr;
+extern codegen::def<"first(_, ...: first: any, ...rest: any) -> any"> const&     first;
+extern codegen::def<"xfirst(...: any...) -> any"> const&                         xfirst;
+extern codegen::def<"rest(_, ...: first: any, ...rest: any) -> any..."> const&   rest;
+extern codegen::def<"xrest(...: any...) -> any..."> const&                       xrest;
+extern codegen::def<"trim(...: any...) -> any..."> const&                        trim;
+extern codegen::def<"default(...: default: any, ...args: any) -> any..."> const& default_;
 extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&
     fail;
 

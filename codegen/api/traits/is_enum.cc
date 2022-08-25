@@ -25,25 +25,42 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(some) some = NIFTY_DEF(some, [&](va args) {
-  docs << "something. fails if nothing.";
+namespace detail {
+decltype(is_enum_o) is_enum_o = NIFTY_DEF(is_enum_o);
+}
 
-  tests << some("foo")                          = "foo" >> docs;
-  tests << some("foo", "bar")                   = "foo, bar" >> docs;
-  tests << some("foo", 42, pp::tup("", "", "")) = "foo, 42, (, , )" >> docs;
-  tests << some("", "")                         = "," >> docs;
+decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
+  docs << "[extends " + is_atom + "] detects if args matches a specified atom union."
+       << ""
+       << "to use this function, define a set of"
+       << "macros with the following characteristics:"
+       << " ‐ object-like"
+       << " ‐ common prefix"
+       << " ‐ enum value suffixes"
+       << " ‐ expand to nothing"
+       << "pass the common prefix as chkprefix."
+       << ""
+       << "example: (identifying an enum<GOOD|BAD>)"
+       << " #define FOO_GOOD"
+       << " #define FOO_BAD"
+       << " " + is_enum + "(FOO_, BLEH) // 0"
+       << " " + is_enum + "(FOO_, GOOD) // 1"
+       << " " + is_enum + "(FOO_, ,,,)  // 0";
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, ...)">{}  = [](arg, va args) { return args; };
+  detail::is_enum_o = def{"o(chkatom, vatom)"} = [&](arg chkatom, arg vatom) {
+    return is_none(xcat(chkatom, vatom));
+  };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_some(args)),
-                  str("[" + some + "] some cannot describe nothing : " + args), args);
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_enum_o; };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(rest(args))), args);
 });
 
 } // namespace api

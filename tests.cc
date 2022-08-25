@@ -70,12 +70,12 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
-//           none  some  obj   atom  bool  hex   nybl  int   idec             //
-//           ihex  uint  udec  uhex  tup   utup  word  size  any              //
+//           any   none  obj   atom  enum  bool  hex   nybl  int              //
+//           idec  ihex  uint  udec  uhex  tup   utup  word  size             //
 //       ‐ traits detection                                       [traits]    //
-//           is_none  is_some  is_obj   is_atom  is_bool  is_hex   is_nybl    //
-//           is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex  is_tup     //
-//           is_utup  is_word  is_size  is_any   typeof   sizeof              //
+//           is_any   is_none  is_obj   is_atom  is_enum  is_bool  is_hex     //
+//           is_nybl  is_int   is_idec  is_ihex  is_uint  is_udec  is_uhex    //
+//           is_tup   is_utup  is_word  is_size  typeof   sizeof              //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -115,7 +115,8 @@
 //                                                                            //
 //    Copy pputl.h and include. The distribution is single-header.            //
 //                                                                            //
-//    pputl needs a C++20-compliant preprocessor but has no dependencies.     //
+//    pputl requires a preprocessor that supports the C++20 specifications    //
+//    for macro replacement and macro-related implementation limits.          //
 //                                                                            //
 //    pputl is completely generated and tested by a custom C++ framework.     //
 //    See the codegen/ folder for the full source.                            //
@@ -125,12 +126,12 @@
 //                                                                            //
 //    Supported integer modes:                                                //
 //                                                                            //
-//      word_size=1    ⋮   4-bit integers  ⋮   ~? KiB                         //
-//      word_size=2    ⋮   8-bit integers  ⋮   ~? KiB                         //
-//      word_size=3    ⋮  12-bit integers  ⋮  [~? MiB (default)]              //
-//      word_size=4 †  ⋮  16-bit integers  ⋮   ~? MiB                         //
-//                                          ________________________________  //
-//                                          †: requires cpp20_deflimit=false  //
+//       word_size=1    ⋮   4-bit integers  ⋮  ~? KiB                         //
+//       word_size=2    ⋮   8-bit integers  ⋮  ~? KiB                         //
+//     [ word_size=3    ⋮  12-bit integers  ⋮  ~? MiB  (default) ]            //
+//       word_size=4 †  ⋮  16-bit integers  ⋮  ~? MiB                         //
+//                                        ________________________________    //
+//                                        †: requires cpp20_deflimit=false    //
 //                                                                            //
 //    By default, pputl is fully compliant with the C++20 standard,           //
 //    which defines the following implementation limits in [implimits]:       //
@@ -154,48 +155,59 @@
 //    TERMINOLOGY                                                             //
 //    -----------                                                             //
 //                                                                            //
-//    pputl defines several types and uses type casting and traits testing    //
-//    for control flow and safety;  parameters documented with these types    //
-//    are verified by invoking the appropriate cast or traits function.       //
+//    pputl makes extensive use of duck-typing  for control flow and error    //
+//    management.  pputl types are essentially pairs of functions: one for    //
+//    traits identification another for type casting and assertions.          //
 //                                                                            //
-//      none: an absence of tokens                                            //
-//      some: <abstract> something; not nothing [e.g. foo] [e.g. ,,,]         //
-//       └─ obj: exactly one generic value                                    //
-//          ├─ atom: a generic value not surrounded by parentheses            //
-//          │   ├─ bool: a literal '1' or '0'                                 //
-//          │   ├─ hex:  a literal uppercase hexadecimal digit [e.g. B]       //
-//          │   ├─ nybl: a literal 4-bit bool concatenation [e.g. 0110]       //
-//          │   ├─ int: <abstract> a word-sized signed integer                //
-//          │   │   ├─ idec: a positive 2s-complement decimal [e.g. 3]        //
-//          │   │   └─ ihex: a signed hex integer [e.g. 0x861]                //
-//          │   └─ uint: <abstract> a word-sized unsigned integer             //
-//          │       ├─ udec: an unsigned decimal integer [e.g. 42u]           //
-//          │       └─ uhex: an unsigned hex integer [e.g. 0x02Au]            //
-//          ├─ tup: parenthesised items [docs: tup, (T...), (T, U), etc.]     //
-//          │   └─ utup: an unsigned word as a tup of hex [e.g. (6, D, 2)]    //
-//          └─ word: <union> int | uint | utup                                //
-//              └─ size: an unsigned word capped by the argument limit        //
-//      any: <union> none | obj; any kind of individual macro argument        //
+//    API functions are strictly documented using this type system. Inputs    //
+//    are verified directly or indirectly by invoking the appropriate type    //
+//    constructors or by using some other form of inference.                  //
+//                                                                            //
+//     list: <doconly> tokens delimited by non-parenthesized commas           //
+//      └╴any: <abstract> something or nothing; a list with 0-1 elements      //
+//         ├╴none: nothing; an absence of pp-tokens                           //
+//         └╴obj: a non-empty generic value                                   //
+//            ├╴atom: an individual value that may form identifier tails      //
+//            │  ├╴enum<...>: a value that matches a specified atom union     //
+//            │  │  └╴bool: enum<0|1>                                         //
+//            │  ├╴hex:  a 4-bit uppercase hexadecimal digit [e.g. B]         //
+//            │  ├╴nybl: a 4-bit bool concatenation [e.g. 0110]               //
+//            │  ├╴int: <abstract> a word-sized signed integer                //
+//            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //
+//            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //
+//            │  └╴uint: <abstract> a word-sized unsigned integer             //
+//            │     ├╴udec: an unsigned decimal integer [e.g. 42u]            //
+//            │     └╴uhex: an unsigned hex integer [e.g. 0x02Au]             //
+//            ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b)]              //
+//            │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]      //
+//            └╴word: <union> int | uint | utup                               //
+//               └╴size: an unsigned word capped by the argument limit        //
+//                                                                            //
+//    All pputl types are fully verifiable except for atom, which requires    //
+//    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
+//    with identifiers to create new identifiers. See C++20 [lex.name] for    //
+//    details. While not testable, this requirement is critical for value-    //
+//    based control flow and must be observed by the user where applicable    //
+//    (although atom does perform a tuple test and will fail when it can).    //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
 //                                                                            //
-//    pputl errors execute  an invalid preprocessor operation by using the    //
+//    pputl errors  execute an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
-//    errors  triggered by  pputl functions  will include  the macro name,    //
-//    a textual description, and its primary expansion arguments.             //
+//    errors produced by pputl functions include the macro name, a textual    //
+//    description, and the exact primary expansion arguments.                 //
 //                                                                            //
 //    With a few exceptions in [lang], non-nullary API functions are fully    //
 //    variadic and chainable  such that the outputs of one  may be used as    //
 //    inputs to another.  Inputs must be distinguishable after the primary    //
 //    expansion; deferred input behavior is undefined.                        //
 //                                                                            //
-//    Hexadecimal integers are always represented by fixed-length strings.    //
-//    Negative ints cannot be represented in decimal  due to concatenation    //
+//    Negative ints  cannot be represented in decimal due to concatenation    //
 //    restrictions. Arithmetic and bitwise functions attempt to cast their    //
 //    results in the same form as their input, but will always return ihex    //
 //    when an idec input becomes negative.  Decimal representations may be   ///
-//    generated for pasting using fmt.paste.                                ////
+//    generated for pasting using fmt.c_int.                                ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -255,6 +267,7 @@ ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (fooPTL_EAT(bar)));
 
 ASSERT_PP_EQ((PTL_XCAT(foo, bar)), (foobar));
 ASSERT_PP_EQ((PTL_XCAT(foo, PTL_EAT(bar))), (foo));
+ASSERT_PP_EQ((PTL_XCAT(,)), ());
 
 ASSERT_PP_EQ((PTL_STR()), (""));
 ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
@@ -310,6 +323,18 @@ ASSERT_PP_EQ((PTL_DEFAULT(a,)), (a));
 ASSERT_PP_EQ((PTL_DEFAULT(a, b)), (b));
 ASSERT_PP_EQ((PTL_DEFAULT(a, b, c)), (b, c));
 
+ASSERT_PP_EQ((PTL_IS_ANY()), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (0));
+
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
@@ -321,18 +346,6 @@ ASSERT_PP_EQ((PTL_IS_NONE(a, , )), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(, , a)), (0));
-
-ASSERT_PP_EQ((PTL_IS_SOME()), (0));
-ASSERT_PP_EQ((PTL_IS_SOME(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(foo, bar)), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(PTL_ESC())), (0));
-ASSERT_PP_EQ((PTL_IS_SOME(, )), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(, , )), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(a, )), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(a, , )), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(, a)), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(, a, )), (1));
-ASSERT_PP_EQ((PTL_IS_SOME(, , a)), (1));
 
 ASSERT_PP_EQ((PTL_IS_OBJ()), (0));
 ASSERT_PP_EQ((PTL_IS_OBJ(,)), (0));
@@ -501,13 +514,6 @@ ASSERT_PP_EQ((PTL_IS_SIZE(0xFFFu)), (0));
 ASSERT_PP_EQ((PTL_IS_SIZE(255u)), (1));
 ASSERT_PP_EQ((PTL_IS_SIZE((0, 0, 8))), (1));
 
-ASSERT_PP_EQ((PTL_IS_ANY()), (1));
-ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
-ASSERT_PP_EQ((PTL_IS_ANY(,)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(,,)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
-
 ASSERT_PP_EQ((PTL_TYPEOF((foo))), (TUP));
 ASSERT_PP_EQ((PTL_TYPEOF(0)), (IDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0u)), (UDEC));
@@ -519,7 +525,7 @@ ASSERT_PP_EQ((PTL_TYPEOF(0xFFFu)), (UHEX));
 ASSERT_PP_EQ((PTL_TYPEOF(foo)), (ATOM));
 ASSERT_PP_EQ((PTL_TYPEOF(001)), (ATOM));
 ASSERT_PP_EQ((PTL_TYPEOF(0010)), (NYBL));
-ASSERT_PP_EQ((PTL_TYPEOF(foo, bar)), (SOME));
+ASSERT_PP_EQ((PTL_TYPEOF(foo, bar)), (LIST));
 ASSERT_PP_EQ((PTL_TYPEOF((A))), (TUP));
 ASSERT_PP_EQ((PTL_TYPEOF((0, 0, 0))), (UTUP));
 ASSERT_PP_EQ((PTL_TYPEOF((F, F, F))), (UTUP));
@@ -538,12 +544,10 @@ ASSERT_PP_EQ((PTL_SIZEOF(, a)), (2u));
 ASSERT_PP_EQ((PTL_SIZEOF(, a, )), (3u));
 ASSERT_PP_EQ((PTL_SIZEOF(, , a)), (3u));
 
-ASSERT_PP_EQ((PTL_NONE()), ());
+ASSERT_PP_EQ((PTL_ANY()), ());
+ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
 
-ASSERT_PP_EQ((PTL_SOME(foo)), (foo));
-ASSERT_PP_EQ((PTL_SOME(foo, bar)), (foo, bar));
-ASSERT_PP_EQ((PTL_SOME(foo, 42, (, , ))), (foo, 42, (, , )));
-ASSERT_PP_EQ((PTL_SOME(, )), (,));
+ASSERT_PP_EQ((PTL_NONE()), ());
 
 ASSERT_PP_EQ((PTL_OBJ(foo)), (foo));
 
@@ -655,10 +659,6 @@ ASSERT_PP_EQ((PTL_WORD((F, F, F), UDEC)), (4095u));
 ASSERT_PP_EQ((PTL_UINT((0, 0, 0), UHEX)), (0x000u));
 
 ASSERT_PP_EQ((PTL_SIZE(0)), (0));
-
-ASSERT_PP_EQ((PTL_ANY()), ());
-ASSERT_PP_EQ((PTL_ANY(PTL_NONE())), ());
-ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));

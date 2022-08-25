@@ -37,8 +37,9 @@ decltype(xcat) xcat = NIFTY_DEF(xcat, [&](va args) {
 
   tests << xcat("foo", "bar")      = "foobar" >> docs;
   tests << xcat("foo", eat("bar")) = "foo" >> docs;
+  tests << xcat(",")               = "" >> docs;
 
-  return pp::va_opt(cat(args));
+  return cat(args);
 });
 
 } // namespace api

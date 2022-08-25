@@ -25,31 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_some) is_some = NIFTY_DEF(is_some, [&](va) {
-  docs << "detects if args is something.";
+decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
+  docs << "[inherits from " + atom + "] enum type. describes an atom union."
+       << ""
+       << "to use this function, define a set of"
+       << "macros with the following characteristics:"
+       << " ‐ object-like"
+       << " ‐ common prefix"
+       << " ‐ enum value suffixes"
+       << " ‐ expand to nothing"
+       << "pass the common prefix as chkprefix."
+       << ""
+       << "example: (asserting an enum<GOOD|BAD>)"
+       << " #define FOO_GOOD"
+       << " #define FOO_BAD"
+       << " " + enum_ + "(FOO_, BLEH) // <fail>"
+       << " " + enum_ + "(FOO_, GOOD) // GOOD"
+       << " " + enum_ + "(FOO_, ,,,)  // <fail>";
 
-  tests << is_some("")         = "0" >> docs;
-  tests << is_some("foo")      = "1" >> docs;
-  tests << is_some("foo, bar") = "1" >> docs;
-  tests << is_some(esc())      = "0" >> docs;
-  tests << is_some(", ")       = "1";
-  tests << is_some(", , ")     = "1";
-  tests << is_some("a, ")      = "1";
-  tests << is_some("a, , ")    = "1";
-  tests << is_some(", a")      = "1";
-  tests << is_some(", a, ")    = "1";
-  tests << is_some(", , a")    = "1";
+  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
+  def<"\\1(e, enum)">{} = [](arg, arg enum_) { return enum_; };
 
-  def<"\\0"> _0 = [&] { return "0"; };
-  def<"\\01">{} = [&] { return "1"; };
-
-  return pp::cat(_0, pp::va_opt("1"));
+  return def<"o(e, chkatom, vatom)">{[&](arg e, arg chkatom, arg vatom) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_enum_o(chkatom, vatom)), e,
+                    vatom);
+  }}(str("[" + enum_ + "] enum validation failure : " + args), atom(first(args)),
+     atom(rest(args)));
 });
 
 } // namespace api

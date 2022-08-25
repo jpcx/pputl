@@ -36,7 +36,7 @@ decltype(is_obj_o) is_obj_o = NIFTY_DEF(is_obj_o);
 }
 
 decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va args) {
-  docs << "[extends " + is_some + "] detects if args is exactly one generic value.";
+  docs << "[extends " + is_any + "] detects if args is a non-empty generic value.";
 
   tests << is_obj("")         = "0" >> docs;
   tests << is_obj(",")        = "0" >> docs;
@@ -45,35 +45,16 @@ decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va args) {
   tests << is_obj("foo")      = "1" >> docs;
   tests << is_obj("(42)")     = "1" >> docs;
 
-  detail::is_obj_o =
-      def{"o(_, ...: <some + token; e.g. __VA_ARGS__.foo>)"} = [&](arg first, va) {
-        docs << "must be called with tokens after __VA_ARGS__ to detect empty ending arg";
-        def<"ok"> pass = [&] {
-          def<"\\0"> _0 = [&] { return "0"; };
-          def<"\\1">{}  = [&] { return "1"; };
-          return utl::slice(_0, -1);
-        };
-
-        def<"not_ok"> no_pass = [&] {
-          def<"\\0"> _0 = [&] { return "0"; };
-          def<"\\1">{}  = [&] { return "0"; };
-          return utl::slice(_0, -1);
-        };
-
-        auto prefix = utl::slice(pass, -2);
-        if (prefix.back() == '_')
-          prefix.pop_back();
-        auto small = utl::slice(pass, prefix.size(), 0);
-        auto large = utl::slice(no_pass, prefix.size(), 0);
-        auto diff  = utl::slice(large, -small.size());
-
-        return xcat(pp::cat(prefix, pp::va_opt(diff), small), is_some(first));
-      };
+  detail::is_obj_o = def{"o(any)"} = [&](arg any) {
+    def<"\\0"> _0 = [&] { return "1"; };
+    def<"\\1">{}  = [&] { return "0"; };
+    return xcat(utl::slice(_0, -1), is_none(any));
+  };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_obj_o; };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_some(args)), args + ".");
+  return pp::call(xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")), args);
 });
 
 } // namespace api

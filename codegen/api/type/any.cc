@@ -33,16 +33,15 @@ using namespace codegen;
 
 decltype(any) any = NIFTY_DEF(any, [&](va args) {
   docs << "(none|obj) a potentially-empty, individual macro argument."
-       << "fails if not exactly one arg.";
+       << "fails if more than one arg.";
 
-  tests << any()       = "" >> docs;
-  tests << any(none()) = "" >> docs;
-  tests << any("foo")  = "foo" >> docs;
+  tests << any()      = "" >> docs;
+  tests << any("foo") = "foo" >> docs;
 
   def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
   def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_any(some)),
+  return pp::call(xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")),
                   str("[" + any + "] any cannot describe multiple args : " + args), args);
 });
 

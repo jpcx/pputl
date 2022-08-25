@@ -31,21 +31,32 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_any_o) is_any_o = NIFTY_DEF(is_any_o);
+}
+
 decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
-  docs << "detects if args is any kind of individual macro argument.";
+  docs << "detects if the list has either 0 or 1 elements.";
 
   tests << is_any()         = "1" >> docs;
   tests << is_any("foo")    = "1" >> docs;
   tests << is_any("(a, b)") = "1" >> docs;
-  tests << is_any(",")      = "0" >> docs;
-  tests << is_any(",,")     = "0" >> docs;
   tests << is_any("a, b")   = "0" >> docs;
+  tests << is_any(", ")     = "0" >> docs;
+  tests << is_any(", , ")   = "0" >> docs;
+  tests << is_any("a, ")    = "0";
+  tests << is_any("a, , ")  = "0";
+  tests << is_any(", a")    = "0";
+  tests << is_any(", a, ")  = "0";
+  tests << is_any(", , a")  = "0";
 
   def<"\\0"> _0 = [&] { return "1"; };
   def<"\\01">{} = [&] { return "0"; };
 
-  return def<"o(_, ...)">{[&](arg, va) { return pp::cat(_0, pp::va_opt(1)); }}(args
-                                                                               + ".");
+  detail::is_any_o = def{"o(_, ...: <args + token; e.g. __VA_ARGS__.foo>)"} =
+      [&](arg, va) { return pp::cat(_0, pp::va_opt(1)); };
+
+  return detail::is_any_o(args + ".");
 });
 
 } // namespace api

@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
-  docs << "[inherits from " + some + "] exactly one generic value."
-       << "fails if not exactly one arg.";
+  docs << "[inherits from " + any + "] exactly one non-empty generic value.";
 
   tests << obj("foo") = "foo" >> docs;
 
@@ -42,7 +41,7 @@ decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
 
   return def<"o(e, ...)">{[&](arg e, va some) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_obj_o(some + ".")), e, some);
-  }}(str("[" + obj + "] obj cannot describe multiple args : " + args), some(args));
+  }}(str("[" + obj + "] obj cannot describe empty values : " + args), any(args));
 });
 
 } // namespace api

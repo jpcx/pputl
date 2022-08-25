@@ -36,7 +36,8 @@ decltype(is_hex_o) is_hex_o = NIFTY_DEF(is_hex_o);
 }
 
 decltype(is_hex) is_hex = NIFTY_DEF(is_hex, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is a capital hex digit.";
+  docs << "[extends " + is_atom
+              + "] detects if args is 4-bit uppercase hexadecimal digit.";
 
   tests << is_hex()      = "0" >> docs;
   tests << is_hex(0)     = "1" >> docs;

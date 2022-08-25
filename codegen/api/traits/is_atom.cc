@@ -37,7 +37,16 @@ decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
 
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   docs << "[extends " + is_obj
-              + "] detects if args is a generic, non-tuple, singular value.";
+              + "] detects if args is a value that may form identifier tails."
+       << ""
+       << "this function only tests for tuples and multiple values."
+       << ""
+       << "while not testable, the true semantics of atom implies"
+       << "that its values are able to concatenate with identifiers"
+       << "to form new identifiers, meaning that is must match /[\\w\\d_]+/."
+       << ""
+       << "this property is critical for value-based control flow"
+       << "and must be observed by the user where applicable.";
 
   tests << is_atom()                 = "0" >> docs;
   tests << is_atom("foo")            = "1" >> docs;

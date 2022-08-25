@@ -32,7 +32,17 @@ namespace api {
 using namespace codegen;
 
 decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
-  docs << "[inherits from " + obj + "] a generic, non-tuple, singular value.";
+  docs << "[inherits from " + obj
+              + "] an individual value that may form identifier tails."
+       << ""
+       << "this function only tests for tuples and multiple values."
+       << ""
+       << "while not testable, the true semantics of atom implies"
+       << "that its values are able to concatenate with identifiers"
+       << "to form new identifiers, meaning that is must match /[\\w\\d_]+/."
+       << ""
+       << "this property is critical for value-based control flow"
+       << "and must be observed by the user where applicable.";
 
   tests << atom("foo") = "foo" >> docs;
 

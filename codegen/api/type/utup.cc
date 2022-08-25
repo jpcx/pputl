@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
-  docs << "[inherits from " + some + "] a tuple of exactly " + word_size + " ("
+  docs << "[inherits from " + tup + "] a tuple of exactly " + word_size + " ("
               + std::to_string(conf::word_size) + ") nybls."
        << "constructibe from any word.";
 
@@ -77,9 +77,9 @@ decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
 
   def<"\\1(e, ...)">{} = [](arg, va word) { return word; };
 
-  return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(some)), e, some);
-  }}(str("[" + utup + "] invalid integer or word : " + args), some(args));
+  return def<"o(e, obj)">{[&](arg e, arg obj) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(obj)), e, obj);
+  }}(str("[" + utup + "] invalid integer or word : " + args), obj(args));
 });
 
 } // namespace api

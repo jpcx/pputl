@@ -36,7 +36,7 @@ decltype(is_nybl_o) is_nybl_o = NIFTY_DEF(is_nybl_o);
 }
 
 decltype(is_nybl) is_nybl = NIFTY_DEF(is_nybl, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is a 4-bit concatenation bools.";
+  docs << "[extends " + is_atom + "] detects if args is a 4-bit bool concatenation.";
 
   tests << is_nybl()       = "0" >> docs;
   tests << is_nybl(0)      = "0" >> docs;

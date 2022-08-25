@@ -43,7 +43,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << "  | NONE | SOME | UTUP | TUP  | IDEC | IHEX"
+       << "  | LIST | NONE | UTUP | TUP  | IDEC | IHEX"
        << "  | UDEC | UHEX | HEX  | NYBL | ATOM";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -60,7 +60,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof("foo")          = "ATOM" >> docs;
   tests << typeof("001")          = "ATOM" >> docs;
   tests << typeof("0010")         = "NYBL" >> docs;
-  tests << typeof("foo, bar")     = "SOME" >> docs;
+  tests << typeof("foo, bar")     = "LIST" >> docs;
   if constexpr (conf::word_size > 1)
     tests << typeof("(A)") = "TUP" >> docs;
   tests << typeof(pp::tup(
@@ -69,73 +69,73 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "UTUP" >> docs;
   tests << typeof()                                                    = "NONE" >> docs;
 
-  // !none
-  def<"\\0(...)"> _0 = [&](va some_) {
-    docs << "^!none";
+  // !any
+  def<"\\0(...)"> _0 = [&](va) {
+    docs << "^!any";
+    return "LIST";
+  };
 
-    // !obj
-    def<"<\\0(...)"> _0 = [&](va) {
-      docs << "^!none → !obj";
-      return "SOME";
-    };
+  // any
+  def<"\\1(any)">{} = [&](arg any) {
+    docs << "^!any";
 
-    // obj
-    def<"<1(obj)">{} = [&](arg obj) {
-      docs << "^!none → obj";
+    // !none
+    def<"<\\0(obj)"> _0 = [&](arg obj) {
+      docs << "^!any → !none";
 
       // !tup
       def<"<\\0(atom)"> _0 = [&](arg atom_) {
-        docs << "^!none → obj → !tup";
+        docs << "^!any → !none → !tup";
 
         // !int
         def<"<\\0(atom)"> _0 = [&](arg atom_) {
-          docs << "^!none → obj → !tup → !int";
+          docs << "^!any → !none → !tup → !int";
 
           // !uint
           def<"<\\0(atom)"> _0 = [&](arg atom_) {
-            docs << "^!none → obj → !tup → !int → !uint";
+            docs << "^!any → !none → !tup → !int → !uint";
 
             // !hex
             def<"<\\0(atom)"> _0 = [&](arg atom_) {
-              docs << "^!none → obj → !tup → !int → !uint → !hex";
+              docs << "^!any → !none → !tup → !int → !uint → !hex";
 
               // !nybl
               def<"<\\0(atom)"> _0 = [&](arg) {
-                docs << "^!none → obj → !tup → !int → !uint → !hex → !nybl";
+                docs << "^!any → !none → !tup → !int → !uint → !hex → !nybl";
                 return "ATOM";
               };
 
               // nybl
               def<"<1(nybl)">{} = [&](arg) {
-                docs << "^!none → obj → !tup → !int → !uint → !hex → nybl";
+                docs << "^!any → !none → !tup → !int → !uint → !hex → nybl";
                 return "NYBL";
               };
 
-              return pp::call(xcat(utl::slice(_0, -1), detail::is_nybl_o(atom_)), atom_);
+              return pp::call(xcat(utl::slice(_0, -1), is_nybl(atom_)), atom_);
             };
 
             // hex
             def<"<1(hex)">{} = [&](arg) {
-              docs << "^!none → obj → !tup → !int → !uint → hex";
+              docs << "^!any → !none → !tup → !int → !uint → hex";
               return "HEX";
             };
 
-            return pp::call(xcat(utl::slice(_0, -1), detail::is_hex_o(atom_)), atom_);
+            return pp::call(xcat(utl::slice(_0, -1), is_hex(atom_)), atom_);
           };
 
           // uint
           def<"<1(uint)">{} = [&](arg uint) {
-            docs << "^!none → obj → !tup → !int → uint";
+            docs << "^!any → !none → !tup → !int → uint";
 
             // !udec
             def<"<\\0(uhex)"> _0 = [&](arg) {
-              docs << "^!none → obj → !tup → !int → uint → !udec";
+              docs << "^!any → !none → !tup → !int → uint → !udec";
               return "UHEX";
             };
 
             // udec
             def<"<1(udec)">{} = [&](arg) {
-              docs << "^!none → obj → !tup → !int → uint → udec";
+              docs << "^!any → !none → !tup → !int → uint → udec";
               return "UDEC";
             };
 
@@ -147,17 +147,17 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
 
         // int
         def<"<1(int)">{} = [&](arg int_) {
-          docs << "^!none → obj → !tup → int";
+          docs << "^!any → !none → !tup → int";
 
           // !idec
           def<"<\\0(ihex)"> _0 = [&](arg) {
-            docs << "^!none → obj → !tup → int → !idec";
+            docs << "^!any → !none → !tup → int → !idec";
             return "IHEX";
           };
 
           // idec
           def<"<1(idec)">{} = [&](arg) {
-            docs << "^!none → obj → !tup → int → idec";
+            docs << "^!any → !none → !tup → int → idec";
             return "IDEC";
           };
 
@@ -169,17 +169,17 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
 
       // tup
       def<"<1(tup)">{} = [&](arg tup_) {
-        docs << "^!none → obj → tup";
+        docs << "^!any → !none → tup";
 
         // !utup
         def<"<\\0(tup)"> _0 = [&](arg) {
-          docs << "^!none → obj → tup → !utup";
+          docs << "^!any → !none → tup → !utup";
           return "TUP";
         };
 
         // utup
         def<"<1(utup)">{} = [&](arg) {
-          docs << "^!none → obj → tup → utup";
+          docs << "^!any → !none → tup → utup";
           return "UTUP";
         };
 
@@ -189,16 +189,16 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_obj_o(some_ + ".")), some_);
+    // none
+    def<"<1(...)">{} = [&](va) {
+      docs << "^!any → none";
+      return "NONE";
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), is_none(any)), any);
   };
 
-  // nothing
-  def<"\\1(...)">{} = [&](va) {
-    docs << "none";
-    return "NONE";
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")), args);
 });
 
 } // namespace api

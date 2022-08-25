@@ -31,12 +31,8 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_bool_o) is_bool_o = NIFTY_DEF(is_bool_o);
-}
-
 decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is a bool (literal '1' or '0').";
+  docs << "[extends " + is_enum + "] detects if args is a bool (enum<0|1>).";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
 
@@ -58,16 +54,10 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   tests << is_bool(", a, ")  = "0";
   tests << is_bool(", , a")  = "0";
 
-  detail::is_bool_o = def{"o(atom)"} = [&](arg atom) {
-    def<"\\0"> _0 = [&] { return ""; };
-    def<"\\1">{}  = [&] { return ""; };
-    return is_none(xcat(utl::slice(_0, -1), atom));
-  };
+  def<"\\0"> _0 = [&] { return ""; };
+  def<"\\1">{}  = [&] { return ""; };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_bool_o; };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+  return is_enum(utl::slice(_0, -1), args);
 });
 
 } // namespace api

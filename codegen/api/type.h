@@ -35,33 +35,34 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"none(...: <nothing>) -> none{}"> const&                  none;
-extern codegen::def<"some(...: v: some) -> some{v}"> const&                   some;
-extern codegen::def<"obj(...: v: obj) -> obj{v}"> const&                      obj;
-extern codegen::def<"atom(...: v: obj) -> atom{v}"> const&                    atom;
-extern codegen::def<"bool(...: v: 0|1) -> bool{b}"> const&                    bool_;
-extern codegen::def<"hex(...: v: hex|nybl) -> hex{h}"> const&                 hex;
-extern codegen::def<"nybl(...: v: hex|nybl) -> nybl{h}"> const&               nybl;
-extern codegen::def<"int(...: v: word, hint?: IDEC|IHEX) -> int{n}"> const&   int_;
-extern codegen::def<"idec(...: v: word) -> idec{n}"> const&                   idec;
-extern codegen::def<"ihex(...: v: word) -> ihex{n}"> const&                   ihex;
-extern codegen::def<"uint(...: v: word, hint?: UDEC|UHEX) -> uint{n}"> const& uint;
-extern codegen::def<"udec(...: v: word) -> udec{n}"> const&                   udec;
-extern codegen::def<"uhex(...: v: word) -> uhex{n}"> const&                   uhex;
-extern codegen::def<"tup(...: v: tup) -> t"> const&                           tup;
-extern codegen::def<"utup(...: v: word) -> utup{n}"> const&                   utup;
+extern codegen::def<"any(...: any) -> any"> const&                               any;
+extern codegen::def<"none(...: none) -> none"> const&                            none;
+extern codegen::def<"obj(...: obj) -> obj"> const&                               obj;
+extern codegen::def<"atom(...: obj) -> atom"> const&                             atom;
+extern codegen::def<"enum(...: chkprefix: atom, enum<...>) -> enum<...>"> const& enum_;
+extern codegen::def<"bool(...: bool) -> bool"> const&                            bool_;
+extern codegen::def<"hex(...: hex|nybl) -> hex"> const&                          hex;
+extern codegen::def<"nybl(...: hex|nybl) -> nybl"> const&                        nybl;
+extern codegen::def<"int(...: word, hint?: enum<IDEC|IHEX>) -> int"> const&      int_;
+extern codegen::def<"idec(...: word) -> idec"> const&                            idec;
+extern codegen::def<"ihex(...: word) -> ihex"> const&                            ihex;
+extern codegen::def<"uint(...: word, hint?: enum<UDEC|UHEX>) -> uint"> const&    uint;
+extern codegen::def<"udec(...: word) -> udec"> const&                            udec;
+extern codegen::def<"uhex(...: word) -> uhex"> const&                            uhex;
+extern codegen::def<"tup(...: tup) -> tup"> const&                               tup;
+extern codegen::def<"utup(...: word) -> utup"> const&                            utup;
 extern codegen::def<
-    "word(...: v: word, [hint]: UTUP|IDEC|IHEX|UDEC|UHEX) -> word{n}"> const& word;
+    "word(...: word, hint?: enum<UTUP|IDEC|IHEX|UDEC|UHEX>) -> word"> const& word;
 extern codegen::def<
-    "size(...: v: word, [hint]: UTUP|IDEC|IHEX|UDEC|UHEX) -> size{n}"> const& size;
-extern codegen::def<"any(...: v: any) -> any{v}"> const&                      any;
+    "size(...: word, hint?: enum<UTUP|IDEC|IHEX|UDEC|UHEX>) -> size"> const& size;
 
 // TODO: ctor
 
+NIFTY_DECL(any);
 NIFTY_DECL(none);
-NIFTY_DECL(some);
 NIFTY_DECL(obj);
 NIFTY_DECL(atom);
+NIFTY_DECL(enum_);
 NIFTY_DECL(bool_);
 NIFTY_DECL(hex);
 NIFTY_DECL(nybl);
@@ -75,7 +76,6 @@ NIFTY_DECL(tup);
 NIFTY_DECL(utup);
 NIFTY_DECL(word);
 NIFTY_DECL(size);
-NIFTY_DECL(any);
 
 inline codegen::end_category<"type"> type_end;
 
