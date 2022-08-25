@@ -270,7 +270,7 @@ constexpr char const project_header[]{
     "//      └╴any: <abstract> something or nothing; a list with 0-1 elements      //\n"
     "//         ├╴none: nothing; an absence of pp-tokens                           //\n"
     "//         └╴obj: a non-empty generic value                                   //\n"
-    "//            ├╴atom: an individual value that may form identifier tails      //\n"
+    "//            ├╴atom: an individual value that may form an identifier tail    //\n"
     "//            │  ├╴enum<...>: a value that matches a specified atom union     //\n"
     "//            │  │  └╴bool: enum<0|1>                                         //\n"
     "//            │  ├╴hex:  a 4-bit uppercase hexadecimal digit [e.g. B]         //\n"

@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
   docs << "[inherits from " + obj
-              + "] an individual value that may form identifier tails."
+              + "] an individual value that may form an identifier tail."
        << ""
        << "this function only tests for tuples and multiple values."
        << ""

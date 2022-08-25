@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
   docs << "[inherits from " + tup + "] a tuple of exactly " + word_size + " ("
-              + std::to_string(conf::word_size) + ") nybls."
+              + std::to_string(conf::word_size) + ") hex digits."
        << "constructibe from any word.";
 
   tests << utup(0) = pp::tup(std::vector<std::string>(conf::word_size, "0")) >> docs;

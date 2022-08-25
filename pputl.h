@@ -169,7 +169,7 @@
 //      └╴any: <abstract> something or nothing; a list with 0-1 elements      //
 //         ├╴none: nothing; an absence of pp-tokens                           //
 //         └╴obj: a non-empty generic value                                   //
-//            ├╴atom: an individual value that may form identifier tails      //
+//            ├╴atom: an individual value that may form an identifier tail    //
 //            │  ├╴enum<...>: a value that matches a specified atom union     //
 //            │  │  └╴bool: enum<0|1>                                         //
 //            │  ├╴hex:  a 4-bit uppercase hexadecimal digit [e.g. B]         //
@@ -476,7 +476,7 @@
 
 /// [traits.is_atom]
 /// ----------------
-/// [extends PTL_IS_OBJ] detects if args is a value that may form identifier tails.
+/// [extends PTL_IS_OBJ] detects if args is a value that may form an identifier tail.
 ///
 /// this function only tests for tuples and multiple values.
 ///
@@ -1308,7 +1308,7 @@
 
 /// [type.atom]
 /// -----------
-/// [inherits from PTL_OBJ] an individual value that may form identifier tails.
+/// [inherits from PTL_OBJ] an individual value that may form an identifier tail.
 ///
 /// this function only tests for tuples and multiple values.
 ///
@@ -1485,13 +1485,16 @@
 /// PTL_INT((0, 0, 0))       // 0x000
 /// PTL_INT((8, 0, 0), IDEC) // 0x800
 /// PTL_INT((7, F, F), IDEC) // 2047
-#define PTL_INT(/* word, hint?: enum<IDEC|IHEX> */...) /* -> int */ \
+#define PTL_INT(/* word, hint=AUTO: enum<IDEC|IHEX|AUTO> */...) /* -> int */ \
   PPUTLINT_o(PTL_STR([PTL_INT] invalid arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLINT_o(e, v, ...) \
-  PTL_XCAT(PPUTLINT_, PPUTLINT_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
+#define PPUTLINT_o(e, v, ...)                                                       \
+  PTL_XCAT(PPUTLINT_,                                                               \
+           PPUTLINT_MODE(e, PTL_TYPEOF(v),                                          \
+                         PTL_ENUM(PPUTLINT_HINT_, PTL_DEFAULT(AUTO, __VA_ARGS__)))) \
+  (v)
 #define PPUTLINT_XW_IH(utup)      PPUTLINT_XW_IH_o utup
 #define PPUTLINT_XW_IH_o(a, b, c) PPUTLIMPL_UHEX(0x##a##b##c##u, IHEX)
 #define PPUTLINT_XW_IC(utup)      PPUTLINT_XW_IC_o utup
@@ -1506,37 +1509,33 @@
 #define PPUTLINT_ID_ID(idec)      idec
 
 /// cast mode selector and error detector
-#define PPUTLINT_MODE(/* <err>, <typeof v>, <hint> */ e, t, ...) /* -> <cast mode> */ \
-  PTL_XCAT(PPUTLINT_MODE_, PTL_XCAT(PTL_IS_NONE(PTL_XCAT(PPUTLINT_MODE_0, t)),        \
-                                    PTL_IS_NONE(PPUTLINT_MODE_1##__VA_ARGS__)))       \
-  (e, t, __VA_ARGS__)
-#define PPUTLINT_MODE_11(e, t, ...) PPUTLINT_MODE_11_##t##__VA_ARGS__
-#define PPUTLINT_MODE_11_UTUP       XW_IH
-#define PPUTLINT_MODE_11_UTUPIHEX   XW_IH
-#define PPUTLINT_MODE_11_UTUPIDEC   XW_IC
-#define PPUTLINT_MODE_11_UHEX       UH_IH
-#define PPUTLINT_MODE_11_UHEXIHEX   UH_IH
-#define PPUTLINT_MODE_11_UHEXIDEC   UH_IC
-#define PPUTLINT_MODE_11_UDEC       UD_IC
-#define PPUTLINT_MODE_11_UDECIHEX   UD_IH
-#define PPUTLINT_MODE_11_UDECIDEC   UD_IC
-#define PPUTLINT_MODE_11_IHEX       IH_IH
-#define PPUTLINT_MODE_11_IHEXIHEX   IH_IH
-#define PPUTLINT_MODE_11_IHEXIDEC   IH_IC
-#define PPUTLINT_MODE_11_IDEC       ID_ID
-#define PPUTLINT_MODE_11_IDECIHEX   ID_IH
-#define PPUTLINT_MODE_11_IDECIDEC   ID_ID
-#define PPUTLINT_MODE_10(e, t, ...) PTL_FAIL(e)
-#define PPUTLINT_MODE_01(e, t, ...) PTL_FAIL(e)
-#define PPUTLINT_MODE_00(e, t, ...) PTL_FAIL(e)
-#define PPUTLINT_MODE_1
-#define PPUTLINT_MODE_1IHEX
-#define PPUTLINT_MODE_1IDEC
-#define PPUTLINT_MODE_0UTUP
-#define PPUTLINT_MODE_0UHEX
-#define PPUTLINT_MODE_0UDEC
-#define PPUTLINT_MODE_0IHEX
-#define PPUTLINT_MODE_0IDEC
+#define PPUTLINT_MODE(e, t, hint) \
+  PTL_XCAT(PPUTLINT_MODE_, PTL_IS_NONE(PTL_XCAT(PPUTLINT_MODE_, t)))(e, t, hint)
+#define PPUTLINT_MODE_1(e, t, hint) PPUTLINT_MODE_1_##t##hint
+#define PPUTLINT_MODE_1_UTUPAUTO    XW_IH
+#define PPUTLINT_MODE_1_UTUPIHEX    XW_IH
+#define PPUTLINT_MODE_1_UTUPIDEC    XW_IC
+#define PPUTLINT_MODE_1_UHEXAUTO    UH_IH
+#define PPUTLINT_MODE_1_UHEXIHEX    UH_IH
+#define PPUTLINT_MODE_1_UHEXIDEC    UH_IC
+#define PPUTLINT_MODE_1_UDECAUTO    UD_IC
+#define PPUTLINT_MODE_1_UDECIHEX    UD_IH
+#define PPUTLINT_MODE_1_UDECIDEC    UD_IC
+#define PPUTLINT_MODE_1_IHEXAUTO    IH_IH
+#define PPUTLINT_MODE_1_IHEXIHEX    IH_IH
+#define PPUTLINT_MODE_1_IHEXIDEC    IH_IC
+#define PPUTLINT_MODE_1_IDECAUTO    ID_ID
+#define PPUTLINT_MODE_1_IDECIHEX    ID_IH
+#define PPUTLINT_MODE_1_IDECIDEC    ID_ID
+#define PPUTLINT_MODE_0(e, t, hint) PTL_FAIL(e)
+#define PPUTLINT_MODE_UTUP
+#define PPUTLINT_MODE_UHEX
+#define PPUTLINT_MODE_UDEC
+#define PPUTLINT_MODE_IHEX
+#define PPUTLINT_MODE_IDEC
+#define PPUTLINT_HINT_AUTO
+#define PPUTLINT_HINT_IHEX
+#define PPUTLINT_HINT_IDEC
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1634,13 +1633,16 @@
 /// PTL_UINT(0x004u, UDEC)    // 4u
 /// PTL_UINT((0, 0, 0))       // 0x000u
 /// PTL_UINT((F, F, F), UDEC) // 4095u
-#define PTL_UINT(/* word, hint?: enum<UDEC|UHEX> */...) /* -> uint */ \
+#define PTL_UINT(/* word, hint=AUTO: enum<UDEC|UHEX|AUTO> */...) /* -> uint */ \
   PPUTLUINT_o(PTL_STR([PTL_UINT] invalid arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLUINT_o(e, v, ...) \
-  PTL_XCAT(PPUTLUINT_, PPUTLUINT_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
+#define PPUTLUINT_o(e, v, ...)                                                        \
+  PTL_XCAT(PPUTLUINT_,                                                                \
+           PPUTLUINT_MODE(e, PTL_TYPEOF(v),                                           \
+                          PTL_ENUM(PPUTLUINT_HINT_, PTL_DEFAULT(AUTO, __VA_ARGS__)))) \
+  (v)
 #define PPUTLUINT_XW_UH(utup)      PPUTLUINT_XW_UH_o utup
 #define PPUTLUINT_XW_UH_o(a, b, c) 0x##a##b##c##u
 #define PPUTLUINT_XW_UD(utup)      PPUTLUINT_XW_UD_o utup
@@ -1655,37 +1657,33 @@
 #define PPUTLUINT_ID_UD(idec)      idec##u
 
 /// cast mode selector and error detector
-#define PPUTLUINT_MODE(/* <err>, <typeof v>, <hint> */ e, t, ...) /* -> <cast mode> */ \
-  PTL_XCAT(PPUTLUINT_MODE_, PTL_XCAT(PTL_IS_NONE(PTL_XCAT(PPUTLUINT_MODE_0, t)),       \
-                                     PTL_IS_NONE(PPUTLUINT_MODE_1##__VA_ARGS__)))      \
-  (e, t, __VA_ARGS__)
-#define PPUTLUINT_MODE_11(e, t, ...) PPUTLUINT_MODE_11_##t##__VA_ARGS__
-#define PPUTLUINT_MODE_11_UTUP       XW_UH
-#define PPUTLUINT_MODE_11_UTUPUHEX   XW_UH
-#define PPUTLUINT_MODE_11_UTUPUDEC   XW_UD
-#define PPUTLUINT_MODE_11_UHEX       UH_UH
-#define PPUTLUINT_MODE_11_UHEXUHEX   UH_UH
-#define PPUTLUINT_MODE_11_UHEXUDEC   UH_UD
-#define PPUTLUINT_MODE_11_UDEC       UD_UD
-#define PPUTLUINT_MODE_11_UDECUHEX   UD_UH
-#define PPUTLUINT_MODE_11_UDECUDEC   UD_UD
-#define PPUTLUINT_MODE_11_IHEX       IH_UH
-#define PPUTLUINT_MODE_11_IHEXUHEX   IH_UH
-#define PPUTLUINT_MODE_11_IHEXUDEC   IH_UD
-#define PPUTLUINT_MODE_11_IDEC       ID_UD
-#define PPUTLUINT_MODE_11_IDECUHEX   ID_UH
-#define PPUTLUINT_MODE_11_IDECUDEC   ID_UD
-#define PPUTLUINT_MODE_10(e, t, ...) PTL_FAIL(e)
-#define PPUTLUINT_MODE_01(e, t, ...) PTL_FAIL(e)
-#define PPUTLUINT_MODE_00(e, t, ...) PTL_FAIL(e)
-#define PPUTLUINT_MODE_1
-#define PPUTLUINT_MODE_1UHEX
-#define PPUTLUINT_MODE_1UDEC
-#define PPUTLUINT_MODE_0UTUP
-#define PPUTLUINT_MODE_0UHEX
-#define PPUTLUINT_MODE_0UDEC
-#define PPUTLUINT_MODE_0IHEX
-#define PPUTLUINT_MODE_0IDEC
+#define PPUTLUINT_MODE(e, t, hint) /* -> <cast mode> */ \
+  PTL_XCAT(PPUTLUINT_MODE_, PTL_IS_NONE(PTL_XCAT(PPUTLUINT_MODE_, t)))(e, t, hint)
+#define PPUTLUINT_MODE_1(e, t, hint) PPUTLUINT_MODE_1_##t##hint
+#define PPUTLUINT_MODE_1_UTUPAUTO    XW_UH
+#define PPUTLUINT_MODE_1_UTUPUHEX    XW_UH
+#define PPUTLUINT_MODE_1_UTUPUDEC    XW_UD
+#define PPUTLUINT_MODE_1_UHEXAUTO    UH_UH
+#define PPUTLUINT_MODE_1_UHEXUHEX    UH_UH
+#define PPUTLUINT_MODE_1_UHEXUDEC    UH_UD
+#define PPUTLUINT_MODE_1_UDECAUTO    UD_UD
+#define PPUTLUINT_MODE_1_UDECUHEX    UD_UH
+#define PPUTLUINT_MODE_1_UDECUDEC    UD_UD
+#define PPUTLUINT_MODE_1_IHEXAUTO    IH_UH
+#define PPUTLUINT_MODE_1_IHEXUHEX    IH_UH
+#define PPUTLUINT_MODE_1_IHEXUDEC    IH_UD
+#define PPUTLUINT_MODE_1_IDECAUTO    ID_UD
+#define PPUTLUINT_MODE_1_IDECUHEX    ID_UH
+#define PPUTLUINT_MODE_1_IDECUDEC    ID_UD
+#define PPUTLUINT_MODE_0(e, t, hint) PTL_FAIL(e)
+#define PPUTLUINT_MODE_UTUP
+#define PPUTLUINT_MODE_UHEX
+#define PPUTLUINT_MODE_UDEC
+#define PPUTLUINT_MODE_IHEX
+#define PPUTLUINT_MODE_IDEC
+#define PPUTLUINT_HINT_AUTO
+#define PPUTLUINT_HINT_UHEX
+#define PPUTLUINT_HINT_UDEC
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1752,7 +1750,7 @@
 
 /// [type.utup]
 /// -----------
-/// [inherits from PTL_TUP] a tuple of exactly PTL_WORD_SIZE (3) nybls.
+/// [inherits from PTL_TUP] a tuple of exactly PTL_WORD_SIZE (3) hex digits.
 /// constructibe from any word.
 ///
 /// PTL_UTUP(0)         // (0, 0, 0)
@@ -1858,13 +1856,17 @@
 /// PTL_WORD((8, 0, 0), IDEC) // 0x800
 /// PTL_WORD((F, F, F), UDEC) // 4095u
 /// PTL_UINT((0, 0, 0), UHEX) // 0x000u
-#define PTL_WORD(/* word, hint?: enum<UTUP|IDEC|IHEX|UDEC|UHEX> */...) /* -> word */ \
+#define PTL_WORD(                                                                \
+    /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> word */ \
   PPUTLWORD_o(PTL_STR([PTL_WORD] invalid arguments : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLWORD_o(e, v, ...) \
-  PTL_XCAT(PPUTLWORD_, PPUTLWORD_MODE(e, PTL_TYPEOF(v), __VA_ARGS__))(v)
+#define PPUTLWORD_o(e, v, ...)                                                        \
+  PTL_XCAT(PPUTLWORD_,                                                                \
+           PPUTLWORD_MODE(e, PTL_TYPEOF(v),                                           \
+                          PTL_ENUM(PPUTLWORD_HINT_, PTL_DEFAULT(AUTO, __VA_ARGS__)))) \
+  (v)
 #define PPUTLWORD_UTUP(word) PTL_UTUP(word)
 #define PPUTLWORD_UHEX(word) PTL_UINT(word, UHEX)
 #define PPUTLWORD_UDEC(word) PTL_UINT(word, UDEC)
@@ -1872,25 +1874,27 @@
 #define PPUTLWORD_IDEC(word) PTL_INT(word, IDEC)
 
 /// cast mode selector and error detector
-#define PPUTLWORD_MODE(/* <err>, <typeof v>, <hint> */ e, t, ...) /* -> <cast mode> */ \
-  PTL_XCAT(PPUTLWORD_MODE_, PTL_XCAT(PTL_IS_NONE(PTL_XCAT(PPUTLWORD_MODE_0, t)),       \
-                                     PTL_IS_NONE(PPUTLWORD_MODE_1##__VA_ARGS__)))      \
-  (e, t, __VA_ARGS__)
-#define PPUTLWORD_MODE_11(e, t, ...) PTL_DEFAULT(t, __VA_ARGS__)
-#define PPUTLWORD_MODE_10(e, t, ...) PTL_FAIL(e)
-#define PPUTLWORD_MODE_01(e, t, ...) PTL_FAIL(e)
-#define PPUTLWORD_MODE_00(e, t, ...) PTL_FAIL(e)
-#define PPUTLWORD_MODE_1
-#define PPUTLWORD_MODE_1UTUP
-#define PPUTLWORD_MODE_1UHEX
-#define PPUTLWORD_MODE_1UDEC
-#define PPUTLWORD_MODE_1IHEX
-#define PPUTLWORD_MODE_1IDEC
-#define PPUTLWORD_MODE_0UTUP
-#define PPUTLWORD_MODE_0UHEX
-#define PPUTLWORD_MODE_0UDEC
-#define PPUTLWORD_MODE_0IHEX
-#define PPUTLWORD_MODE_0IDEC
+#define PPUTLWORD_MODE(e, t, hint) \
+  PTL_XCAT(PPUTLWORD_MODE_, PTL_IS_NONE(PTL_XCAT(PPUTLWORD_MODE_, t)))(e, t, hint)
+#define PPUTLWORD_MODE_1(e, t, hint) PPUTLWORD_MODE_1_##hint(t)
+#define PPUTLWORD_MODE_1_AUTO(t)     t
+#define PPUTLWORD_MODE_1_UTUP(t)     UTUP
+#define PPUTLWORD_MODE_1_UHEX(t)     UHEX
+#define PPUTLWORD_MODE_1_UDEC(t)     UDEC
+#define PPUTLWORD_MODE_1_IHEX(t)     IHEX
+#define PPUTLWORD_MODE_1_IDEC(t)     IDEC
+#define PPUTLWORD_MODE_0(e, t, hint) PTL_FAIL(e)
+#define PPUTLWORD_MODE_UTUP
+#define PPUTLWORD_MODE_UHEX
+#define PPUTLWORD_MODE_UDEC
+#define PPUTLWORD_MODE_IHEX
+#define PPUTLWORD_MODE_IDEC
+#define PPUTLWORD_HINT_AUTO
+#define PPUTLWORD_HINT_UTUP
+#define PPUTLWORD_HINT_UHEX
+#define PPUTLWORD_HINT_UDEC
+#define PPUTLWORD_HINT_IHEX
+#define PPUTLWORD_HINT_IDEC
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -1913,8 +1917,12 @@
 /// values above the int max must have a 'u' suffix; implicit interpretation
 /// as unsigned is not allowed (e.g. 4095 is not a valid integer).
 ///
-/// PTL_SIZE(0) // 0
-#define PTL_SIZE(/* word, hint?: enum<UTUP|IDEC|IHEX|UDEC|UHEX> */...) /* -> size */   \
+/// PTL_SIZE(0)     // 0
+/// PTL_SIZE(1)     // 1
+/// PTL_SIZE(0x007) // 0x007
+/// PTL_SIZE(255u)  // 255u
+#define PTL_SIZE(                                                                      \
+    /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> size */       \
   PPUTLSIZE_o(PTL_STR([PTL_SIZE] invalid size; must be within 0 and PTL_SIZE_MAX(255u) \
                       : __VA_ARGS__),                                                  \
               PTL_WORD(__VA_ARGS__))

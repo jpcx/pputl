@@ -167,7 +167,7 @@
 //      └╴any: <abstract> something or nothing; a list with 0-1 elements      //
 //         ├╴none: nothing; an absence of pp-tokens                           //
 //         └╴obj: a non-empty generic value                                   //
-//            ├╴atom: an individual value that may form identifier tails      //
+//            ├╴atom: an individual value that may form an identifier tail    //
 //            │  ├╴enum<...>: a value that matches a specified atom union     //
 //            │  │  └╴bool: enum<0|1>                                         //
 //            │  ├╴hex:  a 4-bit uppercase hexadecimal digit [e.g. B]         //
@@ -659,6 +659,9 @@ ASSERT_PP_EQ((PTL_WORD((F, F, F), UDEC)), (4095u));
 ASSERT_PP_EQ((PTL_UINT((0, 0, 0), UHEX)), (0x000u));
 
 ASSERT_PP_EQ((PTL_SIZE(0)), (0));
+ASSERT_PP_EQ((PTL_SIZE(1)), (1));
+ASSERT_PP_EQ((PTL_SIZE(0x007)), (0x007));
+ASSERT_PP_EQ((PTL_SIZE(255u)), (255u));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));

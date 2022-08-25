@@ -37,7 +37,7 @@ decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
 
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   docs << "[extends " + is_obj
-              + "] detects if args is a value that may form identifier tails."
+              + "] detects if args is a value that may form an identifier tail."
        << ""
        << "this function only tests for tuples and multiple values."
        << ""

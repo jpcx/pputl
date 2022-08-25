@@ -95,47 +95,43 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   // utup → udec | requires UDEC hint
   tests << uint(pp::tup(samp::hmax), "UDEC") = uint_max_s >> docs;
 
-  def<"mode(e, t, ...: <err>, <typeof v>, <hint>) -> <cast mode>"> mode =
-      [&](arg e, arg t, va hint) {
-        docs << "cast mode selector and error detector";
+  def<"hint_\\UDEC"> hint_udec = [&] { return ""; };
+  def<"hint_\\UHEX">{}         = [&] { return ""; };
+  def<"hint_\\AUTO">{}         = [&] { return ""; };
 
-        def<"0\\IDEC"> _0idec = [&] { return ""; };
-        def<"0\\IHEX">{}      = [&] { return ""; };
-        def<"0\\UDEC">{}      = [&] { return ""; };
-        def<"0\\UHEX">{}      = [&] { return ""; };
-        def<"0\\UTUP">{}      = [&] { return ""; };
-        def<"1\\UDEC"> _1udec = [&] { return ""; };
-        def<"1\\UHEX">{}      = [&] { return ""; };
-        def<"1">{}            = [&] { return ""; };
+  def<"mode(e, t, hint) -> <cast mode>"> mode = [&](arg e, arg t, arg hint) {
+    docs << "cast mode selector and error detector";
 
-        def<"\\00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
-        def<"\\01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"\\10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"\\11(e, t, ...)">{}   = [&](arg, arg t, va hint) {
-          def<"\\IDECUDEC"> idecidec = [&] { return "ID_UD"; };
-          def<"\\IDECUHEX">{}        = [&] { return "ID_UH"; };
-          def<"\\IDEC">{}            = [&] { return "ID_UD"; };
-          def<"\\IHEXUDEC">{}        = [&] { return "IH_UD"; };
-          def<"\\IHEXUHEX">{}        = [&] { return "IH_UH"; };
-          def<"\\IHEX">{}            = [&] { return "IH_UH"; };
-          def<"\\UDECUDEC">{}        = [&] { return "UD_UD"; };
-          def<"\\UDECUHEX">{}        = [&] { return "UD_UH"; };
-          def<"\\UDEC">{}            = [&] { return "UD_UD"; };
-          def<"\\UHEXUDEC">{}        = [&] { return "UH_UD"; };
-          def<"\\UHEXUHEX">{}        = [&] { return "UH_UH"; };
-          def<"\\UHEX">{}            = [&] { return "UH_UH"; };
-          def<"\\UTUPUDEC">{}        = [&] { return "XW_UD"; };
-          def<"\\UTUPUHEX">{}        = [&] { return "XW_UH"; };
-          def<"\\UTUP">{}            = [&] { return "XW_UH"; };
+    def<"\\IDEC"> idec_ = [&] { return ""; };
+    def<"\\IHEX">{}     = [&] { return ""; };
+    def<"\\UDEC">{}     = [&] { return ""; };
+    def<"\\UHEX">{}     = [&] { return ""; };
+    def<"\\UTUP">{}     = [&] { return ""; };
 
-          return pp::cat(utl::slice(idecidec, -8), t, hint);
-        };
+    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) { return fail(e); };
+    def<"\\1(e, t, hint)">{}  = [&](arg, arg t, arg hint) {
+      def<"\\IDECUDEC"> idecidec = [&] { return "ID_UD"; };
+      def<"\\IDECUHEX">{}        = [&] { return "ID_UH"; };
+      def<"\\IDECAUTO">{}        = [&] { return "ID_UD"; };
+      def<"\\IHEXUDEC">{}        = [&] { return "IH_UD"; };
+      def<"\\IHEXUHEX">{}        = [&] { return "IH_UH"; };
+      def<"\\IHEXAUTO">{}        = [&] { return "IH_UH"; };
+      def<"\\UDECUDEC">{}        = [&] { return "UD_UD"; };
+      def<"\\UDECUHEX">{}        = [&] { return "UD_UH"; };
+      def<"\\UDECAUTO">{}        = [&] { return "UD_UD"; };
+      def<"\\UHEXUDEC">{}        = [&] { return "UH_UD"; };
+      def<"\\UHEXUHEX">{}        = [&] { return "UH_UH"; };
+      def<"\\UHEXAUTO">{}        = [&] { return "UH_UH"; };
+      def<"\\UTUPUDEC">{}        = [&] { return "XW_UD"; };
+      def<"\\UTUPUHEX">{}        = [&] { return "XW_UH"; };
+      def<"\\UTUPAUTO">{}        = [&] { return "XW_UH"; };
 
-        return pp::call(xcat(utl::slice(_00, -2),
-                             xcat(is_none(xcat(utl::slice(_0idec, -4), t)),
-                                  is_none(pp::cat(utl::slice(_1udec, -4), hint)))),
-                        e, t, hint);
-      };
+      return pp::cat(utl::slice(idecidec, -8), t, hint);
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), is_none(xcat(utl::slice(idec_, -4), t))), e,
+                    t, hint);
+  };
 
   auto utup_params = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : utup_params)
@@ -169,7 +165,10 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(xcat(utl::slice(id_id, -5), mode(e, typeof(v), hint)), v);
+    return pp::call(xcat(utl::slice(id_id, -5),
+                         mode(e, typeof(v),
+                              enum_(utl::slice(hint_udec, -4), default_("AUTO", hint)))),
+                    v);
   }}(str("[" + uint + "] invalid arguments : " + args), args);
 });
 

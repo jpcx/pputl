@@ -52,6 +52,10 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
               + " is not a valid integer).";
 
   tests << size(0) = "0" >> docs;
+  tests << size(1) = "1" >> docs;
+  tests << size("0x" + utl::cat(samp::h7)) =
+      ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << size(size_max_s) = size_max_s >> docs;
 
   return def<"o(e, w)">{[&](arg e, arg w) {
     def<"\\0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };

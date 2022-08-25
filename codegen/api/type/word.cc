@@ -145,32 +145,37 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   tests << uint(pp::tup(samp::hmin), "UHEX") =
       ("0x" + utl::cat(samp::hmin) + "u") >> docs;
 
-  def<"mode(e, t, ...: <err>, <typeof v>, <hint>) -> <cast mode>"> mode =
-      [&](arg e, arg t, va hint) {
-        docs << "cast mode selector and error detector";
+  def<"hint_\\IDEC"> hint_idec = [&] { return ""; };
+  def<"hint_\\IHEX">{}         = [&] { return ""; };
+  def<"hint_\\UDEC">{}         = [&] { return ""; };
+  def<"hint_\\UHEX">{}         = [&] { return ""; };
+  def<"hint_\\UTUP">{}         = [&] { return ""; };
+  def<"hint_\\AUTO">{}         = [&] { return ""; };
 
-        def<"0\\IDEC"> _0idec = [&] { return ""; };
-        def<"0\\IHEX">{}      = [&] { return ""; };
-        def<"0\\UDEC">{}      = [&] { return ""; };
-        def<"0\\UHEX">{}      = [&] { return ""; };
-        def<"0\\UTUP">{}      = [&] { return ""; };
-        def<"1\\IDEC"> _1idec = [&] { return ""; };
-        def<"1\\IHEX">{}      = [&] { return ""; };
-        def<"1\\UDEC">{}      = [&] { return ""; };
-        def<"1\\UHEX">{}      = [&] { return ""; };
-        def<"1\\UTUP">{}      = [&] { return ""; };
-        def<"1">{}            = [&] { return ""; };
+  def<"mode(e, t, hint)"> mode = [&](arg e, arg t, arg hint) {
+    docs << "cast mode selector and error detector";
 
-        def<"\\00(e, t, ...)"> _00 = [&](arg e, arg, va) { return fail(e); };
-        def<"\\01(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"\\10(e, t, ...)">{}   = [&](arg e, arg, va) { return fail(e); };
-        def<"\\11(e, t, ...)">{} = [&](arg, arg t, va hint) { return default_(t, hint); };
+    def<"\\IDEC"> idec_ = [&] { return ""; };
+    def<"\\IHEX">{}     = [&] { return ""; };
+    def<"\\UDEC">{}     = [&] { return ""; };
+    def<"\\UHEX">{}     = [&] { return ""; };
+    def<"\\UTUP">{}     = [&] { return ""; };
 
-        return pp::call(xcat(utl::slice(_00, -2),
-                             xcat(is_none(xcat(utl::slice(_0idec, -4), t)),
-                                  is_none(pp::cat(utl::slice(_1idec, -4), hint)))),
-                        e, t, hint);
-      };
+    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) { return fail(e); };
+    def<"\\1(e, t, hint)">{}  = [&](arg, arg t, arg hint) {
+      def<"\\IDEC(t)"> idec_ = [&](arg) { return "IDEC"; };
+      def<"\\IHEX(t)">{}     = [&](arg) { return "IHEX"; };
+      def<"\\UDEC(t)">{}     = [&](arg) { return "UDEC"; };
+      def<"\\UHEX(t)">{}     = [&](arg) { return "UHEX"; };
+      def<"\\UTUP(t)">{}     = [&](arg) { return "UTUP"; };
+      def<"\\AUTO(t)">{}     = [&](arg t) { return t; };
+
+      return pp::call(pp::cat(utl::slice(idec_, -4), hint), t);
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), is_none(xcat(utl::slice(idec_, -4), t))), e,
+                    t, hint);
+  };
 
   auto utup_params = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : utup_params)
@@ -185,7 +190,10 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   def<"\\UTUP(word)">{}    = [&](arg word) { return utup(word); };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(xcat(utl::slice(idec, -4), mode(e, typeof(v), hint)), v);
+    return pp::call(xcat(utl::slice(idec, -4),
+                         mode(e, typeof(v),
+                              enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
+                    v);
   }}(str("[" + word + "] invalid arguments : " + args), args);
 });
 

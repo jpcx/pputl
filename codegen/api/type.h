@@ -43,20 +43,21 @@ extern codegen::def<"enum(...: chkprefix: atom, enum<...>) -> enum<...>"> const&
 extern codegen::def<"bool(...: bool) -> bool"> const&                            bool_;
 extern codegen::def<"hex(...: hex|nybl) -> hex"> const&                          hex;
 extern codegen::def<"nybl(...: hex|nybl) -> nybl"> const&                        nybl;
-extern codegen::def<"int(...: word, hint?: enum<IDEC|IHEX>) -> int"> const&      int_;
-extern codegen::def<"idec(...: word) -> idec"> const&                            idec;
-extern codegen::def<"ihex(...: word) -> ihex"> const&                            ihex;
-extern codegen::def<"uint(...: word, hint?: enum<UDEC|UHEX>) -> uint"> const&    uint;
-extern codegen::def<"udec(...: word) -> udec"> const&                            udec;
-extern codegen::def<"uhex(...: word) -> uhex"> const&                            uhex;
-extern codegen::def<"tup(...: tup) -> tup"> const&                               tup;
-extern codegen::def<"utup(...: word) -> utup"> const&                            utup;
+extern codegen::def<"int(...: word, hint=AUTO: enum<IDEC|IHEX|AUTO>) -> int"> const& int_;
+extern codegen::def<"idec(...: word) -> idec"> const&                                idec;
+extern codegen::def<"ihex(...: word) -> ihex"> const&                                ihex;
+extern codegen::def<"uint(...: word, hint=AUTO: enum<UDEC|UHEX|AUTO>) -> uint"> const&
+                                                      uint;
+extern codegen::def<"udec(...: word) -> udec"> const& udec;
+extern codegen::def<"uhex(...: word) -> uhex"> const& uhex;
+extern codegen::def<"tup(...: tup) -> tup"> const&    tup;
+extern codegen::def<"utup(...: word) -> utup"> const& utup;
 extern codegen::def<
-    "word(...: word, hint?: enum<UTUP|IDEC|IHEX|UDEC|UHEX>) -> word"> const& word;
+    "word(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> word"> const&
+    word;
 extern codegen::def<
-    "size(...: word, hint?: enum<UTUP|IDEC|IHEX|UDEC|UHEX>) -> size"> const& size;
-
-// TODO: ctor
+    "size(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const&
+    size;
 
 NIFTY_DECL(any);
 NIFTY_DECL(none);
