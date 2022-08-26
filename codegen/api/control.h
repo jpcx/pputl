@@ -26,24 +26,27 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "codegen.h"
-// #include "config.h"
-// #include "lang.h"
-// #include "meta.h"
-// #include "numeric.h"
-// #include "traits.h"
-// #include "type.h"
-// 
-// namespace api {
-// 
-// inline codegen::category<"control"> control;
-// 
-// // extern codegen::def<"if(...: b: bool, t: tuple, f: tuple) -> b ? ...t : ...f"> const& if_;
-// // extern codegen::def<"switch(...: cs: uint, cases: tuple...) -> ...cases[cs]"> const&  switch_;
-// 
-// // NIFTY_DECL(if_);
-// // NIFTY_DECL(switch_);
-// 
-// inline codegen::end_category<"control"> control_end;
-// 
-// } // namespace api
+#include "bitwise.h"
+#include "codegen.h"
+#include "compare.h"
+#include "config.h"
+#include "lang.h"
+#include "logic.h"
+#include "meta.h"
+#include "numeric.h"
+#include "traits.h"
+#include "type.h"
+
+namespace api {
+
+inline codegen::category<"control"> control;
+
+extern codegen::def<"if(...: bool, t: tup, f: tup) -> list"> const&    if_;
+extern codegen::def<"switch(...: size, ...cases: tup) -> list"> const& switch_;
+
+NIFTY_DECL(if_);
+NIFTY_DECL(switch_);
+
+inline codegen::end_category<"control"> control_end;
+
+} // namespace api

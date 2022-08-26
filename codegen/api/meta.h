@@ -51,7 +51,8 @@ extern codegen::def<"recur_rp(...: size) -> obj"> const&          recur_rp;
 
 template<std::convertible_to<std::string>... Args>
 inline std::string
-recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
+meta_recur(std::string const& x, std::string const& n, std::string const& f,
+           Args&&... args) {
   return x + "(" + recur_lp(n, f) + " "
        + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ")
        + " " + recur_rp(n) + ")";
