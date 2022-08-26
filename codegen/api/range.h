@@ -41,7 +41,7 @@ namespace api {
 
 inline codegen::category<"range"> range;
 
-extern codegen::def<"items(...: v: tup) -> ...v"> const& items;
+extern codegen::def<"items(...: tup) -> list"> const& items;
 
 NIFTY_DECL(items);
 

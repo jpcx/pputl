@@ -37,14 +37,14 @@ namespace api {
 
 inline codegen::category<"numeric"> numeric;
 
-extern codegen::def<"inc(...: v: word) -> word{v + 1}"> const&  inc;
-extern codegen::def<"dec(...: v: word) -> word{v - 1}"> const&  dec;
-extern codegen::def<"eqz(...: v: word) -> bool{v == 0}"> const& eqz;
-extern codegen::def<"nez(...: v: word) -> bool{v != 0}"> const& nez;
-extern codegen::def<"ltz(...: v: int) -> bool{v < 0}"> const&   ltz;
-extern codegen::def<"gtz(...: v: int) -> bool{v > 0}"> const&   gtz;
-extern codegen::def<"lez(...: v: int) -> bool{v >= 0}"> const&  lez;
-extern codegen::def<"gez(...: v: int) -> bool{v >= 0}"> const&  gez;
+extern codegen::def<"inc(...: word) -> word"> const& inc;
+extern codegen::def<"dec(...: word) -> word"> const& dec;
+extern codegen::def<"eqz(...: word) -> bool"> const& eqz;
+extern codegen::def<"nez(...: word) -> bool"> const& nez;
+extern codegen::def<"ltz(...: int) -> bool"> const&  ltz;
+extern codegen::def<"gtz(...: int) -> bool"> const&  gtz;
+extern codegen::def<"lez(...: int) -> bool"> const&  lez;
+extern codegen::def<"gez(...: int) -> bool"> const&  gez;
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);

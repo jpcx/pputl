@@ -40,14 +40,14 @@ namespace api {
 
 inline codegen::category<"meta"> meta;
 
-extern codegen::def<"lp() -> <deferred left paren>"> const&  lp;
-extern codegen::def<"rp() -> <deferred right paren>"> const& rp;
-extern codegen::def<"x(...: v: any...) -> ...v"> const&      x;
-std::string                                                  xtrace_expected(unsigned n);
-extern codegen::def<"xtrace -> xtrace"> const&               xtrace;
-extern codegen::def<"xtrace_read(...: xtrace) -> udec&size"> const&        xtrace_read;
-extern codegen::def<"recur_lp(...: n: size, f: <fn>) -> 'f lp'{n}"> const& recur_lp;
-extern codegen::def<"recur_rp(...: n: size) -> 'rp'{n}"> const&            recur_rp;
+extern codegen::def<"lp() -> obj"> const&              lp;
+extern codegen::def<"rp() -> obj>"> const&             rp;
+extern codegen::def<"x(...: any...) -> any..."> const& x;
+std::string                                            xtrace_expected(unsigned n);
+extern codegen::def<"xtrace -> obj"> const&            xtrace;
+extern codegen::def<"xtrace_read(...: obj) -> udec&size"> const&  xtrace_read;
+extern codegen::def<"recur_lp(...: size, fn: obj) -> obj"> const& recur_lp;
+extern codegen::def<"recur_rp(...: size) -> obj"> const&          recur_rp;
 
 template<std::convertible_to<std::string>... Args>
 inline std::string

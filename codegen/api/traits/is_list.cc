@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,32 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
 #include "traits.h"
-#include "type.h"
 
 namespace api {
 
-inline codegen::category<"logic"> logic;
+using namespace codegen;
 
-extern codegen::def<"not(...: bool) -> bool"> const&        not_;
-extern codegen::def<"and(...: bool, bool) -> bool"> const&  and_;
-extern codegen::def<"or(...: bool, bool) -> bool"> const&   or_;
-extern codegen::def<"xor(...: bool, bool) -> bool"> const&  xor_;
-extern codegen::def<"nand(...: bool, bool) -> bool"> const& nand_;
-extern codegen::def<"nor(...: bool, bool) -> bool"> const&  nor_;
-extern codegen::def<"xnor(...: bool, bool) -> bool"> const& xnor_;
+decltype(is_list) is_list = NIFTY_DEF(is_list, [&](va) {
+  docs << "list detection; returns 1 in all cases (root type; everything matches).";
 
-NIFTY_DECL(not_);
-NIFTY_DECL(and_);
-NIFTY_DECL(or_);
-NIFTY_DECL(xor_);
-NIFTY_DECL(nand_);
-NIFTY_DECL(nor_);
-NIFTY_DECL(xnor_);
+  tests << is_list()         = "1" >> docs;
+  tests << is_list("foo")    = "1" >> docs;
+  tests << is_list("(a, b)") = "1" >> docs;
+  tests << is_list("a, b")   = "1" >> docs;
+  tests << is_list(", ")     = "1" >> docs;
+  tests << is_list(", , ")   = "1" >> docs;
+  tests << is_list("a, ")    = "1";
+  tests << is_list("a, , ")  = "1";
+  tests << is_list(", a")    = "1";
+  tests << is_list(", a, ")  = "1";
+  tests << is_list(", , a")  = "1";
 
-inline codegen::end_category<"logic"> logic_end;
+  return "1";
+});
 
 } // namespace api

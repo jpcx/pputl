@@ -39,22 +39,22 @@ namespace api {
 
 inline codegen::category<"bitwise"> bitwise;
 
-extern codegen::def<"bdump(...: v: word) -> ...bool"> const&                bdump;
-extern codegen::def<"bsll(...: v: word, n: idec) -> word{v << n}"> const&   bsll;
-extern codegen::def<"bsrl(...: v: word, n: idec) -> word{v >> n}"> const&   bsrl;
-extern codegen::def<"bsra(...: v: int, n: idec) -> int{v / 2**n}"> const&   bsra;
-extern codegen::def<"bnot(...: v: word) -> word{~v}"> const&                bnot;
-extern codegen::def<"band(...: a: word, b: word) -> int{a & b}"> const&     band;
-extern codegen::def<"bor(...: a: word, b: word) -> int{a | b}"> const&      bor;
-extern codegen::def<"bxor(...: a: word, b: word) -> int{a ^ b}"> const&     bxor;
-extern codegen::def<"bnand(...: a: word, b: word) -> int{~(a & b)}"> const& bnand;
-extern codegen::def<"bnor(...: a: word, b: word) -> int{~(a | b)}"> const&  bnor;
-extern codegen::def<"bxnor(...: a: word, b: word) -> int{~(a ^ b)}"> const& bxnor;
-extern codegen::def<"bget(...: v: word, i: idec) -> v[i]: bool"> const&     bget;
-extern codegen::def<"bset(...: v: word, i: idec, b: bool) -> word{v[i] = b}"> const& bset;
-extern codegen::def<"bflip(...: v: word, i: idec) -> word{v[i] = !v[i]}"> const& bflip;
-extern codegen::def<"brotl(...: a: word, n: idec) -> word"> const&               brotl;
-extern codegen::def<"brotr(...: a: word, n: idec) -> word"> const&               brotr;
+extern codegen::def<"bdump(...: word) -> bool..."> const&               bdump;
+extern codegen::def<"bsll(...: word, n: idec) -> word"> const&          bsll;
+extern codegen::def<"bsrl(...: word, n: idec) -> word"> const&          bsrl;
+extern codegen::def<"bsra(...: word, n: idec) -> word"> const&          bsra;
+extern codegen::def<"bnot(...: word) -> word"> const&                   bnot;
+extern codegen::def<"band(...: word, word) -> word"> const&             band;
+extern codegen::def<"bor(...: word, word) -> word"> const&              bor;
+extern codegen::def<"bxor(...: word, word) -> word"> const&             bxor;
+extern codegen::def<"bnand(...: word, word) -> word"> const&            bnand;
+extern codegen::def<"bnor(...: word, word) -> word"> const&             bnor;
+extern codegen::def<"bxnor(...: word, word) -> word"> const&            bxnor;
+extern codegen::def<"bget(...: word, i: idec) -> bool"> const&          bget;
+extern codegen::def<"bset(...: word, i: idec, b: bool) -> word"> const& bset;
+extern codegen::def<"bflip(...: word, i: idec) -> word"> const&         bflip;
+extern codegen::def<"brotl(...: word, n: idec) -> word"> const&         brotl;
+extern codegen::def<"brotr(...: word, n: idec) -> word"> const&         brotr;
 
 NIFTY_DECL(bdump);
 NIFTY_DECL(bsll);

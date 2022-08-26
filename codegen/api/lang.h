@@ -45,8 +45,7 @@ extern codegen::def<"rest(_, ...: first: any, ...rest: any) -> any..."> const&  
 extern codegen::def<"xrest(...: any...) -> any..."> const&                       xrest;
 extern codegen::def<"trim(...: any...) -> any..."> const&                        trim;
 extern codegen::def<"default(...: default: any, ...args: any) -> any..."> const& default_;
-extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&
-    fail;
+extern codegen::def<"fail(...: msg: obj)"> const&                                fail;
 
 // TODO fmt.hex
 

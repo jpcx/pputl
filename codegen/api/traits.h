@@ -36,6 +36,7 @@ namespace api {
 
 inline codegen::category<"traits"> traits;
 
+extern codegen::def<"is_list(...: list) -> enum<1>"> const&               is_list;
 extern codegen::def<"is_any(...: list) -> bool"> const&                   is_any;
 extern codegen::def<"is_none(...: list) -> bool"> const&                  is_none;
 extern codegen::def<"is_obj(...: list) -> bool"> const&                   is_obj;
@@ -94,6 +95,7 @@ NIFTY_DECL(is_word_o);
 NIFTY_DECL(is_size_o);
 } // namespace detail
 
+NIFTY_DECL(is_list);
 NIFTY_DECL(is_any);
 NIFTY_DECL(is_none);
 NIFTY_DECL(is_obj);

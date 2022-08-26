@@ -35,6 +35,7 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
+extern codegen::def<"list(...: list) -> list"> const&                            list;
 extern codegen::def<"any(...: any) -> any"> const&                               any;
 extern codegen::def<"none(...: none) -> none"> const&                            none;
 extern codegen::def<"obj(...: obj) -> obj"> const&                               obj;
@@ -59,6 +60,7 @@ extern codegen::def<
     "size(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const&
     size;
 
+NIFTY_DECL(list);
 NIFTY_DECL(any);
 NIFTY_DECL(none);
 NIFTY_DECL(obj);

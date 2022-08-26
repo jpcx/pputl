@@ -84,7 +84,7 @@ decltype(bsra) bsra = NIFTY_DEF(bsra, [&](va args) {
   }
 
   return def<"o(v, ct)">{[&](arg v, arg ct) {
-    return int_(def<"<o(i, ...)">{[&](arg i, va bin) {
+    return word(def<"<o(i, ...)">{[&](arg i, va bin) {
                   return def<"<o(...)">{[&](va args) {
                     return def<"<o(i, gelt, ...)">{[&](arg i, arg gelt, va args) {
                       def<"\\0(...)"> gelt0 = [&](va) { return "0"; };
@@ -95,7 +95,7 @@ decltype(bsra) bsra = NIFTY_DEF(bsra, [&](va args) {
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);
                     }}(args);
                   }}(i, lt(i, conf::bit_length), bin);
-                }}(idec(ct), bdump(int_(v))),
+                }}(idec(ct), bdump(word(v))),
                 typeof(v));
   }}(args);
 });
