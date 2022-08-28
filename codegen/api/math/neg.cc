@@ -31,26 +31,15 @@ namespace api {
 
 using namespace codegen;
 
-decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
-  docs << "subtraction with underflow."
-       << ""
-       << "returns unsigned if either operand is unsigned,"
-       << "decimal if either operand is decimal, utup if"
-       << "both operands are utup, and hex otherwise.";
+decltype(neg) neg = NIFTY_DEF(neg, [&](va args) {
+  docs << "integral negation.";
 
-  tests << sub("0, 0")          = "0" >> docs;
-  tests << sub("0, 1")          = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << sub("0u, 1u")        = uint_max_s >> docs;
-  tests << sub("1, 0")          = "1" >> docs;
-  tests << sub("1, 1")          = "0" >> docs;
-  tests << sub("3, 1")          = "2" >> docs;
-  tests << sub("1u, 3u")        = (std::to_string(conf::uint_max - 1) + "u") >> docs;
-  tests << sub(uint_max_s, 0)   = uint_max_s;
-  tests << sub(uint_max_s, 1)   = (std::to_string(conf::uint_max - 1) + "u");
-  tests << sub(0, int_min_s)    = int_min_s >> docs;
-  tests << sub("0u", int_min_s) = (std::to_string(conf::int_max + 1) + "u") >> docs;
+  tests << neg(0)                           = "0" >> docs;
+  tests << neg(1)                           = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << neg("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << neg("1u")                        = uint_max_s >> docs;
 
-  return add(first(args), neg(rest(args)));
+  return word(inc(bnot(args)), typeof(args));
 });
 
 } // namespace api

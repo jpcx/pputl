@@ -39,17 +39,20 @@ inline codegen::category<"impl.traits"> traits;
 
 extern codegen::def<"hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC|INC|NYBL|BITS})"> const& hex;
 extern codegen::def<
-    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD})"> const& hexhex;
-extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const&    nybl;
+    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD0|ADD1})"> const& hexhex;
+extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const&          nybl;
 extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const& udec;
 extern codegen::def<
     "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;
+extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "
+                    "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const&                   arithhint;
 
 NIFTY_DECL(hex);
 NIFTY_DECL(hexhex);
 NIFTY_DECL(nybl);
 NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
+NIFTY_DECL(arithhint);
 
 inline codegen::end_category<"impl.traits"> traits_end;
 

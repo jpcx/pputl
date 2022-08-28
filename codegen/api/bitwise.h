@@ -40,9 +40,9 @@ namespace api {
 inline codegen::category<"bitwise"> bitwise;
 
 extern codegen::def<"bdump(...: word) -> bool..."> const&               bdump;
-extern codegen::def<"bsll(...: word, n: idec) -> word"> const&          bsll;
-extern codegen::def<"bsrl(...: word, n: idec) -> word"> const&          bsrl;
-extern codegen::def<"bsra(...: word, n: idec) -> word"> const&          bsra;
+extern codegen::def<"bsll(...: word, n=1: idec) -> word"> const&        bsll;
+extern codegen::def<"bsrl(...: word, n=1: idec) -> word"> const&        bsrl;
+extern codegen::def<"bsra(...: word, n=1: idec) -> word"> const&        bsra;
 extern codegen::def<"bnot(...: word) -> word"> const&                   bnot;
 extern codegen::def<"band(...: word, word) -> word"> const&             band;
 extern codegen::def<"bor(...: word, word) -> word"> const&              bor;
