@@ -43,7 +43,6 @@ namespace api {
 inline codegen::category<"math"> math;
 
 // TODO: if/switch notuple
-//       remove nybl
 
 extern codegen::def<"neg(...: word) -> word"> const&       neg;
 extern codegen::def<"add(...: word, word) -> word"> const& add;

@@ -165,9 +165,9 @@
 //         └╴obj: a non-empty generic value                                   //
 //            ├╴atom: an individual value that may form an identifier tail    //
 //            │  ├╴enum<...>: a value that matches a specified atom union     //
-//            │  │  └╴bool: enum<0|1>                                         //
-//            │  ├╴hex:  a 4-bit uppercase hexadecimal digit [e.g. B]         //
-//            │  ├╴nybl: a 4-bit bool concatenation [e.g. 0110]               //
+//            │  │  ├╴bool: enum<0|1>                                         //
+//            │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>             //
+//            │  │  └╴nybl: enum<0000|0001|0010|...|1101|1110|1111>           //
 //            │  ├╴int: <abstract> a word-sized signed integer                //
 //            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //
 //            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //
@@ -564,7 +564,7 @@
 
 /// [traits.is_hex]
 /// ---------------
-/// [extends PTL_IS_ATOM] detects if args is 4-bit uppercase hexadecimal digit.
+/// [extends PTL_IS_ENUM] detects if args is an uppercase hexadecimal digit.
 ///
 /// PTL_IS_HEX()    // 0
 /// PTL_IS_HEX(0)   // 1
@@ -587,7 +587,7 @@
 
 /// [traits.is_nybl]
 /// ----------------
-/// [extends PTL_IS_ATOM] detects if args is a 4-bit bool concatenation.
+/// [extends PTL_IS_ENUM] detects if args is a 4-bit bool concatenation.
 ///
 /// PTL_IS_NYBL()     // 0
 /// PTL_IS_NYBL(0)    // 0
@@ -1402,7 +1402,7 @@
 
 /// [type.hex]
 /// ----------
-/// [inherits from PTL_ATOM] capital hex digit type.
+/// [inherits from PTL_ENUM] uppercase hexadeicmal digit.
 /// constructible from either hex or nybl.
 /// expands to v if valid, else fails.
 ///
@@ -1427,7 +1427,7 @@
 
 /// [type.nybl]
 /// -----------
-/// [inherits from PTL_ATOM] 4-bit bool concatenation type.
+/// [inherits from PTL_ENUM] 4-bit bool concatenation type.
 /// constructible from either nybl or hex.
 /// expands to v if valid, else fails.
 ///

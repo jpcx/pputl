@@ -163,9 +163,9 @@
 //         └╴obj: a non-empty generic value                                   //
 //            ├╴atom: an individual value that may form an identifier tail    //
 //            │  ├╴enum<...>: a value that matches a specified atom union     //
-//            │  │  └╴bool: enum<0|1>                                         //
-//            │  ├╴hex:  a 4-bit uppercase hexadecimal digit [e.g. B]         //
-//            │  ├╴nybl: a 4-bit bool concatenation [e.g. 0110]               //
+//            │  │  ├╴bool: enum<0|1>                                         //
+//            │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>             //
+//            │  │  └╴nybl: enum<0000|0001|0010|...|1101|1110|1111>           //
 //            │  ├╴int: <abstract> a word-sized signed integer                //
 //            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //
 //            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //

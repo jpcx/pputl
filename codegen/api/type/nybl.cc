@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
-  docs << "[inherits from " + atom + "] 4-bit bool concatenation type."
+  docs << "[inherits from " + enum_ + "] 4-bit bool concatenation type."
        << "constructible from either nybl or hex."
        << "expands to v if valid, else fails.";
 

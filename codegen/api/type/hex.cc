@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
-  docs << "[inherits from " + atom + "] capital hex digit type."
+  docs << "[inherits from " + enum_ + "] uppercase hexadeicmal digit."
        << "constructible from either hex or nybl."
        << "expands to v if valid, else fails.";
 
