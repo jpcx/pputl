@@ -42,8 +42,6 @@ namespace api {
 
 inline codegen::category<"math"> math;
 
-// TODO: if/switch notuple
-
 extern codegen::def<"neg(...: word) -> word"> const&       neg;
 extern codegen::def<"add(...: word, word) -> word"> const& add;
 extern codegen::def<"sub(...: word, word) -> word"> const& sub;

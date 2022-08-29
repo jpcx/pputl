@@ -41,8 +41,8 @@ namespace api {
 
 inline codegen::category<"control"> control;
 
-extern codegen::def<"if(...: bool, t: tup, f: tup) -> list"> const&    if_;
-extern codegen::def<"switch(...: size, ...cases: tup) -> list"> const& switch_;
+extern codegen::def<"if(...: bool, t: any, f: any) -> any"> const&    if_;
+extern codegen::def<"switch(...: size, ...cases: any) -> any"> const& switch_;
 
 NIFTY_DECL(if_);
 NIFTY_DECL(switch_);

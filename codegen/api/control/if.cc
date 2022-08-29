@@ -32,22 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
-  docs << "conditionally expands items based on a boolean.";
+  docs << "conditionally expands based on a boolean.";
 
-  tests << if_(1, "(t), ()")     = "t" >> docs;
-  tests << if_(0, "(t), ()")     = "" >> docs;
-  tests << if_(1, "(t), (f)")    = "t" >> docs;
-  tests << if_(0, "(t), (f)")    = "f" >> docs;
-  tests << if_(1, "(a), (b, c)") = "a" >> docs;
-  tests << if_(0, "(a), (b, c)") = "b, c" >> docs;
+  tests << if_(1, "t,")   = "t" >> docs;
+  tests << if_(0, "t,")   = "" >> docs;
+  tests << if_(1, "t, f") = "t" >> docs;
+  tests << if_(0, "t, f") = "f" >> docs;
 
-  def<"\\0(_, t, f)"> _0 = [&](arg, arg t, arg f) {
-    return rest(tup(t), esc + " " + tup(f));
-  };
-
-  def<"\\1(_, t, f)">{} = [&](arg, arg t, arg f) {
-    return rest(tup(f), esc + " " + tup(t));
-  };
+  def<"\\0(_, t, ...)"> _0 = [&](arg, arg, va f) { return any(f); };
+  def<"\\1(_, t, ...)">{}  = [&](arg, arg t, va) { return t; };
 
   return pp::call(xcat(utl::slice(_0, -1), bool_(first(args))), args);
 });

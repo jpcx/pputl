@@ -3332,49 +3332,49 @@
 
 /// [control.if]
 /// ------------
-/// conditionally expands items based on a boolean.
+/// conditionally expands based on a boolean.
 ///
-/// PTL_IF(1, (t), ())     // t
-/// PTL_IF(0, (t), ())     // <nothing>
-/// PTL_IF(1, (t), (f))    // t
-/// PTL_IF(0, (t), (f))    // f
-/// PTL_IF(1, (a), (b, c)) // a
-/// PTL_IF(0, (a), (b, c)) // b, c
-#define PTL_IF(/* bool, t: tup, f: tup */...) /* -> list */ \
+/// PTL_IF(1, t,)   // t
+/// PTL_IF(0, t,)   // <nothing>
+/// PTL_IF(1, t, f) // t
+/// PTL_IF(0, t, f) // f
+#define PTL_IF(/* bool, t: any, f: any */...) /* -> any */ \
   PTL_XCAT(PPUTLIF_, PTL_BOOL(PTL_FIRST(__VA_ARGS__)))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIF_1(_, t, f) PTL_REST(PTL_TUP(f), PTL_ESC PTL_TUP(t))
-#define PPUTLIF_0(_, t, f) PTL_REST(PTL_TUP(t), PTL_ESC PTL_TUP(f))
+#define PPUTLIF_1(_, t, ...) t
+#define PPUTLIF_0(_, t, ...) PTL_ANY(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [control.switch]
 /// ----------------
-/// conditionally expands items based on a size.
-/// the final tuple is the default case.
+/// conditionally expands based on a size.
+/// the final case is default.
 ///
-/// PTL_SWITCH(0, (1))                // 1
-/// PTL_SWITCH(1, (1))                // 1
-/// PTL_SWITCH(2, (1))                // 1
-/// PTL_SWITCH(1, (1), (2))           // 2
-/// PTL_SWITCH(2, (1), (2))           // 2
-/// PTL_SWITCH(2, (1), (2), (3, 4))   // 3, 4
-/// PTL_SWITCH(255, (1), (2), (3, 4)) // 3, 4
-#define PTL_SWITCH(/* size, ...cases: tup */...) /* -> list */                      \
+/// PTL_SWITCH(0, 1)         // 1
+/// PTL_SWITCH(1, 1)         // 1
+/// PTL_SWITCH(2, 1)         // 1
+/// PTL_SWITCH(1, 1, 2)      // 2
+/// PTL_SWITCH(2, 1, 2)      // 2
+/// PTL_SWITCH(255, 1, 2, 3) // 3
+#define PTL_SWITCH(/* size, ...cases: any */...) /* -> any */                       \
   PPUTLSWITCH_RES(PPUTLSWITCH_X(PTL_RECUR_LP(PTL_FIRST(__VA_ARGS__), PPUTLSWITCH_R) \
                                     __VA_ARGS__ PTL_RECUR_RP(PTL_FIRST(__VA_ARGS__))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLSWITCH_RES(...)         PPUTLSWITCH_RES_X(__VA_ARGS__)
-#define PPUTLSWITCH_RES_X(i, _, ...) PPUTLSWITCH_X(PTL_ESC PTL_TUP(_))
-#define PPUTLSWITCH_X(...)           __VA_ARGS__
+#define PPUTLSWITCH_RES_X(i, _, ...) _
 #define PPUTLSWITCH_R(...)           PPUTLSWITCH_R_X(__VA_ARGS__)
-#define PPUTLSWITCH_R_X(i, _, ...)                                    \
-  PTL_IF(PTL_IF(PTL_EQZ(i), (1), (PTL_IS_NONE(__VA_ARGS__))), (0, _), \
-         (PTL_DEC(i), __VA_ARGS__))
+#define PPUTLSWITCH_R_X(i, _, ...)                                         \
+  PTL_IF(PTL_OR(PTL_EQZ(i), PTL_IS_NONE(__VA_ARGS__)), PPUTLSWITCH_R_BASE, \
+         PPUTLSWITCH_R_RECR)                                               \
+  (i, _, __VA_ARGS__)
+#define PPUTLSWITCH_R_RECR(i, _, ...) PTL_DEC(i), __VA_ARGS__
+#define PPUTLSWITCH_R_BASE(i, _, ...) 0, _
+#define PPUTLSWITCH_X(...)            __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
