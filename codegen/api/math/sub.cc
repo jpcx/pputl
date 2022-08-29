@@ -33,10 +33,7 @@ using namespace codegen;
 
 decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
   docs << "subtraction with underflow."
-       << ""
-       << "returns unsigned if either operand is unsigned,"
-       << "decimal if either operand is decimal, utup if"
-       << "both operands are utup, and hex otherwise.";
+       << "" << impl::arith_rules;
 
   tests << sub("0, 0")          = "0" >> docs;
   tests << sub("0, 1")          = ("0x" + utl::cat(samp::hmax)) >> docs;

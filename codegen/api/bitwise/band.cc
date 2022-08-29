@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(band) band = NIFTY_DEF(band, [&](va args) {
   docs << "bitwise AND operation."
-       << "uses arg 'a' for result cast hint.";
+       << "" << impl::arith_rules;
 
   tests << band(0, 0)                                     = "0" >> docs;
   tests << band(0, 1)                                     = "0" >> docs;
@@ -62,7 +62,7 @@ decltype(band) band = NIFTY_DEF(band, [&](va args) {
     };
 
     def<"res(...)"> res = [&](va args) {
-      def o = def{"o(_type, " + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
+      def o = def{"o(_hint, " + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
                   + ")"} = [&](pack args) { //
         auto res = svect{next(args.begin()), std::prev(args.end(), conf::word_size)};
         return word(pp::tup(res), args.front());
@@ -71,17 +71,17 @@ decltype(band) band = NIFTY_DEF(band, [&](va args) {
     };
 
     return def<"o(a, b)">{[&](arg a, arg b) {
-      return res(typeof(a), def<"<o(...)">{[&](va args) {
-                   return utl::cat(svect(conf::word_size, r + "(")) + args
-                        + utl::cat(svect(conf::word_size, ")"));
-                 }}(x(esc + " " + utup(a), esc + " " + utup(b))));
+      return res(impl::xarithhint(typeof(a), typeof(b)),
+                 utl::cat(svect(conf::word_size, r + "(")) + " "
+                     + x(esc + " " + utup(a), esc + " " + utup(b)) + " "
+                     + utl::cat(svect(conf::word_size, ")")));
     }}(args);
   } else {
     return def<"o(a, b)">{[&](arg a, arg b) {
       return word(pp::tup(def<"<o(a, b)">{[&](arg a, arg b) {
                     return impl::hexhex(cat(a, b), "AND");
                   }}(esc + " " + utup(a), esc + " " + utup(b))),
-                  typeof(a));
+                  impl::xarithhint(typeof(a), typeof(b)));
     }}(args);
   }
 });

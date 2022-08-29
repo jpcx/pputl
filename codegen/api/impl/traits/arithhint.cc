@@ -37,9 +37,9 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
        << ""
        << "immediately concatenates args."
        << ""
-       << "returns unsigned if either operand is unsigned,"
-       << "decimal if either operand is decimal, utup if"
-       << "both operands are utup, and hex otherwise.";
+       << "returns UDEC|UHEX if either operand is UDEC|UHEX|UTUP,"
+       << "UDEC|IDEC if either operand is UDEC|IDEC, UTUP if"
+       << "both operands are UTUP, and UHEX|IHEX otherwise.";
 
   def<"\\IDECIDEC"> idecidec = [&] { return "IDEC"; };
   def<"\\IDECIHEX">{}        = [&] { return "IDEC"; };

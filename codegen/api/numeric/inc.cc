@@ -46,63 +46,37 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
     tests << inc("15u") = "0u" >> docs;
   }
 
-  if constexpr (conf::word_size > 1) {
-    def<"x(...)"> x = [&](va args) { return args; };
+  constexpr auto sz = conf::word_size;
 
-    def init = def{"init(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                   + ")"} = [&](pack args) {
-      svect head = svect(args.begin(), std::prev(args.end()));
-      return utl::cat(head, ", ") + ", " + esc + " " + impl::hex(args.back(), "INC");
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              impl::hex(v[sz], pp::cat("INC", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
+  };
+
+  def<"res(t, ...)"> res = [&](arg t, va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
     };
 
-    def<"r0(...)"> r0 = [&](va args) {
-      def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-                  + ", _carry, _inc)"} = [&](pack args) {
-        def<"\\0(b)"> _0 = [&](arg b) { return "0, " + b; };
-        def<"\\1(b)">{}  = [&](arg b) { return x(esc + " " + impl::hex(b, "INC")); };
+    return word(o(args), t);
+  };
 
-        return args.back() + ", "
-             + utl::cat(svect{args.begin(), args.begin() + conf::word_size - 2}, ", ")
-             + (conf::word_size > 2 ? ", " : "")
-             + pp::call(pp::cat(utl::slice(_0, -1), *(args.rbegin() + 1)),
-                        *(args.rbegin() + 2));
-      };
-
-      return o(args);
-    };
-
-    def<"r1(...)"> r1 = [&](va args) {
-      def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-                  + ", _carry, _inc)"} = [&](pack args) { //
-        return args.back() + ", "
-             + utl::cat(svect{args.begin(), args.begin() + conf::word_size - 2}, ", ")
-             + (conf::word_size > 2 ? ", " : "") + "0, " + *(args.rbegin() + 2);
-      };
-
-      return o(args);
-    };
-
-    def<"res(...)"> res = [&](va args) {
-      def o = def{"o(_hint, " + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
-                  + ", _carry, _inc)"} = [&](pack args) { //
-        return word(pp::tup(utl::cat(svect{args.begin() + 1,
-                                           args.begin() + 1 + conf::word_size - 1},
-                                     ", "),
-                            args.back()),
-                    args.front());
-      };
-      return o(args);
-    };
-
-    return res(typeof(args), def<"o(...)">{[&](va args) {
-                 return r1(utl::cat(svect(conf::word_size - 1, r0 + "(")) + args
-                           + utl::cat(svect(conf::word_size - 1, ")")));
-               }}(x(init + " " + utup(args))));
-
-  } else {
-    return word(pp::tup(esc(rest + " " + impl::hex(esc + " " + utup(args), "INC"))),
-                typeof(args));
-  }
+  return def<"o(v)">{[&](arg v) {
+    auto rlp = utl::cat(svect{conf::word_size, r + "("});
+    auto rrp = utl::cat(svect{conf::word_size, ")"});
+    return res(typeof(v), rlp + "1, " + x(esc + " " + utup(v)) + rrp);
+  }}(args);
 });
 
 } // namespace api

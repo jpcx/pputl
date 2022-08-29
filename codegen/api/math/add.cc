@@ -33,10 +33,7 @@ using namespace codegen;
 
 decltype(add) add = NIFTY_DEF(add, [&](va args) {
   docs << "addition with overflow."
-       << ""
-       << "returns unsigned if either operand is unsigned,"
-       << "decimal if either operand is decimal, utup if"
-       << "both operands are utup, and hex otherwise.";
+       << "" << impl::arith_rules;
 
   tests << add("0, 0")        = "0" >> docs;
   tests << add("0, 1")        = "1" >> docs;

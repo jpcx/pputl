@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(bnor) bnor = NIFTY_DEF(bnor, [&](va args) {
   docs << "bitwise NOR."
-       << "uses arg 'a' for result cast hint.";
+       << "" << impl::arith_rules;
 
   tests << bnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
   tests << bnor(0, 1) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
@@ -42,7 +42,10 @@ decltype(bnor) bnor = NIFTY_DEF(bnor, [&](va args) {
     tests << bnor(7, 8) =
         ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
 
-  return word(impl::uhex(uhex(bor(args)), "BNOT"), typeof(first(args)));
+  return def<"o(a, b)">{[&](arg a, arg b) {
+    return word(impl::uhex(uhex(bor(a, b)), "BNOT"),
+                impl::xarithhint(typeof(a), typeof(b)));
+  }}(args);
 });
 
 } // namespace api

@@ -210,7 +210,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220828
+#define PTL_BUILD /* -> <c++ int> */ 20220829
 
 /// [config.word_size]
 /// ------------------
@@ -2287,24 +2287,18 @@
 /// PTL_INC(0x7FF) // 0x800
 /// PTL_INC(15u)   // 16u
 /// PTL_INC(4095u) // 0u
-#define PTL_INC(/* word */...) /* -> word */ \
-  PPUTLINC_RES(PTL_TYPEOF(__VA_ARGS__),      \
-               PPUTLINC_o(PPUTLINC_X(PPUTLINC_INIT PTL_UTUP(__VA_ARGS__))))
+#define PTL_INC(/* word */...) /* -> word */ PPUTLINC_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLINC_o(...) PPUTLINC_R1(PPUTLINC_R0(PPUTLINC_R0(__VA_ARGS__)))
-
-#define PPUTLINC_RES(...)                         PPUTLINC_RES_o(__VA_ARGS__)
-#define PPUTLINC_RES_o(_hint, a, b, _carry, _inc) PTL_WORD((a, b, _inc), _hint)
-#define PPUTLINC_R1(...)                          PPUTLINC_R1_o(__VA_ARGS__)
-#define PPUTLINC_R1_o(a, b, _carry, _inc)         _inc, a, 0, b
-#define PPUTLINC_R0(...)                          PPUTLINC_R0_o(__VA_ARGS__)
-#define PPUTLINC_R0_o(a, b, _carry, _inc)         _inc, a, PPUTLINC_R0_o_##_carry(b)
-#define PPUTLINC_R0_o_1(b)                        PPUTLINC_X(PTL_ESC PPUTLIMPL_HEX(b, INC))
-#define PPUTLINC_R0_o_0(b)                        0, b
-#define PPUTLINC_INIT(a, b, c)                    a, b, PTL_ESC PPUTLIMPL_HEX(c, INC)
-#define PPUTLINC_X(...)                           __VA_ARGS__
+#define PPUTLINC_o(v)         \
+  PPUTLINC_RES(PTL_TYPEOF(v), \
+               PPUTLINC_R(PPUTLINC_R(PPUTLINC_R(1, PPUTLINC_X(PTL_ESC PTL_UTUP(v))))))
+#define PPUTLINC_RES(t, ...)       PTL_WORD(PPUTLINC_RES_o(__VA_ARGS__), t)
+#define PPUTLINC_RES_o(_, a, b, c) (a, b, c)
+#define PPUTLINC_R(...)            PPUTLINC_R_o(__VA_ARGS__)
+#define PPUTLINC_R_o(_, a, b, c)   PPUTLIMPL_HEX(c, INC##_), a, b
+#define PPUTLINC_X(...)            __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2318,24 +2312,18 @@
 /// PTL_DEC(0x800) // 0x7FF
 /// PTL_DEC(16u)   // 15u
 /// PTL_DEC(0u)    // 4095u
-#define PTL_DEC(/* word */...) /* -> word */ \
-  PPUTLDEC_RES(PTL_TYPEOF(__VA_ARGS__),      \
-               PPUTLDEC_o(PPUTLDEC_X(PPUTLDEC_INIT PTL_UTUP(__VA_ARGS__))))
+#define PTL_DEC(/* word */...) /* -> word */ PPUTLDEC_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLDEC_o(...) PPUTLDEC_R1(PPUTLDEC_R0(PPUTLDEC_R0(__VA_ARGS__)))
-
-#define PPUTLDEC_RES(...)                         PPUTLDEC_RES_o(__VA_ARGS__)
-#define PPUTLDEC_RES_o(_hint, a, b, _carry, _dec) PTL_WORD((a, b, _dec), _hint)
-#define PPUTLDEC_R1(...)                          PPUTLDEC_R1_o(__VA_ARGS__)
-#define PPUTLDEC_R1_o(a, b, _carry, _dec)         _dec, a, 0, b
-#define PPUTLDEC_R0(...)                          PPUTLDEC_R0_o(__VA_ARGS__)
-#define PPUTLDEC_R0_o(a, b, _carry, _dec)         _dec, a, PPUTLDEC_R0_o_##_carry(b)
-#define PPUTLDEC_R0_o_1(b)                        PPUTLDEC_X(PTL_ESC PPUTLIMPL_HEX(b, DEC))
-#define PPUTLDEC_R0_o_0(b)                        0, b
-#define PPUTLDEC_INIT(a, b, c)                    a, b, PTL_ESC PPUTLIMPL_HEX(c, DEC)
-#define PPUTLDEC_X(...)                           __VA_ARGS__
+#define PPUTLDEC_o(v)         \
+  PPUTLDEC_RES(PTL_TYPEOF(v), \
+               PPUTLDEC_R(PPUTLDEC_R(PPUTLDEC_R(1, PPUTLDEC_X(PTL_ESC PTL_UTUP(v))))))
+#define PPUTLDEC_RES(t, ...)       PTL_WORD(PPUTLDEC_RES_o(__VA_ARGS__), t)
+#define PPUTLDEC_RES_o(_, a, b, c) (a, b, c)
+#define PPUTLDEC_R(...)            PPUTLDEC_R_o(__VA_ARGS__)
+#define PPUTLDEC_R_o(_, a, b, c)   PPUTLIMPL_HEX(c, DEC##_), a, b
+#define PPUTLDEC_X(...)            __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2639,7 +2627,11 @@
 /// [bitwise.band]
 /// --------------
 /// bitwise AND operation.
-/// uses arg 'a' for result cast hint.
+///
+/// returns unsigned if either operand is unsigned,
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_BAND(0, 0)         // 0
 /// PTL_BAND(0, 1)         // 0
@@ -2650,14 +2642,12 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBAND_o(a, b)      \
-  PPUTLBAND_RES(PTL_TYPEOF(a), \
-                PPUTLBAND_oo(PPUTLBAND_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))
-
-#define PPUTLBAND_oo(...) PPUTLBAND_R(PPUTLBAND_R(PPUTLBAND_R(__VA_ARGS__)))
-
+#define PPUTLBAND_o(a, b)                                           \
+  PPUTLBAND_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)), \
+                PPUTLBAND_R(PPUTLBAND_R(PPUTLBAND_R(                \
+                    PPUTLBAND_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
 #define PPUTLBAND_RES(...)                       PPUTLBAND_RES_o(__VA_ARGS__)
-#define PPUTLBAND_RES_o(_type, a, b, c, d, e, f) PTL_WORD((a, b, c), _type)
+#define PPUTLBAND_RES_o(_hint, a, b, c, d, e, f) PTL_WORD((a, b, c), _hint)
 #define PPUTLBAND_R(...)                         PPUTLBAND_R_o(__VA_ARGS__)
 #define PPUTLBAND_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, AND), a, b, f, d, e
 #define PPUTLBAND_X(...)                         __VA_ARGS__
@@ -2667,7 +2657,11 @@
 /// [bitwise.bor]
 /// -------------
 /// bitwise OR operation.
-/// uses arg 'a' for result cast hint.
+///
+/// returns unsigned if either operand is unsigned,
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_BOR(0, 0)        // 0
 /// PTL_BOR(0, 1)        // 1
@@ -2678,10 +2672,10 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBOR_o(a, b)      \
-  PPUTLBOR_RES(PTL_TYPEOF(a), \
-               PPUTLBOR_oo(PPUTLBOR_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))
-#define PPUTLBOR_oo(...)                        PPUTLBOR_R(PPUTLBOR_R(PPUTLBOR_R(__VA_ARGS__)))
+#define PPUTLBOR_o(a, b)                                           \
+  PPUTLBOR_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)), \
+               PPUTLBOR_R(PPUTLBOR_R(                              \
+                   PPUTLBOR_R(PPUTLBOR_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
 #define PPUTLBOR_RES(...)                       PPUTLBOR_RES_o(__VA_ARGS__)
 #define PPUTLBOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD((a, b, c), _type)
 #define PPUTLBOR_R(...)                         PPUTLBOR_R_o(__VA_ARGS__)
@@ -2693,7 +2687,11 @@
 /// [bitwise.bxor]
 /// --------------
 /// bitwise XOR operation.
-/// uses arg 'a' for result cast hint.
+///
+/// returns unsigned if either operand is unsigned,
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_BXOR(0, 0)         // 0
 /// PTL_BXOR(0, 1)         // 1
@@ -2706,12 +2704,10 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBXOR_o(a, b)      \
-  PPUTLBXOR_RES(PTL_TYPEOF(a), \
-                PPUTLBXOR_oo(PPUTLBXOR_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))
-
-#define PPUTLBXOR_oo(...) PPUTLBXOR_R(PPUTLBXOR_R(PPUTLBXOR_R(__VA_ARGS__)))
-
+#define PPUTLBXOR_o(a, b)                                           \
+  PPUTLBXOR_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)), \
+                PPUTLBXOR_R(PPUTLBXOR_R(PPUTLBXOR_R(                \
+                    PPUTLBXOR_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
 #define PPUTLBXOR_RES(...)                       PPUTLBXOR_RES_o(__VA_ARGS__)
 #define PPUTLBXOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD((a, b, c), _type)
 #define PPUTLBXOR_R(...)                         PPUTLBXOR_R_o(__VA_ARGS__)
@@ -2723,40 +2719,70 @@
 /// [bitwise.bnand]
 /// ---------------
 /// bitwise NAND.
-/// uses arg 'a' for result cast hint.
+///
+/// returns unsigned if either operand is unsigned,
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_BNAND(0, 0)                 // 0xFFF
 /// PTL_BNAND(5, 7)                 // 0xFFA
 /// PTL_BNAND((7, F, F), (F, F, F)) // (8, 0, 0)
-#define PTL_BNAND(/* word, word */...) /* -> word */              \
-  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BAND(__VA_ARGS__)), BNOT), \
-           PTL_TYPEOF(PTL_FIRST(__VA_ARGS__)))
+#define PTL_BNAND(/* word, word */...) /* -> word */ PPUTLBNAND_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBNAND_o(a, b)                                 \
+  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BAND(a, b)), BNOT), \
+           PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [bitwise.bnor]
 /// --------------
 /// bitwise NOR.
-/// uses arg 'a' for result cast hint.
+///
+/// returns unsigned if either operand is unsigned,
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_BNOR(0, 0) // 0xFFF
 /// PTL_BNOR(0, 1) // 0xFFE
 /// PTL_BNOR(5, 7) // 0xFF8
 /// PTL_BNOR(7, 8) // 0xFF0
-#define PTL_BNOR(/* word, word */...) /* -> word */              \
-  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BOR(__VA_ARGS__)), BNOT), \
-           PTL_TYPEOF(PTL_FIRST(__VA_ARGS__)))
+#define PTL_BNOR(/* word, word */...) /* -> word */ PPUTLBNOR_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBNOR_o(a, b)                                 \
+  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BOR(a, b)), BNOT), \
+           PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [bitwise.bxnor]
 /// ---------------
 /// bitwise XNOR.
-/// uses arg 'a' for result cast hint.
+///
+/// returns unsigned if either operand is unsigned,
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_BXNOR(0, 0)  // 0xFFF
 /// PTL_BXNOR(0, 1)  // 0xFFE
 /// PTL_BXNOR(5, 7)  // 0xFFD
 /// PTL_BXNOR(15, 8) // 0xFF8
-#define PTL_BXNOR(/* word, word */...) /* -> word */              \
-  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BXOR(__VA_ARGS__)), BNOT), \
-           PTL_TYPEOF(PTL_FIRST(__VA_ARGS__)))
+#define PTL_BXNOR(/* word, word */...) /* -> word */ PPUTLBXNOR_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBXNOR_o(a, b)                                 \
+  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BXOR(a, b)), BNOT), \
+           PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [bitwise.bget]
 /// --------------
@@ -3368,8 +3394,9 @@
 /// addition with overflow.
 ///
 /// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal, utup if
-/// both operands are utup, and hex otherwise.
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_ADD(0, 0)            // 0
 /// PTL_ADD(0, 1)            // 1
@@ -3403,8 +3430,9 @@
 /// subtraction with underflow.
 ///
 /// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal, utup if
-/// both operands are utup, and hex otherwise.
+/// decimal if either operand is decimal (and the
+/// result is non-negative), utup if both operands
+/// are utup, and hex otherwise.
 ///
 /// PTL_SUB(0, 0)      // 0
 /// PTL_SUB(0, 1)      // 0xFFF
@@ -3442,38 +3470,48 @@
 /// [impl.traits.hex]
 /// -----------------
 /// [internal] hex traits
-#define PPUTLIMPL_HEX(/* {<atom>, IS}|{<hex>, NOT|DEC|INC|NYBL|BITS} */ v, t) \
+#define PPUTLIMPL_HEX(/* {<atom>, IS}|{<hex>, NOT|DEC0|DEC1|INC0|INC1|NYBL|BITS} */ v, \
+                      t)                                                               \
   PPUTLIMPL_HEX_o(t, PTL_XCAT(PPUTLIMPL_HEX_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_HEX_o(t, ...)              PPUTLIMPL_HEX_##t(__VA_ARGS__)
-#define PPUTLIMPL_HEX_BITS(n, d, i, ny, ...) /* -> ...bool */ __VA_ARGS__
-#define PPUTLIMPL_HEX_NYBL(n, d, i, ny, ...) /* -> nybl */ ny
-#define PPUTLIMPL_HEX_INC(n, d, i, ...)      /* -> (bool, hex) */ i
-#define PPUTLIMPL_HEX_DEC(n, d, ...)         /* -> (bool, hex) */ d
-#define PPUTLIMPL_HEX_NOT(n, ...)            /* -> hex */ n
-#define PPUTLIMPL_HEX_IS(_, ...)             /* -> bool */ PPUTLIMPL_HEX_IS_0##__VA_OPT__(1)
-#define PPUTLIMPL_HEX_IS_01                  1
-#define PPUTLIMPL_HEX_IS_0                   0
+#define PPUTLIMPL_HEX_o(t, ...) PPUTLIMPL_HEX_##t(__VA_ARGS__)
+#define PPUTLIMPL_HEX_BITS(n, d0c, d0, d1c, d1, i0c, i0, i1c, i1, ny, \
+                           ...) /* -> ...bool */                      \
+  __VA_ARGS__
+#define PPUTLIMPL_HEX_NYBL(n, d0c, d0, d1c, d1, i0c, i0, i1c, i1, ny, ...) /* -> nybl */ \
+  ny
+#define PPUTLIMPL_HEX_INC1(n, d0c, d0, d1c, d1, i0c, i0, i1c, i1, \
+                           ...) /* -> bool, hex */                \
+  i1c, i1
+#define PPUTLIMPL_HEX_INC0(n, d0c, d0, d1c, d1, i0c, i0, ...) /* -> bool, hex */ i0c, i0
+#define PPUTLIMPL_HEX_DEC1(n, d0c, d0, d1c, d1, ...)          /* -> bool, hex */ d1c, d1
+#define PPUTLIMPL_HEX_DEC0(n, d0c, d0, ...)                   /* -> bool, hex */ d0c, d0
+#define PPUTLIMPL_HEX_NOT(n, ...)                             /* -> hex */ n
 
-/// not, (dec carry, dec), (inc carry, inc), nybl, ...bits
-#define PPUTLIMPL_HEX_F 0, (0, E), (1, 0), 1111, 1, 1, 1, 1
-#define PPUTLIMPL_HEX_E 1, (0, D), (0, F), 1110, 1, 1, 1, 0
-#define PPUTLIMPL_HEX_D 2, (0, C), (0, E), 1101, 1, 1, 0, 1
-#define PPUTLIMPL_HEX_C 3, (0, B), (0, D), 1100, 1, 1, 0, 0
-#define PPUTLIMPL_HEX_B 4, (0, A), (0, C), 1011, 1, 0, 1, 1
-#define PPUTLIMPL_HEX_A 5, (0, 9), (0, B), 1010, 1, 0, 1, 0
-#define PPUTLIMPL_HEX_9 6, (0, 8), (0, A), 1001, 1, 0, 0, 1
-#define PPUTLIMPL_HEX_8 7, (0, 7), (0, 9), 1000, 1, 0, 0, 0
-#define PPUTLIMPL_HEX_7 8, (0, 6), (0, 8), 0111, 0, 1, 1, 1
-#define PPUTLIMPL_HEX_6 9, (0, 5), (0, 7), 0110, 0, 1, 1, 0
-#define PPUTLIMPL_HEX_5 A, (0, 4), (0, 6), 0101, 0, 1, 0, 1
-#define PPUTLIMPL_HEX_4 B, (0, 3), (0, 5), 0100, 0, 1, 0, 0
-#define PPUTLIMPL_HEX_3 C, (0, 2), (0, 4), 0011, 0, 0, 1, 1
-#define PPUTLIMPL_HEX_2 D, (0, 1), (0, 3), 0010, 0, 0, 1, 0
-#define PPUTLIMPL_HEX_1 E, (0, 0), (0, 2), 0001, 0, 0, 0, 1
-#define PPUTLIMPL_HEX_0 F, (1, F), (0, 1), 0000, 0, 0, 0, 0
+#define PPUTLIMPL_HEX_IS(_, ...) /* -> bool */ PPUTLIMPL_HEX_IS_0##__VA_OPT__(1)
+
+#define PPUTLIMPL_HEX_IS_01 1
+#define PPUTLIMPL_HEX_IS_0  0
+
+/// not, dec0carry, dec0, dec1carry, dec1, inc0carry, inc0, inc1carry, inc1, nybl, ...bits
+#define PPUTLIMPL_HEX_F 0, 0, F, 0, E, 0, F, 1, 0, 1111, 1, 1, 1, 1
+#define PPUTLIMPL_HEX_E 1, 0, E, 0, D, 0, E, 0, F, 1110, 1, 1, 1, 0
+#define PPUTLIMPL_HEX_D 2, 0, D, 0, C, 0, D, 0, E, 1101, 1, 1, 0, 1
+#define PPUTLIMPL_HEX_C 3, 0, C, 0, B, 0, C, 0, D, 1100, 1, 1, 0, 0
+#define PPUTLIMPL_HEX_B 4, 0, B, 0, A, 0, B, 0, C, 1011, 1, 0, 1, 1
+#define PPUTLIMPL_HEX_A 5, 0, A, 0, 9, 0, A, 0, B, 1010, 1, 0, 1, 0
+#define PPUTLIMPL_HEX_9 6, 0, 9, 0, 8, 0, 9, 0, A, 1001, 1, 0, 0, 1
+#define PPUTLIMPL_HEX_8 7, 0, 8, 0, 7, 0, 8, 0, 9, 1000, 1, 0, 0, 0
+#define PPUTLIMPL_HEX_7 8, 0, 7, 0, 6, 0, 7, 0, 8, 0111, 0, 1, 1, 1
+#define PPUTLIMPL_HEX_6 9, 0, 6, 0, 5, 0, 6, 0, 7, 0110, 0, 1, 1, 0
+#define PPUTLIMPL_HEX_5 A, 0, 5, 0, 4, 0, 5, 0, 6, 0101, 0, 1, 0, 1
+#define PPUTLIMPL_HEX_4 B, 0, 4, 0, 3, 0, 4, 0, 5, 0100, 0, 1, 0, 0
+#define PPUTLIMPL_HEX_3 C, 0, 3, 0, 2, 0, 3, 0, 4, 0011, 0, 0, 1, 1
+#define PPUTLIMPL_HEX_2 D, 0, 2, 0, 1, 0, 2, 0, 3, 0010, 0, 0, 1, 0
+#define PPUTLIMPL_HEX_1 E, 0, 1, 0, 0, 0, 1, 0, 2, 0001, 0, 0, 0, 1
+#define PPUTLIMPL_HEX_0 F, 0, 0, 1, F, 0, 0, 0, 1, 0000, 0, 0, 0, 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -12042,9 +12080,9 @@
 ///
 /// immediately concatenates args.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal, utup if
-/// both operands are utup, and hex otherwise.
+/// returns UDEC|UHEX if either operand is UDEC|UHEX|UTUP,
+/// UDEC|IDEC if either operand is UDEC|IDEC, UTUP if
+/// both operands are UTUP, and UHEX|IHEX otherwise.
 #define PPUTLIMPL_ARITHHINT(                                                   \
     /* enum<IDEC|IHEX|UDEC|UHEX|UTUP>, enum<IDEC|IHEX|UDEC|UHEX|UTUP> */ a, b) \
   PPUTLIMPL_ARITHHINT_##a##b
@@ -12079,6 +12117,16 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [impl.traits.xarithhint]
+/// ------------------------
+/// [internal] two-operand arithmetic cast hint.
+///
+/// returns UDEC|UHEX if either operand is UDEC|UHEX|UTUP,
+/// UDEC|IDEC if either operand is UDEC|IDEC, UTUP if
+/// both operands are UTUP, and UHEX|IHEX otherwise.
+#define PPUTLIMPL_XARITHHINT(                                                \
+    /* enum<IDEC|IHEX|UDEC|UHEX|UTUP>, enum<IDEC|IHEX|UDEC|UHEX|UTUP> */...) \
+  PPUTLIMPL_ARITHHINT(__VA_ARGS__)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // vim: fdm=marker:fmr={{{,}}}

@@ -25,27 +25,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(bxnor) bxnor = NIFTY_DEF(bxnor, [&](va args) {
-  docs << "bitwise XNOR."
-       << "" << impl::arith_rules;
+decltype(xarithhint) xarithhint = NIFTY_DEF(xarithhint, [&](va args) {
+  docs << "[internal] two-operand arithmetic cast hint."
+       << ""
+       << "returns UDEC|UHEX if either operand is UDEC|UHEX|UTUP,"
+       << "UDEC|IDEC if either operand is UDEC|IDEC, UTUP if"
+       << "both operands are UTUP, and UHEX|IHEX otherwise.";
 
-  tests << bxnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bxnor(0, 1) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
-  tests << bxnor(5, 7) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "D") >> docs;
-  if constexpr (conf::word_size > 1)
-    tests << bxnor(15, 8) =
-        ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
-
-  return def<"o(a, b)">{[&](arg a, arg b) {
-    return word(impl::uhex(uhex(bxor(a, b)), "BNOT"),
-                impl::xarithhint(typeof(a), typeof(b)));
-  }}(args);
+  return arithhint(args);
 });
 
+} // namespace impl
 } // namespace api

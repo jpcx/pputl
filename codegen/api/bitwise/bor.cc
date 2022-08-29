@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(bor) bor = NIFTY_DEF(bor, [&](va args) {
   docs << "bitwise OR operation."
-       << "uses arg 'a' for result cast hint.";
+       << "" << impl::arith_rules;
 
   tests << bor(0, 0)                 = "0" >> docs;
   tests << bor(0, 1)                 = "1" >> docs;
@@ -71,17 +71,17 @@ decltype(bor) bor = NIFTY_DEF(bor, [&](va args) {
     };
 
     return def<"o(a, b)">{[&](arg a, arg b) {
-      return res(typeof(a), def<"<o(...)">{[&](va args) {
-                   return utl::cat(svect(conf::word_size, r + "(")) + args
-                        + utl::cat(svect(conf::word_size, ")"));
-                 }}(x(esc + " " + utup(a), esc + " " + utup(b))));
+      return res(impl::xarithhint(typeof(a), typeof(b)),
+                 utl::cat(svect(conf::word_size, r + "(")) + " "
+                     + x(esc + " " + utup(a), esc + " " + utup(b)) + " "
+                     + utl::cat(svect(conf::word_size, ")")));
     }}(args);
   } else {
     return def<"o(a, b)">{[&](arg a, arg b) {
       return word(pp::tup(def<"<o(a, b)">{[&](arg a, arg b) {
                     return impl::hexhex(cat(a, b), "OR");
                   }}(esc + " " + utup(a), esc + " " + utup(b))),
-                  typeof(a));
+                  impl::xarithhint(typeof(a), typeof(b)));
     }}(args);
   }
 });
