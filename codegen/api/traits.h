@@ -54,7 +54,6 @@ extern codegen::def<"is_uhex(...: list) -> bool"> const&                  is_uhe
 extern codegen::def<"is_tup(...: list) -> bool"> const&                   is_tup;
 extern codegen::def<"is_utup(...: list) -> bool"> const&                  is_utup;
 extern codegen::def<"is_word(...: list) -> bool"> const&                  is_word;
-extern codegen::def<"is_nat(...: list) -> bool"> const&                   is_nat;
 extern codegen::def<"is_size(...: list) -> bool"> const&                  is_size;
 extern codegen::def<
     "typeof(...: list) -> "
@@ -77,7 +76,6 @@ extern codegen::def<>& is_uhex_o;
 extern codegen::def<>& is_tup_o;
 extern codegen::def<>& is_utup_o;
 extern codegen::def<>& is_word_o;
-extern codegen::def<>& is_nat_o;
 extern codegen::def<>& is_size_o;
 NIFTY_DECL(is_any_o);
 NIFTY_DECL(is_obj_o);
@@ -94,7 +92,6 @@ NIFTY_DECL(is_uhex_o);
 NIFTY_DECL(is_tup_o);
 NIFTY_DECL(is_utup_o);
 NIFTY_DECL(is_word_o);
-NIFTY_DECL(is_nat_o);
 NIFTY_DECL(is_size_o);
 } // namespace detail
 
@@ -116,7 +113,6 @@ NIFTY_DECL(is_uhex);
 NIFTY_DECL(is_tup);
 NIFTY_DECL(is_utup);
 NIFTY_DECL(is_word);
-NIFTY_DECL(is_nat);
 NIFTY_DECL(is_size);
 NIFTY_DECL(typeof);
 NIFTY_DECL(sizeof_);

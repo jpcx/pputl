@@ -36,7 +36,7 @@ decltype(is_size_o) is_size_o = NIFTY_DEF(is_size_o);
 }
 
 decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
-  docs << "[extends " + is_nat + "] detects if args is a natural word less than "
+  docs << "[extends " + is_word + "] detects if args is a non-negative word less than "
               + size_max + " (" + size_max_s + ").";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
@@ -57,7 +57,7 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
   }
   tests << is_size(pp::tup(samp::h8)) = "1" >> docs;
 
-  detail::is_size_o = def{"o(nat)"} = [&](arg nat) {
+  detail::is_size_o = def{"o(word)"} = [&](arg word) {
     def<> chk;
     if constexpr (size_lt_max) {
       chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
@@ -89,7 +89,13 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       def<"<\\1(int)">{} = [&](arg int_) {
         if constexpr (size_lt_max) {
           def<"<\\0(ihex)"> _0 = [&](arg ihex) {
-            return esc(chk + " " + impl::uhex(pp::cat(ihex, 'u'), "UTUP"));
+            def<"<\\0(ihex)"> _0 = [&](arg ihex) {
+              return esc(chk + " " + impl::uhex(pp::cat(ihex, 'u'), "UTUP"));
+            };
+            def<"<\\1(ihex)">{} = [&](arg) { return "0"; };
+
+            return pp::call(
+                xcat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ")), ihex);
           };
           def<"<\\1(idec)">{} = [&](arg idec) {
             return esc(chk + " "
@@ -113,13 +119,13 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       }
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(nat)), nat);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_size_o; };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_nat(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_word(args)), args);
 });
 
 } // namespace api

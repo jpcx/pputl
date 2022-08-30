@@ -45,7 +45,7 @@ inline codegen::category<"math"> math;
 extern codegen::def<"neg(...: word) -> word"> const&       neg;
 extern codegen::def<"add(...: word, word) -> word"> const& add;
 extern codegen::def<"sub(...: word, word) -> word"> const& sub;
-// extern codegen::def<"log2(...: nat) -> nat"> const&        log2;
+// extern codegen::def<"log2(...: word) -> word"> const&        log2;
 // extern codegen::def<"mul(...: l: uint, r: uint) -> uint{l * r}"> const& mul;
 // extern codegen::def<"fulldiv(...: l: uint, r: uint) -> uint{l / r}, uint{l % r}">
 // const&

@@ -67,12 +67,11 @@
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           list  any   none  obj   atom  enum  bool  hex   nybl  int        //
-//           idec  ihex  uint  udec  uhex  tup   utup  word  nat   size       //
+//           idec  ihex  uint  udec  uhex  tup   utup  word  size             //
 //       ‐ traits detection                                       [traits]    //
-//           is_list  is_any   is_none  is_obj  is_atom  is_enum              //
-//           is_bool  is_hex   is_nybl  is_int  is_idec  is_ihex              //
-//           is_uint  is_udec  is_uhex  is_tup  is_utup  is_word              //
-//           is_nat   is_size  typeof   sizeof                                //
+//           is_list  is_any   is_none  is_obj   is_atom  is_enum  is_bool    //
+//           is_hex   is_nybl  is_int   is_idec  is_ihex  is_uint  is_udec    //
+//           is_uhex  is_tup   is_utup  is_word  is_size  typeof   sizeof     //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -178,8 +177,7 @@
 //            ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b)]              //
 //            │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]      //
 //            └╴word: <union> int | uint | utup                               //
-//               └╴nat: a non-negative (natural) word                         //
-//                  └╴size: a natural word capped by the argument limit       //
+//               └╴size: a non-negative word capped by the argument limit     //
 //                                                                            //
 //    All pputl traits are fully testable except for atom,  which requires    //
 //    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
@@ -865,44 +863,10 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_nat]
-/// ---------------
-/// [extends PTL_IS_WORD] detects if args is a non-negative (natural) word.
-///
-/// PTL_IS_NAT(0)         // 1
-/// PTL_IS_NAT(0u)        // 1
-/// PTL_IS_NAT(foo)       // 0
-/// PTL_IS_NAT(())        // 0
-/// PTL_IS_NAT(A)         // 0
-/// PTL_IS_NAT(0x800)     // 0
-/// PTL_IS_NAT(255u)      // 1
-/// PTL_IS_NAT(4095u)     // 1
-/// PTL_IS_NAT(0xFFF)     // 0
-/// PTL_IS_NAT(0xFFFu)    // 1
-/// PTL_IS_NAT((0, 0, 8)) // 1
-#define PTL_IS_NAT(/* list */...) /* -> bool */ \
-  PTL_XCAT(PPUTLIS_NAT_, PTL_IS_WORD(__VA_ARGS__))(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIS_NAT_1           PPUTLIS_NAT_o
-#define PPUTLIS_NAT_0           PPUTLIS_NAT_0_fail
-#define PPUTLIS_NAT_0_fail(...) 0
-#define PPUTLIS_NAT_o(word)     PTL_XCAT(PPUTLIS_NAT_o_, PPUTLIS_TUP_o(word))(word)
-#define PPUTLIS_NAT_o_1(utup)   1
-#define PPUTLIS_NAT_o_0(atom)   PTL_XCAT(PPUTLIS_NAT_o_0, PPUTLIS_INT_o(atom))(atom)
-#define PPUTLIS_NAT_o_01(int)   PTL_XCAT(PPUTLIS_NAT_o_01, PPUTLIS_IDEC_o(int))(int)
-#define PPUTLIS_NAT_o_011(idec) 1
-#define PPUTLIS_NAT_o_010(ihex) PTL_XCAT(PPUTLIS_NAT_o_010, PPUTLIMPL_UHEX(ihex##u, ILTZ))
-#define PPUTLIS_NAT_o_0101      0
-#define PPUTLIS_NAT_o_0100      1
-#define PPUTLIS_NAT_o_00(uint)  1
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [traits.is_size]
 /// ----------------
-/// [extends PTL_IS_NAT] detects if args is a natural word less than PTL_SIZE_MAX (255u).
+/// [extends PTL_IS_WORD] detects if args is a non-negative word less than PTL_SIZE_MAX
+/// (255u).
 ///
 /// PTL_IS_SIZE(0)         // 1
 /// PTL_IS_SIZE(0u)        // 1
@@ -915,21 +879,25 @@
 /// PTL_IS_SIZE(255u)      // 1
 /// PTL_IS_SIZE((0, 0, 8)) // 1
 #define PTL_IS_SIZE(/* list */...) /* -> bool */ \
-  PTL_XCAT(PPUTLIS_SIZE_, PTL_IS_NAT(__VA_ARGS__))(__VA_ARGS__)
+  PTL_XCAT(PPUTLIS_SIZE_, PTL_IS_WORD(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_SIZE_1           PPUTLIS_SIZE_o
 #define PPUTLIS_SIZE_0           PPUTLIS_SIZE_0_fail
 #define PPUTLIS_SIZE_0_fail(...) 0
-#define PPUTLIS_SIZE_o(nat)      PTL_XCAT(PPUTLIS_SIZE_o_, PPUTLIS_TUP_o(nat))(nat)
+#define PPUTLIS_SIZE_o(word)     PTL_XCAT(PPUTLIS_SIZE_o_, PPUTLIS_TUP_o(word))(word)
 #define PPUTLIS_SIZE_o_1(utup)   PTL_ESC(PPUTLIS_SIZE_o_CHK utup)
 #define PPUTLIS_SIZE_o_0(atom)   PTL_XCAT(PPUTLIS_SIZE_o_0, PPUTLIS_INT_o(atom))(atom)
 #define PPUTLIS_SIZE_o_01(int)   PTL_XCAT(PPUTLIS_SIZE_o_01, PPUTLIS_IDEC_o(int))(int)
 #define PPUTLIS_SIZE_o_011(idec) \
   PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(idec##u, UHEX), UTUP))
-#define PPUTLIS_SIZE_o_010(ihex) PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(ihex##u, UTUP))
-#define PPUTLIS_SIZE_o_00(uint)  PTL_XCAT(PPUTLIS_SIZE_o_00, PPUTLIS_UDEC_o(uint))(uint)
+#define PPUTLIS_SIZE_o_010(ihex) \
+  PTL_XCAT(PPUTLIS_SIZE_o_010, PPUTLIMPL_UHEX(ihex##u, ILTZ))(ihex)
+#define PPUTLIS_SIZE_o_0101(ihex) 0
+#define PPUTLIS_SIZE_o_0100(ihex) \
+  PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(ihex##u, UTUP))
+#define PPUTLIS_SIZE_o_00(uint) PTL_XCAT(PPUTLIS_SIZE_o_00, PPUTLIS_UDEC_o(uint))(uint)
 #define PPUTLIS_SIZE_o_001(udec) \
   PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(udec, UHEX), UTUP))
 #define PPUTLIS_SIZE_o_000(uhex)    PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(uhex, UTUP))
@@ -1944,45 +1912,9 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.nat]
-/// ----------
-/// [inherits from PTL_WORD] a non-negative (natural) word.
-/// constructibe from any word type.
-///
-/// cannot parse negative decimals; use math.neg instead.
-/// hex length is fixed. cannot parse shorter hex lengths.
-///
-/// see type.word for available cast modes.
-///
-/// preserves hex/decimal representation by default.
-///
-/// cast between signed and unsigned reinterprets bits.
-///
-/// values above the int max must have a 'u' suffix; implicit interpretation
-/// as unsigned is not allowed (e.g. 4095 is not a valid integer).
-///
-/// PTL_NAT(0)     // 0
-/// PTL_NAT(1)     // 1
-/// PTL_NAT(0x007) // 0x007
-/// PTL_NAT(255u)  // 255u
-/// PTL_NAT(4095u) // 4095u
-#define PTL_NAT(                                                                \
-    /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> nat */ \
-  PPUTLNAT_o(PTL_STR([PTL_NAT] invalid nat; must be a natural word              \
-                     : __VA_ARGS__),                                            \
-             PTL_WORD(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLNAT_o(e, w)   PTL_XCAT(PPUTLNAT_o_, PPUTLIS_NAT_o(w))(e, w)
-#define PPUTLNAT_o_1(e, w) w
-#define PPUTLNAT_o_0(e, w) PTL_FAIL(e)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [type.size]
 /// -----------
-/// [inherits from PTL_NAT] a natural word less than PTL_SIZE_MAX (255u).
+/// [inherits from PTL_WORD] a non-negative word less than PTL_SIZE_MAX (255u).
 /// constructibe from any word type.
 ///
 /// cannot parse negative decimals; use math.neg instead.

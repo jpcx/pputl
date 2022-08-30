@@ -57,8 +57,6 @@ extern codegen::def<
     "word(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> word"> const&
     word;
 extern codegen::def<
-    "nat(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> nat"> const& nat;
-extern codegen::def<
     "size(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const&
     size;
 
@@ -80,7 +78,6 @@ NIFTY_DECL(uhex);
 NIFTY_DECL(tup);
 NIFTY_DECL(utup);
 NIFTY_DECL(word);
-NIFTY_DECL(nat);
 NIFTY_DECL(size);
 
 inline codegen::end_category<"type"> type_end;

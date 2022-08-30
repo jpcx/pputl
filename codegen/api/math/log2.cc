@@ -34,13 +34,12 @@
 // decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
 //   docs << "log2 lookup. value must be non-negative.";
 // 
-//   tests << log2("0u")                 = uint_max_s >> docs;
-//   tests << log2(0)                    = ("0x" + utl::cat(samp::hmax)) >> docs;
+//   tests << log2("0u")                 = "0u" >> docs;
+//   tests << log2(0)                    = 0 >> docs;
 //   tests << log2(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
 //   tests << log2(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
 // 
-//   return def<"o(nat)">{
-//       [&](arg n) { return nat(impl::udec(udec(n), "LOG2"), typeof(n)); }}(nat(args));
+//   return nat(impl::udec(udec(args), "LOG2"), typeof(args));
 // });
 // 
 // } // namespace api
