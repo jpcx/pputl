@@ -32,18 +32,16 @@ namespace api {
 using namespace codegen;
 
 decltype(size) size = NIFTY_DEF(size, [&](va args) {
-  docs << "[inherits from " + word + "] a word within 0 and " + size_max + " ("
+  docs << "[inherits from " + nat + "] a natural word less than " + size_max + " ("
               + size_max_s + ")."
-       << "constructibe from any word."
+       << "constructibe from any word type."
        << ""
        << "cannot parse negative decimals; use math.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
        << "see type.word for available cast modes."
        << ""
-       << "attempts to preserve hex/decimal representation by default, but"
-       << "will output hex if casting the input yields a negative number."
-       << "hint is ignored only if the result is negative and the hint is IDEC."
+       << "preserves hex/decimal representation by default."
        << ""
        << "cast between signed and unsigned reinterprets bits."
        << ""
@@ -51,11 +49,10 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  tests << size(0) = "0" >> docs;
-  tests << size(1) = "1" >> docs;
-  tests << size("0x" + utl::cat(samp::h7)) =
-      ("0x" + utl::cat(samp::h7)) >> docs;
-  tests << size(size_max_s) = size_max_s >> docs;
+  tests << size(0)                         = "0" >> docs;
+  tests << size(1)                         = "1" >> docs;
+  tests << size("0x" + utl::cat(samp::h7)) = ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << size(size_max_s)                = size_max_s >> docs;
 
   return def<"o(e, w)">{[&](arg e, arg w) {
     def<"\\0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };

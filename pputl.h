@@ -67,19 +67,20 @@
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           list  any   none  obj   atom  enum  bool  hex   nybl  int        //
-//           idec  ihex  uint  udec  uhex  tup   utup  word  size             //
+//           idec  ihex  uint  udec  uhex  tup   utup  word  nat   size       //
 //       ‐ traits detection                                       [traits]    //
-//           is_list  is_any   is_none  is_obj   is_atom  is_enum  is_bool    //
-//           is_hex   is_nybl  is_int   is_idec  is_ihex  is_uint  is_udec    //
-//           is_uhex  is_tup   is_utup  is_word  is_size  typeof   sizeof     //
+//           is_list  is_any   is_none  is_obj  is_atom  is_enum              //
+//           is_bool  is_hex   is_nybl  is_int  is_idec  is_ihex              //
+//           is_uint  is_udec  is_uhex  is_tup  is_utup  is_word              //
+//           is_nat   is_size  typeof   sizeof                                //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
 //           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                                      [numeric, math]    //
-//           inc  dec  add   sub   mul   divr                                 //
-//           div  mod  pow2  sqrt  log2  fact                                 //
+//           inc   dec  neg  add   sub   log2  mul                            //
+//           divr  div  mod  pow2  sqrt  fact                                 //
 //       ‐ comparison                                   [numeric, compare]    //
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
@@ -164,10 +165,10 @@
 //         ├╴none: nothing; an absence of pp-tokens                           //
 //         └╴obj: a non-empty generic value                                   //
 //            ├╴atom: an individual value that may form an identifier tail    //
-//            │  ├╴enum<...>: a value that matches a specified atom union     //
-//            │  │  ├╴bool: enum<0|1>                                         //
-//            │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>             //
-//            │  │  └╴nybl: enum<0000|0001|0010|...|1101|1110|1111>           //
+//            │  ├╴enum<v0|v1|...>: an atom that matches a specified union    //
+//            │  ├╴bool: a literal `1` or `0`                                 //
+//            │  ├╴hex:  a literal uppercase hexadecimal digit [e.g. F]       //
+//            │  ├╴nybl: a literal 4-bit bool concatenation [e.g. 0110]       //
 //            │  ├╴int: <abstract> a word-sized signed integer                //
 //            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //
 //            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //
@@ -177,7 +178,8 @@
 //            ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b)]              //
 //            │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]      //
 //            └╴word: <union> int | uint | utup                               //
-//               └╴size: an unsigned word capped by the argument limit        //
+//               └╴nat: a non-negative (natural) word                         //
+//                  └╴size: a natural word capped by the argument limit       //
 //                                                                            //
 //    All pputl traits are fully testable except for atom,  which requires    //
 //    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
@@ -210,7 +212,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220829
+#define PTL_BUILD /* -> <c++ int> */ 20220830
 
 /// [config.word_size]
 /// ------------------
@@ -564,7 +566,7 @@
 
 /// [traits.is_hex]
 /// ---------------
-/// [extends PTL_IS_ENUM] detects if args is an uppercase hexadecimal digit.
+/// [extends PTL_IS_ATOM] detects if args is an uppercase hexadecimal digit.
 ///
 /// PTL_IS_HEX()    // 0
 /// PTL_IS_HEX(0)   // 1
@@ -587,7 +589,7 @@
 
 /// [traits.is_nybl]
 /// ----------------
-/// [extends PTL_IS_ENUM] detects if args is a 4-bit bool concatenation.
+/// [extends PTL_IS_ATOM] detects if args is a 4-bit bool concatenation.
 ///
 /// PTL_IS_NYBL()     // 0
 /// PTL_IS_NYBL(0)    // 0
@@ -863,9 +865,44 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [traits.is_nat]
+/// ---------------
+/// [extends PTL_IS_WORD] detects if args is a non-negative (natural) word.
+///
+/// PTL_IS_NAT(0)         // 1
+/// PTL_IS_NAT(0u)        // 1
+/// PTL_IS_NAT(foo)       // 0
+/// PTL_IS_NAT(())        // 0
+/// PTL_IS_NAT(A)         // 0
+/// PTL_IS_NAT(0x800)     // 0
+/// PTL_IS_NAT(255u)      // 1
+/// PTL_IS_NAT(4095u)     // 1
+/// PTL_IS_NAT(0xFFF)     // 0
+/// PTL_IS_NAT(0xFFFu)    // 1
+/// PTL_IS_NAT((0, 0, 8)) // 1
+#define PTL_IS_NAT(/* list */...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_NAT_, PTL_IS_WORD(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_NAT_1           PPUTLIS_NAT_o
+#define PPUTLIS_NAT_0           PPUTLIS_NAT_0_fail
+#define PPUTLIS_NAT_0_fail(...) 0
+#define PPUTLIS_NAT_o(word)     PTL_XCAT(PPUTLIS_NAT_o_, PPUTLIS_TUP_o(word))(word)
+#define PPUTLIS_NAT_o_1(utup)   1
+#define PPUTLIS_NAT_o_0(atom)   PTL_XCAT(PPUTLIS_NAT_o_0, PPUTLIS_INT_o(atom))(atom)
+#define PPUTLIS_NAT_o_01(int)   PTL_XCAT(PPUTLIS_NAT_o_01, PPUTLIS_IDEC_o(int))(int)
+#define PPUTLIS_NAT_o_011(idec) 1
+#define PPUTLIS_NAT_o_010(ihex) PTL_XCAT(PPUTLIS_NAT_o_010, PPUTLIMPL_UHEX(ihex##u, ILTZ))
+#define PPUTLIS_NAT_o_0101      0
+#define PPUTLIS_NAT_o_0100      1
+#define PPUTLIS_NAT_o_00(uint)  1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_size]
 /// ----------------
-/// [extends PTL_IS_WORD] detects if args is a word within 0 and PTL_SIZE_MAX (255u).
+/// [extends PTL_IS_NAT] detects if args is a natural word less than PTL_SIZE_MAX (255u).
 ///
 /// PTL_IS_SIZE(0)         // 1
 /// PTL_IS_SIZE(0u)        // 1
@@ -878,26 +915,21 @@
 /// PTL_IS_SIZE(255u)      // 1
 /// PTL_IS_SIZE((0, 0, 8)) // 1
 #define PTL_IS_SIZE(/* list */...) /* -> bool */ \
-  PTL_XCAT(PPUTLIS_SIZE_, PTL_IS_WORD(__VA_ARGS__))(__VA_ARGS__)
+  PTL_XCAT(PPUTLIS_SIZE_, PTL_IS_NAT(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIS_SIZE_1           PPUTLIS_SIZE_o
 #define PPUTLIS_SIZE_0           PPUTLIS_SIZE_0_fail
 #define PPUTLIS_SIZE_0_fail(...) 0
-#define PPUTLIS_SIZE_o(word)     PTL_XCAT(PPUTLIS_SIZE_o_, PPUTLIS_TUP_o(word))(word)
+#define PPUTLIS_SIZE_o(nat)      PTL_XCAT(PPUTLIS_SIZE_o_, PPUTLIS_TUP_o(nat))(nat)
 #define PPUTLIS_SIZE_o_1(utup)   PTL_ESC(PPUTLIS_SIZE_o_CHK utup)
 #define PPUTLIS_SIZE_o_0(atom)   PTL_XCAT(PPUTLIS_SIZE_o_0, PPUTLIS_INT_o(atom))(atom)
 #define PPUTLIS_SIZE_o_01(int)   PTL_XCAT(PPUTLIS_SIZE_o_01, PPUTLIS_IDEC_o(int))(int)
 #define PPUTLIS_SIZE_o_011(idec) \
-  PTL_XCAT(PPUTLIS_SIZE_o_011, PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(idec##u, UHEX), ILTZ))
-#define PPUTLIS_SIZE_o_0111 0
-#define PPUTLIS_SIZE_o_0110 1
-#define PPUTLIS_SIZE_o_010(ihex) \
-  PTL_XCAT(PPUTLIS_SIZE_o_010, PPUTLIMPL_UHEX(ihex##u, ILTZ))
-#define PPUTLIS_SIZE_o_0101     0
-#define PPUTLIS_SIZE_o_0100     1
-#define PPUTLIS_SIZE_o_00(uint) PTL_XCAT(PPUTLIS_SIZE_o_00, PPUTLIS_UDEC_o(uint))(uint)
+  PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(idec##u, UHEX), UTUP))
+#define PPUTLIS_SIZE_o_010(ihex) PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(ihex##u, UTUP))
+#define PPUTLIS_SIZE_o_00(uint)  PTL_XCAT(PPUTLIS_SIZE_o_00, PPUTLIS_UDEC_o(uint))(uint)
 #define PPUTLIS_SIZE_o_001(udec) \
   PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(PPUTLIMPL_UDEC(udec, UHEX), UTUP))
 #define PPUTLIS_SIZE_o_000(uhex)    PTL_ESC(PPUTLIS_SIZE_o_CHK PPUTLIMPL_UHEX(uhex, UTUP))
@@ -1402,7 +1434,7 @@
 
 /// [type.hex]
 /// ----------
-/// [inherits from PTL_ENUM] uppercase hexadeicmal digit.
+/// [inherits from PTL_ATOM] uppercase hexadeicmal digit.
 /// constructible from either hex or nybl.
 /// expands to v if valid, else fails.
 ///
@@ -1427,7 +1459,7 @@
 
 /// [type.nybl]
 /// -----------
-/// [inherits from PTL_ENUM] 4-bit bool concatenation type.
+/// [inherits from PTL_ATOM] 4-bit bool concatenation type.
 /// constructible from either nybl or hex.
 /// expands to v if valid, else fails.
 ///
@@ -1453,7 +1485,7 @@
 /// [type.int]
 /// ----------
 /// [inherits from PTL_ATOM] 12-bit signed integer type.
-/// constructible from any word.
+/// constructible from any word type.
 /// instance is either idec or ihex.
 ///
 /// cannot parse negative decimals; use math.neg instead.
@@ -1603,7 +1635,7 @@
 /// [type.uint]
 /// -----------
 /// [inherits from PTL_ATOM] 12-bit unsigned integer type.
-/// constructible from any word.
+/// constructible from any word type.
 /// instance is either udec or uhex.
 ///
 /// cannot parse negative decimals; use math.neg instead.
@@ -1795,7 +1827,7 @@
 /// [type.word]
 /// -----------
 /// [inherits from PTL_OBJ] a union of int|uint|utup.
-/// constructibe from any word.
+/// constructibe from any word type.
 ///
 /// cannot parse negative decimals; use math.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
@@ -1912,19 +1944,53 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [type.size]
-/// -----------
-/// [inherits from PTL_WORD] a word within 0 and PTL_SIZE_MAX (255u).
-/// constructibe from any word.
+/// [type.nat]
+/// ----------
+/// [inherits from PTL_WORD] a non-negative (natural) word.
+/// constructibe from any word type.
 ///
 /// cannot parse negative decimals; use math.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
 /// see type.word for available cast modes.
 ///
-/// attempts to preserve hex/decimal representation by default, but
-/// will output hex if casting the input yields a negative number.
-/// hint is ignored only if the result is negative and the hint is IDEC.
+/// preserves hex/decimal representation by default.
+///
+/// cast between signed and unsigned reinterprets bits.
+///
+/// values above the int max must have a 'u' suffix; implicit interpretation
+/// as unsigned is not allowed (e.g. 4095 is not a valid integer).
+///
+/// PTL_NAT(0)     // 0
+/// PTL_NAT(1)     // 1
+/// PTL_NAT(0x007) // 0x007
+/// PTL_NAT(255u)  // 255u
+/// PTL_NAT(4095u) // 4095u
+#define PTL_NAT(                                                                \
+    /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> nat */ \
+  PPUTLNAT_o(PTL_STR([PTL_NAT] invalid nat; must be a natural word              \
+                     : __VA_ARGS__),                                            \
+             PTL_WORD(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLNAT_o(e, w)   PTL_XCAT(PPUTLNAT_o_, PPUTLIS_NAT_o(w))(e, w)
+#define PPUTLNAT_o_1(e, w) w
+#define PPUTLNAT_o_0(e, w) PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.size]
+/// -----------
+/// [inherits from PTL_NAT] a natural word less than PTL_SIZE_MAX (255u).
+/// constructibe from any word type.
+///
+/// cannot parse negative decimals; use math.neg instead.
+/// hex length is fixed. cannot parse shorter hex lengths.
+///
+/// see type.word for available cast modes.
+///
+/// preserves hex/decimal representation by default.
 ///
 /// cast between signed and unsigned reinterprets bits.
 ///
@@ -2628,10 +2694,9 @@
 /// --------------
 /// bitwise AND operation.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_BAND(0, 0)         // 0
 /// PTL_BAND(0, 1)         // 0
@@ -2658,10 +2723,9 @@
 /// -------------
 /// bitwise OR operation.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_BOR(0, 0)        // 0
 /// PTL_BOR(0, 1)        // 1
@@ -2688,10 +2752,9 @@
 /// --------------
 /// bitwise XOR operation.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_BXOR(0, 0)         // 0
 /// PTL_BXOR(0, 1)         // 1
@@ -2720,10 +2783,9 @@
 /// ---------------
 /// bitwise NAND.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_BNAND(0, 0)                 // 0xFFF
 /// PTL_BNAND(5, 7)                 // 0xFFA
@@ -2742,10 +2804,9 @@
 /// --------------
 /// bitwise NOR.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_BNOR(0, 0) // 0xFFF
 /// PTL_BNOR(0, 1) // 0xFFE
@@ -2765,10 +2826,9 @@
 /// ---------------
 /// bitwise XNOR.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_BXNOR(0, 0)  // 0xFFF
 /// PTL_BXNOR(0, 1)  // 0xFFE
@@ -3393,10 +3453,9 @@
 /// ----------
 /// addition with overflow.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_ADD(0, 0)            // 0
 /// PTL_ADD(0, 1)            // 1
@@ -3429,10 +3488,9 @@
 /// ----------
 /// subtraction with underflow.
 ///
-/// returns unsigned if either operand is unsigned,
-/// decimal if either operand is decimal (and the
-/// result is non-negative), utup if both operands
-/// are utup, and hex otherwise.
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
 ///
 /// PTL_SUB(0, 0)      // 0
 /// PTL_SUB(0, 1)      // 0xFFF
@@ -3443,8 +3501,22 @@
 /// PTL_SUB(1u, 3u)    // 4094u
 /// PTL_SUB(0, 0x800)  // 0x800
 /// PTL_SUB(0u, 0x800) // 2048u
-#define PTL_SUB(/* word, word */...) /* -> word */ \
-  PTL_ADD(PTL_FIRST(__VA_ARGS__), PTL_NEG(PTL_REST(__VA_ARGS__)))
+#define PTL_SUB(/* word, word */...) /* -> word */ PPUTLSUB_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLSUB_o(a, b)                         \
+  PPUTLSUB_RES(PTL_TYPEOF(a), PTL_TYPEOF(b),     \
+               PPUTLSUB_R(PPUTLSUB_R(PPUTLSUB_R( \
+                   0, PPUTLSUB_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
+#define PPUTLSUB_RES(ta, tb, ...) \
+  PTL_WORD(PPUTLSUB_RES_o(__VA_ARGS__), PPUTLIMPL_ARITHHINT(ta, tb))
+#define PPUTLSUB_RES_o(_, a, b, c, d, e, f) (a, b, c)
+#define PPUTLSUB_R(...)                     PPUTLSUB_R_o(__VA_ARGS__)
+#define PPUTLSUB_R_o(_, a, b, c, d, e, f)   PPUTLIMPL_HEXHEX(c##f, SUB##_), a, b, f, d, e
+#define PPUTLSUB_X(...)                     __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [range.items]
 /// -------------
@@ -3518,286 +3590,285 @@
 /// [impl.traits.hexhex]
 /// --------------------
 /// [internal] hex pair (hex##hex) traits
-#define PPUTLIMPL_HEXHEX(/* {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD0|ADD1} */ v, \
-                         t)                                                              \
+#define PPUTLIMPL_HEXHEX(                                                     \
+    /* {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB0-1|ADD0-1|MUL0-E} */ v, t) \
   PPUTLIMPL_HEXHEX_o(t, PTL_XCAT(PPUTLIMPL_HEXHEX_, v))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIMPL_HEXHEX_o(t, ...) PPUTLIMPL_HEXHEX_##t(__VA_ARGS__)
 
-#define PPUTLIMPL_HEXHEX_ADD1(l, a, o, x, sc, ss, a0c, a0s, a1c, a1s) /* -> bool, hex */ \
-  a1c, a1s
-#define PPUTLIMPL_HEXHEX_ADD0(l, a, o, x, sc, ss, a0c, a0s, ...) /* -> bool, hex */ \
-  a0c, a0s
-#define PPUTLIMPL_HEXHEX_SUB(l, a, o, x, sc, ss, ...) /* -> bool, hex */ sc, ss
-#define PPUTLIMPL_HEXHEX_XOR(l, a, o, x, ...)         /* -> hex */ x
-#define PPUTLIMPL_HEXHEX_OR(l, a, o, ...)             /* -> hex */ o
-#define PPUTLIMPL_HEXHEX_AND(l, a, ...)               /* -> hex */ a
-#define PPUTLIMPL_HEXHEX_LT(l, ...)                   /* -> bool */ l
+#define PPUTLIMPL_HEXHEX_ADD1(a, b, c, d, e, f, g, h, i, j, k, l, ...) k, l
+#define PPUTLIMPL_HEXHEX_ADD0(a, b, c, d, e, f, g, h, i, j, ...)       i, j
+#define PPUTLIMPL_HEXHEX_SUB1(a, b, c, d, e, f, g, h, ...)             g, h
+#define PPUTLIMPL_HEXHEX_SUB0(a, b, c, d, e, f, ...)                   e, f
+#define PPUTLIMPL_HEXHEX_XOR(a, b, c, d, ...)                          d
+#define PPUTLIMPL_HEXHEX_OR(a, b, c, ...)                              c
+#define PPUTLIMPL_HEXHEX_AND(a, b, ...)                                b
+#define PPUTLIMPL_HEXHEX_LT(a, ...)                                    a
 
 #define PPUTLIMPL_HEXHEX_IS(_, ...) /* -> bool */ PPUTLIMPL_HEXHEX_IS_0##__VA_OPT__(1)
 
 #define PPUTLIMPL_HEXHEX_IS_01 1
 #define PPUTLIMPL_HEXHEX_IS_0  0
 
-/// lt, and, or, xor, sub carry, sub, add0 carry, add0 sum, add1 carry, add1 sum
-#define PPUTLIMPL_HEXHEX_FF 0, F, F, 0, 0, 0, 1, E, 1, F
-#define PPUTLIMPL_HEXHEX_FE 0, E, F, 1, 0, 1, 1, D, 1, E
-#define PPUTLIMPL_HEXHEX_FD 0, D, F, 2, 0, 2, 1, C, 1, D
-#define PPUTLIMPL_HEXHEX_FC 0, C, F, 3, 0, 3, 1, B, 1, C
-#define PPUTLIMPL_HEXHEX_FB 0, B, F, 4, 0, 4, 1, A, 1, B
-#define PPUTLIMPL_HEXHEX_FA 0, A, F, 5, 0, 5, 1, 9, 1, A
-#define PPUTLIMPL_HEXHEX_F9 0, 9, F, 6, 0, 6, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_F8 0, 8, F, 7, 0, 7, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_F7 0, 7, F, 8, 0, 8, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_F6 0, 6, F, 9, 0, 9, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_F5 0, 5, F, A, 0, A, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_F4 0, 4, F, B, 0, B, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_F3 0, 3, F, C, 0, C, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_F2 0, 2, F, D, 0, D, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_F1 0, 1, F, E, 0, E, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_F0 0, 0, F, F, 0, F, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_EF 1, E, F, 1, 1, F, 1, D, 1, E
-#define PPUTLIMPL_HEXHEX_EE 0, E, E, 0, 0, 0, 1, C, 1, D
-#define PPUTLIMPL_HEXHEX_ED 0, C, F, 3, 0, 1, 1, B, 1, C
-#define PPUTLIMPL_HEXHEX_EC 0, C, E, 2, 0, 2, 1, A, 1, B
-#define PPUTLIMPL_HEXHEX_EB 0, A, F, 5, 0, 3, 1, 9, 1, A
-#define PPUTLIMPL_HEXHEX_EA 0, A, E, 4, 0, 4, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_E9 0, 8, F, 7, 0, 5, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_E8 0, 8, E, 6, 0, 6, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_E7 0, 6, F, 9, 0, 7, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_E6 0, 6, E, 8, 0, 8, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_E5 0, 4, F, B, 0, 9, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_E4 0, 4, E, A, 0, A, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_E3 0, 2, F, D, 0, B, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_E2 0, 2, E, C, 0, C, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_E1 0, 0, F, F, 0, D, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_E0 0, 0, E, E, 0, E, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_DF 1, D, F, 2, 1, E, 1, C, 1, D
-#define PPUTLIMPL_HEXHEX_DE 1, C, F, 3, 1, F, 1, B, 1, C
-#define PPUTLIMPL_HEXHEX_DD 0, D, D, 0, 0, 0, 1, A, 1, B
-#define PPUTLIMPL_HEXHEX_DC 0, C, D, 1, 0, 1, 1, 9, 1, A
-#define PPUTLIMPL_HEXHEX_DB 0, 9, F, 6, 0, 2, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_DA 0, 8, F, 7, 0, 3, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_D9 0, 9, D, 4, 0, 4, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_D8 0, 8, D, 5, 0, 5, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_D7 0, 5, F, A, 0, 6, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_D6 0, 4, F, B, 0, 7, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_D5 0, 5, D, 8, 0, 8, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_D4 0, 4, D, 9, 0, 9, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_D3 0, 1, F, E, 0, A, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_D2 0, 0, F, F, 0, B, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_D1 0, 1, D, C, 0, C, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_D0 0, 0, D, D, 0, D, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_CF 1, C, F, 3, 1, D, 1, B, 1, C
-#define PPUTLIMPL_HEXHEX_CE 1, C, E, 2, 1, E, 1, A, 1, B
-#define PPUTLIMPL_HEXHEX_CD 1, C, D, 1, 1, F, 1, 9, 1, A
-#define PPUTLIMPL_HEXHEX_CC 0, C, C, 0, 0, 0, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_CB 0, 8, F, 7, 0, 1, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_CA 0, 8, E, 6, 0, 2, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_C9 0, 8, D, 5, 0, 3, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_C8 0, 8, C, 4, 0, 4, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_C7 0, 4, F, B, 0, 5, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_C6 0, 4, E, A, 0, 6, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_C5 0, 4, D, 9, 0, 7, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_C4 0, 4, C, 8, 0, 8, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_C3 0, 0, F, F, 0, 9, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_C2 0, 0, E, E, 0, A, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_C1 0, 0, D, D, 0, B, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_C0 0, 0, C, C, 0, C, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_BF 1, B, F, 4, 1, C, 1, A, 1, B
-#define PPUTLIMPL_HEXHEX_BE 1, A, F, 5, 1, D, 1, 9, 1, A
-#define PPUTLIMPL_HEXHEX_BD 1, 9, F, 6, 1, E, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_BC 1, 8, F, 7, 1, F, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_BB 0, B, B, 0, 0, 0, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_BA 0, A, B, 1, 0, 1, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_B9 0, 9, B, 2, 0, 2, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_B8 0, 8, B, 3, 0, 3, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_B7 0, 3, F, C, 0, 4, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_B6 0, 2, F, D, 0, 5, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_B5 0, 1, F, E, 0, 6, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_B4 0, 0, F, F, 0, 7, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_B3 0, 3, B, 8, 0, 8, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_B2 0, 2, B, 9, 0, 9, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_B1 0, 1, B, A, 0, A, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_B0 0, 0, B, B, 0, B, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_AF 1, A, F, 5, 1, B, 1, 9, 1, A
-#define PPUTLIMPL_HEXHEX_AE 1, A, E, 4, 1, C, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_AD 1, 8, F, 7, 1, D, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_AC 1, 8, E, 6, 1, E, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_AB 1, A, B, 1, 1, F, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_AA 0, A, A, 0, 0, 0, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_A9 0, 8, B, 3, 0, 1, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_A8 0, 8, A, 2, 0, 2, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_A7 0, 2, F, D, 0, 3, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_A6 0, 2, E, C, 0, 4, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_A5 0, 0, F, F, 0, 5, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_A4 0, 0, E, E, 0, 6, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_A3 0, 2, B, 9, 0, 7, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_A2 0, 2, A, 8, 0, 8, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_A1 0, 0, B, B, 0, 9, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_A0 0, 0, A, A, 0, A, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_9F 1, 9, F, 6, 1, A, 1, 8, 1, 9
-#define PPUTLIMPL_HEXHEX_9E 1, 8, F, 7, 1, B, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_9D 1, 9, D, 4, 1, C, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_9C 1, 8, D, 5, 1, D, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_9B 1, 9, B, 2, 1, E, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_9A 1, 8, B, 3, 1, F, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_99 0, 9, 9, 0, 0, 0, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_98 0, 8, 9, 1, 0, 1, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_97 0, 1, F, E, 0, 2, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_96 0, 0, F, F, 0, 3, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_95 0, 1, D, C, 0, 4, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_94 0, 0, D, D, 0, 5, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_93 0, 1, B, A, 0, 6, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_92 0, 0, B, B, 0, 7, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_91 0, 1, 9, 8, 0, 8, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_90 0, 0, 9, 9, 0, 9, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_8F 1, 8, F, 7, 1, 9, 1, 7, 1, 8
-#define PPUTLIMPL_HEXHEX_8E 1, 8, E, 6, 1, A, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_8D 1, 8, D, 5, 1, B, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_8C 1, 8, C, 4, 1, C, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_8B 1, 8, B, 3, 1, D, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_8A 1, 8, A, 2, 1, E, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_89 1, 8, 9, 1, 1, F, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_88 0, 8, 8, 0, 0, 0, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_87 0, 0, F, F, 0, 1, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_86 0, 0, E, E, 0, 2, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_85 0, 0, D, D, 0, 3, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_84 0, 0, C, C, 0, 4, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_83 0, 0, B, B, 0, 5, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_82 0, 0, A, A, 0, 6, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_81 0, 0, 9, 9, 0, 7, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_80 0, 0, 8, 8, 0, 8, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_7F 1, 7, F, 8, 1, 8, 1, 6, 1, 7
-#define PPUTLIMPL_HEXHEX_7E 1, 6, F, 9, 1, 9, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_7D 1, 5, F, A, 1, A, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_7C 1, 4, F, B, 1, B, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_7B 1, 3, F, C, 1, C, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_7A 1, 2, F, D, 1, D, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_79 1, 1, F, E, 1, E, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_78 1, 0, F, F, 1, F, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_77 0, 7, 7, 0, 0, 0, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_76 0, 6, 7, 1, 0, 1, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_75 0, 5, 7, 2, 0, 2, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_74 0, 4, 7, 3, 0, 3, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_73 0, 3, 7, 4, 0, 4, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_72 0, 2, 7, 5, 0, 5, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_71 0, 1, 7, 6, 0, 6, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_70 0, 0, 7, 7, 0, 7, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_6F 1, 6, F, 9, 1, 7, 1, 5, 1, 6
-#define PPUTLIMPL_HEXHEX_6E 1, 6, E, 8, 1, 8, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_6D 1, 4, F, B, 1, 9, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_6C 1, 4, E, A, 1, A, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_6B 1, 2, F, D, 1, B, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_6A 1, 2, E, C, 1, C, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_69 1, 0, F, F, 1, D, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_68 1, 0, E, E, 1, E, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_67 1, 6, 7, 1, 1, F, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_66 0, 6, 6, 0, 0, 0, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_65 0, 4, 7, 3, 0, 1, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_64 0, 4, 6, 2, 0, 2, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_63 0, 2, 7, 5, 0, 3, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_62 0, 2, 6, 4, 0, 4, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_61 0, 0, 7, 7, 0, 5, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_60 0, 0, 6, 6, 0, 6, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_5F 1, 5, F, A, 1, 6, 1, 4, 1, 5
-#define PPUTLIMPL_HEXHEX_5E 1, 4, F, B, 1, 7, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_5D 1, 5, D, 8, 1, 8, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_5C 1, 4, D, 9, 1, 9, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_5B 1, 1, F, E, 1, A, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_5A 1, 0, F, F, 1, B, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_59 1, 1, D, C, 1, C, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_58 1, 0, D, D, 1, D, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_57 1, 5, 7, 2, 1, E, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_56 1, 4, 7, 3, 1, F, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_55 0, 5, 5, 0, 0, 0, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_54 0, 4, 5, 1, 0, 1, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_53 0, 1, 7, 6, 0, 2, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_52 0, 0, 7, 7, 0, 3, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_51 0, 1, 5, 4, 0, 4, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_50 0, 0, 5, 5, 0, 5, 0, 5, 0, 6
-#define PPUTLIMPL_HEXHEX_4F 1, 4, F, B, 1, 5, 1, 3, 1, 4
-#define PPUTLIMPL_HEXHEX_4E 1, 4, E, A, 1, 6, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_4D 1, 4, D, 9, 1, 7, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_4C 1, 4, C, 8, 1, 8, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_4B 1, 0, F, F, 1, 9, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_4A 1, 0, E, E, 1, A, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_49 1, 0, D, D, 1, B, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_48 1, 0, C, C, 1, C, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_47 1, 4, 7, 3, 1, D, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_46 1, 4, 6, 2, 1, E, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_45 1, 4, 5, 1, 1, F, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_44 0, 4, 4, 0, 0, 0, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_43 0, 0, 7, 7, 0, 1, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_42 0, 0, 6, 6, 0, 2, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_41 0, 0, 5, 5, 0, 3, 0, 5, 0, 6
-#define PPUTLIMPL_HEXHEX_40 0, 0, 4, 4, 0, 4, 0, 4, 0, 5
-#define PPUTLIMPL_HEXHEX_3F 1, 3, F, C, 1, 4, 1, 2, 1, 3
-#define PPUTLIMPL_HEXHEX_3E 1, 2, F, D, 1, 5, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_3D 1, 1, F, E, 1, 6, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_3C 1, 0, F, F, 1, 7, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_3B 1, 3, B, 8, 1, 8, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_3A 1, 2, B, 9, 1, 9, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_39 1, 1, B, A, 1, A, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_38 1, 0, B, B, 1, B, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_37 1, 3, 7, 4, 1, C, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_36 1, 2, 7, 5, 1, D, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_35 1, 1, 7, 6, 1, E, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_34 1, 0, 7, 7, 1, F, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_33 0, 3, 3, 0, 0, 0, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_32 0, 2, 3, 1, 0, 1, 0, 5, 0, 6
-#define PPUTLIMPL_HEXHEX_31 0, 1, 3, 2, 0, 2, 0, 4, 0, 5
-#define PPUTLIMPL_HEXHEX_30 0, 0, 3, 3, 0, 3, 0, 3, 0, 4
-#define PPUTLIMPL_HEXHEX_2F 1, 2, F, D, 1, 3, 1, 1, 1, 2
-#define PPUTLIMPL_HEXHEX_2E 1, 2, E, C, 1, 4, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_2D 1, 0, F, F, 1, 5, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_2C 1, 0, E, E, 1, 6, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_2B 1, 2, B, 9, 1, 7, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_2A 1, 2, A, 8, 1, 8, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_29 1, 0, B, B, 1, 9, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_28 1, 0, A, A, 1, A, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_27 1, 2, 7, 5, 1, B, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_26 1, 2, 6, 4, 1, C, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_25 1, 0, 7, 7, 1, D, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_24 1, 0, 6, 6, 1, E, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_23 1, 2, 3, 1, 1, F, 0, 5, 0, 6
-#define PPUTLIMPL_HEXHEX_22 0, 2, 2, 0, 0, 0, 0, 4, 0, 5
-#define PPUTLIMPL_HEXHEX_21 0, 0, 3, 3, 0, 1, 0, 3, 0, 4
-#define PPUTLIMPL_HEXHEX_20 0, 0, 2, 2, 0, 2, 0, 2, 0, 3
-#define PPUTLIMPL_HEXHEX_1F 1, 1, F, E, 1, 2, 1, 0, 1, 1
-#define PPUTLIMPL_HEXHEX_1E 1, 0, F, F, 1, 3, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_1D 1, 1, D, C, 1, 4, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_1C 1, 0, D, D, 1, 5, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_1B 1, 1, B, A, 1, 6, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_1A 1, 0, B, B, 1, 7, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_19 1, 1, 9, 8, 1, 8, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_18 1, 0, 9, 9, 1, 9, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_17 1, 1, 7, 6, 1, A, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_16 1, 0, 7, 7, 1, B, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_15 1, 1, 5, 4, 1, C, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_14 1, 0, 5, 5, 1, D, 0, 5, 0, 6
-#define PPUTLIMPL_HEXHEX_13 1, 1, 3, 2, 1, E, 0, 4, 0, 5
-#define PPUTLIMPL_HEXHEX_12 1, 0, 3, 3, 1, F, 0, 3, 0, 4
-#define PPUTLIMPL_HEXHEX_11 0, 1, 1, 0, 0, 0, 0, 2, 0, 3
-#define PPUTLIMPL_HEXHEX_10 0, 0, 1, 1, 0, 1, 0, 1, 0, 2
-#define PPUTLIMPL_HEXHEX_0F 1, 0, F, F, 1, 1, 0, F, 1, 0
-#define PPUTLIMPL_HEXHEX_0E 1, 0, E, E, 1, 2, 0, E, 0, F
-#define PPUTLIMPL_HEXHEX_0D 1, 0, D, D, 1, 3, 0, D, 0, E
-#define PPUTLIMPL_HEXHEX_0C 1, 0, C, C, 1, 4, 0, C, 0, D
-#define PPUTLIMPL_HEXHEX_0B 1, 0, B, B, 1, 5, 0, B, 0, C
-#define PPUTLIMPL_HEXHEX_0A 1, 0, A, A, 1, 6, 0, A, 0, B
-#define PPUTLIMPL_HEXHEX_09 1, 0, 9, 9, 1, 7, 0, 9, 0, A
-#define PPUTLIMPL_HEXHEX_08 1, 0, 8, 8, 1, 8, 0, 8, 0, 9
-#define PPUTLIMPL_HEXHEX_07 1, 0, 7, 7, 1, 9, 0, 7, 0, 8
-#define PPUTLIMPL_HEXHEX_06 1, 0, 6, 6, 1, A, 0, 6, 0, 7
-#define PPUTLIMPL_HEXHEX_05 1, 0, 5, 5, 1, B, 0, 5, 0, 6
-#define PPUTLIMPL_HEXHEX_04 1, 0, 4, 4, 1, C, 0, 4, 0, 5
-#define PPUTLIMPL_HEXHEX_03 1, 0, 3, 3, 1, D, 0, 3, 0, 4
-#define PPUTLIMPL_HEXHEX_02 1, 0, 2, 2, 1, E, 0, 2, 0, 3
-#define PPUTLIMPL_HEXHEX_01 1, 0, 1, 1, 1, F, 0, 1, 0, 2
-#define PPUTLIMPL_HEXHEX_00 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+/// lt, and, or, xor, sub0-1 carry, sub0-1, add0-1 carry, add0-1
+#define PPUTLIMPL_HEXHEX_FF 0, F, F, 0, 0, 0, 1, F, 1, E, 1, F
+#define PPUTLIMPL_HEXHEX_FE 0, E, F, 1, 0, 1, 0, 0, 1, D, 1, E
+#define PPUTLIMPL_HEXHEX_FD 0, D, F, 2, 0, 2, 0, 1, 1, C, 1, D
+#define PPUTLIMPL_HEXHEX_FC 0, C, F, 3, 0, 3, 0, 2, 1, B, 1, C
+#define PPUTLIMPL_HEXHEX_FB 0, B, F, 4, 0, 4, 0, 3, 1, A, 1, B
+#define PPUTLIMPL_HEXHEX_FA 0, A, F, 5, 0, 5, 0, 4, 1, 9, 1, A
+#define PPUTLIMPL_HEXHEX_F9 0, 9, F, 6, 0, 6, 0, 5, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_F8 0, 8, F, 7, 0, 7, 0, 6, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_F7 0, 7, F, 8, 0, 8, 0, 7, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_F6 0, 6, F, 9, 0, 9, 0, 8, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_F5 0, 5, F, A, 0, A, 0, 9, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_F4 0, 4, F, B, 0, B, 0, A, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_F3 0, 3, F, C, 0, C, 0, B, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_F2 0, 2, F, D, 0, D, 0, C, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_F1 0, 1, F, E, 0, E, 0, D, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_F0 0, 0, F, F, 0, F, 0, E, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_EF 1, E, F, 1, 1, F, 1, E, 1, D, 1, E
+#define PPUTLIMPL_HEXHEX_EE 0, E, E, 0, 0, 0, 1, F, 1, C, 1, D
+#define PPUTLIMPL_HEXHEX_ED 0, C, F, 3, 0, 1, 0, 0, 1, B, 1, C
+#define PPUTLIMPL_HEXHEX_EC 0, C, E, 2, 0, 2, 0, 1, 1, A, 1, B
+#define PPUTLIMPL_HEXHEX_EB 0, A, F, 5, 0, 3, 0, 2, 1, 9, 1, A
+#define PPUTLIMPL_HEXHEX_EA 0, A, E, 4, 0, 4, 0, 3, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_E9 0, 8, F, 7, 0, 5, 0, 4, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_E8 0, 8, E, 6, 0, 6, 0, 5, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_E7 0, 6, F, 9, 0, 7, 0, 6, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_E6 0, 6, E, 8, 0, 8, 0, 7, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_E5 0, 4, F, B, 0, 9, 0, 8, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_E4 0, 4, E, A, 0, A, 0, 9, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_E3 0, 2, F, D, 0, B, 0, A, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_E2 0, 2, E, C, 0, C, 0, B, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_E1 0, 0, F, F, 0, D, 0, C, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_E0 0, 0, E, E, 0, E, 0, D, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_DF 1, D, F, 2, 1, E, 1, D, 1, C, 1, D
+#define PPUTLIMPL_HEXHEX_DE 1, C, F, 3, 1, F, 1, E, 1, B, 1, C
+#define PPUTLIMPL_HEXHEX_DD 0, D, D, 0, 0, 0, 1, F, 1, A, 1, B
+#define PPUTLIMPL_HEXHEX_DC 0, C, D, 1, 0, 1, 0, 0, 1, 9, 1, A
+#define PPUTLIMPL_HEXHEX_DB 0, 9, F, 6, 0, 2, 0, 1, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_DA 0, 8, F, 7, 0, 3, 0, 2, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_D9 0, 9, D, 4, 0, 4, 0, 3, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_D8 0, 8, D, 5, 0, 5, 0, 4, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_D7 0, 5, F, A, 0, 6, 0, 5, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_D6 0, 4, F, B, 0, 7, 0, 6, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_D5 0, 5, D, 8, 0, 8, 0, 7, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_D4 0, 4, D, 9, 0, 9, 0, 8, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_D3 0, 1, F, E, 0, A, 0, 9, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_D2 0, 0, F, F, 0, B, 0, A, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_D1 0, 1, D, C, 0, C, 0, B, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_D0 0, 0, D, D, 0, D, 0, C, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_CF 1, C, F, 3, 1, D, 1, C, 1, B, 1, C
+#define PPUTLIMPL_HEXHEX_CE 1, C, E, 2, 1, E, 1, D, 1, A, 1, B
+#define PPUTLIMPL_HEXHEX_CD 1, C, D, 1, 1, F, 1, E, 1, 9, 1, A
+#define PPUTLIMPL_HEXHEX_CC 0, C, C, 0, 0, 0, 1, F, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_CB 0, 8, F, 7, 0, 1, 0, 0, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_CA 0, 8, E, 6, 0, 2, 0, 1, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_C9 0, 8, D, 5, 0, 3, 0, 2, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_C8 0, 8, C, 4, 0, 4, 0, 3, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_C7 0, 4, F, B, 0, 5, 0, 4, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_C6 0, 4, E, A, 0, 6, 0, 5, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_C5 0, 4, D, 9, 0, 7, 0, 6, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_C4 0, 4, C, 8, 0, 8, 0, 7, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_C3 0, 0, F, F, 0, 9, 0, 8, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_C2 0, 0, E, E, 0, A, 0, 9, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_C1 0, 0, D, D, 0, B, 0, A, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_C0 0, 0, C, C, 0, C, 0, B, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_BF 1, B, F, 4, 1, C, 1, B, 1, A, 1, B
+#define PPUTLIMPL_HEXHEX_BE 1, A, F, 5, 1, D, 1, C, 1, 9, 1, A
+#define PPUTLIMPL_HEXHEX_BD 1, 9, F, 6, 1, E, 1, D, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_BC 1, 8, F, 7, 1, F, 1, E, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_BB 0, B, B, 0, 0, 0, 1, F, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_BA 0, A, B, 1, 0, 1, 0, 0, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_B9 0, 9, B, 2, 0, 2, 0, 1, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_B8 0, 8, B, 3, 0, 3, 0, 2, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_B7 0, 3, F, C, 0, 4, 0, 3, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_B6 0, 2, F, D, 0, 5, 0, 4, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_B5 0, 1, F, E, 0, 6, 0, 5, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_B4 0, 0, F, F, 0, 7, 0, 6, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_B3 0, 3, B, 8, 0, 8, 0, 7, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_B2 0, 2, B, 9, 0, 9, 0, 8, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_B1 0, 1, B, A, 0, A, 0, 9, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_B0 0, 0, B, B, 0, B, 0, A, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_AF 1, A, F, 5, 1, B, 1, A, 1, 9, 1, A
+#define PPUTLIMPL_HEXHEX_AE 1, A, E, 4, 1, C, 1, B, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_AD 1, 8, F, 7, 1, D, 1, C, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_AC 1, 8, E, 6, 1, E, 1, D, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_AB 1, A, B, 1, 1, F, 1, E, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_AA 0, A, A, 0, 0, 0, 1, F, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_A9 0, 8, B, 3, 0, 1, 0, 0, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_A8 0, 8, A, 2, 0, 2, 0, 1, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_A7 0, 2, F, D, 0, 3, 0, 2, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_A6 0, 2, E, C, 0, 4, 0, 3, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_A5 0, 0, F, F, 0, 5, 0, 4, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_A4 0, 0, E, E, 0, 6, 0, 5, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_A3 0, 2, B, 9, 0, 7, 0, 6, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_A2 0, 2, A, 8, 0, 8, 0, 7, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_A1 0, 0, B, B, 0, 9, 0, 8, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_A0 0, 0, A, A, 0, A, 0, 9, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_9F 1, 9, F, 6, 1, A, 1, 9, 1, 8, 1, 9
+#define PPUTLIMPL_HEXHEX_9E 1, 8, F, 7, 1, B, 1, A, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_9D 1, 9, D, 4, 1, C, 1, B, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_9C 1, 8, D, 5, 1, D, 1, C, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_9B 1, 9, B, 2, 1, E, 1, D, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_9A 1, 8, B, 3, 1, F, 1, E, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_99 0, 9, 9, 0, 0, 0, 1, F, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_98 0, 8, 9, 1, 0, 1, 0, 0, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_97 0, 1, F, E, 0, 2, 0, 1, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_96 0, 0, F, F, 0, 3, 0, 2, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_95 0, 1, D, C, 0, 4, 0, 3, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_94 0, 0, D, D, 0, 5, 0, 4, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_93 0, 1, B, A, 0, 6, 0, 5, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_92 0, 0, B, B, 0, 7, 0, 6, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_91 0, 1, 9, 8, 0, 8, 0, 7, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_90 0, 0, 9, 9, 0, 9, 0, 8, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_8F 1, 8, F, 7, 1, 9, 1, 8, 1, 7, 1, 8
+#define PPUTLIMPL_HEXHEX_8E 1, 8, E, 6, 1, A, 1, 9, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_8D 1, 8, D, 5, 1, B, 1, A, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_8C 1, 8, C, 4, 1, C, 1, B, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_8B 1, 8, B, 3, 1, D, 1, C, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_8A 1, 8, A, 2, 1, E, 1, D, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_89 1, 8, 9, 1, 1, F, 1, E, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_88 0, 8, 8, 0, 0, 0, 1, F, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_87 0, 0, F, F, 0, 1, 0, 0, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_86 0, 0, E, E, 0, 2, 0, 1, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_85 0, 0, D, D, 0, 3, 0, 2, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_84 0, 0, C, C, 0, 4, 0, 3, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_83 0, 0, B, B, 0, 5, 0, 4, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_82 0, 0, A, A, 0, 6, 0, 5, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_81 0, 0, 9, 9, 0, 7, 0, 6, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_80 0, 0, 8, 8, 0, 8, 0, 7, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_7F 1, 7, F, 8, 1, 8, 1, 7, 1, 6, 1, 7
+#define PPUTLIMPL_HEXHEX_7E 1, 6, F, 9, 1, 9, 1, 8, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_7D 1, 5, F, A, 1, A, 1, 9, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_7C 1, 4, F, B, 1, B, 1, A, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_7B 1, 3, F, C, 1, C, 1, B, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_7A 1, 2, F, D, 1, D, 1, C, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_79 1, 1, F, E, 1, E, 1, D, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_78 1, 0, F, F, 1, F, 1, E, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_77 0, 7, 7, 0, 0, 0, 1, F, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_76 0, 6, 7, 1, 0, 1, 0, 0, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_75 0, 5, 7, 2, 0, 2, 0, 1, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_74 0, 4, 7, 3, 0, 3, 0, 2, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_73 0, 3, 7, 4, 0, 4, 0, 3, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_72 0, 2, 7, 5, 0, 5, 0, 4, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_71 0, 1, 7, 6, 0, 6, 0, 5, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_70 0, 0, 7, 7, 0, 7, 0, 6, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_6F 1, 6, F, 9, 1, 7, 1, 6, 1, 5, 1, 6
+#define PPUTLIMPL_HEXHEX_6E 1, 6, E, 8, 1, 8, 1, 7, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_6D 1, 4, F, B, 1, 9, 1, 8, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_6C 1, 4, E, A, 1, A, 1, 9, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_6B 1, 2, F, D, 1, B, 1, A, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_6A 1, 2, E, C, 1, C, 1, B, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_69 1, 0, F, F, 1, D, 1, C, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_68 1, 0, E, E, 1, E, 1, D, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_67 1, 6, 7, 1, 1, F, 1, E, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_66 0, 6, 6, 0, 0, 0, 1, F, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_65 0, 4, 7, 3, 0, 1, 0, 0, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_64 0, 4, 6, 2, 0, 2, 0, 1, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_63 0, 2, 7, 5, 0, 3, 0, 2, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_62 0, 2, 6, 4, 0, 4, 0, 3, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_61 0, 0, 7, 7, 0, 5, 0, 4, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_60 0, 0, 6, 6, 0, 6, 0, 5, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_5F 1, 5, F, A, 1, 6, 1, 5, 1, 4, 1, 5
+#define PPUTLIMPL_HEXHEX_5E 1, 4, F, B, 1, 7, 1, 6, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_5D 1, 5, D, 8, 1, 8, 1, 7, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_5C 1, 4, D, 9, 1, 9, 1, 8, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_5B 1, 1, F, E, 1, A, 1, 9, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_5A 1, 0, F, F, 1, B, 1, A, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_59 1, 1, D, C, 1, C, 1, B, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_58 1, 0, D, D, 1, D, 1, C, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_57 1, 5, 7, 2, 1, E, 1, D, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_56 1, 4, 7, 3, 1, F, 1, E, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_55 0, 5, 5, 0, 0, 0, 1, F, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_54 0, 4, 5, 1, 0, 1, 0, 0, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_53 0, 1, 7, 6, 0, 2, 0, 1, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_52 0, 0, 7, 7, 0, 3, 0, 2, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_51 0, 1, 5, 4, 0, 4, 0, 3, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_50 0, 0, 5, 5, 0, 5, 0, 4, 0, 5, 0, 6
+#define PPUTLIMPL_HEXHEX_4F 1, 4, F, B, 1, 5, 1, 4, 1, 3, 1, 4
+#define PPUTLIMPL_HEXHEX_4E 1, 4, E, A, 1, 6, 1, 5, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_4D 1, 4, D, 9, 1, 7, 1, 6, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_4C 1, 4, C, 8, 1, 8, 1, 7, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_4B 1, 0, F, F, 1, 9, 1, 8, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_4A 1, 0, E, E, 1, A, 1, 9, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_49 1, 0, D, D, 1, B, 1, A, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_48 1, 0, C, C, 1, C, 1, B, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_47 1, 4, 7, 3, 1, D, 1, C, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_46 1, 4, 6, 2, 1, E, 1, D, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_45 1, 4, 5, 1, 1, F, 1, E, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_44 0, 4, 4, 0, 0, 0, 1, F, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_43 0, 0, 7, 7, 0, 1, 0, 0, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_42 0, 0, 6, 6, 0, 2, 0, 1, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_41 0, 0, 5, 5, 0, 3, 0, 2, 0, 5, 0, 6
+#define PPUTLIMPL_HEXHEX_40 0, 0, 4, 4, 0, 4, 0, 3, 0, 4, 0, 5
+#define PPUTLIMPL_HEXHEX_3F 1, 3, F, C, 1, 4, 1, 3, 1, 2, 1, 3
+#define PPUTLIMPL_HEXHEX_3E 1, 2, F, D, 1, 5, 1, 4, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_3D 1, 1, F, E, 1, 6, 1, 5, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_3C 1, 0, F, F, 1, 7, 1, 6, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_3B 1, 3, B, 8, 1, 8, 1, 7, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_3A 1, 2, B, 9, 1, 9, 1, 8, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_39 1, 1, B, A, 1, A, 1, 9, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_38 1, 0, B, B, 1, B, 1, A, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_37 1, 3, 7, 4, 1, C, 1, B, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_36 1, 2, 7, 5, 1, D, 1, C, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_35 1, 1, 7, 6, 1, E, 1, D, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_34 1, 0, 7, 7, 1, F, 1, E, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_33 0, 3, 3, 0, 0, 0, 1, F, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_32 0, 2, 3, 1, 0, 1, 0, 0, 0, 5, 0, 6
+#define PPUTLIMPL_HEXHEX_31 0, 1, 3, 2, 0, 2, 0, 1, 0, 4, 0, 5
+#define PPUTLIMPL_HEXHEX_30 0, 0, 3, 3, 0, 3, 0, 2, 0, 3, 0, 4
+#define PPUTLIMPL_HEXHEX_2F 1, 2, F, D, 1, 3, 1, 2, 1, 1, 1, 2
+#define PPUTLIMPL_HEXHEX_2E 1, 2, E, C, 1, 4, 1, 3, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_2D 1, 0, F, F, 1, 5, 1, 4, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_2C 1, 0, E, E, 1, 6, 1, 5, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_2B 1, 2, B, 9, 1, 7, 1, 6, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_2A 1, 2, A, 8, 1, 8, 1, 7, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_29 1, 0, B, B, 1, 9, 1, 8, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_28 1, 0, A, A, 1, A, 1, 9, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_27 1, 2, 7, 5, 1, B, 1, A, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_26 1, 2, 6, 4, 1, C, 1, B, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_25 1, 0, 7, 7, 1, D, 1, C, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_24 1, 0, 6, 6, 1, E, 1, D, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_23 1, 2, 3, 1, 1, F, 1, E, 0, 5, 0, 6
+#define PPUTLIMPL_HEXHEX_22 0, 2, 2, 0, 0, 0, 1, F, 0, 4, 0, 5
+#define PPUTLIMPL_HEXHEX_21 0, 0, 3, 3, 0, 1, 0, 0, 0, 3, 0, 4
+#define PPUTLIMPL_HEXHEX_20 0, 0, 2, 2, 0, 2, 0, 1, 0, 2, 0, 3
+#define PPUTLIMPL_HEXHEX_1F 1, 1, F, E, 1, 2, 1, 1, 1, 0, 1, 1
+#define PPUTLIMPL_HEXHEX_1E 1, 0, F, F, 1, 3, 1, 2, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_1D 1, 1, D, C, 1, 4, 1, 3, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_1C 1, 0, D, D, 1, 5, 1, 4, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_1B 1, 1, B, A, 1, 6, 1, 5, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_1A 1, 0, B, B, 1, 7, 1, 6, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_19 1, 1, 9, 8, 1, 8, 1, 7, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_18 1, 0, 9, 9, 1, 9, 1, 8, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_17 1, 1, 7, 6, 1, A, 1, 9, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_16 1, 0, 7, 7, 1, B, 1, A, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_15 1, 1, 5, 4, 1, C, 1, B, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_14 1, 0, 5, 5, 1, D, 1, C, 0, 5, 0, 6
+#define PPUTLIMPL_HEXHEX_13 1, 1, 3, 2, 1, E, 1, D, 0, 4, 0, 5
+#define PPUTLIMPL_HEXHEX_12 1, 0, 3, 3, 1, F, 1, E, 0, 3, 0, 4
+#define PPUTLIMPL_HEXHEX_11 0, 1, 1, 0, 0, 0, 1, F, 0, 2, 0, 3
+#define PPUTLIMPL_HEXHEX_10 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 2
+#define PPUTLIMPL_HEXHEX_0F 1, 0, F, F, 1, 1, 1, 0, 0, F, 1, 0
+#define PPUTLIMPL_HEXHEX_0E 1, 0, E, E, 1, 2, 1, 1, 0, E, 0, F
+#define PPUTLIMPL_HEXHEX_0D 1, 0, D, D, 1, 3, 1, 2, 0, D, 0, E
+#define PPUTLIMPL_HEXHEX_0C 1, 0, C, C, 1, 4, 1, 3, 0, C, 0, D
+#define PPUTLIMPL_HEXHEX_0B 1, 0, B, B, 1, 5, 1, 4, 0, B, 0, C
+#define PPUTLIMPL_HEXHEX_0A 1, 0, A, A, 1, 6, 1, 5, 0, A, 0, B
+#define PPUTLIMPL_HEXHEX_09 1, 0, 9, 9, 1, 7, 1, 6, 0, 9, 0, A
+#define PPUTLIMPL_HEXHEX_08 1, 0, 8, 8, 1, 8, 1, 7, 0, 8, 0, 9
+#define PPUTLIMPL_HEXHEX_07 1, 0, 7, 7, 1, 9, 1, 8, 0, 7, 0, 8
+#define PPUTLIMPL_HEXHEX_06 1, 0, 6, 6, 1, A, 1, 9, 0, 6, 0, 7
+#define PPUTLIMPL_HEXHEX_05 1, 0, 5, 5, 1, B, 1, A, 0, 5, 0, 6
+#define PPUTLIMPL_HEXHEX_04 1, 0, 4, 4, 1, C, 1, B, 0, 4, 0, 5
+#define PPUTLIMPL_HEXHEX_03 1, 0, 3, 3, 1, D, 1, C, 0, 3, 0, 4
+#define PPUTLIMPL_HEXHEX_02 1, 0, 2, 2, 1, E, 1, D, 0, 2, 0, 3
+#define PPUTLIMPL_HEXHEX_01 1, 0, 1, 1, 1, F, 1, E, 0, 1, 0, 2
+#define PPUTLIMPL_HEXHEX_00 0, 0, 0, 0, 0, 0, 1, F, 0, 0, 0, 1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

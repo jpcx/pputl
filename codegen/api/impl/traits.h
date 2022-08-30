@@ -37,16 +37,17 @@ namespace impl {
 
 inline codegen::category<"impl.traits"> traits;
 
-inline std::string const arith_rules{"returns unsigned if either operand is unsigned,\n"
-                                     "decimal if either operand is decimal (and the\n"
-                                     "result is non-negative), utup if both operands\n"
-                                     "are utup, and hex otherwise."};
+inline std::string const arith_rules{
+    "returns unsigned if either operand is unsigned, decimal if\n"
+    "either operand is decimal (and the result is non-negative),\n"
+    "utup if both operands are utup, and hex otherwise."};
 
 extern codegen::def<
     "hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC0|DEC1|INC0|INC1|NYBL|BITS})"> const& hex;
 extern codegen::def<
-    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB|ADD0|ADD1})"> const& hexhex;
-extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const&          nybl;
+    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB0-1|ADD0-1|MUL0-E})"> const&
+                                                                          hexhex;
+extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const& nybl;
 extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const& udec;
 extern codegen::def<
     "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;

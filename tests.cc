@@ -65,19 +65,20 @@
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           list  any   none  obj   atom  enum  bool  hex   nybl  int        //
-//           idec  ihex  uint  udec  uhex  tup   utup  word  size             //
+//           idec  ihex  uint  udec  uhex  tup   utup  word  nat   size       //
 //       ‐ traits detection                                       [traits]    //
-//           is_list  is_any   is_none  is_obj   is_atom  is_enum  is_bool    //
-//           is_hex   is_nybl  is_int   is_idec  is_ihex  is_uint  is_udec    //
-//           is_uhex  is_tup   is_utup  is_word  is_size  typeof   sizeof     //
+//           is_list  is_any   is_none  is_obj  is_atom  is_enum              //
+//           is_bool  is_hex   is_nybl  is_int  is_idec  is_ihex              //
+//           is_uint  is_udec  is_uhex  is_tup  is_utup  is_word              //
+//           is_nat   is_size  typeof   sizeof                                //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
 //           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                                      [numeric, math]    //
-//           inc  dec  add   sub   mul   divr                                 //
-//           div  mod  pow2  sqrt  log2  fact                                 //
+//           inc   dec  neg  add   sub   log2  mul                            //
+//           divr  div  mod  pow2  sqrt  fact                                 //
 //       ‐ comparison                                   [numeric, compare]    //
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
@@ -162,10 +163,10 @@
 //         ├╴none: nothing; an absence of pp-tokens                           //
 //         └╴obj: a non-empty generic value                                   //
 //            ├╴atom: an individual value that may form an identifier tail    //
-//            │  ├╴enum<...>: a value that matches a specified atom union     //
-//            │  │  ├╴bool: enum<0|1>                                         //
-//            │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>             //
-//            │  │  └╴nybl: enum<0000|0001|0010|...|1101|1110|1111>           //
+//            │  ├╴enum<v0|v1|...>: an atom that matches a specified union    //
+//            │  ├╴bool: a literal `1` or `0`                                 //
+//            │  ├╴hex:  a literal uppercase hexadecimal digit [e.g. F]       //
+//            │  ├╴nybl: a literal 4-bit bool concatenation [e.g. 0110]       //
 //            │  ├╴int: <abstract> a word-sized signed integer                //
 //            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //
 //            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //
@@ -175,7 +176,8 @@
 //            ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b)]              //
 //            │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]      //
 //            └╴word: <union> int | uint | utup                               //
-//               └╴size: an unsigned word capped by the argument limit        //
+//               └╴nat: a non-negative (natural) word                         //
+//                  └╴size: a natural word capped by the argument limit       //
 //                                                                            //
 //    All pputl traits are fully testable except for atom,  which requires    //
 //    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
@@ -509,6 +511,18 @@ ASSERT_PP_EQ((PTL_IS_WORD(4095u)), (1));
 ASSERT_PP_EQ((PTL_IS_WORD(0xFFFu)), (1));
 ASSERT_PP_EQ((PTL_IS_WORD((0, 0, 8))), (1));
 
+ASSERT_PP_EQ((PTL_IS_NAT(0)), (1));
+ASSERT_PP_EQ((PTL_IS_NAT(0u)), (1));
+ASSERT_PP_EQ((PTL_IS_NAT(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_NAT(())), (0));
+ASSERT_PP_EQ((PTL_IS_NAT(A)), (0));
+ASSERT_PP_EQ((PTL_IS_NAT(0x800)), (0));
+ASSERT_PP_EQ((PTL_IS_NAT(255u)), (1));
+ASSERT_PP_EQ((PTL_IS_NAT(4095u)), (1));
+ASSERT_PP_EQ((PTL_IS_NAT(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_NAT(0xFFFu)), (1));
+ASSERT_PP_EQ((PTL_IS_NAT((0, 0, 8))), (1));
+
 ASSERT_PP_EQ((PTL_IS_SIZE(0)), (1));
 ASSERT_PP_EQ((PTL_IS_SIZE(0u)), (1));
 ASSERT_PP_EQ((PTL_IS_SIZE(foo)), (0));
@@ -667,6 +681,12 @@ ASSERT_PP_EQ((PTL_WORD((0, 0, 0), IHEX)), (0x000));
 ASSERT_PP_EQ((PTL_WORD((8, 0, 0), IDEC)), (0x800));
 ASSERT_PP_EQ((PTL_WORD((F, F, F), UDEC)), (4095u));
 ASSERT_PP_EQ((PTL_UINT((0, 0, 0), UHEX)), (0x000u));
+
+ASSERT_PP_EQ((PTL_NAT(0)), (0));
+ASSERT_PP_EQ((PTL_NAT(1)), (1));
+ASSERT_PP_EQ((PTL_NAT(0x007)), (0x007));
+ASSERT_PP_EQ((PTL_NAT(255u)), (255u));
+ASSERT_PP_EQ((PTL_NAT(4095u)), (4095u));
 
 ASSERT_PP_EQ((PTL_SIZE(0)), (0));
 ASSERT_PP_EQ((PTL_SIZE(1)), (1));

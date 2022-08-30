@@ -34,7 +34,7 @@ using namespace codegen;
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
               + "-bit signed integer type."
-       << "constructible from any word."
+       << "constructible from any word type."
        << "instance is either idec or ihex."
        << ""
        << "cannot parse negative decimals; use math.neg instead."

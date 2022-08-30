@@ -36,8 +36,8 @@ decltype(is_size_o) is_size_o = NIFTY_DEF(is_size_o);
 }
 
 decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
-  docs << "[extends " + is_word + "] detects if args is a word within 0 and " + size_max
-              + " (" + size_max_s + ").";
+  docs << "[extends " + is_nat + "] detects if args is a natural word less than "
+              + size_max + " (" + size_max_s + ").";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
 
@@ -57,7 +57,7 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
   }
   tests << is_size(pp::tup(samp::h8)) = "1" >> docs;
 
-  detail::is_size_o = def{"o(word)"} = [&](arg word) {
+  detail::is_size_o = def{"o(nat)"} = [&](arg nat) {
     def<> chk;
     if constexpr (size_lt_max) {
       chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
@@ -87,29 +87,19 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       };
 
       def<"<\\1(int)">{} = [&](arg int_) {
-        def<"<\\0(ihex)"> _0 = [&](arg ihex) {
-          if constexpr (size_lt_max) {
-            def<"<\\0"> _0 = [&] { return "1"; };
-            def<"<\\1">{}  = [&] { return "0"; };
-            return xcat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ"));
-          } else {
-            def<"<\\0"> _0 = [&] { return "1"; };
-            def<"<\\1">{}  = [&] { return "0"; };
-            return xcat(utl::slice(_0, -1), impl::uhex(pp::cat(ihex, 'u'), "ILTZ"));
-          }
-        };
-        def<"<\\1(idec)">{} = [&](arg idec) {
-          if constexpr (size_lt_max) {
-            def<"<\\0"> _0 = [&] { return "1"; };
-            def<"<\\1">{}  = [&] { return "0"; };
-            return xcat(utl::slice(_0, -1),
-                        impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "ILTZ"));
-          } else {
-            return "1";
-          }
-        };
+        if constexpr (size_lt_max) {
+          def<"<\\0(ihex)"> _0 = [&](arg ihex) {
+            return esc(chk + " " + impl::uhex(pp::cat(ihex, 'u'), "UTUP"));
+          };
+          def<"<\\1(idec)">{} = [&](arg idec) {
+            return esc(chk + " "
+                       + impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "UTUP"));
+          };
 
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_idec_o(int_)), int_);
+          return pp::call(xcat(utl::slice(_0, -1), detail::is_idec_o(int_)), int_);
+        } else {
+          return "1";
+        }
       };
 
       return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
@@ -123,13 +113,13 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       }
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(nat)), nat);
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
   def<"\\1">{}  = [&] { return detail::is_size_o; };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_word(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_nat(args)), args);
 });
 
 } // namespace api

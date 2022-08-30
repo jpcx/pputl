@@ -33,7 +33,7 @@ using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
   docs << "[inherits from " + obj + "] a union of int|uint|utup."
-       << "constructibe from any word."
+       << "constructibe from any word type."
        << ""
        << "cannot parse negative decimals; use math.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."

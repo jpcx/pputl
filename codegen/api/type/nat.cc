@@ -31,25 +31,35 @@ namespace api {
 
 using namespace codegen;
 
-decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
-  docs << "[inherits from " + atom + "] 4-bit bool concatenation type."
-       << "constructible from either nybl or hex."
-       << "expands to v if valid, else fails.";
+decltype(nat) nat = NIFTY_DEF(nat, [&](va args) {
+  docs << "[inherits from " + word + "] a non-negative (natural) word."
+       << "constructibe from any word type."
+       << ""
+       << "cannot parse negative decimals; use math.neg instead."
+       << "hex length is fixed. cannot parse shorter hex lengths."
+       << ""
+       << "see type.word for available cast modes."
+       << ""
+       << "preserves hex/decimal representation by default."
+       << ""
+       << "cast between signed and unsigned reinterprets bits."
+       << ""
+       << "values above the int max must have a 'u' suffix; implicit interpretation"
+       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+              + " is not a valid integer).";
 
-  tests << nybl("0000") = "0000" >> docs;
-  tests << nybl("0110") = "0110" >> docs;
-  tests << nybl("5")    = "0101" >> docs;
-  tests << nybl("A")    = "1010" >> docs;
+  tests << nat(0)                         = "0" >> docs;
+  tests << nat(1)                         = "1" >> docs;
+  tests << nat("0x" + utl::cat(samp::h7)) = ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << nat(size_max_s)                = size_max_s >> docs;
+  tests << nat(uint_max_s)                = uint_max_s >> docs;
 
-  def<"\\00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
-  def<"\\01(e, hex)">{}   = [](arg, arg hex) { return impl::hex(hex, "NYBL"); };
-  def<"\\10(e, nybl)">{}  = [](arg, arg nybl) { return nybl; };
+  return def<"o(e, w)">{[&](arg e, arg w) {
+    def<"\\0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };
+    def<"\\1(e, w)">{}  = [&](arg, arg w) { return w; };
 
-  return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(
-        xcat(utl::slice(_00, -2), xcat(detail::is_nybl_o(atom), detail::is_hex_o(atom))),
-        e, atom);
-  }}(str("[" + nybl + "] invalid arguments; must be nybl or hex : " + args), atom(args));
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_nat_o(w)), e, w);
+  }}(str("[" + nat + "] invalid nat; must be a natural word : " + args), word(args));
 });
 
 } // namespace api

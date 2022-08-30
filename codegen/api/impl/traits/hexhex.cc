@@ -25,6 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "codegen.h"
 #include "impl/traits.h"
 
 namespace api {
@@ -56,18 +57,14 @@ xor_(std::size_t i, std::size_t j) {
 }
 
 static std::string
-sub(std::size_t i, std::size_t j) {
-  return std::to_string(i < j) + ", " + alpha[(16 + (i - j)) % 16];
+sub(std::size_t i, std::size_t j, std::size_t carry = 0) {
+  return std::string{alpha[1 - ((16 + (i - j - carry)) / 16)]} + ", "
+       + alpha[(16 + (i - j - carry)) % 16];
 }
 
 static std::string
-add(std::size_t i, std::size_t j) {
-  return std::string{i + j >= 16 ? "1" : "0"} + ", " + alpha[(i + j) % 16];
-}
-
-static std::string
-addinc(std::size_t i, std::size_t j) {
-  return std::string{i + j + 1 >= 16 ? "1" : "0"} + ", " + alpha[(i + j + 1) % 16];
+add(std::size_t i, std::size_t j, std::size_t carry = 0) {
+  return std::string{alpha[(i + j + carry) / 16]} + ", " + alpha[(i + j + carry) % 16];
 }
 
 decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
@@ -80,8 +77,10 @@ decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
       for (std::size_t i = 0; i < 16 - 1; ++i) {
         for (std::size_t j = 0; j < 16; ++j) {
           pairs[idx++] = def{"\\" + std::string{alpha[i]} + alpha[j]} = [&] {
-            return lt(i, j) + ", " + and_(i, j) + ", " + or_(i, j) + ", " + xor_(i, j)
-                 + ", " + sub(i, j) + ", " + add(i, j) + ", " + addinc(i, j);
+            return utl::cat(std::array{lt(i, j), and_(i, j), or_(i, j), xor_(i, j),
+                                       sub(i, j, 0), sub(i, j, 1), add(i, j, 0),
+                                       add(i, j, 1)},
+                            ", ");
           };
         }
       }
@@ -90,15 +89,18 @@ decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
         std::size_t j = 0;
         for (; j < 16 - 1; ++j) {
           pairs[idx++] = def{"\\" + std::string{alpha[i]} + alpha[j]} = [&] {
-            return lt(i, j) + ", " + and_(i, j) + ", " + or_(i, j) + ", " + xor_(i, j)
-                 + ", " + sub(i, j) + ", " + add(i, j) + ", " + addinc(i, j);
+            return utl::cat(std::array{lt(i, j), and_(i, j), or_(i, j), xor_(i, j),
+                                       sub(i, j, 0), sub(i, j, 1), add(i, j, 0),
+                                       add(i, j, 1)},
+                            ", ");
           };
         }
         pairs[idx++] = def{"\\" + std::string{alpha[i]} + alpha[j]} = [&] {
-          docs << "lt, and, or, xor, sub carry, sub, add0 carry, add0 sum, add1 carry, "
-                  "add1 sum";
-          return lt(i, j) + ", " + and_(i, j) + ", " + or_(i, j) + ", " + xor_(i, j)
-               + ", " + sub(i, j) + ", " + add(i, j) + ", " + addinc(i, j);
+          docs << "lt, and, or, xor, sub0-1 carry, sub0-1, add0-1 carry, add0-1";
+          return utl::cat(std::array{lt(i, j), and_(i, j), or_(i, j), xor_(i, j),
+                                     sub(i, j, 0), sub(i, j, 1), add(i, j, 0),
+                                     add(i, j, 1)},
+                          ", ");
         };
       }
     }
@@ -110,18 +112,29 @@ decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
     return pp::cat(_0, pp::va_opt("1"));
   };
 
-  def<"\\LT(l, ...) -> bool">{}          = [&](pack args) { return args[0]; };
-  def<"\\AND(l, a, ...) -> hex">{}       = [&](pack args) { return args[1]; };
-  def<"\\OR(l, a, o, ...) -> hex">{}     = [&](pack args) { return args[2]; };
-  def<"\\XOR(l, a, o, x, ...) -> hex">{} = [&](pack args) { return args[3]; };
-  def<"\\SUB(l, a, o, x, sc, ss, ...) -> bool, hex">{} = [&](pack args) {
+  def{"\\LT(" + utl::cat(utl::alpha_base52_seq(1), ", ") + ", ...)"} = [&](pack args) {
+    return args[0];
+  };
+  def{"\\AND(" + utl::cat(utl::alpha_base52_seq(2), ", ") + ", ...)"} = [&](pack args) {
+    return args[1];
+  };
+  def{"\\OR(" + utl::cat(utl::alpha_base52_seq(3), ", ") + ", ...)"} = [&](pack args) {
+    return args[2];
+  };
+  def{"\\XOR(" + utl::cat(utl::alpha_base52_seq(4), ", ") + ", ...)"} = [&](pack args) {
+    return args[3];
+  };
+  def{"\\SUB0(" + utl::cat(utl::alpha_base52_seq(6), ", ") + ", ...)"} = [&](pack args) {
     return args[4] + ", " + args[5];
   };
-  def<"\\ADD0(l, a, o, x, sc, ss, a0c, a0s, ...) -> bool, hex">{} = [&](pack args) {
+  def{"\\SUB1(" + utl::cat(utl::alpha_base52_seq(8), ", ") + ", ...)"} = [&](pack args) {
     return args[6] + ", " + args[7];
   };
-  def<"\\ADD1(l, a, o, x, sc, ss, a0c, a0s, a1c, a1s) -> bool, hex">{} = [&](pack args) {
+  def{"\\ADD0(" + utl::cat(utl::alpha_base52_seq(10), ", ") + ", ...)"} = [&](pack args) {
     return args[8] + ", " + args[9];
+  };
+  def{"\\ADD1(" + utl::cat(utl::alpha_base52_seq(12), ", ") + ", ...)"} = [&](pack args) {
+    return args[10] + ", " + args[11];
   };
 
   return def<"o(t, ...)">{[&](arg t, va row) {

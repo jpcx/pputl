@@ -34,7 +34,7 @@ using namespace codegen;
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
               + "-bit unsigned integer type."
-       << "constructible from any word."
+       << "constructible from any word type."
        << "instance is either udec or uhex."
        << ""
        << "cannot parse negative decimals; use math.neg instead."

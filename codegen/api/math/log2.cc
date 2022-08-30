@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,38 +25,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
-#include "codegen.h"
-#include "compare.h"
-#include "config.h"
-#include "control.h"
-#include "lang.h"
-#include "logic.h"
-#include "meta.h"
-#include "numeric.h"
-#include "traits.h"
-#include "type.h"
-
-namespace api {
-
-inline codegen::category<"math"> math;
-
-extern codegen::def<"neg(...: word) -> word"> const&       neg;
-extern codegen::def<"add(...: word, word) -> word"> const& add;
-extern codegen::def<"sub(...: word, word) -> word"> const& sub;
-// extern codegen::def<"log2(...: nat) -> nat"> const&        log2;
-// extern codegen::def<"mul(...: l: uint, r: uint) -> uint{l * r}"> const& mul;
-// extern codegen::def<"fulldiv(...: l: uint, r: uint) -> uint{l / r}, uint{l % r}">
-// const&
-//     fulldiv;
-
-NIFTY_DECL(neg);
-NIFTY_DECL(add);
-NIFTY_DECL(sub);
-// NIFTY_DECL(log2);
-// NIFTY_DECL(mul);
-// NIFTY_DECL(fulldiv);
-
-inline codegen::end_category<"math"> math_end;
-
-} // namespace api
+// #include "math.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
+//   docs << "log2 lookup. value must be non-negative.";
+// 
+//   tests << log2("0u")                 = uint_max_s >> docs;
+//   tests << log2(0)                    = ("0x" + utl::cat(samp::hmax)) >> docs;
+//   tests << log2(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
+//   tests << log2(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
+// 
+//   return def<"o(nat)">{
+//       [&](arg n) { return nat(impl::udec(udec(n), "LOG2"), typeof(n)); }}(nat(args));
+// });
+// 
+// } // namespace api
