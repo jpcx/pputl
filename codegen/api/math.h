@@ -42,19 +42,15 @@ namespace api {
 
 inline codegen::category<"math"> math;
 
-// TODO mul2 divr2 div2 mod2
-
-extern codegen::def<"add(...: word, word) -> word"> const& add;
-extern codegen::def<"sub(...: word, word) -> word"> const& sub;
-extern codegen::def<"mul(...: word, word) -> word"> const& mul;
-// extern codegen::def<"fulldiv(...: l: uint, r: uint) -> uint{l / r}, uint{l % r}">
-// const&
-//     fulldiv;
+extern codegen::def<"add(...: word, word) -> word"> const&        add;
+extern codegen::def<"sub(...: word, word) -> word"> const&        sub;
+extern codegen::def<"mul(...: word, word) -> word"> const&        mul;
+// extern codegen::def<"divr(...: word, word) -> word, word"> const& divr;
 
 NIFTY_DECL(add);
 NIFTY_DECL(sub);
 NIFTY_DECL(mul);
-// NIFTY_DECL(fulldiv);
+// NIFTY_DECL(divr);
 
 inline codegen::end_category<"math"> math_end;
 

@@ -32,28 +32,28 @@ namespace api {
 using namespace codegen;
 
 decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
-  docs << "gets the ith bit from the word."
-       << "i must be between 0 and " + bit_length + " ("
-              + std::to_string(conf::bit_length) + ").";
+  docs << "gets the ith bit from the word, indexed from least to most significant."
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length)
+              + ").";
 
   auto maxless1 =
       "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "E";
 
-  tests << bget(2, conf::bit_length - 3)                   = "0" >> docs;
-  tests << bget(2, conf::bit_length - 2)                   = "1" >> docs;
-  tests << bget(2, conf::bit_length - 1)                   = "0" >> docs;
-  tests << bget("5u", conf::bit_length - 3)                = "1" >> docs;
-  tests << bget(maxless1, conf::bit_length - 2)            = "1" >> docs;
-  tests << bget(maxless1 + "u", conf::bit_length - 1)      = "0" >> docs;
-  tests << bget(pp::tup(samp::hmax), conf::bit_length - 1) = "1" >> docs;
+  tests << bget(2, 2)                   = "0" >> docs;
+  tests << bget(2, 1)                   = "1" >> docs;
+  tests << bget(2, 0)                   = "0" >> docs;
+  tests << bget("5u", 2)                = "1" >> docs;
+  tests << bget(maxless1, 1)            = "1" >> docs;
+  tests << bget(maxless1 + "u", 0)      = "0" >> docs;
+  tests << bget(pp::tup(samp::hmax), 0) = "1" >> docs;
 
   auto bitparams = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
-  def _0 = def{"0(" + bitparams + ")"} = [&](pack args) { return args[0]; };
+  def _0 = def{"0(" + bitparams + ")"} = [&](pack args) { return args.back(); };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
     def{"" + std::to_string(i) + "(" + bitparams + ")"} = [&](pack args) {
-      return args[i];
+      return args[conf::bit_length - 1 - i];
     };
   }
 

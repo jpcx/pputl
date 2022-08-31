@@ -25,8 +25,6 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include <span>
-
 #include "bitwise.h"
 
 namespace api {
@@ -34,16 +32,17 @@ namespace api {
 using namespace codegen;
 
 decltype(bflip) bflip = NIFTY_DEF(bflip, [&](va args) {
-  docs << "flips the ith bit in the uint."
-       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length) + ").";
+  docs << "flips the ith bit in the uint. indexed from least to most significant."
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length)
+              + ").";
 
-  tests << bflip(0, conf::bit_length - 1)    = "1" >> docs;
-  tests << bflip("1u", conf::bit_length - 2) = "3u" >> docs;
-  tests << bflip("0x" + utl::cat(samp::h2), conf::bit_length - 3) =
-      ("0x" + utl::cat(samp::h6)) >> docs;
-  tests << bflip("0x" + utl::cat(samp::h3) + "u", conf::bit_length - 4) =
+  tests << bflip(0, 0)                         = "1" >> docs;
+  tests << bflip("1u", 1)                      = "3u" >> docs;
+  tests << bflip("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h6)) >> docs;
+  tests << bflip("0x" + utl::cat(samp::h3) + "u", 3) =
       ("0x" + utl::cat(samp::h11) + "u") >> docs;
-  tests << bflip(pp::tup(samp::hmax), 0) = pp::tup(samp::himax) >> docs;
+  tests << bflip(pp::tup(samp::hmax), conf::bit_length - 1) =
+      pp::tup(samp::himax) >> docs;
 
   return bset(args, not_(bget(args)));
 });

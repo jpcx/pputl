@@ -25,8 +25,6 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include <span>
-
 #include "bitwise.h"
 
 namespace api {
@@ -34,9 +32,9 @@ namespace api {
 using namespace codegen;
 
 decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
-  docs << "sets the ith bit of the word to b."
-       << "i must be between 0 and " + bit_length + " ("
-              + std::to_string(conf::bit_length) + ").";
+  docs << "sets the ith bit of the word to b, indexed from least to most significant."
+       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length)
+              + ").";
 
   auto zero   = std::vector<std::string>(conf::word_size, "0");
   auto two    = zero;
@@ -49,15 +47,15 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
     *(_21.rbegin() + 0) = "5";
   }
 
-  tests << bset(0, conf::bit_length - 2, 1)    = "2" >> docs;
-  tests << bset("1u", conf::bit_length - 3, 1) = "5u" >> docs;
+  tests << bset(0, 1, 1)    = "2" >> docs;
+  tests << bset("1u", 2, 1) = "5u" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << bset(5, conf::bit_length - 5, 1) = "21" >> docs;
-  tests << bset("0x" + utl::cat(samp::h2), conf::bit_length - 1, 1) =
-      ("0x" + utl::cat(samp::h3)) >> docs;
-  tests << bset("0x" + utl::cat(samp::h3) + "u", conf::bit_length - 1, 0) =
+    tests << bset(5, 4, 1) = "21" >> docs;
+  tests << bset("0x" + utl::cat(samp::h2), 0, 1) = ("0x" + utl::cat(samp::h3)) >> docs;
+  tests << bset("0x" + utl::cat(samp::h3) + "u", 0, 0) =
       ("0x" + utl::cat(samp::h2) + "u") >> docs;
-  tests << bset(pp::tup(samp::hmax), 0, 0) = pp::tup(samp::himax) >> docs;
+  tests << bset(pp::tup(samp::hmax), conf::bit_length - 1, 0) =
+      pp::tup(samp::himax) >> docs;
 
   std::vector<std::string> params{"_"};
   std::ranges::copy(utl::alpha_base52_seq(conf::bit_length), std::back_inserter(params));
@@ -70,12 +68,12 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
   }
 
   auto p0 = params;
-  std::swap(p0[0], p0[1]);
+  std::swap(p0.front(), p0.back());
   def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) { return pp::tup(res); };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
     auto pn = params;
-    std::swap(pn[0], pn[i + 1]);
+    std::swap(pn[0], pn[conf::bit_length - i]);
     def{"" + std::to_string(i) + "(" + utl::cat(pn, ", ") + ")"} = [&](pack) {
       return pp::tup(res);
     };

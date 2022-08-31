@@ -62,15 +62,14 @@ decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
 
     return def<"o(a, b, s)">{[&](arg a, arg b, arg s) {
       return bsll(a) + ", " + bsra(b) + ", "
-           + pp::call(if_(bget(b, conf::bit_length - 1), recr, base), s, a);
+           + pp::call(if_(bget(b, 0), recr, base), s, a);
     }}(args);
   };
 
-  def<"eqz_b(a, b)"> eqz_b = [&](arg a, arg b) {
+  def<"beqz(a, b)"> beqz = [&](arg a, arg b) {
     return word(0, impl::xarithhint(typeof(a), typeof(b)));
   };
-
-  def<"nez_b(a, b)"> nez_b = [&](arg a, arg b) {
+  def<"bnez(a, b)"> bnez = [&](arg a, arg b) {
     def<"\\00(ta, tb, a, b)"> _00 = [&](arg ta, arg tb, arg a, arg b) {
       return word(res(recur(x, log2(b), r, a, b, "0")), impl::arithhint(ta, tb));
     };
@@ -93,7 +92,7 @@ decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
                     a, b);
   };
 
-  return pp::call(if_(eqz(rest(args)), eqz_b, nez_b), args);
+  return pp::call(if_(eqz(rest(args)), beqz, bnez), args);
 });
 
 } // namespace api

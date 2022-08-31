@@ -2917,16 +2917,16 @@
 
 /// [bitwise.bget]
 /// --------------
-/// gets the ith bit from the word.
-/// i must be between 0 and PTL_BIT_LENGTH (12).
+/// gets the ith bit from the word, indexed from least to most significant.
+/// i must be less than PTL_BIT_LENGTH (12).
 ///
-/// PTL_BGET(2, 9)          // 0
-/// PTL_BGET(2, 10)         // 1
-/// PTL_BGET(2, 11)         // 0
-/// PTL_BGET(5u, 9)         // 1
-/// PTL_BGET(0xFFE, 10)     // 1
-/// PTL_BGET(0xFFEu, 11)    // 0
-/// PTL_BGET((F, F, F), 11) // 1
+/// PTL_BGET(2, 2)         // 0
+/// PTL_BGET(2, 1)         // 1
+/// PTL_BGET(2, 0)         // 0
+/// PTL_BGET(5u, 2)        // 1
+/// PTL_BGET(0xFFE, 1)     // 1
+/// PTL_BGET(0xFFEu, 0)    // 0
+/// PTL_BGET((F, F, F), 0) // 1
 #define PTL_BGET(/* word, i: idec */...) /* -> bool */ \
   PPUTLBGET_o(PTL_STR("[PTL_BGET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
@@ -2941,32 +2941,32 @@
 
 #define PPUTLBGET_oooo_1(e, i, ...)                      PPUTLBGET_##i(__VA_ARGS__)
 #define PPUTLBGET_oooo_0(e, ...)                         PTL_FAIL(e)
-#define PPUTLBGET_11(a, b, c, d, e, f, g, h, i, j, k, l) l
-#define PPUTLBGET_10(a, b, c, d, e, f, g, h, i, j, k, l) k
-#define PPUTLBGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  j
-#define PPUTLBGET_8(a, b, c, d, e, f, g, h, i, j, k, l)  i
-#define PPUTLBGET_7(a, b, c, d, e, f, g, h, i, j, k, l)  h
-#define PPUTLBGET_6(a, b, c, d, e, f, g, h, i, j, k, l)  g
-#define PPUTLBGET_5(a, b, c, d, e, f, g, h, i, j, k, l)  f
-#define PPUTLBGET_4(a, b, c, d, e, f, g, h, i, j, k, l)  e
-#define PPUTLBGET_3(a, b, c, d, e, f, g, h, i, j, k, l)  d
-#define PPUTLBGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  c
-#define PPUTLBGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  b
-#define PPUTLBGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  a
+#define PPUTLBGET_11(a, b, c, d, e, f, g, h, i, j, k, l) a
+#define PPUTLBGET_10(a, b, c, d, e, f, g, h, i, j, k, l) b
+#define PPUTLBGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  c
+#define PPUTLBGET_8(a, b, c, d, e, f, g, h, i, j, k, l)  d
+#define PPUTLBGET_7(a, b, c, d, e, f, g, h, i, j, k, l)  e
+#define PPUTLBGET_6(a, b, c, d, e, f, g, h, i, j, k, l)  f
+#define PPUTLBGET_5(a, b, c, d, e, f, g, h, i, j, k, l)  g
+#define PPUTLBGET_4(a, b, c, d, e, f, g, h, i, j, k, l)  h
+#define PPUTLBGET_3(a, b, c, d, e, f, g, h, i, j, k, l)  i
+#define PPUTLBGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  j
+#define PPUTLBGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  k
+#define PPUTLBGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  l
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [bitwise.bset]
 /// --------------
-/// sets the ith bit of the word to b.
-/// i must be between 0 and PTL_BIT_LENGTH (12).
+/// sets the ith bit of the word to b, indexed from least to most significant.
+/// i must be less than PTL_BIT_LENGTH (12).
 ///
-/// PTL_BSET(0, 10, 1)        // 2
-/// PTL_BSET(1u, 9, 1)        // 5u
-/// PTL_BSET(5, 7, 1)         // 21
-/// PTL_BSET(0x002, 11, 1)    // 0x003
-/// PTL_BSET(0x003u, 11, 0)   // 0x002u
-/// PTL_BSET((F, F, F), 0, 0) // (7, F, F)
+/// PTL_BSET(0, 1, 1)          // 2
+/// PTL_BSET(1u, 2, 1)         // 5u
+/// PTL_BSET(5, 4, 1)          // 21
+/// PTL_BSET(0x002, 0, 1)      // 0x003
+/// PTL_BSET(0x003u, 0, 0)     // 0x002u
+/// PTL_BSET((F, F, F), 11, 0) // (7, F, F)
 #define PTL_BSET(/* word, i: idec, b: bool */...) /* -> word */ \
   PPUTLBSET_o(PTL_STR("[PTL_BSET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
@@ -2979,40 +2979,40 @@
 #define PPUTLBSET_oooo(e, i, b, gelt, ...) PPUTLBSET_oooo_##gelt(e, i, b, __VA_ARGS__)
 #define PPUTLBSET_oooo_1(e, i, b, ...)     PPUTLBSET_##i(b, __VA_ARGS__)
 #define PPUTLBSET_oooo_0(e, ...)           PTL_FAIL(e)
-#define PPUTLBSET_11(l, a, b, c, d, e, f, g, h, i, j, k, _)          \
+#define PPUTLBSET_11(a, _, b, c, d, e, f, g, h, i, j, k, l)          \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_10(k, a, b, c, d, e, f, g, h, i, j, _, l)          \
+#define PPUTLBSET_10(b, a, _, c, d, e, f, g, h, i, j, k, l)          \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_9(j, a, b, c, d, e, f, g, h, i, _, k, l)           \
+#define PPUTLBSET_9(c, a, b, _, d, e, f, g, h, i, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_8(i, a, b, c, d, e, f, g, h, _, j, k, l)           \
+#define PPUTLBSET_8(d, a, b, c, _, e, f, g, h, i, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_7(h, a, b, c, d, e, f, g, _, i, j, k, l)           \
+#define PPUTLBSET_7(e, a, b, c, d, _, f, g, h, i, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_6(g, a, b, c, d, e, f, _, h, i, j, k, l)           \
+#define PPUTLBSET_6(f, a, b, c, d, e, _, g, h, i, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_5(f, a, b, c, d, e, _, g, h, i, j, k, l)           \
+#define PPUTLBSET_5(g, a, b, c, d, e, f, _, h, i, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_4(e, a, b, c, d, _, f, g, h, i, j, k, l)           \
+#define PPUTLBSET_4(h, a, b, c, d, e, f, g, _, i, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_3(d, a, b, c, _, e, f, g, h, i, j, k, l)           \
+#define PPUTLBSET_3(i, a, b, c, d, e, f, g, h, _, j, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_2(c, a, b, _, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBSET_2(j, a, b, c, d, e, f, g, h, i, _, k, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_1(b, a, _, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBSET_1(k, a, b, c, d, e, f, g, h, i, j, _, l)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
-#define PPUTLBSET_0(a, _, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBSET_0(l, a, b, c, d, e, f, g, h, i, j, k, _)           \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
 
@@ -3020,14 +3020,14 @@
 
 /// [bitwise.bflip]
 /// ---------------
-/// flips the ith bit in the uint.
+/// flips the ith bit in the uint. indexed from least to most significant.
 /// i must be less than PTL_BIT_LENGTH (12).
 ///
-/// PTL_BFLIP(0, 11)        // 1
-/// PTL_BFLIP(1u, 10)       // 3u
-/// PTL_BFLIP(0x002, 9)     // 0x006
-/// PTL_BFLIP(0x003u, 8)    // 0x00Bu
-/// PTL_BFLIP((F, F, F), 0) // (7, F, F)
+/// PTL_BFLIP(0, 0)          // 1
+/// PTL_BFLIP(1u, 1)         // 3u
+/// PTL_BFLIP(0x002, 2)      // 0x006
+/// PTL_BFLIP(0x003u, 3)     // 0x00Bu
+/// PTL_BFLIP((F, F, F), 11) // (7, F, F)
 #define PTL_BFLIP(/* word, i: idec */...) /* -> word */ \
   PTL_BSET(__VA_ARGS__, PTL_NOT(PTL_BGET(__VA_ARGS__)))
 
@@ -3254,8 +3254,8 @@
 ///
 /// example:
 ///   madd(a, b) = add(a, b), b
-///   mul(a, b)  = first(id(recur_lp(a, madd) 0, b recur_rp(a)))
-///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
+///   mul(a, b)  = first(x(recur_lp(a, madd) 0, b recur_rp(a)))
+///   mul(2, 4) -> first(x(madd LP madd LP 0, 4 RP RP))
 ///             -> first(madd(madd(0, 4)))
 ///             -> first(madd(4, 4))
 ///             -> first(8, 4)
@@ -3366,8 +3366,8 @@
 ///
 /// example:
 ///   madd(a, b) = add(a, b), b
-///   mul(a, b)  = first(id(recur_lp(a, madd) 0, 4 recur_rp(a)))
-///   mul(2, 4) -> first(id(madd LP madd LP 0, 4 RP RP))
+///   mul(a, b)  = first(x(recur_lp(a, madd) 0, 4 recur_rp(a)))
+///   mul(2, 4) -> first(x(madd LP madd LP 0, 4 RP RP))
 ///             -> first(madd(madd(0, 4)))
 ///             -> first(madd(4, 4))
 ///             -> first(8, 4)
@@ -3597,40 +3597,39 @@
 /// PTL_MUL(4095u, 4095u)           // 1u
 /// PTL_MUL(2047, 4095u)            // 2049u
 #define PTL_MUL(/* word, word */...) /* -> word */ \
-  PTL_IF(PTL_EQZ(PTL_REST(__VA_ARGS__)), PPUTLMUL_EQZ_B, PPUTLMUL_NEZ_B)(__VA_ARGS__)
+  PTL_IF(PTL_EQZ(PTL_REST(__VA_ARGS__)), PPUTLMUL_BEQZ, PPUTLMUL_BNEZ)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLMUL_NEZ_B(a, b)                                  \
-  PTL_XCAT(PPUTLMUL_NEZ_B_, PTL_XCAT(PTL_LTZ(a), PTL_LTZ(b))) \
+#define PPUTLMUL_BNEZ(a, b)                                  \
+  PTL_XCAT(PPUTLMUL_BNEZ_, PTL_XCAT(PTL_LTZ(a), PTL_LTZ(b))) \
   (PTL_TYPEOF(a), PTL_TYPEOF(b), a, b)
-#define PPUTLMUL_NEZ_B_11(ta, tb, a, b) \
-  PPUTLMUL_NEZ_B_11_o(PPUTLIMPL_ARITHHINT(ta, tb), PTL_NEG(a), PTL_NEG(b))
-#define PPUTLMUL_NEZ_B_11_o(hint, a, b)                                        \
+#define PPUTLMUL_BNEZ_11(ta, tb, a, b) \
+  PPUTLMUL_BNEZ_11_o(PPUTLIMPL_ARITHHINT(ta, tb), PTL_NEG(a), PTL_NEG(b))
+#define PPUTLMUL_BNEZ_11_o(hint, a, b)                                         \
   PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
                                    0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
            hint)
-#define PPUTLMUL_NEZ_B_10(ta, tb, a, b)                                                  \
+#define PPUTLMUL_BNEZ_10(ta, tb, a, b)                                                   \
   PTL_NEG(                                                                               \
       PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) PTL_NEG(a), \
                                        b, 0 PTL_RECUR_RP(PTL_LOG2(b)))),                 \
                PPUTLIMPL_ARITHHINT(ta, tb)))
-#define PPUTLMUL_NEZ_B_01(ta, tb, a, b) \
-  PPUTLMUL_NEZ_B_01_o(PPUTLIMPL_ARITHHINT(ta, tb), a, PTL_NEG(b))
-#define PPUTLMUL_NEZ_B_01_o(hint, a, b)                                                \
+#define PPUTLMUL_BNEZ_01(ta, tb, a, b) \
+  PPUTLMUL_BNEZ_01_o(PPUTLIMPL_ARITHHINT(ta, tb), a, PTL_NEG(b))
+#define PPUTLMUL_BNEZ_01_o(hint, a, b)                                                 \
   PTL_NEG(PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
                                            0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
                    hint))
-#define PPUTLMUL_NEZ_B_00(ta, tb, a, b)                                        \
+#define PPUTLMUL_BNEZ_00(ta, tb, a, b)                                         \
   PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
                                    0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
            PPUTLIMPL_ARITHHINT(ta, tb))
-#define PPUTLMUL_EQZ_B(a, b) \
+#define PPUTLMUL_BEQZ(a, b) \
   PTL_WORD(0, PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
 #define PPUTLMUL_R(...) PPUTLMUL_R_o(__VA_ARGS__)
 #define PPUTLMUL_R_o(a, b, s) \
-  PTL_BSLL(a), PTL_BSRA(b),   \
-      PTL_IF(PTL_BGET(b, 11), PPUTLMUL_R_RECR, PPUTLMUL_R_BASE)(s, a)
+  PTL_BSLL(a), PTL_BSRA(b), PTL_IF(PTL_BGET(b, 0), PPUTLMUL_R_RECR, PPUTLMUL_R_BASE)(s, a)
 #define PPUTLMUL_R_RECR(s, a)   PTL_ADD(s, a)
 #define PPUTLMUL_R_BASE(s, a)   s
 #define PPUTLMUL_RES(...)       PPUTLMUL_RES_o(__VA_ARGS__)
