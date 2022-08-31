@@ -32,10 +32,12 @@ namespace api {
 using namespace codegen;
 
 decltype(lez) lez = NIFTY_DEF(lez, [&](va args) {
-  docs << "signed integral greater-than-or-equal-to-zero detection.";
+  docs << "numeric less-than-or-equal-to-zero detection.";
 
   tests << lez("0")            = "1" >> docs;
   tests << lez("1")            = "0" >> docs;
+  tests << lez("0u")           = "1" >> docs;
+  tests << lez("1u")           = "0" >> docs;
   tests << lez(int_max_s)      = "0" >> docs;
   tests << lez(int_min_s)      = "1" >> docs;
   tests << lez(inc(int_max_s)) = "1" >> docs;

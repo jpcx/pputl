@@ -25,21 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "math.h"
+#include "numeric.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(neg) neg = NIFTY_DEF(neg, [&](va args) {
-  docs << "integral negation.";
+decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
+  docs << "numeric log2. value must be greater than zero."
+       << "casts result according to the input.";
 
-  tests << neg(0)                           = "0" >> docs;
-  tests << neg(1)                           = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << neg("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << neg("1u")                        = uint_max_s >> docs;
+  tests << log2("1u")                      = "0u" >> docs;
+  tests << log2(2)                         = "1" >> docs;
+  tests << log2("0x" + utl::cat(samp::h4)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << log2(uint_max_s) = (std::to_string(conf::bit_length - 1) + "u") >> docs;
 
-  return word(inc(bnot(args)), typeof(args));
+  def<"\\0(e, n)"> _0 = [&](arg e, arg) { return fail(e); };
+  def<"\\1(e, n)">{}  = [&](arg, arg n) {
+    return word(impl::udec(udec(n), "LOG2"), typeof(n));
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), gtz(args)),
+                  str("[" + log2 + "] value must be greater than zero : " + args), args);
 });
 
 } // namespace api

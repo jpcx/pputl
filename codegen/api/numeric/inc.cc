@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
-  docs << "numerical increment w/ overflow.";
+  docs << "numeric increment w/ overflow.";
 
   tests << inc(0)                            = "1" >> docs;
   tests << inc("1u")                         = "2u" >> docs;

@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
-  docs << "numerical non-zero detection.";
+  docs << "numeric non-zero detection.";
 
   tests << nez("0")                               = "0" >> docs;
   tests << nez("0u")                              = "0" >> docs;

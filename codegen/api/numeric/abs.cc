@@ -25,21 +25,26 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "math.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
-//   docs << "log2 lookup. value must be non-negative.";
-// 
-//   tests << log2("0u")                 = "0u" >> docs;
-//   tests << log2(0)                    = 0 >> docs;
-//   tests << log2(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
-//   tests << log2(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
-// 
-//   return nat(impl::udec(udec(args), "LOG2"), typeof(args));
-// });
-// 
-// } // namespace api
+#include "codegen.h"
+#include "numeric.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(abs) abs = NIFTY_DEF(abs, [&](va args) {
+  docs << "numeric absolute value."
+       << "casts result according to the input.";
+
+  tests << abs(0)       = "0" >> docs;
+  tests << abs(1)       = "1" >> docs;
+  tests << abs(neg(1))  = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << abs(neg(15)) = ("0x" + utl::cat(samp::h15)) >> docs;
+
+  def<"\\0(n)"> _0 = [&](arg n) { return n; };
+  def<"\\1(n)">{}  = [&](arg n) { return neg(n); };
+
+  return pp::call(xcat(utl::slice(_0, -1), ltz(args)), args);
+});
+
+} // namespace api

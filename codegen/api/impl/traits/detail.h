@@ -116,12 +116,12 @@ inline std::string
 log2(unsigned n) {
   if (n == 0)
     return "";
-  return std::to_string(static_cast<unsigned>(std::log2(n))) + "u";
+  return std::to_string(static_cast<unsigned>(std::log2(n)));
 }
 
 inline std::string
 sqrt(unsigned n) {
-  return std::to_string(static_cast<unsigned>(std::sqrt(n))) + "u";
+  return std::to_string(static_cast<unsigned>(std::sqrt(n)));
 }
 
 inline std::string
@@ -129,8 +129,8 @@ fact(unsigned n) {
   auto                     facts = utl::prime_factors(n);
   std::vector<std::string> sfacts(facts.size());
   std::ranges::transform(facts, std::begin(sfacts),
-                         [](auto&& v) { return std::to_string(v) + "u"; });
-  return pp::tup(utl::cat(sfacts, ", "));
+                         [](auto&& v) { return std::to_string(v); });
+  return utl::cat(sfacts, ", ");
 }
 
 inline std::array<std::string, conf::word_size * 4>

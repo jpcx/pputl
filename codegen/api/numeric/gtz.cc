@@ -32,10 +32,12 @@ namespace api {
 using namespace codegen;
 
 decltype(gtz) gtz = NIFTY_DEF(gtz, [&](va args) {
-  docs << "signed integral greater-than-zero detection.";
+  docs << "numeric greater-than-zero detection.";
 
   tests << gtz("0")            = "0" >> docs;
   tests << gtz("1")            = "1" >> docs;
+  tests << gtz("0u")           = "0" >> docs;
+  tests << gtz("1u")           = "1" >> docs;
   tests << gtz(int_max_s)      = "1" >> docs;
   tests << gtz(int_min_s)      = "0" >> docs;
   tests << gtz(inc(int_max_s)) = "0" >> docs;

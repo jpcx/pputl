@@ -37,17 +37,24 @@ namespace api {
 
 inline codegen::category<"numeric"> numeric;
 
-extern codegen::def<"inc(...: word) -> word"> const& inc;
-extern codegen::def<"dec(...: word) -> word"> const& dec;
-extern codegen::def<"eqz(...: word) -> bool"> const& eqz;
-extern codegen::def<"nez(...: word) -> bool"> const& nez;
-extern codegen::def<"ltz(...: int) -> bool"> const&  ltz;
-extern codegen::def<"gtz(...: int) -> bool"> const&  gtz;
-extern codegen::def<"lez(...: int) -> bool"> const&  lez;
-extern codegen::def<"gez(...: int) -> bool"> const&  gez;
+extern codegen::def<"inc(...: word) -> word"> const&     inc;
+extern codegen::def<"dec(...: word) -> word"> const&     dec;
+extern codegen::def<"neg(...: word) -> word"> const&     neg;
+extern codegen::def<"eqz(...: word) -> bool"> const&     eqz;
+extern codegen::def<"nez(...: word) -> bool"> const&     nez;
+extern codegen::def<"ltz(...: word) -> bool"> const&     ltz;
+extern codegen::def<"gtz(...: word) -> bool"> const&     gtz;
+extern codegen::def<"lez(...: word) -> bool"> const&     lez;
+extern codegen::def<"gez(...: word) -> bool"> const&     gez;
+extern codegen::def<"abs(...: word) -> word"> const&     abs;
+extern codegen::def<"log2(...: word) -> word"> const&    log2;
+extern codegen::def<"sqrt(...: word) -> word"> const&    sqrt;
+extern codegen::def<"fact(...: word) -> word..."> const& fact;
+extern codegen::def<"prime(...: word) -> bool"> const&   prime;
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);
+NIFTY_DECL(neg);
 namespace detail {
 extern codegen::def<>& eqz_0u;
 NIFTY_DECL(eqz_0u);
@@ -58,6 +65,11 @@ NIFTY_DECL(ltz);
 NIFTY_DECL(gtz);
 NIFTY_DECL(lez);
 NIFTY_DECL(gez);
+NIFTY_DECL(abs);
+NIFTY_DECL(log2);
+NIFTY_DECL(sqrt);
+NIFTY_DECL(fact);
+NIFTY_DECL(prime);
 
 inline codegen::end_category<"numeric"> numeric_end;
 

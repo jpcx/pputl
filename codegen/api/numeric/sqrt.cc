@@ -31,50 +31,24 @@ namespace api {
 
 using namespace codegen;
 
-decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
-  docs << "numeric decrement w/ underflow.";
+decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
+  docs << "numeric sqrt. value must be non-negative."
+       << "casts result according to the input.";
 
-  tests << dec(1)         = "0" >> docs;
-  tests << dec("2u")      = "1u" >> docs;
-  tests << dec(0)         = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << dec(int_min_s) = ("0x" + utl::cat(samp::himax)) >> docs;
-
+  tests << sqrt("0u") = "0u" >> docs;
+  tests << sqrt(4)    = "2" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << dec("16u") = "15u" >> docs;
+    tests << sqrt("0x" + utl::cat(samp::h16)) = ("0x" + utl::cat(samp::h4)) >> docs;
+  tests << sqrt(uint_max_s) =
+      (std::to_string((unsigned)::sqrt(conf::uint_max)) + "u") >> docs;
 
-  tests << dec("0u") = uint_max_s >> docs;
-
-  constexpr auto sz = conf::word_size;
-
-  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
-
-  def<"x(...)"> x = [&](va args) { return args; };
-
-  def<"r(...)"> r = [&](va args) {
-    def o = def{"o(" + p + ")"} = [&](pack v) {
-      return utl::cat(
-          std::array{
-              impl::hex(v[sz], pp::cat("DEC", v[0])),
-              utl::cat(svect{&v[1], &v[sz]}, ", "),
-          },
-          ", ");
-    };
-    return o(args);
+  def<"\\0(e, n)"> _0 = [&](arg, arg n) {
+    return word(impl::udec(udec(n), "SQRT"), typeof(n));
   };
+  def<"\\1(e, n)">{} = [&](arg e, arg) { return fail(e); };
 
-  def<"res(t, ...)"> res = [&](arg t, va args) {
-    def o = def{"o(" + p + ")"} = [&](pack v) {
-      return pp::tup(svect{&v[1], &v[sz + 1]});
-    };
-
-    return word(o(args), t);
-  };
-
-  return def<"o(v)">{[&](arg v) {
-    auto rlp = utl::cat(svect{conf::word_size, r + "("});
-    auto rrp = utl::cat(svect{conf::word_size, ")"});
-    return res(typeof(v), rlp + "1, " + x(esc + " " + utup(v)) + rrp);
-  }}(args);
+  return pp::call(xcat(utl::slice(_0, -1), ltz(args)),
+                  str("[" + sqrt + "] value must be non-negative : " + args), args);
 });
 
 } // namespace api

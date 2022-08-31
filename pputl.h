@@ -210,7 +210,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220830
+#define PTL_BUILD /* -> <c++ int> */ 20220831
 
 /// [config.word_size]
 /// ------------------
@@ -2277,7 +2277,7 @@
 
 /// [numeric.inc]
 /// -------------
-/// numerical increment w/ overflow.
+/// numeric increment w/ overflow.
 ///
 /// PTL_INC(0)     // 1
 /// PTL_INC(1u)    // 2u
@@ -2302,7 +2302,7 @@
 
 /// [numeric.dec]
 /// -------------
-/// numerical decrement w/ underflow.
+/// numeric decrement w/ underflow.
 ///
 /// PTL_DEC(1)     // 0
 /// PTL_DEC(2u)    // 1u
@@ -2325,9 +2325,20 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [numeric.neg]
+/// -------------
+/// integral negation.
+///
+/// PTL_NEG(0)     // 0
+/// PTL_NEG(1)     // 0xFFF
+/// PTL_NEG(0xFFF) // 0x001
+/// PTL_NEG(1u)    // 4095u
+#define PTL_NEG(/* word */...) /* -> word */ \
+  PTL_WORD(PTL_INC(PPUTLIMPL_UHEX(PTL_UHEX(__VA_ARGS__), BNOT)), PTL_TYPEOF(__VA_ARGS__))
+
 /// [numeric.eqz]
 /// -------------
-/// numerical zero detection.
+/// numeric zero detection.
 ///
 /// PTL_EQZ(0)         // 1
 /// PTL_EQZ(0u)        // 1
@@ -2349,7 +2360,7 @@
 
 /// [numeric.nez]
 /// -------------
-/// numerical non-zero detection.
+/// numeric non-zero detection.
 ///
 /// PTL_NEZ(0)         // 0
 /// PTL_NEZ(0u)        // 0
@@ -2365,57 +2376,183 @@
 
 /// [numeric.ltz]
 /// -------------
-/// signed integral less-than-zero detection.
+/// numeric less-than-zero detection.
 ///
 /// PTL_LTZ(0)             // 0
 /// PTL_LTZ(1)             // 0
+/// PTL_LTZ(0u)            // 0
+/// PTL_LTZ(1u)            // 0
 /// PTL_LTZ(2047)          // 0
 /// PTL_LTZ(0x800)         // 1
 /// PTL_LTZ(PTL_INC(2047)) // 1
-#define PTL_LTZ(/* int */...) /* -> bool */ \
-  PPUTLLTZ_o(PPUTLLTZ_RES PTL_UTUP(PTL_INT(__VA_ARGS__)))
+#define PTL_LTZ(/* word */...) /* -> bool */ \
+  PTL_XCAT(PPUTLLTZ_, PTL_IS_INT(__VA_ARGS__))(PTL_WORD(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLLTZ_o(...)       __VA_ARGS__
-#define PPUTLLTZ_RES(a, b, c) PPUTLIMPL_HEXHEX(7##a, LT)
+#define PPUTLLTZ_1(int)                  PPUTLLTZ_1_o(PPUTLLTZ_RES PTL_UTUP(int))
+#define PPUTLLTZ_1_o(...)                __VA_ARGS__
+#define PPUTLLTZ_0(/* uint|utup */ word) 0
+#define PPUTLLTZ_RES(a, b, c)            PPUTLIMPL_HEXHEX(7##a, LT)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [numeric.gtz]
 /// -------------
-/// signed integral greater-than-zero detection.
+/// numeric greater-than-zero detection.
 ///
 /// PTL_GTZ(0)             // 0
 /// PTL_GTZ(1)             // 1
+/// PTL_GTZ(0u)            // 0
+/// PTL_GTZ(1u)            // 1
 /// PTL_GTZ(2047)          // 1
 /// PTL_GTZ(0x800)         // 0
 /// PTL_GTZ(PTL_INC(2047)) // 0
-#define PTL_GTZ(/* int */...) /* -> bool */ \
+#define PTL_GTZ(/* word */...) /* -> bool */ \
   PTL_NOR(PTL_LTZ(__VA_ARGS__), PTL_EQZ(__VA_ARGS__))
 
 /// [numeric.lez]
 /// -------------
-/// signed integral greater-than-or-equal-to-zero detection.
+/// numeric less-than-or-equal-to-zero detection.
 ///
 /// PTL_LEZ(0)             // 1
 /// PTL_LEZ(1)             // 0
+/// PTL_LEZ(0u)            // 1
+/// PTL_LEZ(1u)            // 0
 /// PTL_LEZ(2047)          // 0
 /// PTL_LEZ(0x800)         // 1
 /// PTL_LEZ(PTL_INC(2047)) // 1
-#define PTL_LEZ(/* int */...) /* -> bool */ \
+#define PTL_LEZ(/* word */...) /* -> bool */ \
   PTL_OR(PTL_LTZ(__VA_ARGS__), PTL_EQZ(__VA_ARGS__))
 
 /// [numeric.gez]
 /// -------------
-/// signed integral greater-than-or-equal-to-zero detection.
+/// numeric greater-than-or-equal-to-zero detection.
 ///
 /// PTL_GEZ(0)             // 1
 /// PTL_GEZ(1)             // 1
+/// PTL_GEZ(0u)            // 1
+/// PTL_GEZ(1u)            // 1
 /// PTL_GEZ(2047)          // 1
 /// PTL_GEZ(0x800)         // 0
 /// PTL_GEZ(PTL_INC(2047)) // 0
-#define PTL_GEZ(/* int */...) /* -> bool */ PTL_NOT(PTL_LTZ(__VA_ARGS__))
+#define PTL_GEZ(/* word */...) /* -> bool */ PTL_NOT(PTL_LTZ(__VA_ARGS__))
+
+/// [numeric.abs]
+/// -------------
+/// numeric absolute value.
+/// casts result according to the input.
+///
+/// PTL_ABS(0)           // 0
+/// PTL_ABS(1)           // 1
+/// PTL_ABS(PTL_NEG(1))  // 0x001
+/// PTL_ABS(PTL_NEG(15)) // 0x00F
+#define PTL_ABS(/* word */...) /* -> word */ \
+  PTL_XCAT(PPUTLABS_, PTL_LTZ(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLABS_1(n) PTL_NEG(n)
+#define PPUTLABS_0(n) n
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.log2]
+/// --------------
+/// numeric log2. value must be greater than zero.
+/// casts result according to the input.
+///
+/// PTL_LOG2(1u)    // 0u
+/// PTL_LOG2(2)     // 1
+/// PTL_LOG2(0x004) // 0x002
+/// PTL_LOG2(4095u) // 11u
+#define PTL_LOG2(/* word */...) /* -> word */ \
+  PTL_XCAT(PPUTLLOG2_, PTL_GTZ(__VA_ARGS__))  \
+  (PTL_STR([PTL_LOG2] value must be greater than zero : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLLOG2_1(e, n) PTL_WORD(PPUTLIMPL_UDEC(PTL_UDEC(n), LOG2), PTL_TYPEOF(n))
+#define PPUTLLOG2_0(e, n) PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.sqrt]
+/// --------------
+/// numeric sqrt. value must be non-negative.
+/// casts result according to the input.
+///
+/// PTL_SQRT(0u)    // 0u
+/// PTL_SQRT(4)     // 2
+/// PTL_SQRT(0x010) // 0x004
+/// PTL_SQRT(4095u) // 63u
+#define PTL_SQRT(/* word */...) /* -> word */ \
+  PTL_XCAT(PPUTLSQRT_, PTL_LTZ(__VA_ARGS__))  \
+  (PTL_STR([PTL_SQRT] value must be non - negative : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLSQRT_1(e, n) PTL_FAIL(e)
+#define PPUTLSQRT_0(e, n) PTL_WORD(PPUTLIMPL_UDEC(PTL_UDEC(n), SQRT), PTL_TYPEOF(n))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.fact]
+/// --------------
+/// numeric prime factorization. value must be non-negative.
+/// casts each result according to the input.
+///
+/// PTL_FACT(0u)  // <nothing>
+/// PTL_FACT(13)  // <nothing>
+/// PTL_FACT(4)   // 2, 2
+/// PTL_FACT(12u) // 2u, 2u, 3u
+#define PTL_FACT(/* word */...) /* -> word... */   \
+  PTL_XCAT(PPUTLFACT_, PTL_LTZ(__VA_ARGS__))       \
+  (PTL_STR([PTL_FACT] value must be non - negative \
+           : __VA_ARGS__),                         \
+   PPUTLFACT_R, __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLFACT_1(e, r, n) PTL_FAIL(e)
+#define PPUTLFACT_0(e, r, n)                    \
+  PPUTLFACT_X(PTL_ESC PTL_XFIRST(r(r(r(r(r(r(r( \
+      r(r(r(PPUTLFACT_INIT(PTL_TYPEOF(n), PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))))))))))))))
+#define PPUTLFACT_R(...)            PPUTLFACT_R_o(__VA_ARGS__)
+#define PPUTLFACT_R_o(a, t, ...)    PPUTLFACT_R0##__VA_OPT__(1)(a, t, __VA_ARGS__)
+#define PPUTLFACT_R01(a, t, _, ...) PPUTLFACT_UPDATE(t, _, PTL_ESC a), t, __VA_ARGS__
+#define PPUTLFACT_R0(a, t, ...)     a, t
+#define PPUTLFACT_INIT(...)         PPUTLFACT_INIT_o(__VA_ARGS__)
+#define PPUTLFACT_INIT_o(t, ...)    PPUTLFACT_INIT0##__VA_OPT__(1)(t, __VA_ARGS__)
+#define PPUTLFACT_INIT01(t, _, ...) (PTL_WORD(_, t)), t, __VA_ARGS__
+#define PPUTLFACT_INIT0(t, ...)     (), t
+#define PPUTLFACT_UPDATE(t, _, ...) (__VA_ARGS__, PTL_WORD(_, t))
+#define PPUTLFACT_X(...)            __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [numeric.prime]
+/// ---------------
+/// numeric primality test. value must be non-negative.
+///
+/// PTL_PRIME(0)     // 1
+/// PTL_PRIME(1)     // 1
+/// PTL_PRIME(2)     // 1
+/// PTL_PRIME(3)     // 1
+/// PTL_PRIME(4)     // 0
+/// PTL_PRIME(13)    // 1
+/// PTL_PRIME(1023)  // 0
+/// PTL_PRIME(2047u) // 0
+#define PTL_PRIME(/* word */...) /* -> bool */ \
+  PTL_XCAT(PPUTLPRIME_, PTL_LTZ(__VA_ARGS__))  \
+  (PTL_STR([PTL_PRIME] value must be non - negative : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLPRIME_1(e, n) PTL_FAIL(e)
+#define PPUTLPRIME_0(e, n) PTL_IS_NONE(PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [bitwise.bdump]
 /// ---------------
@@ -3370,17 +3507,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [math.neg]
-/// ----------
-/// integral negation.
-///
-/// PTL_NEG(0)     // 0
-/// PTL_NEG(1)     // 0xFFF
-/// PTL_NEG(0xFFF) // 0x001
-/// PTL_NEG(1u)    // 4095u
-#define PTL_NEG(/* word */...) /* -> word */ \
-  PTL_WORD(PTL_INC(PTL_BNOT(__VA_ARGS__)), PTL_TYPEOF(__VA_ARGS__))
-
 /// [math.add]
 /// ----------
 /// addition with overflow.
@@ -3846,4113 +3972,4111 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIMPL_UDEC_o(t, ...)          PPUTLIMPL_UDEC_##t(__VA_ARGS__)
-#define PPUTLIMPL_UDEC_FACT(u, l, s, f)   /* -> (udec...) */ f
-#define PPUTLIMPL_UDEC_SQRT(u, l, s, ...) /* -> udec */ s
-#define PPUTLIMPL_UDEC_LOG2(u, l, ...)    /* -> udec */ l
+#define PPUTLIMPL_UDEC_FACT(u, l, s, ...) /* -> idec... */ __VA_ARGS__
+#define PPUTLIMPL_UDEC_SQRT(u, l, s, ...) /* -> idec */ s
+#define PPUTLIMPL_UDEC_LOG2(u, l, ...)    /* -> idec */ l
 #define PPUTLIMPL_UDEC_UHEX(u, ...)       /* -> uhex */ u
 #define PPUTLIMPL_UDEC_IS(_, ...)         /* -> bool */ PPUTLIMPL_UDEC_IS_0##__VA_OPT__(1)
 #define PPUTLIMPL_UDEC_IS_01              1
 #define PPUTLIMPL_UDEC_IS_0               0
 
 /// UHEX, LOG2, SQRT, FACT
-#define PPUTLIMPL_UDEC_4095u 0xFFFu, 11u, 63u, (3u, 3u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_4094u 0xFFEu, 11u, 63u, (2u, 23u, 89u)
-#define PPUTLIMPL_UDEC_4093u 0xFFDu, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4092u 0xFFCu, 11u, 63u, (2u, 2u, 3u, 11u, 31u)
-#define PPUTLIMPL_UDEC_4091u 0xFFBu, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4090u 0xFFAu, 11u, 63u, (2u, 5u, 409u)
-#define PPUTLIMPL_UDEC_4089u 0xFF9u, 11u, 63u, (3u, 29u, 47u)
-#define PPUTLIMPL_UDEC_4088u 0xFF8u, 11u, 63u, (2u, 2u, 2u, 7u, 73u)
-#define PPUTLIMPL_UDEC_4087u 0xFF7u, 11u, 63u, (61u, 67u)
-#define PPUTLIMPL_UDEC_4086u 0xFF6u, 11u, 63u, (2u, 3u, 3u, 227u)
-#define PPUTLIMPL_UDEC_4085u 0xFF5u, 11u, 63u, (5u, 19u, 43u)
-#define PPUTLIMPL_UDEC_4084u 0xFF4u, 11u, 63u, (2u, 2u, 1021u)
-#define PPUTLIMPL_UDEC_4083u 0xFF3u, 11u, 63u, (3u, 1361u)
-#define PPUTLIMPL_UDEC_4082u 0xFF2u, 11u, 63u, (2u, 13u, 157u)
-#define PPUTLIMPL_UDEC_4081u 0xFF1u, 11u, 63u, (7u, 11u, 53u)
-#define PPUTLIMPL_UDEC_4080u 0xFF0u, 11u, 63u, (2u, 2u, 2u, 2u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_4079u 0xFEFu, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4078u 0xFEEu, 11u, 63u, (2u, 2039u)
-#define PPUTLIMPL_UDEC_4077u 0xFEDu, 11u, 63u, (3u, 3u, 3u, 151u)
-#define PPUTLIMPL_UDEC_4076u 0xFECu, 11u, 63u, (2u, 2u, 1019u)
-#define PPUTLIMPL_UDEC_4075u 0xFEBu, 11u, 63u, (5u, 5u, 163u)
-#define PPUTLIMPL_UDEC_4074u 0xFEAu, 11u, 63u, (2u, 3u, 7u, 97u)
-#define PPUTLIMPL_UDEC_4073u 0xFE9u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4072u 0xFE8u, 11u, 63u, (2u, 2u, 2u, 509u)
-#define PPUTLIMPL_UDEC_4071u 0xFE7u, 11u, 63u, (3u, 23u, 59u)
-#define PPUTLIMPL_UDEC_4070u 0xFE6u, 11u, 63u, (2u, 5u, 11u, 37u)
-#define PPUTLIMPL_UDEC_4069u 0xFE5u, 11u, 63u, (13u, 313u)
-#define PPUTLIMPL_UDEC_4068u 0xFE4u, 11u, 63u, (2u, 2u, 3u, 3u, 113u)
-#define PPUTLIMPL_UDEC_4067u 0xFE3u, 11u, 63u, (7u, 7u, 83u)
-#define PPUTLIMPL_UDEC_4066u 0xFE2u, 11u, 63u, (2u, 19u, 107u)
-#define PPUTLIMPL_UDEC_4065u 0xFE1u, 11u, 63u, (3u, 5u, 271u)
-#define PPUTLIMPL_UDEC_4064u 0xFE0u, 11u, 63u, (2u, 2u, 2u, 2u, 2u, 127u)
-#define PPUTLIMPL_UDEC_4063u 0xFDFu, 11u, 63u, (17u, 239u)
-#define PPUTLIMPL_UDEC_4062u 0xFDEu, 11u, 63u, (2u, 3u, 677u)
-#define PPUTLIMPL_UDEC_4061u 0xFDDu, 11u, 63u, (31u, 131u)
-#define PPUTLIMPL_UDEC_4060u 0xFDCu, 11u, 63u, (2u, 2u, 5u, 7u, 29u)
-#define PPUTLIMPL_UDEC_4059u 0xFDBu, 11u, 63u, (3u, 3u, 11u, 41u)
-#define PPUTLIMPL_UDEC_4058u 0xFDAu, 11u, 63u, (2u, 2029u)
-#define PPUTLIMPL_UDEC_4057u 0xFD9u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4056u 0xFD8u, 11u, 63u, (2u, 2u, 2u, 3u, 13u, 13u)
-#define PPUTLIMPL_UDEC_4055u 0xFD7u, 11u, 63u, (5u, 811u)
-#define PPUTLIMPL_UDEC_4054u 0xFD6u, 11u, 63u, (2u, 2027u)
-#define PPUTLIMPL_UDEC_4053u 0xFD5u, 11u, 63u, (3u, 7u, 193u)
-#define PPUTLIMPL_UDEC_4052u 0xFD4u, 11u, 63u, (2u, 2u, 1013u)
-#define PPUTLIMPL_UDEC_4051u 0xFD3u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4050u 0xFD2u, 11u, 63u, (2u, 3u, 3u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_4049u 0xFD1u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4048u 0xFD0u, 11u, 63u, (2u, 2u, 2u, 2u, 11u, 23u)
-#define PPUTLIMPL_UDEC_4047u 0xFCFu, 11u, 63u, (3u, 19u, 71u)
-#define PPUTLIMPL_UDEC_4046u 0xFCEu, 11u, 63u, (2u, 7u, 17u, 17u)
-#define PPUTLIMPL_UDEC_4045u 0xFCDu, 11u, 63u, (5u, 809u)
-#define PPUTLIMPL_UDEC_4044u 0xFCCu, 11u, 63u, (2u, 2u, 3u, 337u)
-#define PPUTLIMPL_UDEC_4043u 0xFCBu, 11u, 63u, (13u, 311u)
-#define PPUTLIMPL_UDEC_4042u 0xFCAu, 11u, 63u, (2u, 43u, 47u)
-#define PPUTLIMPL_UDEC_4041u 0xFC9u, 11u, 63u, (3u, 3u, 449u)
-#define PPUTLIMPL_UDEC_4040u 0xFC8u, 11u, 63u, (2u, 2u, 2u, 5u, 101u)
-#define PPUTLIMPL_UDEC_4039u 0xFC7u, 11u, 63u, (7u, 577u)
-#define PPUTLIMPL_UDEC_4038u 0xFC6u, 11u, 63u, (2u, 3u, 673u)
-#define PPUTLIMPL_UDEC_4037u 0xFC5u, 11u, 63u, (11u, 367u)
-#define PPUTLIMPL_UDEC_4036u 0xFC4u, 11u, 63u, (2u, 2u, 1009u)
-#define PPUTLIMPL_UDEC_4035u 0xFC3u, 11u, 63u, (3u, 5u, 269u)
-#define PPUTLIMPL_UDEC_4034u 0xFC2u, 11u, 63u, (2u, 2017u)
-#define PPUTLIMPL_UDEC_4033u 0xFC1u, 11u, 63u, (37u, 109u)
-#define PPUTLIMPL_UDEC_4032u 0xFC0u, 11u, 63u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_4031u 0xFBFu, 11u, 63u, (29u, 139u)
-#define PPUTLIMPL_UDEC_4030u 0xFBEu, 11u, 63u, (2u, 5u, 13u, 31u)
-#define PPUTLIMPL_UDEC_4029u 0xFBDu, 11u, 63u, (3u, 17u, 79u)
-#define PPUTLIMPL_UDEC_4028u 0xFBCu, 11u, 63u, (2u, 2u, 19u, 53u)
-#define PPUTLIMPL_UDEC_4027u 0xFBBu, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4026u 0xFBAu, 11u, 63u, (2u, 3u, 11u, 61u)
-#define PPUTLIMPL_UDEC_4025u 0xFB9u, 11u, 63u, (5u, 5u, 7u, 23u)
-#define PPUTLIMPL_UDEC_4024u 0xFB8u, 11u, 63u, (2u, 2u, 2u, 503u)
-#define PPUTLIMPL_UDEC_4023u 0xFB7u, 11u, 63u, (3u, 3u, 3u, 149u)
-#define PPUTLIMPL_UDEC_4022u 0xFB6u, 11u, 63u, (2u, 2011u)
-#define PPUTLIMPL_UDEC_4021u 0xFB5u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4020u 0xFB4u, 11u, 63u, (2u, 2u, 3u, 5u, 67u)
-#define PPUTLIMPL_UDEC_4019u 0xFB3u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4018u 0xFB2u, 11u, 63u, (2u, 7u, 7u, 41u)
-#define PPUTLIMPL_UDEC_4017u 0xFB1u, 11u, 63u, (3u, 13u, 103u)
-#define PPUTLIMPL_UDEC_4016u 0xFB0u, 11u, 63u, (2u, 2u, 2u, 2u, 251u)
-#define PPUTLIMPL_UDEC_4015u 0xFAFu, 11u, 63u, (5u, 11u, 73u)
-#define PPUTLIMPL_UDEC_4014u 0xFAEu, 11u, 63u, (2u, 3u, 3u, 223u)
-#define PPUTLIMPL_UDEC_4013u 0xFADu, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4012u 0xFACu, 11u, 63u, (2u, 2u, 17u, 59u)
-#define PPUTLIMPL_UDEC_4011u 0xFABu, 11u, 63u, (3u, 7u, 191u)
-#define PPUTLIMPL_UDEC_4010u 0xFAAu, 11u, 63u, (2u, 5u, 401u)
-#define PPUTLIMPL_UDEC_4009u 0xFA9u, 11u, 63u, (19u, 211u)
-#define PPUTLIMPL_UDEC_4008u 0xFA8u, 11u, 63u, (2u, 2u, 2u, 3u, 167u)
-#define PPUTLIMPL_UDEC_4007u 0xFA7u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4006u 0xFA6u, 11u, 63u, (2u, 2003u)
-#define PPUTLIMPL_UDEC_4005u 0xFA5u, 11u, 63u, (3u, 3u, 5u, 89u)
-#define PPUTLIMPL_UDEC_4004u 0xFA4u, 11u, 63u, (2u, 2u, 7u, 11u, 13u)
-#define PPUTLIMPL_UDEC_4003u 0xFA3u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4002u 0xFA2u, 11u, 63u, (2u, 3u, 23u, 29u)
-#define PPUTLIMPL_UDEC_4001u 0xFA1u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_4000u 0xFA0u, 11u, 63u, (2u, 2u, 2u, 2u, 2u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_3999u 0xF9Fu, 11u, 63u, (3u, 31u, 43u)
-#define PPUTLIMPL_UDEC_3998u 0xF9Eu, 11u, 63u, (2u, 1999u)
-#define PPUTLIMPL_UDEC_3997u 0xF9Du, 11u, 63u, (7u, 571u)
-#define PPUTLIMPL_UDEC_3996u 0xF9Cu, 11u, 63u, (2u, 2u, 3u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_3995u 0xF9Bu, 11u, 63u, (5u, 17u, 47u)
-#define PPUTLIMPL_UDEC_3994u 0xF9Au, 11u, 63u, (2u, 1997u)
-#define PPUTLIMPL_UDEC_3993u 0xF99u, 11u, 63u, (3u, 11u, 11u, 11u)
-#define PPUTLIMPL_UDEC_3992u 0xF98u, 11u, 63u, (2u, 2u, 2u, 499u)
-#define PPUTLIMPL_UDEC_3991u 0xF97u, 11u, 63u, (13u, 307u)
-#define PPUTLIMPL_UDEC_3990u 0xF96u, 11u, 63u, (2u, 3u, 5u, 7u, 19u)
-#define PPUTLIMPL_UDEC_3989u 0xF95u, 11u, 63u, ()
-#define PPUTLIMPL_UDEC_3988u 0xF94u, 11u, 63u, (2u, 2u, 997u)
-#define PPUTLIMPL_UDEC_3987u 0xF93u, 11u, 63u, (3u, 3u, 443u)
-#define PPUTLIMPL_UDEC_3986u 0xF92u, 11u, 63u, (2u, 1993u)
-#define PPUTLIMPL_UDEC_3985u 0xF91u, 11u, 63u, (5u, 797u)
-#define PPUTLIMPL_UDEC_3984u 0xF90u, 11u, 63u, (2u, 2u, 2u, 2u, 3u, 83u)
-#define PPUTLIMPL_UDEC_3983u 0xF8Fu, 11u, 63u, (7u, 569u)
-#define PPUTLIMPL_UDEC_3982u 0xF8Eu, 11u, 63u, (2u, 11u, 181u)
-#define PPUTLIMPL_UDEC_3981u 0xF8Du, 11u, 63u, (3u, 1327u)
-#define PPUTLIMPL_UDEC_3980u 0xF8Cu, 11u, 63u, (2u, 2u, 5u, 199u)
-#define PPUTLIMPL_UDEC_3979u 0xF8Bu, 11u, 63u, (23u, 173u)
-#define PPUTLIMPL_UDEC_3978u 0xF8Au, 11u, 63u, (2u, 3u, 3u, 13u, 17u)
-#define PPUTLIMPL_UDEC_3977u 0xF89u, 11u, 63u, (41u, 97u)
-#define PPUTLIMPL_UDEC_3976u 0xF88u, 11u, 63u, (2u, 2u, 2u, 7u, 71u)
-#define PPUTLIMPL_UDEC_3975u 0xF87u, 11u, 63u, (3u, 5u, 5u, 53u)
-#define PPUTLIMPL_UDEC_3974u 0xF86u, 11u, 63u, (2u, 1987u)
-#define PPUTLIMPL_UDEC_3973u 0xF85u, 11u, 63u, (29u, 137u)
-#define PPUTLIMPL_UDEC_3972u 0xF84u, 11u, 63u, (2u, 2u, 3u, 331u)
-#define PPUTLIMPL_UDEC_3971u 0xF83u, 11u, 63u, (11u, 19u, 19u)
-#define PPUTLIMPL_UDEC_3970u 0xF82u, 11u, 63u, (2u, 5u, 397u)
-#define PPUTLIMPL_UDEC_3969u 0xF81u, 11u, 63u, (3u, 3u, 3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3968u 0xF80u, 11u, 62u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 31u)
-#define PPUTLIMPL_UDEC_3967u 0xF7Fu, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3966u 0xF7Eu, 11u, 62u, (2u, 3u, 661u)
-#define PPUTLIMPL_UDEC_3965u 0xF7Du, 11u, 62u, (5u, 13u, 61u)
-#define PPUTLIMPL_UDEC_3964u 0xF7Cu, 11u, 62u, (2u, 2u, 991u)
-#define PPUTLIMPL_UDEC_3963u 0xF7Bu, 11u, 62u, (3u, 1321u)
-#define PPUTLIMPL_UDEC_3962u 0xF7Au, 11u, 62u, (2u, 7u, 283u)
-#define PPUTLIMPL_UDEC_3961u 0xF79u, 11u, 62u, (17u, 233u)
-#define PPUTLIMPL_UDEC_3960u 0xF78u, 11u, 62u, (2u, 2u, 2u, 3u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_3959u 0xF77u, 11u, 62u, (37u, 107u)
-#define PPUTLIMPL_UDEC_3958u 0xF76u, 11u, 62u, (2u, 1979u)
-#define PPUTLIMPL_UDEC_3957u 0xF75u, 11u, 62u, (3u, 1319u)
-#define PPUTLIMPL_UDEC_3956u 0xF74u, 11u, 62u, (2u, 2u, 23u, 43u)
-#define PPUTLIMPL_UDEC_3955u 0xF73u, 11u, 62u, (5u, 7u, 113u)
-#define PPUTLIMPL_UDEC_3954u 0xF72u, 11u, 62u, (2u, 3u, 659u)
-#define PPUTLIMPL_UDEC_3953u 0xF71u, 11u, 62u, (59u, 67u)
-#define PPUTLIMPL_UDEC_3952u 0xF70u, 11u, 62u, (2u, 2u, 2u, 2u, 13u, 19u)
-#define PPUTLIMPL_UDEC_3951u 0xF6Fu, 11u, 62u, (3u, 3u, 439u)
-#define PPUTLIMPL_UDEC_3950u 0xF6Eu, 11u, 62u, (2u, 5u, 5u, 79u)
-#define PPUTLIMPL_UDEC_3949u 0xF6Du, 11u, 62u, (11u, 359u)
-#define PPUTLIMPL_UDEC_3948u 0xF6Cu, 11u, 62u, (2u, 2u, 3u, 7u, 47u)
-#define PPUTLIMPL_UDEC_3947u 0xF6Bu, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3946u 0xF6Au, 11u, 62u, (2u, 1973u)
-#define PPUTLIMPL_UDEC_3945u 0xF69u, 11u, 62u, (3u, 5u, 263u)
-#define PPUTLIMPL_UDEC_3944u 0xF68u, 11u, 62u, (2u, 2u, 2u, 17u, 29u)
-#define PPUTLIMPL_UDEC_3943u 0xF67u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3942u 0xF66u, 11u, 62u, (2u, 3u, 3u, 3u, 73u)
-#define PPUTLIMPL_UDEC_3941u 0xF65u, 11u, 62u, (7u, 563u)
-#define PPUTLIMPL_UDEC_3940u 0xF64u, 11u, 62u, (2u, 2u, 5u, 197u)
-#define PPUTLIMPL_UDEC_3939u 0xF63u, 11u, 62u, (3u, 13u, 101u)
-#define PPUTLIMPL_UDEC_3938u 0xF62u, 11u, 62u, (2u, 11u, 179u)
-#define PPUTLIMPL_UDEC_3937u 0xF61u, 11u, 62u, (31u, 127u)
-#define PPUTLIMPL_UDEC_3936u 0xF60u, 11u, 62u, (2u, 2u, 2u, 2u, 2u, 3u, 41u)
-#define PPUTLIMPL_UDEC_3935u 0xF5Fu, 11u, 62u, (5u, 787u)
-#define PPUTLIMPL_UDEC_3934u 0xF5Eu, 11u, 62u, (2u, 7u, 281u)
-#define PPUTLIMPL_UDEC_3933u 0xF5Du, 11u, 62u, (3u, 3u, 19u, 23u)
-#define PPUTLIMPL_UDEC_3932u 0xF5Cu, 11u, 62u, (2u, 2u, 983u)
-#define PPUTLIMPL_UDEC_3931u 0xF5Bu, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3930u 0xF5Au, 11u, 62u, (2u, 3u, 5u, 131u)
-#define PPUTLIMPL_UDEC_3929u 0xF59u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3928u 0xF58u, 11u, 62u, (2u, 2u, 2u, 491u)
-#define PPUTLIMPL_UDEC_3927u 0xF57u, 11u, 62u, (3u, 7u, 11u, 17u)
-#define PPUTLIMPL_UDEC_3926u 0xF56u, 11u, 62u, (2u, 13u, 151u)
-#define PPUTLIMPL_UDEC_3925u 0xF55u, 11u, 62u, (5u, 5u, 157u)
-#define PPUTLIMPL_UDEC_3924u 0xF54u, 11u, 62u, (2u, 2u, 3u, 3u, 109u)
-#define PPUTLIMPL_UDEC_3923u 0xF53u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3922u 0xF52u, 11u, 62u, (2u, 37u, 53u)
-#define PPUTLIMPL_UDEC_3921u 0xF51u, 11u, 62u, (3u, 1307u)
-#define PPUTLIMPL_UDEC_3920u 0xF50u, 11u, 62u, (2u, 2u, 2u, 2u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3919u 0xF4Fu, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3918u 0xF4Eu, 11u, 62u, (2u, 3u, 653u)
-#define PPUTLIMPL_UDEC_3917u 0xF4Du, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3916u 0xF4Cu, 11u, 62u, (2u, 2u, 11u, 89u)
-#define PPUTLIMPL_UDEC_3915u 0xF4Bu, 11u, 62u, (3u, 3u, 3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_3914u 0xF4Au, 11u, 62u, (2u, 19u, 103u)
-#define PPUTLIMPL_UDEC_3913u 0xF49u, 11u, 62u, (7u, 13u, 43u)
-#define PPUTLIMPL_UDEC_3912u 0xF48u, 11u, 62u, (2u, 2u, 2u, 3u, 163u)
-#define PPUTLIMPL_UDEC_3911u 0xF47u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3910u 0xF46u, 11u, 62u, (2u, 5u, 17u, 23u)
-#define PPUTLIMPL_UDEC_3909u 0xF45u, 11u, 62u, (3u, 1303u)
-#define PPUTLIMPL_UDEC_3908u 0xF44u, 11u, 62u, (2u, 2u, 977u)
-#define PPUTLIMPL_UDEC_3907u 0xF43u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3906u 0xF42u, 11u, 62u, (2u, 3u, 3u, 7u, 31u)
-#define PPUTLIMPL_UDEC_3905u 0xF41u, 11u, 62u, (5u, 11u, 71u)
-#define PPUTLIMPL_UDEC_3904u 0xF40u, 11u, 62u, (2u, 2u, 2u, 2u, 2u, 2u, 61u)
-#define PPUTLIMPL_UDEC_3903u 0xF3Fu, 11u, 62u, (3u, 1301u)
-#define PPUTLIMPL_UDEC_3902u 0xF3Eu, 11u, 62u, (2u, 1951u)
-#define PPUTLIMPL_UDEC_3901u 0xF3Du, 11u, 62u, (47u, 83u)
-#define PPUTLIMPL_UDEC_3900u 0xF3Cu, 11u, 62u, (2u, 2u, 3u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_3899u 0xF3Bu, 11u, 62u, (7u, 557u)
-#define PPUTLIMPL_UDEC_3898u 0xF3Au, 11u, 62u, (2u, 1949u)
-#define PPUTLIMPL_UDEC_3897u 0xF39u, 11u, 62u, (3u, 3u, 433u)
-#define PPUTLIMPL_UDEC_3896u 0xF38u, 11u, 62u, (2u, 2u, 2u, 487u)
-#define PPUTLIMPL_UDEC_3895u 0xF37u, 11u, 62u, (5u, 19u, 41u)
-#define PPUTLIMPL_UDEC_3894u 0xF36u, 11u, 62u, (2u, 3u, 11u, 59u)
-#define PPUTLIMPL_UDEC_3893u 0xF35u, 11u, 62u, (17u, 229u)
-#define PPUTLIMPL_UDEC_3892u 0xF34u, 11u, 62u, (2u, 2u, 7u, 139u)
-#define PPUTLIMPL_UDEC_3891u 0xF33u, 11u, 62u, (3u, 1297u)
-#define PPUTLIMPL_UDEC_3890u 0xF32u, 11u, 62u, (2u, 5u, 389u)
-#define PPUTLIMPL_UDEC_3889u 0xF31u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3888u 0xF30u, 11u, 62u, (2u, 2u, 2u, 2u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_3887u 0xF2Fu, 11u, 62u, (13u, 13u, 23u)
-#define PPUTLIMPL_UDEC_3886u 0xF2Eu, 11u, 62u, (2u, 29u, 67u)
-#define PPUTLIMPL_UDEC_3885u 0xF2Du, 11u, 62u, (3u, 5u, 7u, 37u)
-#define PPUTLIMPL_UDEC_3884u 0xF2Cu, 11u, 62u, (2u, 2u, 971u)
-#define PPUTLIMPL_UDEC_3883u 0xF2Bu, 11u, 62u, (11u, 353u)
-#define PPUTLIMPL_UDEC_3882u 0xF2Au, 11u, 62u, (2u, 3u, 647u)
-#define PPUTLIMPL_UDEC_3881u 0xF29u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3880u 0xF28u, 11u, 62u, (2u, 2u, 2u, 5u, 97u)
-#define PPUTLIMPL_UDEC_3879u 0xF27u, 11u, 62u, (3u, 3u, 431u)
-#define PPUTLIMPL_UDEC_3878u 0xF26u, 11u, 62u, (2u, 7u, 277u)
-#define PPUTLIMPL_UDEC_3877u 0xF25u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3876u 0xF24u, 11u, 62u, (2u, 2u, 3u, 17u, 19u)
-#define PPUTLIMPL_UDEC_3875u 0xF23u, 11u, 62u, (5u, 5u, 5u, 31u)
-#define PPUTLIMPL_UDEC_3874u 0xF22u, 11u, 62u, (2u, 13u, 149u)
-#define PPUTLIMPL_UDEC_3873u 0xF21u, 11u, 62u, (3u, 1291u)
-#define PPUTLIMPL_UDEC_3872u 0xF20u, 11u, 62u, (2u, 2u, 2u, 2u, 2u, 11u, 11u)
-#define PPUTLIMPL_UDEC_3871u 0xF1Fu, 11u, 62u, (7u, 7u, 79u)
-#define PPUTLIMPL_UDEC_3870u 0xF1Eu, 11u, 62u, (2u, 3u, 3u, 5u, 43u)
-#define PPUTLIMPL_UDEC_3869u 0xF1Du, 11u, 62u, (53u, 73u)
-#define PPUTLIMPL_UDEC_3868u 0xF1Cu, 11u, 62u, (2u, 2u, 967u)
-#define PPUTLIMPL_UDEC_3867u 0xF1Bu, 11u, 62u, (3u, 1289u)
-#define PPUTLIMPL_UDEC_3866u 0xF1Au, 11u, 62u, (2u, 1933u)
-#define PPUTLIMPL_UDEC_3865u 0xF19u, 11u, 62u, (5u, 773u)
-#define PPUTLIMPL_UDEC_3864u 0xF18u, 11u, 62u, (2u, 2u, 2u, 3u, 7u, 23u)
-#define PPUTLIMPL_UDEC_3863u 0xF17u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3862u 0xF16u, 11u, 62u, (2u, 1931u)
-#define PPUTLIMPL_UDEC_3861u 0xF15u, 11u, 62u, (3u, 3u, 3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_3860u 0xF14u, 11u, 62u, (2u, 2u, 5u, 193u)
-#define PPUTLIMPL_UDEC_3859u 0xF13u, 11u, 62u, (17u, 227u)
-#define PPUTLIMPL_UDEC_3858u 0xF12u, 11u, 62u, (2u, 3u, 643u)
-#define PPUTLIMPL_UDEC_3857u 0xF11u, 11u, 62u, (7u, 19u, 29u)
-#define PPUTLIMPL_UDEC_3856u 0xF10u, 11u, 62u, (2u, 2u, 2u, 2u, 241u)
-#define PPUTLIMPL_UDEC_3855u 0xF0Fu, 11u, 62u, (3u, 5u, 257u)
-#define PPUTLIMPL_UDEC_3854u 0xF0Eu, 11u, 62u, (2u, 41u, 47u)
-#define PPUTLIMPL_UDEC_3853u 0xF0Du, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3852u 0xF0Cu, 11u, 62u, (2u, 2u, 3u, 3u, 107u)
-#define PPUTLIMPL_UDEC_3851u 0xF0Bu, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3850u 0xF0Au, 11u, 62u, (2u, 5u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_3849u 0xF09u, 11u, 62u, (3u, 1283u)
-#define PPUTLIMPL_UDEC_3848u 0xF08u, 11u, 62u, (2u, 2u, 2u, 13u, 37u)
-#define PPUTLIMPL_UDEC_3847u 0xF07u, 11u, 62u, ()
-#define PPUTLIMPL_UDEC_3846u 0xF06u, 11u, 62u, (2u, 3u, 641u)
-#define PPUTLIMPL_UDEC_3845u 0xF05u, 11u, 62u, (5u, 769u)
-#define PPUTLIMPL_UDEC_3844u 0xF04u, 11u, 62u, (2u, 2u, 31u, 31u)
-#define PPUTLIMPL_UDEC_3843u 0xF03u, 11u, 61u, (3u, 3u, 7u, 61u)
-#define PPUTLIMPL_UDEC_3842u 0xF02u, 11u, 61u, (2u, 17u, 113u)
-#define PPUTLIMPL_UDEC_3841u 0xF01u, 11u, 61u, (23u, 167u)
-#define PPUTLIMPL_UDEC_3840u 0xF00u, 11u, 61u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_3839u 0xEFFu, 11u, 61u, (11u, 349u)
-#define PPUTLIMPL_UDEC_3838u 0xEFEu, 11u, 61u, (2u, 19u, 101u)
-#define PPUTLIMPL_UDEC_3837u 0xEFDu, 11u, 61u, (3u, 1279u)
-#define PPUTLIMPL_UDEC_3836u 0xEFCu, 11u, 61u, (2u, 2u, 7u, 137u)
-#define PPUTLIMPL_UDEC_3835u 0xEFBu, 11u, 61u, (5u, 13u, 59u)
-#define PPUTLIMPL_UDEC_3834u 0xEFAu, 11u, 61u, (2u, 3u, 3u, 3u, 71u)
-#define PPUTLIMPL_UDEC_3833u 0xEF9u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3832u 0xEF8u, 11u, 61u, (2u, 2u, 2u, 479u)
-#define PPUTLIMPL_UDEC_3831u 0xEF7u, 11u, 61u, (3u, 1277u)
-#define PPUTLIMPL_UDEC_3830u 0xEF6u, 11u, 61u, (2u, 5u, 383u)
-#define PPUTLIMPL_UDEC_3829u 0xEF5u, 11u, 61u, (7u, 547u)
-#define PPUTLIMPL_UDEC_3828u 0xEF4u, 11u, 61u, (2u, 2u, 3u, 11u, 29u)
-#define PPUTLIMPL_UDEC_3827u 0xEF3u, 11u, 61u, (43u, 89u)
-#define PPUTLIMPL_UDEC_3826u 0xEF2u, 11u, 61u, (2u, 1913u)
-#define PPUTLIMPL_UDEC_3825u 0xEF1u, 11u, 61u, (3u, 3u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_3824u 0xEF0u, 11u, 61u, (2u, 2u, 2u, 2u, 239u)
-#define PPUTLIMPL_UDEC_3823u 0xEEFu, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3822u 0xEEEu, 11u, 61u, (2u, 3u, 7u, 7u, 13u)
-#define PPUTLIMPL_UDEC_3821u 0xEEDu, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3820u 0xEECu, 11u, 61u, (2u, 2u, 5u, 191u)
-#define PPUTLIMPL_UDEC_3819u 0xEEBu, 11u, 61u, (3u, 19u, 67u)
-#define PPUTLIMPL_UDEC_3818u 0xEEAu, 11u, 61u, (2u, 23u, 83u)
-#define PPUTLIMPL_UDEC_3817u 0xEE9u, 11u, 61u, (11u, 347u)
-#define PPUTLIMPL_UDEC_3816u 0xEE8u, 11u, 61u, (2u, 2u, 2u, 3u, 3u, 53u)
-#define PPUTLIMPL_UDEC_3815u 0xEE7u, 11u, 61u, (5u, 7u, 109u)
-#define PPUTLIMPL_UDEC_3814u 0xEE6u, 11u, 61u, (2u, 1907u)
-#define PPUTLIMPL_UDEC_3813u 0xEE5u, 11u, 61u, (3u, 31u, 41u)
-#define PPUTLIMPL_UDEC_3812u 0xEE4u, 11u, 61u, (2u, 2u, 953u)
-#define PPUTLIMPL_UDEC_3811u 0xEE3u, 11u, 61u, (37u, 103u)
-#define PPUTLIMPL_UDEC_3810u 0xEE2u, 11u, 61u, (2u, 3u, 5u, 127u)
-#define PPUTLIMPL_UDEC_3809u 0xEE1u, 11u, 61u, (13u, 293u)
-#define PPUTLIMPL_UDEC_3808u 0xEE0u, 11u, 61u, (2u, 2u, 2u, 2u, 2u, 7u, 17u)
-#define PPUTLIMPL_UDEC_3807u 0xEDFu, 11u, 61u, (3u, 3u, 3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_3806u 0xEDEu, 11u, 61u, (2u, 11u, 173u)
-#define PPUTLIMPL_UDEC_3805u 0xEDDu, 11u, 61u, (5u, 761u)
-#define PPUTLIMPL_UDEC_3804u 0xEDCu, 11u, 61u, (2u, 2u, 3u, 317u)
-#define PPUTLIMPL_UDEC_3803u 0xEDBu, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3802u 0xEDAu, 11u, 61u, (2u, 1901u)
-#define PPUTLIMPL_UDEC_3801u 0xED9u, 11u, 61u, (3u, 7u, 181u)
-#define PPUTLIMPL_UDEC_3800u 0xED8u, 11u, 61u, (2u, 2u, 2u, 5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_3799u 0xED7u, 11u, 61u, (29u, 131u)
-#define PPUTLIMPL_UDEC_3798u 0xED6u, 11u, 61u, (2u, 3u, 3u, 211u)
-#define PPUTLIMPL_UDEC_3797u 0xED5u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3796u 0xED4u, 11u, 61u, (2u, 2u, 13u, 73u)
-#define PPUTLIMPL_UDEC_3795u 0xED3u, 11u, 61u, (3u, 5u, 11u, 23u)
-#define PPUTLIMPL_UDEC_3794u 0xED2u, 11u, 61u, (2u, 7u, 271u)
-#define PPUTLIMPL_UDEC_3793u 0xED1u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3792u 0xED0u, 11u, 61u, (2u, 2u, 2u, 2u, 3u, 79u)
-#define PPUTLIMPL_UDEC_3791u 0xECFu, 11u, 61u, (17u, 223u)
-#define PPUTLIMPL_UDEC_3790u 0xECEu, 11u, 61u, (2u, 5u, 379u)
-#define PPUTLIMPL_UDEC_3789u 0xECDu, 11u, 61u, (3u, 3u, 421u)
-#define PPUTLIMPL_UDEC_3788u 0xECCu, 11u, 61u, (2u, 2u, 947u)
-#define PPUTLIMPL_UDEC_3787u 0xECBu, 11u, 61u, (7u, 541u)
-#define PPUTLIMPL_UDEC_3786u 0xECAu, 11u, 61u, (2u, 3u, 631u)
-#define PPUTLIMPL_UDEC_3785u 0xEC9u, 11u, 61u, (5u, 757u)
-#define PPUTLIMPL_UDEC_3784u 0xEC8u, 11u, 61u, (2u, 2u, 2u, 11u, 43u)
-#define PPUTLIMPL_UDEC_3783u 0xEC7u, 11u, 61u, (3u, 13u, 97u)
-#define PPUTLIMPL_UDEC_3782u 0xEC6u, 11u, 61u, (2u, 31u, 61u)
-#define PPUTLIMPL_UDEC_3781u 0xEC5u, 11u, 61u, (19u, 199u)
-#define PPUTLIMPL_UDEC_3780u 0xEC4u, 11u, 61u, (2u, 2u, 3u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_3779u 0xEC3u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3778u 0xEC2u, 11u, 61u, (2u, 1889u)
-#define PPUTLIMPL_UDEC_3777u 0xEC1u, 11u, 61u, (3u, 1259u)
-#define PPUTLIMPL_UDEC_3776u 0xEC0u, 11u, 61u, (2u, 2u, 2u, 2u, 2u, 2u, 59u)
-#define PPUTLIMPL_UDEC_3775u 0xEBFu, 11u, 61u, (5u, 5u, 151u)
-#define PPUTLIMPL_UDEC_3774u 0xEBEu, 11u, 61u, (2u, 3u, 17u, 37u)
-#define PPUTLIMPL_UDEC_3773u 0xEBDu, 11u, 61u, (7u, 7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_3772u 0xEBCu, 11u, 61u, (2u, 2u, 23u, 41u)
-#define PPUTLIMPL_UDEC_3771u 0xEBBu, 11u, 61u, (3u, 3u, 419u)
-#define PPUTLIMPL_UDEC_3770u 0xEBAu, 11u, 61u, (2u, 5u, 13u, 29u)
-#define PPUTLIMPL_UDEC_3769u 0xEB9u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3768u 0xEB8u, 11u, 61u, (2u, 2u, 2u, 3u, 157u)
-#define PPUTLIMPL_UDEC_3767u 0xEB7u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3766u 0xEB6u, 11u, 61u, (2u, 7u, 269u)
-#define PPUTLIMPL_UDEC_3765u 0xEB5u, 11u, 61u, (3u, 5u, 251u)
-#define PPUTLIMPL_UDEC_3764u 0xEB4u, 11u, 61u, (2u, 2u, 941u)
-#define PPUTLIMPL_UDEC_3763u 0xEB3u, 11u, 61u, (53u, 71u)
-#define PPUTLIMPL_UDEC_3762u 0xEB2u, 11u, 61u, (2u, 3u, 3u, 11u, 19u)
-#define PPUTLIMPL_UDEC_3761u 0xEB1u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3760u 0xEB0u, 11u, 61u, (2u, 2u, 2u, 2u, 5u, 47u)
-#define PPUTLIMPL_UDEC_3759u 0xEAFu, 11u, 61u, (3u, 7u, 179u)
-#define PPUTLIMPL_UDEC_3758u 0xEAEu, 11u, 61u, (2u, 1879u)
-#define PPUTLIMPL_UDEC_3757u 0xEADu, 11u, 61u, (13u, 17u, 17u)
-#define PPUTLIMPL_UDEC_3756u 0xEACu, 11u, 61u, (2u, 2u, 3u, 313u)
-#define PPUTLIMPL_UDEC_3755u 0xEABu, 11u, 61u, (5u, 751u)
-#define PPUTLIMPL_UDEC_3754u 0xEAAu, 11u, 61u, (2u, 1877u)
-#define PPUTLIMPL_UDEC_3753u 0xEA9u, 11u, 61u, (3u, 3u, 3u, 139u)
-#define PPUTLIMPL_UDEC_3752u 0xEA8u, 11u, 61u, (2u, 2u, 2u, 7u, 67u)
-#define PPUTLIMPL_UDEC_3751u 0xEA7u, 11u, 61u, (11u, 11u, 31u)
-#define PPUTLIMPL_UDEC_3750u 0xEA6u, 11u, 61u, (2u, 3u, 5u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_3749u 0xEA5u, 11u, 61u, (23u, 163u)
-#define PPUTLIMPL_UDEC_3748u 0xEA4u, 11u, 61u, (2u, 2u, 937u)
-#define PPUTLIMPL_UDEC_3747u 0xEA3u, 11u, 61u, (3u, 1249u)
-#define PPUTLIMPL_UDEC_3746u 0xEA2u, 11u, 61u, (2u, 1873u)
-#define PPUTLIMPL_UDEC_3745u 0xEA1u, 11u, 61u, (5u, 7u, 107u)
-#define PPUTLIMPL_UDEC_3744u 0xEA0u, 11u, 61u, (2u, 2u, 2u, 2u, 2u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_3743u 0xE9Fu, 11u, 61u, (19u, 197u)
-#define PPUTLIMPL_UDEC_3742u 0xE9Eu, 11u, 61u, (2u, 1871u)
-#define PPUTLIMPL_UDEC_3741u 0xE9Du, 11u, 61u, (3u, 29u, 43u)
-#define PPUTLIMPL_UDEC_3740u 0xE9Cu, 11u, 61u, (2u, 2u, 5u, 11u, 17u)
-#define PPUTLIMPL_UDEC_3739u 0xE9Bu, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3738u 0xE9Au, 11u, 61u, (2u, 3u, 7u, 89u)
-#define PPUTLIMPL_UDEC_3737u 0xE99u, 11u, 61u, (37u, 101u)
-#define PPUTLIMPL_UDEC_3736u 0xE98u, 11u, 61u, (2u, 2u, 2u, 467u)
-#define PPUTLIMPL_UDEC_3735u 0xE97u, 11u, 61u, (3u, 3u, 5u, 83u)
-#define PPUTLIMPL_UDEC_3734u 0xE96u, 11u, 61u, (2u, 1867u)
-#define PPUTLIMPL_UDEC_3733u 0xE95u, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3732u 0xE94u, 11u, 61u, (2u, 2u, 3u, 311u)
-#define PPUTLIMPL_UDEC_3731u 0xE93u, 11u, 61u, (7u, 13u, 41u)
-#define PPUTLIMPL_UDEC_3730u 0xE92u, 11u, 61u, (2u, 5u, 373u)
-#define PPUTLIMPL_UDEC_3729u 0xE91u, 11u, 61u, (3u, 11u, 113u)
-#define PPUTLIMPL_UDEC_3728u 0xE90u, 11u, 61u, (2u, 2u, 2u, 2u, 233u)
-#define PPUTLIMPL_UDEC_3727u 0xE8Fu, 11u, 61u, ()
-#define PPUTLIMPL_UDEC_3726u 0xE8Eu, 11u, 61u, (2u, 3u, 3u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_3725u 0xE8Du, 11u, 61u, (5u, 5u, 149u)
-#define PPUTLIMPL_UDEC_3724u 0xE8Cu, 11u, 61u, (2u, 2u, 7u, 7u, 19u)
-#define PPUTLIMPL_UDEC_3723u 0xE8Bu, 11u, 61u, (3u, 17u, 73u)
-#define PPUTLIMPL_UDEC_3722u 0xE8Au, 11u, 61u, (2u, 1861u)
-#define PPUTLIMPL_UDEC_3721u 0xE89u, 11u, 61u, (61u, 61u)
-#define PPUTLIMPL_UDEC_3720u 0xE88u, 11u, 60u, (2u, 2u, 2u, 3u, 5u, 31u)
-#define PPUTLIMPL_UDEC_3719u 0xE87u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3718u 0xE86u, 11u, 60u, (2u, 11u, 13u, 13u)
-#define PPUTLIMPL_UDEC_3717u 0xE85u, 11u, 60u, (3u, 3u, 7u, 59u)
-#define PPUTLIMPL_UDEC_3716u 0xE84u, 11u, 60u, (2u, 2u, 929u)
-#define PPUTLIMPL_UDEC_3715u 0xE83u, 11u, 60u, (5u, 743u)
-#define PPUTLIMPL_UDEC_3714u 0xE82u, 11u, 60u, (2u, 3u, 619u)
-#define PPUTLIMPL_UDEC_3713u 0xE81u, 11u, 60u, (47u, 79u)
-#define PPUTLIMPL_UDEC_3712u 0xE80u, 11u, 60u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 29u)
-#define PPUTLIMPL_UDEC_3711u 0xE7Fu, 11u, 60u, (3u, 1237u)
-#define PPUTLIMPL_UDEC_3710u 0xE7Eu, 11u, 60u, (2u, 5u, 7u, 53u)
-#define PPUTLIMPL_UDEC_3709u 0xE7Du, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3708u 0xE7Cu, 11u, 60u, (2u, 2u, 3u, 3u, 103u)
-#define PPUTLIMPL_UDEC_3707u 0xE7Bu, 11u, 60u, (11u, 337u)
-#define PPUTLIMPL_UDEC_3706u 0xE7Au, 11u, 60u, (2u, 17u, 109u)
-#define PPUTLIMPL_UDEC_3705u 0xE79u, 11u, 60u, (3u, 5u, 13u, 19u)
-#define PPUTLIMPL_UDEC_3704u 0xE78u, 11u, 60u, (2u, 2u, 2u, 463u)
-#define PPUTLIMPL_UDEC_3703u 0xE77u, 11u, 60u, (7u, 23u, 23u)
-#define PPUTLIMPL_UDEC_3702u 0xE76u, 11u, 60u, (2u, 3u, 617u)
-#define PPUTLIMPL_UDEC_3701u 0xE75u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3700u 0xE74u, 11u, 60u, (2u, 2u, 5u, 5u, 37u)
-#define PPUTLIMPL_UDEC_3699u 0xE73u, 11u, 60u, (3u, 3u, 3u, 137u)
-#define PPUTLIMPL_UDEC_3698u 0xE72u, 11u, 60u, (2u, 43u, 43u)
-#define PPUTLIMPL_UDEC_3697u 0xE71u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3696u 0xE70u, 11u, 60u, (2u, 2u, 2u, 2u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_3695u 0xE6Fu, 11u, 60u, (5u, 739u)
-#define PPUTLIMPL_UDEC_3694u 0xE6Eu, 11u, 60u, (2u, 1847u)
-#define PPUTLIMPL_UDEC_3693u 0xE6Du, 11u, 60u, (3u, 1231u)
-#define PPUTLIMPL_UDEC_3692u 0xE6Cu, 11u, 60u, (2u, 2u, 13u, 71u)
-#define PPUTLIMPL_UDEC_3691u 0xE6Bu, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3690u 0xE6Au, 11u, 60u, (2u, 3u, 3u, 5u, 41u)
-#define PPUTLIMPL_UDEC_3689u 0xE69u, 11u, 60u, (7u, 17u, 31u)
-#define PPUTLIMPL_UDEC_3688u 0xE68u, 11u, 60u, (2u, 2u, 2u, 461u)
-#define PPUTLIMPL_UDEC_3687u 0xE67u, 11u, 60u, (3u, 1229u)
-#define PPUTLIMPL_UDEC_3686u 0xE66u, 11u, 60u, (2u, 19u, 97u)
-#define PPUTLIMPL_UDEC_3685u 0xE65u, 11u, 60u, (5u, 11u, 67u)
-#define PPUTLIMPL_UDEC_3684u 0xE64u, 11u, 60u, (2u, 2u, 3u, 307u)
-#define PPUTLIMPL_UDEC_3683u 0xE63u, 11u, 60u, (29u, 127u)
-#define PPUTLIMPL_UDEC_3682u 0xE62u, 11u, 60u, (2u, 7u, 263u)
-#define PPUTLIMPL_UDEC_3681u 0xE61u, 11u, 60u, (3u, 3u, 409u)
-#define PPUTLIMPL_UDEC_3680u 0xE60u, 11u, 60u, (2u, 2u, 2u, 2u, 2u, 5u, 23u)
-#define PPUTLIMPL_UDEC_3679u 0xE5Fu, 11u, 60u, (13u, 283u)
-#define PPUTLIMPL_UDEC_3678u 0xE5Eu, 11u, 60u, (2u, 3u, 613u)
-#define PPUTLIMPL_UDEC_3677u 0xE5Du, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3676u 0xE5Cu, 11u, 60u, (2u, 2u, 919u)
-#define PPUTLIMPL_UDEC_3675u 0xE5Bu, 11u, 60u, (3u, 5u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3674u 0xE5Au, 11u, 60u, (2u, 11u, 167u)
-#define PPUTLIMPL_UDEC_3673u 0xE59u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3672u 0xE58u, 11u, 60u, (2u, 2u, 2u, 3u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_3671u 0xE57u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3670u 0xE56u, 11u, 60u, (2u, 5u, 367u)
-#define PPUTLIMPL_UDEC_3669u 0xE55u, 11u, 60u, (3u, 1223u)
-#define PPUTLIMPL_UDEC_3668u 0xE54u, 11u, 60u, (2u, 2u, 7u, 131u)
-#define PPUTLIMPL_UDEC_3667u 0xE53u, 11u, 60u, (19u, 193u)
-#define PPUTLIMPL_UDEC_3666u 0xE52u, 11u, 60u, (2u, 3u, 13u, 47u)
-#define PPUTLIMPL_UDEC_3665u 0xE51u, 11u, 60u, (5u, 733u)
-#define PPUTLIMPL_UDEC_3664u 0xE50u, 11u, 60u, (2u, 2u, 2u, 2u, 229u)
-#define PPUTLIMPL_UDEC_3663u 0xE4Fu, 11u, 60u, (3u, 3u, 11u, 37u)
-#define PPUTLIMPL_UDEC_3662u 0xE4Eu, 11u, 60u, (2u, 1831u)
-#define PPUTLIMPL_UDEC_3661u 0xE4Du, 11u, 60u, (7u, 523u)
-#define PPUTLIMPL_UDEC_3660u 0xE4Cu, 11u, 60u, (2u, 2u, 3u, 5u, 61u)
-#define PPUTLIMPL_UDEC_3659u 0xE4Bu, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3658u 0xE4Au, 11u, 60u, (2u, 31u, 59u)
-#define PPUTLIMPL_UDEC_3657u 0xE49u, 11u, 60u, (3u, 23u, 53u)
-#define PPUTLIMPL_UDEC_3656u 0xE48u, 11u, 60u, (2u, 2u, 2u, 457u)
-#define PPUTLIMPL_UDEC_3655u 0xE47u, 11u, 60u, (5u, 17u, 43u)
-#define PPUTLIMPL_UDEC_3654u 0xE46u, 11u, 60u, (2u, 3u, 3u, 7u, 29u)
-#define PPUTLIMPL_UDEC_3653u 0xE45u, 11u, 60u, (13u, 281u)
-#define PPUTLIMPL_UDEC_3652u 0xE44u, 11u, 60u, (2u, 2u, 11u, 83u)
-#define PPUTLIMPL_UDEC_3651u 0xE43u, 11u, 60u, (3u, 1217u)
-#define PPUTLIMPL_UDEC_3650u 0xE42u, 11u, 60u, (2u, 5u, 5u, 73u)
-#define PPUTLIMPL_UDEC_3649u 0xE41u, 11u, 60u, (41u, 89u)
-#define PPUTLIMPL_UDEC_3648u 0xE40u, 11u, 60u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 19u)
-#define PPUTLIMPL_UDEC_3647u 0xE3Fu, 11u, 60u, (7u, 521u)
-#define PPUTLIMPL_UDEC_3646u 0xE3Eu, 11u, 60u, (2u, 1823u)
-#define PPUTLIMPL_UDEC_3645u 0xE3Du, 11u, 60u, (3u, 3u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_3644u 0xE3Cu, 11u, 60u, (2u, 2u, 911u)
-#define PPUTLIMPL_UDEC_3643u 0xE3Bu, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3642u 0xE3Au, 11u, 60u, (2u, 3u, 607u)
-#define PPUTLIMPL_UDEC_3641u 0xE39u, 11u, 60u, (11u, 331u)
-#define PPUTLIMPL_UDEC_3640u 0xE38u, 11u, 60u, (2u, 2u, 2u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_3639u 0xE37u, 11u, 60u, (3u, 1213u)
-#define PPUTLIMPL_UDEC_3638u 0xE36u, 11u, 60u, (2u, 17u, 107u)
-#define PPUTLIMPL_UDEC_3637u 0xE35u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3636u 0xE34u, 11u, 60u, (2u, 2u, 3u, 3u, 101u)
-#define PPUTLIMPL_UDEC_3635u 0xE33u, 11u, 60u, (5u, 727u)
-#define PPUTLIMPL_UDEC_3634u 0xE32u, 11u, 60u, (2u, 23u, 79u)
-#define PPUTLIMPL_UDEC_3633u 0xE31u, 11u, 60u, (3u, 7u, 173u)
-#define PPUTLIMPL_UDEC_3632u 0xE30u, 11u, 60u, (2u, 2u, 2u, 2u, 227u)
-#define PPUTLIMPL_UDEC_3631u 0xE2Fu, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3630u 0xE2Eu, 11u, 60u, (2u, 3u, 5u, 11u, 11u)
-#define PPUTLIMPL_UDEC_3629u 0xE2Du, 11u, 60u, (19u, 191u)
-#define PPUTLIMPL_UDEC_3628u 0xE2Cu, 11u, 60u, (2u, 2u, 907u)
-#define PPUTLIMPL_UDEC_3627u 0xE2Bu, 11u, 60u, (3u, 3u, 13u, 31u)
-#define PPUTLIMPL_UDEC_3626u 0xE2Au, 11u, 60u, (2u, 7u, 7u, 37u)
-#define PPUTLIMPL_UDEC_3625u 0xE29u, 11u, 60u, (5u, 5u, 5u, 29u)
-#define PPUTLIMPL_UDEC_3624u 0xE28u, 11u, 60u, (2u, 2u, 2u, 3u, 151u)
-#define PPUTLIMPL_UDEC_3623u 0xE27u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3622u 0xE26u, 11u, 60u, (2u, 1811u)
-#define PPUTLIMPL_UDEC_3621u 0xE25u, 11u, 60u, (3u, 17u, 71u)
-#define PPUTLIMPL_UDEC_3620u 0xE24u, 11u, 60u, (2u, 2u, 5u, 181u)
-#define PPUTLIMPL_UDEC_3619u 0xE23u, 11u, 60u, (7u, 11u, 47u)
-#define PPUTLIMPL_UDEC_3618u 0xE22u, 11u, 60u, (2u, 3u, 3u, 3u, 67u)
-#define PPUTLIMPL_UDEC_3617u 0xE21u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3616u 0xE20u, 11u, 60u, (2u, 2u, 2u, 2u, 2u, 113u)
-#define PPUTLIMPL_UDEC_3615u 0xE1Fu, 11u, 60u, (3u, 5u, 241u)
-#define PPUTLIMPL_UDEC_3614u 0xE1Eu, 11u, 60u, (2u, 13u, 139u)
-#define PPUTLIMPL_UDEC_3613u 0xE1Du, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3612u 0xE1Cu, 11u, 60u, (2u, 2u, 3u, 7u, 43u)
-#define PPUTLIMPL_UDEC_3611u 0xE1Bu, 11u, 60u, (23u, 157u)
-#define PPUTLIMPL_UDEC_3610u 0xE1Au, 11u, 60u, (2u, 5u, 19u, 19u)
-#define PPUTLIMPL_UDEC_3609u 0xE19u, 11u, 60u, (3u, 3u, 401u)
-#define PPUTLIMPL_UDEC_3608u 0xE18u, 11u, 60u, (2u, 2u, 2u, 11u, 41u)
-#define PPUTLIMPL_UDEC_3607u 0xE17u, 11u, 60u, ()
-#define PPUTLIMPL_UDEC_3606u 0xE16u, 11u, 60u, (2u, 3u, 601u)
-#define PPUTLIMPL_UDEC_3605u 0xE15u, 11u, 60u, (5u, 7u, 103u)
-#define PPUTLIMPL_UDEC_3604u 0xE14u, 11u, 60u, (2u, 2u, 17u, 53u)
-#define PPUTLIMPL_UDEC_3603u 0xE13u, 11u, 60u, (3u, 1201u)
-#define PPUTLIMPL_UDEC_3602u 0xE12u, 11u, 60u, (2u, 1801u)
-#define PPUTLIMPL_UDEC_3601u 0xE11u, 11u, 60u, (13u, 277u)
-#define PPUTLIMPL_UDEC_3600u 0xE10u, 11u, 60u, (2u, 2u, 2u, 2u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_3599u 0xE0Fu, 11u, 59u, (59u, 61u)
-#define PPUTLIMPL_UDEC_3598u 0xE0Eu, 11u, 59u, (2u, 7u, 257u)
-#define PPUTLIMPL_UDEC_3597u 0xE0Du, 11u, 59u, (3u, 11u, 109u)
-#define PPUTLIMPL_UDEC_3596u 0xE0Cu, 11u, 59u, (2u, 2u, 29u, 31u)
-#define PPUTLIMPL_UDEC_3595u 0xE0Bu, 11u, 59u, (5u, 719u)
-#define PPUTLIMPL_UDEC_3594u 0xE0Au, 11u, 59u, (2u, 3u, 599u)
-#define PPUTLIMPL_UDEC_3593u 0xE09u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3592u 0xE08u, 11u, 59u, (2u, 2u, 2u, 449u)
-#define PPUTLIMPL_UDEC_3591u 0xE07u, 11u, 59u, (3u, 3u, 3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_3590u 0xE06u, 11u, 59u, (2u, 5u, 359u)
-#define PPUTLIMPL_UDEC_3589u 0xE05u, 11u, 59u, (37u, 97u)
-#define PPUTLIMPL_UDEC_3588u 0xE04u, 11u, 59u, (2u, 2u, 3u, 13u, 23u)
-#define PPUTLIMPL_UDEC_3587u 0xE03u, 11u, 59u, (17u, 211u)
-#define PPUTLIMPL_UDEC_3586u 0xE02u, 11u, 59u, (2u, 11u, 163u)
-#define PPUTLIMPL_UDEC_3585u 0xE01u, 11u, 59u, (3u, 5u, 239u)
-#define PPUTLIMPL_UDEC_3584u 0xE00u, 11u, 59u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_3583u 0xDFFu, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3582u 0xDFEu, 11u, 59u, (2u, 3u, 3u, 199u)
-#define PPUTLIMPL_UDEC_3581u 0xDFDu, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3580u 0xDFCu, 11u, 59u, (2u, 2u, 5u, 179u)
-#define PPUTLIMPL_UDEC_3579u 0xDFBu, 11u, 59u, (3u, 1193u)
-#define PPUTLIMPL_UDEC_3578u 0xDFAu, 11u, 59u, (2u, 1789u)
-#define PPUTLIMPL_UDEC_3577u 0xDF9u, 11u, 59u, (7u, 7u, 73u)
-#define PPUTLIMPL_UDEC_3576u 0xDF8u, 11u, 59u, (2u, 2u, 2u, 3u, 149u)
-#define PPUTLIMPL_UDEC_3575u 0xDF7u, 11u, 59u, (5u, 5u, 11u, 13u)
-#define PPUTLIMPL_UDEC_3574u 0xDF6u, 11u, 59u, (2u, 1787u)
-#define PPUTLIMPL_UDEC_3573u 0xDF5u, 11u, 59u, (3u, 3u, 397u)
-#define PPUTLIMPL_UDEC_3572u 0xDF4u, 11u, 59u, (2u, 2u, 19u, 47u)
-#define PPUTLIMPL_UDEC_3571u 0xDF3u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3570u 0xDF2u, 11u, 59u, (2u, 3u, 5u, 7u, 17u)
-#define PPUTLIMPL_UDEC_3569u 0xDF1u, 11u, 59u, (43u, 83u)
-#define PPUTLIMPL_UDEC_3568u 0xDF0u, 11u, 59u, (2u, 2u, 2u, 2u, 223u)
-#define PPUTLIMPL_UDEC_3567u 0xDEFu, 11u, 59u, (3u, 29u, 41u)
-#define PPUTLIMPL_UDEC_3566u 0xDEEu, 11u, 59u, (2u, 1783u)
-#define PPUTLIMPL_UDEC_3565u 0xDEDu, 11u, 59u, (5u, 23u, 31u)
-#define PPUTLIMPL_UDEC_3564u 0xDECu, 11u, 59u, (2u, 2u, 3u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_3563u 0xDEBu, 11u, 59u, (7u, 509u)
-#define PPUTLIMPL_UDEC_3562u 0xDEAu, 11u, 59u, (2u, 13u, 137u)
-#define PPUTLIMPL_UDEC_3561u 0xDE9u, 11u, 59u, (3u, 1187u)
-#define PPUTLIMPL_UDEC_3560u 0xDE8u, 11u, 59u, (2u, 2u, 2u, 5u, 89u)
-#define PPUTLIMPL_UDEC_3559u 0xDE7u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3558u 0xDE6u, 11u, 59u, (2u, 3u, 593u)
-#define PPUTLIMPL_UDEC_3557u 0xDE5u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3556u 0xDE4u, 11u, 59u, (2u, 2u, 7u, 127u)
-#define PPUTLIMPL_UDEC_3555u 0xDE3u, 11u, 59u, (3u, 3u, 5u, 79u)
-#define PPUTLIMPL_UDEC_3554u 0xDE2u, 11u, 59u, (2u, 1777u)
-#define PPUTLIMPL_UDEC_3553u 0xDE1u, 11u, 59u, (11u, 17u, 19u)
-#define PPUTLIMPL_UDEC_3552u 0xDE0u, 11u, 59u, (2u, 2u, 2u, 2u, 2u, 3u, 37u)
-#define PPUTLIMPL_UDEC_3551u 0xDDFu, 11u, 59u, (53u, 67u)
-#define PPUTLIMPL_UDEC_3550u 0xDDEu, 11u, 59u, (2u, 5u, 5u, 71u)
-#define PPUTLIMPL_UDEC_3549u 0xDDDu, 11u, 59u, (3u, 7u, 13u, 13u)
-#define PPUTLIMPL_UDEC_3548u 0xDDCu, 11u, 59u, (2u, 2u, 887u)
-#define PPUTLIMPL_UDEC_3547u 0xDDBu, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3546u 0xDDAu, 11u, 59u, (2u, 3u, 3u, 197u)
-#define PPUTLIMPL_UDEC_3545u 0xDD9u, 11u, 59u, (5u, 709u)
-#define PPUTLIMPL_UDEC_3544u 0xDD8u, 11u, 59u, (2u, 2u, 2u, 443u)
-#define PPUTLIMPL_UDEC_3543u 0xDD7u, 11u, 59u, (3u, 1181u)
-#define PPUTLIMPL_UDEC_3542u 0xDD6u, 11u, 59u, (2u, 7u, 11u, 23u)
-#define PPUTLIMPL_UDEC_3541u 0xDD5u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3540u 0xDD4u, 11u, 59u, (2u, 2u, 3u, 5u, 59u)
-#define PPUTLIMPL_UDEC_3539u 0xDD3u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3538u 0xDD2u, 11u, 59u, (2u, 29u, 61u)
-#define PPUTLIMPL_UDEC_3537u 0xDD1u, 11u, 59u, (3u, 3u, 3u, 131u)
-#define PPUTLIMPL_UDEC_3536u 0xDD0u, 11u, 59u, (2u, 2u, 2u, 2u, 13u, 17u)
-#define PPUTLIMPL_UDEC_3535u 0xDCFu, 11u, 59u, (5u, 7u, 101u)
-#define PPUTLIMPL_UDEC_3534u 0xDCEu, 11u, 59u, (2u, 3u, 19u, 31u)
-#define PPUTLIMPL_UDEC_3533u 0xDCDu, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3532u 0xDCCu, 11u, 59u, (2u, 2u, 883u)
-#define PPUTLIMPL_UDEC_3531u 0xDCBu, 11u, 59u, (3u, 11u, 107u)
-#define PPUTLIMPL_UDEC_3530u 0xDCAu, 11u, 59u, (2u, 5u, 353u)
-#define PPUTLIMPL_UDEC_3529u 0xDC9u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3528u 0xDC8u, 11u, 59u, (2u, 2u, 2u, 3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3527u 0xDC7u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3526u 0xDC6u, 11u, 59u, (2u, 41u, 43u)
-#define PPUTLIMPL_UDEC_3525u 0xDC5u, 11u, 59u, (3u, 5u, 5u, 47u)
-#define PPUTLIMPL_UDEC_3524u 0xDC4u, 11u, 59u, (2u, 2u, 881u)
-#define PPUTLIMPL_UDEC_3523u 0xDC3u, 11u, 59u, (13u, 271u)
-#define PPUTLIMPL_UDEC_3522u 0xDC2u, 11u, 59u, (2u, 3u, 587u)
-#define PPUTLIMPL_UDEC_3521u 0xDC1u, 11u, 59u, (7u, 503u)
-#define PPUTLIMPL_UDEC_3520u 0xDC0u, 11u, 59u, (2u, 2u, 2u, 2u, 2u, 2u, 5u, 11u)
-#define PPUTLIMPL_UDEC_3519u 0xDBFu, 11u, 59u, (3u, 3u, 17u, 23u)
-#define PPUTLIMPL_UDEC_3518u 0xDBEu, 11u, 59u, (2u, 1759u)
-#define PPUTLIMPL_UDEC_3517u 0xDBDu, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3516u 0xDBCu, 11u, 59u, (2u, 2u, 3u, 293u)
-#define PPUTLIMPL_UDEC_3515u 0xDBBu, 11u, 59u, (5u, 19u, 37u)
-#define PPUTLIMPL_UDEC_3514u 0xDBAu, 11u, 59u, (2u, 7u, 251u)
-#define PPUTLIMPL_UDEC_3513u 0xDB9u, 11u, 59u, (3u, 1171u)
-#define PPUTLIMPL_UDEC_3512u 0xDB8u, 11u, 59u, (2u, 2u, 2u, 439u)
-#define PPUTLIMPL_UDEC_3511u 0xDB7u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3510u 0xDB6u, 11u, 59u, (2u, 3u, 3u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_3509u 0xDB5u, 11u, 59u, (11u, 11u, 29u)
-#define PPUTLIMPL_UDEC_3508u 0xDB4u, 11u, 59u, (2u, 2u, 877u)
-#define PPUTLIMPL_UDEC_3507u 0xDB3u, 11u, 59u, (3u, 7u, 167u)
-#define PPUTLIMPL_UDEC_3506u 0xDB2u, 11u, 59u, (2u, 1753u)
-#define PPUTLIMPL_UDEC_3505u 0xDB1u, 11u, 59u, (5u, 701u)
-#define PPUTLIMPL_UDEC_3504u 0xDB0u, 11u, 59u, (2u, 2u, 2u, 2u, 3u, 73u)
-#define PPUTLIMPL_UDEC_3503u 0xDAFu, 11u, 59u, (31u, 113u)
-#define PPUTLIMPL_UDEC_3502u 0xDAEu, 11u, 59u, (2u, 17u, 103u)
-#define PPUTLIMPL_UDEC_3501u 0xDADu, 11u, 59u, (3u, 3u, 389u)
-#define PPUTLIMPL_UDEC_3500u 0xDACu, 11u, 59u, (2u, 2u, 5u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_3499u 0xDABu, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3498u 0xDAAu, 11u, 59u, (2u, 3u, 11u, 53u)
-#define PPUTLIMPL_UDEC_3497u 0xDA9u, 11u, 59u, (13u, 269u)
-#define PPUTLIMPL_UDEC_3496u 0xDA8u, 11u, 59u, (2u, 2u, 2u, 19u, 23u)
-#define PPUTLIMPL_UDEC_3495u 0xDA7u, 11u, 59u, (3u, 5u, 233u)
-#define PPUTLIMPL_UDEC_3494u 0xDA6u, 11u, 59u, (2u, 1747u)
-#define PPUTLIMPL_UDEC_3493u 0xDA5u, 11u, 59u, (7u, 499u)
-#define PPUTLIMPL_UDEC_3492u 0xDA4u, 11u, 59u, (2u, 2u, 3u, 3u, 97u)
-#define PPUTLIMPL_UDEC_3491u 0xDA3u, 11u, 59u, ()
-#define PPUTLIMPL_UDEC_3490u 0xDA2u, 11u, 59u, (2u, 5u, 349u)
-#define PPUTLIMPL_UDEC_3489u 0xDA1u, 11u, 59u, (3u, 1163u)
-#define PPUTLIMPL_UDEC_3488u 0xDA0u, 11u, 59u, (2u, 2u, 2u, 2u, 2u, 109u)
-#define PPUTLIMPL_UDEC_3487u 0xD9Fu, 11u, 59u, (11u, 317u)
-#define PPUTLIMPL_UDEC_3486u 0xD9Eu, 11u, 59u, (2u, 3u, 7u, 83u)
-#define PPUTLIMPL_UDEC_3485u 0xD9Du, 11u, 59u, (5u, 17u, 41u)
-#define PPUTLIMPL_UDEC_3484u 0xD9Cu, 11u, 59u, (2u, 2u, 13u, 67u)
-#define PPUTLIMPL_UDEC_3483u 0xD9Bu, 11u, 59u, (3u, 3u, 3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_3482u 0xD9Au, 11u, 59u, (2u, 1741u)
-#define PPUTLIMPL_UDEC_3481u 0xD99u, 11u, 59u, (59u, 59u)
-#define PPUTLIMPL_UDEC_3480u 0xD98u, 11u, 58u, (2u, 2u, 2u, 3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_3479u 0xD97u, 11u, 58u, (7u, 7u, 71u)
-#define PPUTLIMPL_UDEC_3478u 0xD96u, 11u, 58u, (2u, 37u, 47u)
-#define PPUTLIMPL_UDEC_3477u 0xD95u, 11u, 58u, (3u, 19u, 61u)
-#define PPUTLIMPL_UDEC_3476u 0xD94u, 11u, 58u, (2u, 2u, 11u, 79u)
-#define PPUTLIMPL_UDEC_3475u 0xD93u, 11u, 58u, (5u, 5u, 139u)
-#define PPUTLIMPL_UDEC_3474u 0xD92u, 11u, 58u, (2u, 3u, 3u, 193u)
-#define PPUTLIMPL_UDEC_3473u 0xD91u, 11u, 58u, (23u, 151u)
-#define PPUTLIMPL_UDEC_3472u 0xD90u, 11u, 58u, (2u, 2u, 2u, 2u, 7u, 31u)
-#define PPUTLIMPL_UDEC_3471u 0xD8Fu, 11u, 58u, (3u, 13u, 89u)
-#define PPUTLIMPL_UDEC_3470u 0xD8Eu, 11u, 58u, (2u, 5u, 347u)
-#define PPUTLIMPL_UDEC_3469u 0xD8Du, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3468u 0xD8Cu, 11u, 58u, (2u, 2u, 3u, 17u, 17u)
-#define PPUTLIMPL_UDEC_3467u 0xD8Bu, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3466u 0xD8Au, 11u, 58u, (2u, 1733u)
-#define PPUTLIMPL_UDEC_3465u 0xD89u, 11u, 58u, (3u, 3u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_3464u 0xD88u, 11u, 58u, (2u, 2u, 2u, 433u)
-#define PPUTLIMPL_UDEC_3463u 0xD87u, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3462u 0xD86u, 11u, 58u, (2u, 3u, 577u)
-#define PPUTLIMPL_UDEC_3461u 0xD85u, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3460u 0xD84u, 11u, 58u, (2u, 2u, 5u, 173u)
-#define PPUTLIMPL_UDEC_3459u 0xD83u, 11u, 58u, (3u, 1153u)
-#define PPUTLIMPL_UDEC_3458u 0xD82u, 11u, 58u, (2u, 7u, 13u, 19u)
-#define PPUTLIMPL_UDEC_3457u 0xD81u, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3456u 0xD80u, 11u, 58u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_3455u 0xD7Fu, 11u, 58u, (5u, 691u)
-#define PPUTLIMPL_UDEC_3454u 0xD7Eu, 11u, 58u, (2u, 11u, 157u)
-#define PPUTLIMPL_UDEC_3453u 0xD7Du, 11u, 58u, (3u, 1151u)
-#define PPUTLIMPL_UDEC_3452u 0xD7Cu, 11u, 58u, (2u, 2u, 863u)
-#define PPUTLIMPL_UDEC_3451u 0xD7Bu, 11u, 58u, (7u, 17u, 29u)
-#define PPUTLIMPL_UDEC_3450u 0xD7Au, 11u, 58u, (2u, 3u, 5u, 5u, 23u)
-#define PPUTLIMPL_UDEC_3449u 0xD79u, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3448u 0xD78u, 11u, 58u, (2u, 2u, 2u, 431u)
-#define PPUTLIMPL_UDEC_3447u 0xD77u, 11u, 58u, (3u, 3u, 383u)
-#define PPUTLIMPL_UDEC_3446u 0xD76u, 11u, 58u, (2u, 1723u)
-#define PPUTLIMPL_UDEC_3445u 0xD75u, 11u, 58u, (5u, 13u, 53u)
-#define PPUTLIMPL_UDEC_3444u 0xD74u, 11u, 58u, (2u, 2u, 3u, 7u, 41u)
-#define PPUTLIMPL_UDEC_3443u 0xD73u, 11u, 58u, (11u, 313u)
-#define PPUTLIMPL_UDEC_3442u 0xD72u, 11u, 58u, (2u, 1721u)
-#define PPUTLIMPL_UDEC_3441u 0xD71u, 11u, 58u, (3u, 31u, 37u)
-#define PPUTLIMPL_UDEC_3440u 0xD70u, 11u, 58u, (2u, 2u, 2u, 2u, 5u, 43u)
-#define PPUTLIMPL_UDEC_3439u 0xD6Fu, 11u, 58u, (19u, 181u)
-#define PPUTLIMPL_UDEC_3438u 0xD6Eu, 11u, 58u, (2u, 3u, 3u, 191u)
-#define PPUTLIMPL_UDEC_3437u 0xD6Du, 11u, 58u, (7u, 491u)
-#define PPUTLIMPL_UDEC_3436u 0xD6Cu, 11u, 58u, (2u, 2u, 859u)
-#define PPUTLIMPL_UDEC_3435u 0xD6Bu, 11u, 58u, (3u, 5u, 229u)
-#define PPUTLIMPL_UDEC_3434u 0xD6Au, 11u, 58u, (2u, 17u, 101u)
-#define PPUTLIMPL_UDEC_3433u 0xD69u, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3432u 0xD68u, 11u, 58u, (2u, 2u, 2u, 3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_3431u 0xD67u, 11u, 58u, (47u, 73u)
-#define PPUTLIMPL_UDEC_3430u 0xD66u, 11u, 58u, (2u, 5u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3429u 0xD65u, 11u, 58u, (3u, 3u, 3u, 127u)
-#define PPUTLIMPL_UDEC_3428u 0xD64u, 11u, 58u, (2u, 2u, 857u)
-#define PPUTLIMPL_UDEC_3427u 0xD63u, 11u, 58u, (23u, 149u)
-#define PPUTLIMPL_UDEC_3426u 0xD62u, 11u, 58u, (2u, 3u, 571u)
-#define PPUTLIMPL_UDEC_3425u 0xD61u, 11u, 58u, (5u, 5u, 137u)
-#define PPUTLIMPL_UDEC_3424u 0xD60u, 11u, 58u, (2u, 2u, 2u, 2u, 2u, 107u)
-#define PPUTLIMPL_UDEC_3423u 0xD5Fu, 11u, 58u, (3u, 7u, 163u)
-#define PPUTLIMPL_UDEC_3422u 0xD5Eu, 11u, 58u, (2u, 29u, 59u)
-#define PPUTLIMPL_UDEC_3421u 0xD5Du, 11u, 58u, (11u, 311u)
-#define PPUTLIMPL_UDEC_3420u 0xD5Cu, 11u, 58u, (2u, 2u, 3u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_3419u 0xD5Bu, 11u, 58u, (13u, 263u)
-#define PPUTLIMPL_UDEC_3418u 0xD5Au, 11u, 58u, (2u, 1709u)
-#define PPUTLIMPL_UDEC_3417u 0xD59u, 11u, 58u, (3u, 17u, 67u)
-#define PPUTLIMPL_UDEC_3416u 0xD58u, 11u, 58u, (2u, 2u, 2u, 7u, 61u)
-#define PPUTLIMPL_UDEC_3415u 0xD57u, 11u, 58u, (5u, 683u)
-#define PPUTLIMPL_UDEC_3414u 0xD56u, 11u, 58u, (2u, 3u, 569u)
-#define PPUTLIMPL_UDEC_3413u 0xD55u, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3412u 0xD54u, 11u, 58u, (2u, 2u, 853u)
-#define PPUTLIMPL_UDEC_3411u 0xD53u, 11u, 58u, (3u, 3u, 379u)
-#define PPUTLIMPL_UDEC_3410u 0xD52u, 11u, 58u, (2u, 5u, 11u, 31u)
-#define PPUTLIMPL_UDEC_3409u 0xD51u, 11u, 58u, (7u, 487u)
-#define PPUTLIMPL_UDEC_3408u 0xD50u, 11u, 58u, (2u, 2u, 2u, 2u, 3u, 71u)
-#define PPUTLIMPL_UDEC_3407u 0xD4Fu, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3406u 0xD4Eu, 11u, 58u, (2u, 13u, 131u)
-#define PPUTLIMPL_UDEC_3405u 0xD4Du, 11u, 58u, (3u, 5u, 227u)
-#define PPUTLIMPL_UDEC_3404u 0xD4Cu, 11u, 58u, (2u, 2u, 23u, 37u)
-#define PPUTLIMPL_UDEC_3403u 0xD4Bu, 11u, 58u, (41u, 83u)
-#define PPUTLIMPL_UDEC_3402u 0xD4Au, 11u, 58u, (2u, 3u, 3u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_3401u 0xD49u, 11u, 58u, (19u, 179u)
-#define PPUTLIMPL_UDEC_3400u 0xD48u, 11u, 58u, (2u, 2u, 2u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_3399u 0xD47u, 11u, 58u, (3u, 11u, 103u)
-#define PPUTLIMPL_UDEC_3398u 0xD46u, 11u, 58u, (2u, 1699u)
-#define PPUTLIMPL_UDEC_3397u 0xD45u, 11u, 58u, (43u, 79u)
-#define PPUTLIMPL_UDEC_3396u 0xD44u, 11u, 58u, (2u, 2u, 3u, 283u)
-#define PPUTLIMPL_UDEC_3395u 0xD43u, 11u, 58u, (5u, 7u, 97u)
-#define PPUTLIMPL_UDEC_3394u 0xD42u, 11u, 58u, (2u, 1697u)
-#define PPUTLIMPL_UDEC_3393u 0xD41u, 11u, 58u, (3u, 3u, 13u, 29u)
-#define PPUTLIMPL_UDEC_3392u 0xD40u, 11u, 58u, (2u, 2u, 2u, 2u, 2u, 2u, 53u)
-#define PPUTLIMPL_UDEC_3391u 0xD3Fu, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3390u 0xD3Eu, 11u, 58u, (2u, 3u, 5u, 113u)
-#define PPUTLIMPL_UDEC_3389u 0xD3Du, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3388u 0xD3Cu, 11u, 58u, (2u, 2u, 7u, 11u, 11u)
-#define PPUTLIMPL_UDEC_3387u 0xD3Bu, 11u, 58u, (3u, 1129u)
-#define PPUTLIMPL_UDEC_3386u 0xD3Au, 11u, 58u, (2u, 1693u)
-#define PPUTLIMPL_UDEC_3385u 0xD39u, 11u, 58u, (5u, 677u)
-#define PPUTLIMPL_UDEC_3384u 0xD38u, 11u, 58u, (2u, 2u, 2u, 3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_3383u 0xD37u, 11u, 58u, (17u, 199u)
-#define PPUTLIMPL_UDEC_3382u 0xD36u, 11u, 58u, (2u, 19u, 89u)
-#define PPUTLIMPL_UDEC_3381u 0xD35u, 11u, 58u, (3u, 7u, 7u, 23u)
-#define PPUTLIMPL_UDEC_3380u 0xD34u, 11u, 58u, (2u, 2u, 5u, 13u, 13u)
-#define PPUTLIMPL_UDEC_3379u 0xD33u, 11u, 58u, (31u, 109u)
-#define PPUTLIMPL_UDEC_3378u 0xD32u, 11u, 58u, (2u, 3u, 563u)
-#define PPUTLIMPL_UDEC_3377u 0xD31u, 11u, 58u, (11u, 307u)
-#define PPUTLIMPL_UDEC_3376u 0xD30u, 11u, 58u, (2u, 2u, 2u, 2u, 211u)
-#define PPUTLIMPL_UDEC_3375u 0xD2Fu, 11u, 58u, (3u, 3u, 3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_3374u 0xD2Eu, 11u, 58u, (2u, 7u, 241u)
-#define PPUTLIMPL_UDEC_3373u 0xD2Du, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3372u 0xD2Cu, 11u, 58u, (2u, 2u, 3u, 281u)
-#define PPUTLIMPL_UDEC_3371u 0xD2Bu, 11u, 58u, ()
-#define PPUTLIMPL_UDEC_3370u 0xD2Au, 11u, 58u, (2u, 5u, 337u)
-#define PPUTLIMPL_UDEC_3369u 0xD29u, 11u, 58u, (3u, 1123u)
-#define PPUTLIMPL_UDEC_3368u 0xD28u, 11u, 58u, (2u, 2u, 2u, 421u)
-#define PPUTLIMPL_UDEC_3367u 0xD27u, 11u, 58u, (7u, 13u, 37u)
-#define PPUTLIMPL_UDEC_3366u 0xD26u, 11u, 58u, (2u, 3u, 3u, 11u, 17u)
-#define PPUTLIMPL_UDEC_3365u 0xD25u, 11u, 58u, (5u, 673u)
-#define PPUTLIMPL_UDEC_3364u 0xD24u, 11u, 58u, (2u, 2u, 29u, 29u)
-#define PPUTLIMPL_UDEC_3363u 0xD23u, 11u, 57u, (3u, 19u, 59u)
-#define PPUTLIMPL_UDEC_3362u 0xD22u, 11u, 57u, (2u, 41u, 41u)
-#define PPUTLIMPL_UDEC_3361u 0xD21u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3360u 0xD20u, 11u, 57u, (2u, 2u, 2u, 2u, 2u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_3359u 0xD1Fu, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3358u 0xD1Eu, 11u, 57u, (2u, 23u, 73u)
-#define PPUTLIMPL_UDEC_3357u 0xD1Du, 11u, 57u, (3u, 3u, 373u)
-#define PPUTLIMPL_UDEC_3356u 0xD1Cu, 11u, 57u, (2u, 2u, 839u)
-#define PPUTLIMPL_UDEC_3355u 0xD1Bu, 11u, 57u, (5u, 11u, 61u)
-#define PPUTLIMPL_UDEC_3354u 0xD1Au, 11u, 57u, (2u, 3u, 13u, 43u)
-#define PPUTLIMPL_UDEC_3353u 0xD19u, 11u, 57u, (7u, 479u)
-#define PPUTLIMPL_UDEC_3352u 0xD18u, 11u, 57u, (2u, 2u, 2u, 419u)
-#define PPUTLIMPL_UDEC_3351u 0xD17u, 11u, 57u, (3u, 1117u)
-#define PPUTLIMPL_UDEC_3350u 0xD16u, 11u, 57u, (2u, 5u, 5u, 67u)
-#define PPUTLIMPL_UDEC_3349u 0xD15u, 11u, 57u, (17u, 197u)
-#define PPUTLIMPL_UDEC_3348u 0xD14u, 11u, 57u, (2u, 2u, 3u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_3347u 0xD13u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3346u 0xD12u, 11u, 57u, (2u, 7u, 239u)
-#define PPUTLIMPL_UDEC_3345u 0xD11u, 11u, 57u, (3u, 5u, 223u)
-#define PPUTLIMPL_UDEC_3344u 0xD10u, 11u, 57u, (2u, 2u, 2u, 2u, 11u, 19u)
-#define PPUTLIMPL_UDEC_3343u 0xD0Fu, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3342u 0xD0Eu, 11u, 57u, (2u, 3u, 557u)
-#define PPUTLIMPL_UDEC_3341u 0xD0Du, 11u, 57u, (13u, 257u)
-#define PPUTLIMPL_UDEC_3340u 0xD0Cu, 11u, 57u, (2u, 2u, 5u, 167u)
-#define PPUTLIMPL_UDEC_3339u 0xD0Bu, 11u, 57u, (3u, 3u, 7u, 53u)
-#define PPUTLIMPL_UDEC_3338u 0xD0Au, 11u, 57u, (2u, 1669u)
-#define PPUTLIMPL_UDEC_3337u 0xD09u, 11u, 57u, (47u, 71u)
-#define PPUTLIMPL_UDEC_3336u 0xD08u, 11u, 57u, (2u, 2u, 2u, 3u, 139u)
-#define PPUTLIMPL_UDEC_3335u 0xD07u, 11u, 57u, (5u, 23u, 29u)
-#define PPUTLIMPL_UDEC_3334u 0xD06u, 11u, 57u, (2u, 1667u)
-#define PPUTLIMPL_UDEC_3333u 0xD05u, 11u, 57u, (3u, 11u, 101u)
-#define PPUTLIMPL_UDEC_3332u 0xD04u, 11u, 57u, (2u, 2u, 7u, 7u, 17u)
-#define PPUTLIMPL_UDEC_3331u 0xD03u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3330u 0xD02u, 11u, 57u, (2u, 3u, 3u, 5u, 37u)
-#define PPUTLIMPL_UDEC_3329u 0xD01u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3328u 0xD00u, 11u, 57u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_3327u 0xCFFu, 11u, 57u, (3u, 1109u)
-#define PPUTLIMPL_UDEC_3326u 0xCFEu, 11u, 57u, (2u, 1663u)
-#define PPUTLIMPL_UDEC_3325u 0xCFDu, 11u, 57u, (5u, 5u, 7u, 19u)
-#define PPUTLIMPL_UDEC_3324u 0xCFCu, 11u, 57u, (2u, 2u, 3u, 277u)
-#define PPUTLIMPL_UDEC_3323u 0xCFBu, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3322u 0xCFAu, 11u, 57u, (2u, 11u, 151u)
-#define PPUTLIMPL_UDEC_3321u 0xCF9u, 11u, 57u, (3u, 3u, 3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_3320u 0xCF8u, 11u, 57u, (2u, 2u, 2u, 5u, 83u)
-#define PPUTLIMPL_UDEC_3319u 0xCF7u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3318u 0xCF6u, 11u, 57u, (2u, 3u, 7u, 79u)
-#define PPUTLIMPL_UDEC_3317u 0xCF5u, 11u, 57u, (31u, 107u)
-#define PPUTLIMPL_UDEC_3316u 0xCF4u, 11u, 57u, (2u, 2u, 829u)
-#define PPUTLIMPL_UDEC_3315u 0xCF3u, 11u, 57u, (3u, 5u, 13u, 17u)
-#define PPUTLIMPL_UDEC_3314u 0xCF2u, 11u, 57u, (2u, 1657u)
-#define PPUTLIMPL_UDEC_3313u 0xCF1u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3312u 0xCF0u, 11u, 57u, (2u, 2u, 2u, 2u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_3311u 0xCEFu, 11u, 57u, (7u, 11u, 43u)
-#define PPUTLIMPL_UDEC_3310u 0xCEEu, 11u, 57u, (2u, 5u, 331u)
-#define PPUTLIMPL_UDEC_3309u 0xCEDu, 11u, 57u, (3u, 1103u)
-#define PPUTLIMPL_UDEC_3308u 0xCECu, 11u, 57u, (2u, 2u, 827u)
-#define PPUTLIMPL_UDEC_3307u 0xCEBu, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3306u 0xCEAu, 11u, 57u, (2u, 3u, 19u, 29u)
-#define PPUTLIMPL_UDEC_3305u 0xCE9u, 11u, 57u, (5u, 661u)
-#define PPUTLIMPL_UDEC_3304u 0xCE8u, 11u, 57u, (2u, 2u, 2u, 7u, 59u)
-#define PPUTLIMPL_UDEC_3303u 0xCE7u, 11u, 57u, (3u, 3u, 367u)
-#define PPUTLIMPL_UDEC_3302u 0xCE6u, 11u, 57u, (2u, 13u, 127u)
-#define PPUTLIMPL_UDEC_3301u 0xCE5u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3300u 0xCE4u, 11u, 57u, (2u, 2u, 3u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_3299u 0xCE3u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3298u 0xCE2u, 11u, 57u, (2u, 17u, 97u)
-#define PPUTLIMPL_UDEC_3297u 0xCE1u, 11u, 57u, (3u, 7u, 157u)
-#define PPUTLIMPL_UDEC_3296u 0xCE0u, 11u, 57u, (2u, 2u, 2u, 2u, 2u, 103u)
-#define PPUTLIMPL_UDEC_3295u 0xCDFu, 11u, 57u, (5u, 659u)
-#define PPUTLIMPL_UDEC_3294u 0xCDEu, 11u, 57u, (2u, 3u, 3u, 3u, 61u)
-#define PPUTLIMPL_UDEC_3293u 0xCDDu, 11u, 57u, (37u, 89u)
-#define PPUTLIMPL_UDEC_3292u 0xCDCu, 11u, 57u, (2u, 2u, 823u)
-#define PPUTLIMPL_UDEC_3291u 0xCDBu, 11u, 57u, (3u, 1097u)
-#define PPUTLIMPL_UDEC_3290u 0xCDAu, 11u, 57u, (2u, 5u, 7u, 47u)
-#define PPUTLIMPL_UDEC_3289u 0xCD9u, 11u, 57u, (11u, 13u, 23u)
-#define PPUTLIMPL_UDEC_3288u 0xCD8u, 11u, 57u, (2u, 2u, 2u, 3u, 137u)
-#define PPUTLIMPL_UDEC_3287u 0xCD7u, 11u, 57u, (19u, 173u)
-#define PPUTLIMPL_UDEC_3286u 0xCD6u, 11u, 57u, (2u, 31u, 53u)
-#define PPUTLIMPL_UDEC_3285u 0xCD5u, 11u, 57u, (3u, 3u, 5u, 73u)
-#define PPUTLIMPL_UDEC_3284u 0xCD4u, 11u, 57u, (2u, 2u, 821u)
-#define PPUTLIMPL_UDEC_3283u 0xCD3u, 11u, 57u, (7u, 7u, 67u)
-#define PPUTLIMPL_UDEC_3282u 0xCD2u, 11u, 57u, (2u, 3u, 547u)
-#define PPUTLIMPL_UDEC_3281u 0xCD1u, 11u, 57u, (17u, 193u)
-#define PPUTLIMPL_UDEC_3280u 0xCD0u, 11u, 57u, (2u, 2u, 2u, 2u, 5u, 41u)
-#define PPUTLIMPL_UDEC_3279u 0xCCFu, 11u, 57u, (3u, 1093u)
-#define PPUTLIMPL_UDEC_3278u 0xCCEu, 11u, 57u, (2u, 11u, 149u)
-#define PPUTLIMPL_UDEC_3277u 0xCCDu, 11u, 57u, (29u, 113u)
-#define PPUTLIMPL_UDEC_3276u 0xCCCu, 11u, 57u, (2u, 2u, 3u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_3275u 0xCCBu, 11u, 57u, (5u, 5u, 131u)
-#define PPUTLIMPL_UDEC_3274u 0xCCAu, 11u, 57u, (2u, 1637u)
-#define PPUTLIMPL_UDEC_3273u 0xCC9u, 11u, 57u, (3u, 1091u)
-#define PPUTLIMPL_UDEC_3272u 0xCC8u, 11u, 57u, (2u, 2u, 2u, 409u)
-#define PPUTLIMPL_UDEC_3271u 0xCC7u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3270u 0xCC6u, 11u, 57u, (2u, 3u, 5u, 109u)
-#define PPUTLIMPL_UDEC_3269u 0xCC5u, 11u, 57u, (7u, 467u)
-#define PPUTLIMPL_UDEC_3268u 0xCC4u, 11u, 57u, (2u, 2u, 19u, 43u)
-#define PPUTLIMPL_UDEC_3267u 0xCC3u, 11u, 57u, (3u, 3u, 3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_3266u 0xCC2u, 11u, 57u, (2u, 23u, 71u)
-#define PPUTLIMPL_UDEC_3265u 0xCC1u, 11u, 57u, (5u, 653u)
-#define PPUTLIMPL_UDEC_3264u 0xCC0u, 11u, 57u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 17u)
-#define PPUTLIMPL_UDEC_3263u 0xCBFu, 11u, 57u, (13u, 251u)
-#define PPUTLIMPL_UDEC_3262u 0xCBEu, 11u, 57u, (2u, 7u, 233u)
-#define PPUTLIMPL_UDEC_3261u 0xCBDu, 11u, 57u, (3u, 1087u)
-#define PPUTLIMPL_UDEC_3260u 0xCBCu, 11u, 57u, (2u, 2u, 5u, 163u)
-#define PPUTLIMPL_UDEC_3259u 0xCBBu, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3258u 0xCBAu, 11u, 57u, (2u, 3u, 3u, 181u)
-#define PPUTLIMPL_UDEC_3257u 0xCB9u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3256u 0xCB8u, 11u, 57u, (2u, 2u, 2u, 11u, 37u)
-#define PPUTLIMPL_UDEC_3255u 0xCB7u, 11u, 57u, (3u, 5u, 7u, 31u)
-#define PPUTLIMPL_UDEC_3254u 0xCB6u, 11u, 57u, (2u, 1627u)
-#define PPUTLIMPL_UDEC_3253u 0xCB5u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3252u 0xCB4u, 11u, 57u, (2u, 2u, 3u, 271u)
-#define PPUTLIMPL_UDEC_3251u 0xCB3u, 11u, 57u, ()
-#define PPUTLIMPL_UDEC_3250u 0xCB2u, 11u, 57u, (2u, 5u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_3249u 0xCB1u, 11u, 57u, (3u, 3u, 19u, 19u)
-#define PPUTLIMPL_UDEC_3248u 0xCB0u, 11u, 56u, (2u, 2u, 2u, 2u, 7u, 29u)
-#define PPUTLIMPL_UDEC_3247u 0xCAFu, 11u, 56u, (17u, 191u)
-#define PPUTLIMPL_UDEC_3246u 0xCAEu, 11u, 56u, (2u, 3u, 541u)
-#define PPUTLIMPL_UDEC_3245u 0xCADu, 11u, 56u, (5u, 11u, 59u)
-#define PPUTLIMPL_UDEC_3244u 0xCACu, 11u, 56u, (2u, 2u, 811u)
-#define PPUTLIMPL_UDEC_3243u 0xCABu, 11u, 56u, (3u, 23u, 47u)
-#define PPUTLIMPL_UDEC_3242u 0xCAAu, 11u, 56u, (2u, 1621u)
-#define PPUTLIMPL_UDEC_3241u 0xCA9u, 11u, 56u, (7u, 463u)
-#define PPUTLIMPL_UDEC_3240u 0xCA8u, 11u, 56u, (2u, 2u, 2u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_3239u 0xCA7u, 11u, 56u, (41u, 79u)
-#define PPUTLIMPL_UDEC_3238u 0xCA6u, 11u, 56u, (2u, 1619u)
-#define PPUTLIMPL_UDEC_3237u 0xCA5u, 11u, 56u, (3u, 13u, 83u)
-#define PPUTLIMPL_UDEC_3236u 0xCA4u, 11u, 56u, (2u, 2u, 809u)
-#define PPUTLIMPL_UDEC_3235u 0xCA3u, 11u, 56u, (5u, 647u)
-#define PPUTLIMPL_UDEC_3234u 0xCA2u, 11u, 56u, (2u, 3u, 7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_3233u 0xCA1u, 11u, 56u, (53u, 61u)
-#define PPUTLIMPL_UDEC_3232u 0xCA0u, 11u, 56u, (2u, 2u, 2u, 2u, 2u, 101u)
-#define PPUTLIMPL_UDEC_3231u 0xC9Fu, 11u, 56u, (3u, 3u, 359u)
-#define PPUTLIMPL_UDEC_3230u 0xC9Eu, 11u, 56u, (2u, 5u, 17u, 19u)
-#define PPUTLIMPL_UDEC_3229u 0xC9Du, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3228u 0xC9Cu, 11u, 56u, (2u, 2u, 3u, 269u)
-#define PPUTLIMPL_UDEC_3227u 0xC9Bu, 11u, 56u, (7u, 461u)
-#define PPUTLIMPL_UDEC_3226u 0xC9Au, 11u, 56u, (2u, 1613u)
-#define PPUTLIMPL_UDEC_3225u 0xC99u, 11u, 56u, (3u, 5u, 5u, 43u)
-#define PPUTLIMPL_UDEC_3224u 0xC98u, 11u, 56u, (2u, 2u, 2u, 13u, 31u)
-#define PPUTLIMPL_UDEC_3223u 0xC97u, 11u, 56u, (11u, 293u)
-#define PPUTLIMPL_UDEC_3222u 0xC96u, 11u, 56u, (2u, 3u, 3u, 179u)
-#define PPUTLIMPL_UDEC_3221u 0xC95u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3220u 0xC94u, 11u, 56u, (2u, 2u, 5u, 7u, 23u)
-#define PPUTLIMPL_UDEC_3219u 0xC93u, 11u, 56u, (3u, 29u, 37u)
-#define PPUTLIMPL_UDEC_3218u 0xC92u, 11u, 56u, (2u, 1609u)
-#define PPUTLIMPL_UDEC_3217u 0xC91u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3216u 0xC90u, 11u, 56u, (2u, 2u, 2u, 2u, 3u, 67u)
-#define PPUTLIMPL_UDEC_3215u 0xC8Fu, 11u, 56u, (5u, 643u)
-#define PPUTLIMPL_UDEC_3214u 0xC8Eu, 11u, 56u, (2u, 1607u)
-#define PPUTLIMPL_UDEC_3213u 0xC8Du, 11u, 56u, (3u, 3u, 3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_3212u 0xC8Cu, 11u, 56u, (2u, 2u, 11u, 73u)
-#define PPUTLIMPL_UDEC_3211u 0xC8Bu, 11u, 56u, (13u, 13u, 19u)
-#define PPUTLIMPL_UDEC_3210u 0xC8Au, 11u, 56u, (2u, 3u, 5u, 107u)
-#define PPUTLIMPL_UDEC_3209u 0xC89u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3208u 0xC88u, 11u, 56u, (2u, 2u, 2u, 401u)
-#define PPUTLIMPL_UDEC_3207u 0xC87u, 11u, 56u, (3u, 1069u)
-#define PPUTLIMPL_UDEC_3206u 0xC86u, 11u, 56u, (2u, 7u, 229u)
-#define PPUTLIMPL_UDEC_3205u 0xC85u, 11u, 56u, (5u, 641u)
-#define PPUTLIMPL_UDEC_3204u 0xC84u, 11u, 56u, (2u, 2u, 3u, 3u, 89u)
-#define PPUTLIMPL_UDEC_3203u 0xC83u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3202u 0xC82u, 11u, 56u, (2u, 1601u)
-#define PPUTLIMPL_UDEC_3201u 0xC81u, 11u, 56u, (3u, 11u, 97u)
-#define PPUTLIMPL_UDEC_3200u 0xC80u, 11u, 56u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_3199u 0xC7Fu, 11u, 56u, (7u, 457u)
-#define PPUTLIMPL_UDEC_3198u 0xC7Eu, 11u, 56u, (2u, 3u, 13u, 41u)
-#define PPUTLIMPL_UDEC_3197u 0xC7Du, 11u, 56u, (23u, 139u)
-#define PPUTLIMPL_UDEC_3196u 0xC7Cu, 11u, 56u, (2u, 2u, 17u, 47u)
-#define PPUTLIMPL_UDEC_3195u 0xC7Bu, 11u, 56u, (3u, 3u, 5u, 71u)
-#define PPUTLIMPL_UDEC_3194u 0xC7Au, 11u, 56u, (2u, 1597u)
-#define PPUTLIMPL_UDEC_3193u 0xC79u, 11u, 56u, (31u, 103u)
-#define PPUTLIMPL_UDEC_3192u 0xC78u, 11u, 56u, (2u, 2u, 2u, 3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_3191u 0xC77u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3190u 0xC76u, 11u, 56u, (2u, 5u, 11u, 29u)
-#define PPUTLIMPL_UDEC_3189u 0xC75u, 11u, 56u, (3u, 1063u)
-#define PPUTLIMPL_UDEC_3188u 0xC74u, 11u, 56u, (2u, 2u, 797u)
-#define PPUTLIMPL_UDEC_3187u 0xC73u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3186u 0xC72u, 11u, 56u, (2u, 3u, 3u, 3u, 59u)
-#define PPUTLIMPL_UDEC_3185u 0xC71u, 11u, 56u, (5u, 7u, 7u, 13u)
-#define PPUTLIMPL_UDEC_3184u 0xC70u, 11u, 56u, (2u, 2u, 2u, 2u, 199u)
-#define PPUTLIMPL_UDEC_3183u 0xC6Fu, 11u, 56u, (3u, 1061u)
-#define PPUTLIMPL_UDEC_3182u 0xC6Eu, 11u, 56u, (2u, 37u, 43u)
-#define PPUTLIMPL_UDEC_3181u 0xC6Du, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3180u 0xC6Cu, 11u, 56u, (2u, 2u, 3u, 5u, 53u)
-#define PPUTLIMPL_UDEC_3179u 0xC6Bu, 11u, 56u, (11u, 17u, 17u)
-#define PPUTLIMPL_UDEC_3178u 0xC6Au, 11u, 56u, (2u, 7u, 227u)
-#define PPUTLIMPL_UDEC_3177u 0xC69u, 11u, 56u, (3u, 3u, 353u)
-#define PPUTLIMPL_UDEC_3176u 0xC68u, 11u, 56u, (2u, 2u, 2u, 397u)
-#define PPUTLIMPL_UDEC_3175u 0xC67u, 11u, 56u, (5u, 5u, 127u)
-#define PPUTLIMPL_UDEC_3174u 0xC66u, 11u, 56u, (2u, 3u, 23u, 23u)
-#define PPUTLIMPL_UDEC_3173u 0xC65u, 11u, 56u, (19u, 167u)
-#define PPUTLIMPL_UDEC_3172u 0xC64u, 11u, 56u, (2u, 2u, 13u, 61u)
-#define PPUTLIMPL_UDEC_3171u 0xC63u, 11u, 56u, (3u, 7u, 151u)
-#define PPUTLIMPL_UDEC_3170u 0xC62u, 11u, 56u, (2u, 5u, 317u)
-#define PPUTLIMPL_UDEC_3169u 0xC61u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3168u 0xC60u, 11u, 56u, (2u, 2u, 2u, 2u, 2u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_3167u 0xC5Fu, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3166u 0xC5Eu, 11u, 56u, (2u, 1583u)
-#define PPUTLIMPL_UDEC_3165u 0xC5Du, 11u, 56u, (3u, 5u, 211u)
-#define PPUTLIMPL_UDEC_3164u 0xC5Cu, 11u, 56u, (2u, 2u, 7u, 113u)
-#define PPUTLIMPL_UDEC_3163u 0xC5Bu, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3162u 0xC5Au, 11u, 56u, (2u, 3u, 17u, 31u)
-#define PPUTLIMPL_UDEC_3161u 0xC59u, 11u, 56u, (29u, 109u)
-#define PPUTLIMPL_UDEC_3160u 0xC58u, 11u, 56u, (2u, 2u, 2u, 5u, 79u)
-#define PPUTLIMPL_UDEC_3159u 0xC57u, 11u, 56u, (3u, 3u, 3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_3158u 0xC56u, 11u, 56u, (2u, 1579u)
-#define PPUTLIMPL_UDEC_3157u 0xC55u, 11u, 56u, (7u, 11u, 41u)
-#define PPUTLIMPL_UDEC_3156u 0xC54u, 11u, 56u, (2u, 2u, 3u, 263u)
-#define PPUTLIMPL_UDEC_3155u 0xC53u, 11u, 56u, (5u, 631u)
-#define PPUTLIMPL_UDEC_3154u 0xC52u, 11u, 56u, (2u, 19u, 83u)
-#define PPUTLIMPL_UDEC_3153u 0xC51u, 11u, 56u, (3u, 1051u)
-#define PPUTLIMPL_UDEC_3152u 0xC50u, 11u, 56u, (2u, 2u, 2u, 2u, 197u)
-#define PPUTLIMPL_UDEC_3151u 0xC4Fu, 11u, 56u, (23u, 137u)
-#define PPUTLIMPL_UDEC_3150u 0xC4Eu, 11u, 56u, (2u, 3u, 3u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_3149u 0xC4Du, 11u, 56u, (47u, 67u)
-#define PPUTLIMPL_UDEC_3148u 0xC4Cu, 11u, 56u, (2u, 2u, 787u)
-#define PPUTLIMPL_UDEC_3147u 0xC4Bu, 11u, 56u, (3u, 1049u)
-#define PPUTLIMPL_UDEC_3146u 0xC4Au, 11u, 56u, (2u, 11u, 11u, 13u)
-#define PPUTLIMPL_UDEC_3145u 0xC49u, 11u, 56u, (5u, 17u, 37u)
-#define PPUTLIMPL_UDEC_3144u 0xC48u, 11u, 56u, (2u, 2u, 2u, 3u, 131u)
-#define PPUTLIMPL_UDEC_3143u 0xC47u, 11u, 56u, (7u, 449u)
-#define PPUTLIMPL_UDEC_3142u 0xC46u, 11u, 56u, (2u, 1571u)
-#define PPUTLIMPL_UDEC_3141u 0xC45u, 11u, 56u, (3u, 3u, 349u)
-#define PPUTLIMPL_UDEC_3140u 0xC44u, 11u, 56u, (2u, 2u, 5u, 157u)
-#define PPUTLIMPL_UDEC_3139u 0xC43u, 11u, 56u, (43u, 73u)
-#define PPUTLIMPL_UDEC_3138u 0xC42u, 11u, 56u, (2u, 3u, 523u)
-#define PPUTLIMPL_UDEC_3137u 0xC41u, 11u, 56u, ()
-#define PPUTLIMPL_UDEC_3136u 0xC40u, 11u, 56u, (2u, 2u, 2u, 2u, 2u, 2u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3135u 0xC3Fu, 11u, 55u, (3u, 5u, 11u, 19u)
-#define PPUTLIMPL_UDEC_3134u 0xC3Eu, 11u, 55u, (2u, 1567u)
-#define PPUTLIMPL_UDEC_3133u 0xC3Du, 11u, 55u, (13u, 241u)
-#define PPUTLIMPL_UDEC_3132u 0xC3Cu, 11u, 55u, (2u, 2u, 3u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_3131u 0xC3Bu, 11u, 55u, (31u, 101u)
-#define PPUTLIMPL_UDEC_3130u 0xC3Au, 11u, 55u, (2u, 5u, 313u)
-#define PPUTLIMPL_UDEC_3129u 0xC39u, 11u, 55u, (3u, 7u, 149u)
-#define PPUTLIMPL_UDEC_3128u 0xC38u, 11u, 55u, (2u, 2u, 2u, 17u, 23u)
-#define PPUTLIMPL_UDEC_3127u 0xC37u, 11u, 55u, (53u, 59u)
-#define PPUTLIMPL_UDEC_3126u 0xC36u, 11u, 55u, (2u, 3u, 521u)
-#define PPUTLIMPL_UDEC_3125u 0xC35u, 11u, 55u, (5u, 5u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_3124u 0xC34u, 11u, 55u, (2u, 2u, 11u, 71u)
-#define PPUTLIMPL_UDEC_3123u 0xC33u, 11u, 55u, (3u, 3u, 347u)
-#define PPUTLIMPL_UDEC_3122u 0xC32u, 11u, 55u, (2u, 7u, 223u)
-#define PPUTLIMPL_UDEC_3121u 0xC31u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3120u 0xC30u, 11u, 55u, (2u, 2u, 2u, 2u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_3119u 0xC2Fu, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3118u 0xC2Eu, 11u, 55u, (2u, 1559u)
-#define PPUTLIMPL_UDEC_3117u 0xC2Du, 11u, 55u, (3u, 1039u)
-#define PPUTLIMPL_UDEC_3116u 0xC2Cu, 11u, 55u, (2u, 2u, 19u, 41u)
-#define PPUTLIMPL_UDEC_3115u 0xC2Bu, 11u, 55u, (5u, 7u, 89u)
-#define PPUTLIMPL_UDEC_3114u 0xC2Au, 11u, 55u, (2u, 3u, 3u, 173u)
-#define PPUTLIMPL_UDEC_3113u 0xC29u, 11u, 55u, (11u, 283u)
-#define PPUTLIMPL_UDEC_3112u 0xC28u, 11u, 55u, (2u, 2u, 2u, 389u)
-#define PPUTLIMPL_UDEC_3111u 0xC27u, 11u, 55u, (3u, 17u, 61u)
-#define PPUTLIMPL_UDEC_3110u 0xC26u, 11u, 55u, (2u, 5u, 311u)
-#define PPUTLIMPL_UDEC_3109u 0xC25u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3108u 0xC24u, 11u, 55u, (2u, 2u, 3u, 7u, 37u)
-#define PPUTLIMPL_UDEC_3107u 0xC23u, 11u, 55u, (13u, 239u)
-#define PPUTLIMPL_UDEC_3106u 0xC22u, 11u, 55u, (2u, 1553u)
-#define PPUTLIMPL_UDEC_3105u 0xC21u, 11u, 55u, (3u, 3u, 3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_3104u 0xC20u, 11u, 55u, (2u, 2u, 2u, 2u, 2u, 97u)
-#define PPUTLIMPL_UDEC_3103u 0xC1Fu, 11u, 55u, (29u, 107u)
-#define PPUTLIMPL_UDEC_3102u 0xC1Eu, 11u, 55u, (2u, 3u, 11u, 47u)
-#define PPUTLIMPL_UDEC_3101u 0xC1Du, 11u, 55u, (7u, 443u)
-#define PPUTLIMPL_UDEC_3100u 0xC1Cu, 11u, 55u, (2u, 2u, 5u, 5u, 31u)
-#define PPUTLIMPL_UDEC_3099u 0xC1Bu, 11u, 55u, (3u, 1033u)
-#define PPUTLIMPL_UDEC_3098u 0xC1Au, 11u, 55u, (2u, 1549u)
-#define PPUTLIMPL_UDEC_3097u 0xC19u, 11u, 55u, (19u, 163u)
-#define PPUTLIMPL_UDEC_3096u 0xC18u, 11u, 55u, (2u, 2u, 2u, 3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_3095u 0xC17u, 11u, 55u, (5u, 619u)
-#define PPUTLIMPL_UDEC_3094u 0xC16u, 11u, 55u, (2u, 7u, 13u, 17u)
-#define PPUTLIMPL_UDEC_3093u 0xC15u, 11u, 55u, (3u, 1031u)
-#define PPUTLIMPL_UDEC_3092u 0xC14u, 11u, 55u, (2u, 2u, 773u)
-#define PPUTLIMPL_UDEC_3091u 0xC13u, 11u, 55u, (11u, 281u)
-#define PPUTLIMPL_UDEC_3090u 0xC12u, 11u, 55u, (2u, 3u, 5u, 103u)
-#define PPUTLIMPL_UDEC_3089u 0xC11u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3088u 0xC10u, 11u, 55u, (2u, 2u, 2u, 2u, 193u)
-#define PPUTLIMPL_UDEC_3087u 0xC0Fu, 11u, 55u, (3u, 3u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_3086u 0xC0Eu, 11u, 55u, (2u, 1543u)
-#define PPUTLIMPL_UDEC_3085u 0xC0Du, 11u, 55u, (5u, 617u)
-#define PPUTLIMPL_UDEC_3084u 0xC0Cu, 11u, 55u, (2u, 2u, 3u, 257u)
-#define PPUTLIMPL_UDEC_3083u 0xC0Bu, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3082u 0xC0Au, 11u, 55u, (2u, 23u, 67u)
-#define PPUTLIMPL_UDEC_3081u 0xC09u, 11u, 55u, (3u, 13u, 79u)
-#define PPUTLIMPL_UDEC_3080u 0xC08u, 11u, 55u, (2u, 2u, 2u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_3079u 0xC07u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3078u 0xC06u, 11u, 55u, (2u, 3u, 3u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_3077u 0xC05u, 11u, 55u, (17u, 181u)
-#define PPUTLIMPL_UDEC_3076u 0xC04u, 11u, 55u, (2u, 2u, 769u)
-#define PPUTLIMPL_UDEC_3075u 0xC03u, 11u, 55u, (3u, 5u, 5u, 41u)
-#define PPUTLIMPL_UDEC_3074u 0xC02u, 11u, 55u, (2u, 29u, 53u)
-#define PPUTLIMPL_UDEC_3073u 0xC01u, 11u, 55u, (7u, 439u)
-#define PPUTLIMPL_UDEC_3072u \
-  0xC00u, 11u, 55u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_3071u 0xBFFu, 11u, 55u, (37u, 83u)
-#define PPUTLIMPL_UDEC_3070u 0xBFEu, 11u, 55u, (2u, 5u, 307u)
-#define PPUTLIMPL_UDEC_3069u 0xBFDu, 11u, 55u, (3u, 3u, 11u, 31u)
-#define PPUTLIMPL_UDEC_3068u 0xBFCu, 11u, 55u, (2u, 2u, 13u, 59u)
-#define PPUTLIMPL_UDEC_3067u 0xBFBu, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3066u 0xBFAu, 11u, 55u, (2u, 3u, 7u, 73u)
-#define PPUTLIMPL_UDEC_3065u 0xBF9u, 11u, 55u, (5u, 613u)
-#define PPUTLIMPL_UDEC_3064u 0xBF8u, 11u, 55u, (2u, 2u, 2u, 383u)
-#define PPUTLIMPL_UDEC_3063u 0xBF7u, 11u, 55u, (3u, 1021u)
-#define PPUTLIMPL_UDEC_3062u 0xBF6u, 11u, 55u, (2u, 1531u)
-#define PPUTLIMPL_UDEC_3061u 0xBF5u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3060u 0xBF4u, 11u, 55u, (2u, 2u, 3u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_3059u 0xBF3u, 11u, 55u, (7u, 19u, 23u)
-#define PPUTLIMPL_UDEC_3058u 0xBF2u, 11u, 55u, (2u, 11u, 139u)
-#define PPUTLIMPL_UDEC_3057u 0xBF1u, 11u, 55u, (3u, 1019u)
-#define PPUTLIMPL_UDEC_3056u 0xBF0u, 11u, 55u, (2u, 2u, 2u, 2u, 191u)
-#define PPUTLIMPL_UDEC_3055u 0xBEFu, 11u, 55u, (5u, 13u, 47u)
-#define PPUTLIMPL_UDEC_3054u 0xBEEu, 11u, 55u, (2u, 3u, 509u)
-#define PPUTLIMPL_UDEC_3053u 0xBEDu, 11u, 55u, (43u, 71u)
-#define PPUTLIMPL_UDEC_3052u 0xBECu, 11u, 55u, (2u, 2u, 7u, 109u)
-#define PPUTLIMPL_UDEC_3051u 0xBEBu, 11u, 55u, (3u, 3u, 3u, 113u)
-#define PPUTLIMPL_UDEC_3050u 0xBEAu, 11u, 55u, (2u, 5u, 5u, 61u)
-#define PPUTLIMPL_UDEC_3049u 0xBE9u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3048u 0xBE8u, 11u, 55u, (2u, 2u, 2u, 3u, 127u)
-#define PPUTLIMPL_UDEC_3047u 0xBE7u, 11u, 55u, (11u, 277u)
-#define PPUTLIMPL_UDEC_3046u 0xBE6u, 11u, 55u, (2u, 1523u)
-#define PPUTLIMPL_UDEC_3045u 0xBE5u, 11u, 55u, (3u, 5u, 7u, 29u)
-#define PPUTLIMPL_UDEC_3044u 0xBE4u, 11u, 55u, (2u, 2u, 761u)
-#define PPUTLIMPL_UDEC_3043u 0xBE3u, 11u, 55u, (17u, 179u)
-#define PPUTLIMPL_UDEC_3042u 0xBE2u, 11u, 55u, (2u, 3u, 3u, 13u, 13u)
-#define PPUTLIMPL_UDEC_3041u 0xBE1u, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3040u 0xBE0u, 11u, 55u, (2u, 2u, 2u, 2u, 2u, 5u, 19u)
-#define PPUTLIMPL_UDEC_3039u 0xBDFu, 11u, 55u, (3u, 1013u)
-#define PPUTLIMPL_UDEC_3038u 0xBDEu, 11u, 55u, (2u, 7u, 7u, 31u)
-#define PPUTLIMPL_UDEC_3037u 0xBDDu, 11u, 55u, ()
-#define PPUTLIMPL_UDEC_3036u 0xBDCu, 11u, 55u, (2u, 2u, 3u, 11u, 23u)
-#define PPUTLIMPL_UDEC_3035u 0xBDBu, 11u, 55u, (5u, 607u)
-#define PPUTLIMPL_UDEC_3034u 0xBDAu, 11u, 55u, (2u, 37u, 41u)
-#define PPUTLIMPL_UDEC_3033u 0xBD9u, 11u, 55u, (3u, 3u, 337u)
-#define PPUTLIMPL_UDEC_3032u 0xBD8u, 11u, 55u, (2u, 2u, 2u, 379u)
-#define PPUTLIMPL_UDEC_3031u 0xBD7u, 11u, 55u, (7u, 433u)
-#define PPUTLIMPL_UDEC_3030u 0xBD6u, 11u, 55u, (2u, 3u, 5u, 101u)
-#define PPUTLIMPL_UDEC_3029u 0xBD5u, 11u, 55u, (13u, 233u)
-#define PPUTLIMPL_UDEC_3028u 0xBD4u, 11u, 55u, (2u, 2u, 757u)
-#define PPUTLIMPL_UDEC_3027u 0xBD3u, 11u, 55u, (3u, 1009u)
-#define PPUTLIMPL_UDEC_3026u 0xBD2u, 11u, 55u, (2u, 17u, 89u)
-#define PPUTLIMPL_UDEC_3025u 0xBD1u, 11u, 55u, (5u, 5u, 11u, 11u)
-#define PPUTLIMPL_UDEC_3024u 0xBD0u, 11u, 54u, (2u, 2u, 2u, 2u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_3023u 0xBCFu, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_3022u 0xBCEu, 11u, 54u, (2u, 1511u)
-#define PPUTLIMPL_UDEC_3021u 0xBCDu, 11u, 54u, (3u, 19u, 53u)
-#define PPUTLIMPL_UDEC_3020u 0xBCCu, 11u, 54u, (2u, 2u, 5u, 151u)
-#define PPUTLIMPL_UDEC_3019u 0xBCBu, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_3018u 0xBCAu, 11u, 54u, (2u, 3u, 503u)
-#define PPUTLIMPL_UDEC_3017u 0xBC9u, 11u, 54u, (7u, 431u)
-#define PPUTLIMPL_UDEC_3016u 0xBC8u, 11u, 54u, (2u, 2u, 2u, 13u, 29u)
-#define PPUTLIMPL_UDEC_3015u 0xBC7u, 11u, 54u, (3u, 3u, 5u, 67u)
-#define PPUTLIMPL_UDEC_3014u 0xBC6u, 11u, 54u, (2u, 11u, 137u)
-#define PPUTLIMPL_UDEC_3013u 0xBC5u, 11u, 54u, (23u, 131u)
-#define PPUTLIMPL_UDEC_3012u 0xBC4u, 11u, 54u, (2u, 2u, 3u, 251u)
-#define PPUTLIMPL_UDEC_3011u 0xBC3u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_3010u 0xBC2u, 11u, 54u, (2u, 5u, 7u, 43u)
-#define PPUTLIMPL_UDEC_3009u 0xBC1u, 11u, 54u, (3u, 17u, 59u)
-#define PPUTLIMPL_UDEC_3008u 0xBC0u, 11u, 54u, (2u, 2u, 2u, 2u, 2u, 2u, 47u)
-#define PPUTLIMPL_UDEC_3007u 0xBBFu, 11u, 54u, (31u, 97u)
-#define PPUTLIMPL_UDEC_3006u 0xBBEu, 11u, 54u, (2u, 3u, 3u, 167u)
-#define PPUTLIMPL_UDEC_3005u 0xBBDu, 11u, 54u, (5u, 601u)
-#define PPUTLIMPL_UDEC_3004u 0xBBCu, 11u, 54u, (2u, 2u, 751u)
-#define PPUTLIMPL_UDEC_3003u 0xBBBu, 11u, 54u, (3u, 7u, 11u, 13u)
-#define PPUTLIMPL_UDEC_3002u 0xBBAu, 11u, 54u, (2u, 19u, 79u)
-#define PPUTLIMPL_UDEC_3001u 0xBB9u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_3000u 0xBB8u, 11u, 54u, (2u, 2u, 2u, 3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_2999u 0xBB7u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2998u 0xBB6u, 11u, 54u, (2u, 1499u)
-#define PPUTLIMPL_UDEC_2997u 0xBB5u, 11u, 54u, (3u, 3u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_2996u 0xBB4u, 11u, 54u, (2u, 2u, 7u, 107u)
-#define PPUTLIMPL_UDEC_2995u 0xBB3u, 11u, 54u, (5u, 599u)
-#define PPUTLIMPL_UDEC_2994u 0xBB2u, 11u, 54u, (2u, 3u, 499u)
-#define PPUTLIMPL_UDEC_2993u 0xBB1u, 11u, 54u, (41u, 73u)
-#define PPUTLIMPL_UDEC_2992u 0xBB0u, 11u, 54u, (2u, 2u, 2u, 2u, 11u, 17u)
-#define PPUTLIMPL_UDEC_2991u 0xBAFu, 11u, 54u, (3u, 997u)
-#define PPUTLIMPL_UDEC_2990u 0xBAEu, 11u, 54u, (2u, 5u, 13u, 23u)
-#define PPUTLIMPL_UDEC_2989u 0xBADu, 11u, 54u, (7u, 7u, 61u)
-#define PPUTLIMPL_UDEC_2988u 0xBACu, 11u, 54u, (2u, 2u, 3u, 3u, 83u)
-#define PPUTLIMPL_UDEC_2987u 0xBABu, 11u, 54u, (29u, 103u)
-#define PPUTLIMPL_UDEC_2986u 0xBAAu, 11u, 54u, (2u, 1493u)
-#define PPUTLIMPL_UDEC_2985u 0xBA9u, 11u, 54u, (3u, 5u, 199u)
-#define PPUTLIMPL_UDEC_2984u 0xBA8u, 11u, 54u, (2u, 2u, 2u, 373u)
-#define PPUTLIMPL_UDEC_2983u 0xBA7u, 11u, 54u, (19u, 157u)
-#define PPUTLIMPL_UDEC_2982u 0xBA6u, 11u, 54u, (2u, 3u, 7u, 71u)
-#define PPUTLIMPL_UDEC_2981u 0xBA5u, 11u, 54u, (11u, 271u)
-#define PPUTLIMPL_UDEC_2980u 0xBA4u, 11u, 54u, (2u, 2u, 5u, 149u)
-#define PPUTLIMPL_UDEC_2979u 0xBA3u, 11u, 54u, (3u, 3u, 331u)
-#define PPUTLIMPL_UDEC_2978u 0xBA2u, 11u, 54u, (2u, 1489u)
-#define PPUTLIMPL_UDEC_2977u 0xBA1u, 11u, 54u, (13u, 229u)
-#define PPUTLIMPL_UDEC_2976u 0xBA0u, 11u, 54u, (2u, 2u, 2u, 2u, 2u, 3u, 31u)
-#define PPUTLIMPL_UDEC_2975u 0xB9Fu, 11u, 54u, (5u, 5u, 7u, 17u)
-#define PPUTLIMPL_UDEC_2974u 0xB9Eu, 11u, 54u, (2u, 1487u)
-#define PPUTLIMPL_UDEC_2973u 0xB9Du, 11u, 54u, (3u, 991u)
-#define PPUTLIMPL_UDEC_2972u 0xB9Cu, 11u, 54u, (2u, 2u, 743u)
-#define PPUTLIMPL_UDEC_2971u 0xB9Bu, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2970u 0xB9Au, 11u, 54u, (2u, 3u, 3u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_2969u 0xB99u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2968u 0xB98u, 11u, 54u, (2u, 2u, 2u, 7u, 53u)
-#define PPUTLIMPL_UDEC_2967u 0xB97u, 11u, 54u, (3u, 23u, 43u)
-#define PPUTLIMPL_UDEC_2966u 0xB96u, 11u, 54u, (2u, 1483u)
-#define PPUTLIMPL_UDEC_2965u 0xB95u, 11u, 54u, (5u, 593u)
-#define PPUTLIMPL_UDEC_2964u 0xB94u, 11u, 54u, (2u, 2u, 3u, 13u, 19u)
-#define PPUTLIMPL_UDEC_2963u 0xB93u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2962u 0xB92u, 11u, 54u, (2u, 1481u)
-#define PPUTLIMPL_UDEC_2961u 0xB91u, 11u, 54u, (3u, 3u, 7u, 47u)
-#define PPUTLIMPL_UDEC_2960u 0xB90u, 11u, 54u, (2u, 2u, 2u, 2u, 5u, 37u)
-#define PPUTLIMPL_UDEC_2959u 0xB8Fu, 11u, 54u, (11u, 269u)
-#define PPUTLIMPL_UDEC_2958u 0xB8Eu, 11u, 54u, (2u, 3u, 17u, 29u)
-#define PPUTLIMPL_UDEC_2957u 0xB8Du, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2956u 0xB8Cu, 11u, 54u, (2u, 2u, 739u)
-#define PPUTLIMPL_UDEC_2955u 0xB8Bu, 11u, 54u, (3u, 5u, 197u)
-#define PPUTLIMPL_UDEC_2954u 0xB8Au, 11u, 54u, (2u, 7u, 211u)
-#define PPUTLIMPL_UDEC_2953u 0xB89u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2952u 0xB88u, 11u, 54u, (2u, 2u, 2u, 3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_2951u 0xB87u, 11u, 54u, (13u, 227u)
-#define PPUTLIMPL_UDEC_2950u 0xB86u, 11u, 54u, (2u, 5u, 5u, 59u)
-#define PPUTLIMPL_UDEC_2949u 0xB85u, 11u, 54u, (3u, 983u)
-#define PPUTLIMPL_UDEC_2948u 0xB84u, 11u, 54u, (2u, 2u, 11u, 67u)
-#define PPUTLIMPL_UDEC_2947u 0xB83u, 11u, 54u, (7u, 421u)
-#define PPUTLIMPL_UDEC_2946u 0xB82u, 11u, 54u, (2u, 3u, 491u)
-#define PPUTLIMPL_UDEC_2945u 0xB81u, 11u, 54u, (5u, 19u, 31u)
-#define PPUTLIMPL_UDEC_2944u 0xB80u, 11u, 54u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 23u)
-#define PPUTLIMPL_UDEC_2943u 0xB7Fu, 11u, 54u, (3u, 3u, 3u, 109u)
-#define PPUTLIMPL_UDEC_2942u 0xB7Eu, 11u, 54u, (2u, 1471u)
-#define PPUTLIMPL_UDEC_2941u 0xB7Du, 11u, 54u, (17u, 173u)
-#define PPUTLIMPL_UDEC_2940u 0xB7Cu, 11u, 54u, (2u, 2u, 3u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2939u 0xB7Bu, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2938u 0xB7Au, 11u, 54u, (2u, 13u, 113u)
-#define PPUTLIMPL_UDEC_2937u 0xB79u, 11u, 54u, (3u, 11u, 89u)
-#define PPUTLIMPL_UDEC_2936u 0xB78u, 11u, 54u, (2u, 2u, 2u, 367u)
-#define PPUTLIMPL_UDEC_2935u 0xB77u, 11u, 54u, (5u, 587u)
-#define PPUTLIMPL_UDEC_2934u 0xB76u, 11u, 54u, (2u, 3u, 3u, 163u)
-#define PPUTLIMPL_UDEC_2933u 0xB75u, 11u, 54u, (7u, 419u)
-#define PPUTLIMPL_UDEC_2932u 0xB74u, 11u, 54u, (2u, 2u, 733u)
-#define PPUTLIMPL_UDEC_2931u 0xB73u, 11u, 54u, (3u, 977u)
-#define PPUTLIMPL_UDEC_2930u 0xB72u, 11u, 54u, (2u, 5u, 293u)
-#define PPUTLIMPL_UDEC_2929u 0xB71u, 11u, 54u, (29u, 101u)
-#define PPUTLIMPL_UDEC_2928u 0xB70u, 11u, 54u, (2u, 2u, 2u, 2u, 3u, 61u)
-#define PPUTLIMPL_UDEC_2927u 0xB6Fu, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2926u 0xB6Eu, 11u, 54u, (2u, 7u, 11u, 19u)
-#define PPUTLIMPL_UDEC_2925u 0xB6Du, 11u, 54u, (3u, 3u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_2924u 0xB6Cu, 11u, 54u, (2u, 2u, 17u, 43u)
-#define PPUTLIMPL_UDEC_2923u 0xB6Bu, 11u, 54u, (37u, 79u)
-#define PPUTLIMPL_UDEC_2922u 0xB6Au, 11u, 54u, (2u, 3u, 487u)
-#define PPUTLIMPL_UDEC_2921u 0xB69u, 11u, 54u, (23u, 127u)
-#define PPUTLIMPL_UDEC_2920u 0xB68u, 11u, 54u, (2u, 2u, 2u, 5u, 73u)
-#define PPUTLIMPL_UDEC_2919u 0xB67u, 11u, 54u, (3u, 7u, 139u)
-#define PPUTLIMPL_UDEC_2918u 0xB66u, 11u, 54u, (2u, 1459u)
-#define PPUTLIMPL_UDEC_2917u 0xB65u, 11u, 54u, ()
-#define PPUTLIMPL_UDEC_2916u 0xB64u, 11u, 54u, (2u, 2u, 3u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_2915u 0xB63u, 11u, 53u, (5u, 11u, 53u)
-#define PPUTLIMPL_UDEC_2914u 0xB62u, 11u, 53u, (2u, 31u, 47u)
-#define PPUTLIMPL_UDEC_2913u 0xB61u, 11u, 53u, (3u, 971u)
-#define PPUTLIMPL_UDEC_2912u 0xB60u, 11u, 53u, (2u, 2u, 2u, 2u, 2u, 7u, 13u)
-#define PPUTLIMPL_UDEC_2911u 0xB5Fu, 11u, 53u, (41u, 71u)
-#define PPUTLIMPL_UDEC_2910u 0xB5Eu, 11u, 53u, (2u, 3u, 5u, 97u)
-#define PPUTLIMPL_UDEC_2909u 0xB5Du, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2908u 0xB5Cu, 11u, 53u, (2u, 2u, 727u)
-#define PPUTLIMPL_UDEC_2907u 0xB5Bu, 11u, 53u, (3u, 3u, 17u, 19u)
-#define PPUTLIMPL_UDEC_2906u 0xB5Au, 11u, 53u, (2u, 1453u)
-#define PPUTLIMPL_UDEC_2905u 0xB59u, 11u, 53u, (5u, 7u, 83u)
-#define PPUTLIMPL_UDEC_2904u 0xB58u, 11u, 53u, (2u, 2u, 2u, 3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_2903u 0xB57u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2902u 0xB56u, 11u, 53u, (2u, 1451u)
-#define PPUTLIMPL_UDEC_2901u 0xB55u, 11u, 53u, (3u, 967u)
-#define PPUTLIMPL_UDEC_2900u 0xB54u, 11u, 53u, (2u, 2u, 5u, 5u, 29u)
-#define PPUTLIMPL_UDEC_2899u 0xB53u, 11u, 53u, (13u, 223u)
-#define PPUTLIMPL_UDEC_2898u 0xB52u, 11u, 53u, (2u, 3u, 3u, 7u, 23u)
-#define PPUTLIMPL_UDEC_2897u 0xB51u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2896u 0xB50u, 11u, 53u, (2u, 2u, 2u, 2u, 181u)
-#define PPUTLIMPL_UDEC_2895u 0xB4Fu, 11u, 53u, (3u, 5u, 193u)
-#define PPUTLIMPL_UDEC_2894u 0xB4Eu, 11u, 53u, (2u, 1447u)
-#define PPUTLIMPL_UDEC_2893u 0xB4Du, 11u, 53u, (11u, 263u)
-#define PPUTLIMPL_UDEC_2892u 0xB4Cu, 11u, 53u, (2u, 2u, 3u, 241u)
-#define PPUTLIMPL_UDEC_2891u 0xB4Bu, 11u, 53u, (7u, 7u, 59u)
-#define PPUTLIMPL_UDEC_2890u 0xB4Au, 11u, 53u, (2u, 5u, 17u, 17u)
-#define PPUTLIMPL_UDEC_2889u 0xB49u, 11u, 53u, (3u, 3u, 3u, 107u)
-#define PPUTLIMPL_UDEC_2888u 0xB48u, 11u, 53u, (2u, 2u, 2u, 19u, 19u)
-#define PPUTLIMPL_UDEC_2887u 0xB47u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2886u 0xB46u, 11u, 53u, (2u, 3u, 13u, 37u)
-#define PPUTLIMPL_UDEC_2885u 0xB45u, 11u, 53u, (5u, 577u)
-#define PPUTLIMPL_UDEC_2884u 0xB44u, 11u, 53u, (2u, 2u, 7u, 103u)
-#define PPUTLIMPL_UDEC_2883u 0xB43u, 11u, 53u, (3u, 31u, 31u)
-#define PPUTLIMPL_UDEC_2882u 0xB42u, 11u, 53u, (2u, 11u, 131u)
-#define PPUTLIMPL_UDEC_2881u 0xB41u, 11u, 53u, (43u, 67u)
-#define PPUTLIMPL_UDEC_2880u 0xB40u, 11u, 53u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_2879u 0xB3Fu, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2878u 0xB3Eu, 11u, 53u, (2u, 1439u)
-#define PPUTLIMPL_UDEC_2877u 0xB3Du, 11u, 53u, (3u, 7u, 137u)
-#define PPUTLIMPL_UDEC_2876u 0xB3Cu, 11u, 53u, (2u, 2u, 719u)
-#define PPUTLIMPL_UDEC_2875u 0xB3Bu, 11u, 53u, (5u, 5u, 5u, 23u)
-#define PPUTLIMPL_UDEC_2874u 0xB3Au, 11u, 53u, (2u, 3u, 479u)
-#define PPUTLIMPL_UDEC_2873u 0xB39u, 11u, 53u, (13u, 13u, 17u)
-#define PPUTLIMPL_UDEC_2872u 0xB38u, 11u, 53u, (2u, 2u, 2u, 359u)
-#define PPUTLIMPL_UDEC_2871u 0xB37u, 11u, 53u, (3u, 3u, 11u, 29u)
-#define PPUTLIMPL_UDEC_2870u 0xB36u, 11u, 53u, (2u, 5u, 7u, 41u)
-#define PPUTLIMPL_UDEC_2869u 0xB35u, 11u, 53u, (19u, 151u)
-#define PPUTLIMPL_UDEC_2868u 0xB34u, 11u, 53u, (2u, 2u, 3u, 239u)
-#define PPUTLIMPL_UDEC_2867u 0xB33u, 11u, 53u, (47u, 61u)
-#define PPUTLIMPL_UDEC_2866u 0xB32u, 11u, 53u, (2u, 1433u)
-#define PPUTLIMPL_UDEC_2865u 0xB31u, 11u, 53u, (3u, 5u, 191u)
-#define PPUTLIMPL_UDEC_2864u 0xB30u, 11u, 53u, (2u, 2u, 2u, 2u, 179u)
-#define PPUTLIMPL_UDEC_2863u 0xB2Fu, 11u, 53u, (7u, 409u)
-#define PPUTLIMPL_UDEC_2862u 0xB2Eu, 11u, 53u, (2u, 3u, 3u, 3u, 53u)
-#define PPUTLIMPL_UDEC_2861u 0xB2Du, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2860u 0xB2Cu, 11u, 53u, (2u, 2u, 5u, 11u, 13u)
-#define PPUTLIMPL_UDEC_2859u 0xB2Bu, 11u, 53u, (3u, 953u)
-#define PPUTLIMPL_UDEC_2858u 0xB2Au, 11u, 53u, (2u, 1429u)
-#define PPUTLIMPL_UDEC_2857u 0xB29u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2856u 0xB28u, 11u, 53u, (2u, 2u, 2u, 3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_2855u 0xB27u, 11u, 53u, (5u, 571u)
-#define PPUTLIMPL_UDEC_2854u 0xB26u, 11u, 53u, (2u, 1427u)
-#define PPUTLIMPL_UDEC_2853u 0xB25u, 11u, 53u, (3u, 3u, 317u)
-#define PPUTLIMPL_UDEC_2852u 0xB24u, 11u, 53u, (2u, 2u, 23u, 31u)
-#define PPUTLIMPL_UDEC_2851u 0xB23u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2850u 0xB22u, 11u, 53u, (2u, 3u, 5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_2849u 0xB21u, 11u, 53u, (7u, 11u, 37u)
-#define PPUTLIMPL_UDEC_2848u 0xB20u, 11u, 53u, (2u, 2u, 2u, 2u, 2u, 89u)
-#define PPUTLIMPL_UDEC_2847u 0xB1Fu, 11u, 53u, (3u, 13u, 73u)
-#define PPUTLIMPL_UDEC_2846u 0xB1Eu, 11u, 53u, (2u, 1423u)
-#define PPUTLIMPL_UDEC_2845u 0xB1Du, 11u, 53u, (5u, 569u)
-#define PPUTLIMPL_UDEC_2844u 0xB1Cu, 11u, 53u, (2u, 2u, 3u, 3u, 79u)
-#define PPUTLIMPL_UDEC_2843u 0xB1Bu, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2842u 0xB1Au, 11u, 53u, (2u, 7u, 7u, 29u)
-#define PPUTLIMPL_UDEC_2841u 0xB19u, 11u, 53u, (3u, 947u)
-#define PPUTLIMPL_UDEC_2840u 0xB18u, 11u, 53u, (2u, 2u, 2u, 5u, 71u)
-#define PPUTLIMPL_UDEC_2839u 0xB17u, 11u, 53u, (17u, 167u)
-#define PPUTLIMPL_UDEC_2838u 0xB16u, 11u, 53u, (2u, 3u, 11u, 43u)
-#define PPUTLIMPL_UDEC_2837u 0xB15u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2836u 0xB14u, 11u, 53u, (2u, 2u, 709u)
-#define PPUTLIMPL_UDEC_2835u 0xB13u, 11u, 53u, (3u, 3u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_2834u 0xB12u, 11u, 53u, (2u, 13u, 109u)
-#define PPUTLIMPL_UDEC_2833u 0xB11u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2832u 0xB10u, 11u, 53u, (2u, 2u, 2u, 2u, 3u, 59u)
-#define PPUTLIMPL_UDEC_2831u 0xB0Fu, 11u, 53u, (19u, 149u)
-#define PPUTLIMPL_UDEC_2830u 0xB0Eu, 11u, 53u, (2u, 5u, 283u)
-#define PPUTLIMPL_UDEC_2829u 0xB0Du, 11u, 53u, (3u, 23u, 41u)
-#define PPUTLIMPL_UDEC_2828u 0xB0Cu, 11u, 53u, (2u, 2u, 7u, 101u)
-#define PPUTLIMPL_UDEC_2827u 0xB0Bu, 11u, 53u, (11u, 257u)
-#define PPUTLIMPL_UDEC_2826u 0xB0Au, 11u, 53u, (2u, 3u, 3u, 157u)
-#define PPUTLIMPL_UDEC_2825u 0xB09u, 11u, 53u, (5u, 5u, 113u)
-#define PPUTLIMPL_UDEC_2824u 0xB08u, 11u, 53u, (2u, 2u, 2u, 353u)
-#define PPUTLIMPL_UDEC_2823u 0xB07u, 11u, 53u, (3u, 941u)
-#define PPUTLIMPL_UDEC_2822u 0xB06u, 11u, 53u, (2u, 17u, 83u)
-#define PPUTLIMPL_UDEC_2821u 0xB05u, 11u, 53u, (7u, 13u, 31u)
-#define PPUTLIMPL_UDEC_2820u 0xB04u, 11u, 53u, (2u, 2u, 3u, 5u, 47u)
-#define PPUTLIMPL_UDEC_2819u 0xB03u, 11u, 53u, ()
-#define PPUTLIMPL_UDEC_2818u 0xB02u, 11u, 53u, (2u, 1409u)
-#define PPUTLIMPL_UDEC_2817u 0xB01u, 11u, 53u, (3u, 3u, 313u)
-#define PPUTLIMPL_UDEC_2816u 0xB00u, 11u, 53u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_2815u 0xAFFu, 11u, 53u, (5u, 563u)
-#define PPUTLIMPL_UDEC_2814u 0xAFEu, 11u, 53u, (2u, 3u, 7u, 67u)
-#define PPUTLIMPL_UDEC_2813u 0xAFDu, 11u, 53u, (29u, 97u)
-#define PPUTLIMPL_UDEC_2812u 0xAFCu, 11u, 53u, (2u, 2u, 19u, 37u)
-#define PPUTLIMPL_UDEC_2811u 0xAFBu, 11u, 53u, (3u, 937u)
-#define PPUTLIMPL_UDEC_2810u 0xAFAu, 11u, 53u, (2u, 5u, 281u)
-#define PPUTLIMPL_UDEC_2809u 0xAF9u, 11u, 53u, (53u, 53u)
-#define PPUTLIMPL_UDEC_2808u 0xAF8u, 11u, 52u, (2u, 2u, 2u, 3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_2807u 0xAF7u, 11u, 52u, (7u, 401u)
-#define PPUTLIMPL_UDEC_2806u 0xAF6u, 11u, 52u, (2u, 23u, 61u)
-#define PPUTLIMPL_UDEC_2805u 0xAF5u, 11u, 52u, (3u, 5u, 11u, 17u)
-#define PPUTLIMPL_UDEC_2804u 0xAF4u, 11u, 52u, (2u, 2u, 701u)
-#define PPUTLIMPL_UDEC_2803u 0xAF3u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2802u 0xAF2u, 11u, 52u, (2u, 3u, 467u)
-#define PPUTLIMPL_UDEC_2801u 0xAF1u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2800u 0xAF0u, 11u, 52u, (2u, 2u, 2u, 2u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_2799u 0xAEFu, 11u, 52u, (3u, 3u, 311u)
-#define PPUTLIMPL_UDEC_2798u 0xAEEu, 11u, 52u, (2u, 1399u)
-#define PPUTLIMPL_UDEC_2797u 0xAEDu, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2796u 0xAECu, 11u, 52u, (2u, 2u, 3u, 233u)
-#define PPUTLIMPL_UDEC_2795u 0xAEBu, 11u, 52u, (5u, 13u, 43u)
-#define PPUTLIMPL_UDEC_2794u 0xAEAu, 11u, 52u, (2u, 11u, 127u)
-#define PPUTLIMPL_UDEC_2793u 0xAE9u, 11u, 52u, (3u, 7u, 7u, 19u)
-#define PPUTLIMPL_UDEC_2792u 0xAE8u, 11u, 52u, (2u, 2u, 2u, 349u)
-#define PPUTLIMPL_UDEC_2791u 0xAE7u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2790u 0xAE6u, 11u, 52u, (2u, 3u, 3u, 5u, 31u)
-#define PPUTLIMPL_UDEC_2789u 0xAE5u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2788u 0xAE4u, 11u, 52u, (2u, 2u, 17u, 41u)
-#define PPUTLIMPL_UDEC_2787u 0xAE3u, 11u, 52u, (3u, 929u)
-#define PPUTLIMPL_UDEC_2786u 0xAE2u, 11u, 52u, (2u, 7u, 199u)
-#define PPUTLIMPL_UDEC_2785u 0xAE1u, 11u, 52u, (5u, 557u)
-#define PPUTLIMPL_UDEC_2784u 0xAE0u, 11u, 52u, (2u, 2u, 2u, 2u, 2u, 3u, 29u)
-#define PPUTLIMPL_UDEC_2783u 0xADFu, 11u, 52u, (11u, 11u, 23u)
-#define PPUTLIMPL_UDEC_2782u 0xADEu, 11u, 52u, (2u, 13u, 107u)
-#define PPUTLIMPL_UDEC_2781u 0xADDu, 11u, 52u, (3u, 3u, 3u, 103u)
-#define PPUTLIMPL_UDEC_2780u 0xADCu, 11u, 52u, (2u, 2u, 5u, 139u)
-#define PPUTLIMPL_UDEC_2779u 0xADBu, 11u, 52u, (7u, 397u)
-#define PPUTLIMPL_UDEC_2778u 0xADAu, 11u, 52u, (2u, 3u, 463u)
-#define PPUTLIMPL_UDEC_2777u 0xAD9u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2776u 0xAD8u, 11u, 52u, (2u, 2u, 2u, 347u)
-#define PPUTLIMPL_UDEC_2775u 0xAD7u, 11u, 52u, (3u, 5u, 5u, 37u)
-#define PPUTLIMPL_UDEC_2774u 0xAD6u, 11u, 52u, (2u, 19u, 73u)
-#define PPUTLIMPL_UDEC_2773u 0xAD5u, 11u, 52u, (47u, 59u)
-#define PPUTLIMPL_UDEC_2772u 0xAD4u, 11u, 52u, (2u, 2u, 3u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_2771u 0xAD3u, 11u, 52u, (17u, 163u)
-#define PPUTLIMPL_UDEC_2770u 0xAD2u, 11u, 52u, (2u, 5u, 277u)
-#define PPUTLIMPL_UDEC_2769u 0xAD1u, 11u, 52u, (3u, 13u, 71u)
-#define PPUTLIMPL_UDEC_2768u 0xAD0u, 11u, 52u, (2u, 2u, 2u, 2u, 173u)
-#define PPUTLIMPL_UDEC_2767u 0xACFu, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2766u 0xACEu, 11u, 52u, (2u, 3u, 461u)
-#define PPUTLIMPL_UDEC_2765u 0xACDu, 11u, 52u, (5u, 7u, 79u)
-#define PPUTLIMPL_UDEC_2764u 0xACCu, 11u, 52u, (2u, 2u, 691u)
-#define PPUTLIMPL_UDEC_2763u 0xACBu, 11u, 52u, (3u, 3u, 307u)
-#define PPUTLIMPL_UDEC_2762u 0xACAu, 11u, 52u, (2u, 1381u)
-#define PPUTLIMPL_UDEC_2761u 0xAC9u, 11u, 52u, (11u, 251u)
-#define PPUTLIMPL_UDEC_2760u 0xAC8u, 11u, 52u, (2u, 2u, 2u, 3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_2759u 0xAC7u, 11u, 52u, (31u, 89u)
-#define PPUTLIMPL_UDEC_2758u 0xAC6u, 11u, 52u, (2u, 7u, 197u)
-#define PPUTLIMPL_UDEC_2757u 0xAC5u, 11u, 52u, (3u, 919u)
-#define PPUTLIMPL_UDEC_2756u 0xAC4u, 11u, 52u, (2u, 2u, 13u, 53u)
-#define PPUTLIMPL_UDEC_2755u 0xAC3u, 11u, 52u, (5u, 19u, 29u)
-#define PPUTLIMPL_UDEC_2754u 0xAC2u, 11u, 52u, (2u, 3u, 3u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_2753u 0xAC1u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2752u 0xAC0u, 11u, 52u, (2u, 2u, 2u, 2u, 2u, 2u, 43u)
-#define PPUTLIMPL_UDEC_2751u 0xABFu, 11u, 52u, (3u, 7u, 131u)
-#define PPUTLIMPL_UDEC_2750u 0xABEu, 11u, 52u, (2u, 5u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_2749u 0xABDu, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2748u 0xABCu, 11u, 52u, (2u, 2u, 3u, 229u)
-#define PPUTLIMPL_UDEC_2747u 0xABBu, 11u, 52u, (41u, 67u)
-#define PPUTLIMPL_UDEC_2746u 0xABAu, 11u, 52u, (2u, 1373u)
-#define PPUTLIMPL_UDEC_2745u 0xAB9u, 11u, 52u, (3u, 3u, 5u, 61u)
-#define PPUTLIMPL_UDEC_2744u 0xAB8u, 11u, 52u, (2u, 2u, 2u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2743u 0xAB7u, 11u, 52u, (13u, 211u)
-#define PPUTLIMPL_UDEC_2742u 0xAB6u, 11u, 52u, (2u, 3u, 457u)
-#define PPUTLIMPL_UDEC_2741u 0xAB5u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2740u 0xAB4u, 11u, 52u, (2u, 2u, 5u, 137u)
-#define PPUTLIMPL_UDEC_2739u 0xAB3u, 11u, 52u, (3u, 11u, 83u)
-#define PPUTLIMPL_UDEC_2738u 0xAB2u, 11u, 52u, (2u, 37u, 37u)
-#define PPUTLIMPL_UDEC_2737u 0xAB1u, 11u, 52u, (7u, 17u, 23u)
-#define PPUTLIMPL_UDEC_2736u 0xAB0u, 11u, 52u, (2u, 2u, 2u, 2u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_2735u 0xAAFu, 11u, 52u, (5u, 547u)
-#define PPUTLIMPL_UDEC_2734u 0xAAEu, 11u, 52u, (2u, 1367u)
-#define PPUTLIMPL_UDEC_2733u 0xAADu, 11u, 52u, (3u, 911u)
-#define PPUTLIMPL_UDEC_2732u 0xAACu, 11u, 52u, (2u, 2u, 683u)
-#define PPUTLIMPL_UDEC_2731u 0xAABu, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2730u 0xAAAu, 11u, 52u, (2u, 3u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_2729u 0xAA9u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2728u 0xAA8u, 11u, 52u, (2u, 2u, 2u, 11u, 31u)
-#define PPUTLIMPL_UDEC_2727u 0xAA7u, 11u, 52u, (3u, 3u, 3u, 101u)
-#define PPUTLIMPL_UDEC_2726u 0xAA6u, 11u, 52u, (2u, 29u, 47u)
-#define PPUTLIMPL_UDEC_2725u 0xAA5u, 11u, 52u, (5u, 5u, 109u)
-#define PPUTLIMPL_UDEC_2724u 0xAA4u, 11u, 52u, (2u, 2u, 3u, 227u)
-#define PPUTLIMPL_UDEC_2723u 0xAA3u, 11u, 52u, (7u, 389u)
-#define PPUTLIMPL_UDEC_2722u 0xAA2u, 11u, 52u, (2u, 1361u)
-#define PPUTLIMPL_UDEC_2721u 0xAA1u, 11u, 52u, (3u, 907u)
-#define PPUTLIMPL_UDEC_2720u 0xAA0u, 11u, 52u, (2u, 2u, 2u, 2u, 2u, 5u, 17u)
-#define PPUTLIMPL_UDEC_2719u 0xA9Fu, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2718u 0xA9Eu, 11u, 52u, (2u, 3u, 3u, 151u)
-#define PPUTLIMPL_UDEC_2717u 0xA9Du, 11u, 52u, (11u, 13u, 19u)
-#define PPUTLIMPL_UDEC_2716u 0xA9Cu, 11u, 52u, (2u, 2u, 7u, 97u)
-#define PPUTLIMPL_UDEC_2715u 0xA9Bu, 11u, 52u, (3u, 5u, 181u)
-#define PPUTLIMPL_UDEC_2714u 0xA9Au, 11u, 52u, (2u, 23u, 59u)
-#define PPUTLIMPL_UDEC_2713u 0xA99u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2712u 0xA98u, 11u, 52u, (2u, 2u, 2u, 3u, 113u)
-#define PPUTLIMPL_UDEC_2711u 0xA97u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2710u 0xA96u, 11u, 52u, (2u, 5u, 271u)
-#define PPUTLIMPL_UDEC_2709u 0xA95u, 11u, 52u, (3u, 3u, 7u, 43u)
-#define PPUTLIMPL_UDEC_2708u 0xA94u, 11u, 52u, (2u, 2u, 677u)
-#define PPUTLIMPL_UDEC_2707u 0xA93u, 11u, 52u, ()
-#define PPUTLIMPL_UDEC_2706u 0xA92u, 11u, 52u, (2u, 3u, 11u, 41u)
-#define PPUTLIMPL_UDEC_2705u 0xA91u, 11u, 52u, (5u, 541u)
-#define PPUTLIMPL_UDEC_2704u 0xA90u, 11u, 52u, (2u, 2u, 2u, 2u, 13u, 13u)
-#define PPUTLIMPL_UDEC_2703u 0xA8Fu, 11u, 51u, (3u, 17u, 53u)
-#define PPUTLIMPL_UDEC_2702u 0xA8Eu, 11u, 51u, (2u, 7u, 193u)
-#define PPUTLIMPL_UDEC_2701u 0xA8Du, 11u, 51u, (37u, 73u)
-#define PPUTLIMPL_UDEC_2700u 0xA8Cu, 11u, 51u, (2u, 2u, 3u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_2699u 0xA8Bu, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2698u 0xA8Au, 11u, 51u, (2u, 19u, 71u)
-#define PPUTLIMPL_UDEC_2697u 0xA89u, 11u, 51u, (3u, 29u, 31u)
-#define PPUTLIMPL_UDEC_2696u 0xA88u, 11u, 51u, (2u, 2u, 2u, 337u)
-#define PPUTLIMPL_UDEC_2695u 0xA87u, 11u, 51u, (5u, 7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_2694u 0xA86u, 11u, 51u, (2u, 3u, 449u)
-#define PPUTLIMPL_UDEC_2693u 0xA85u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2692u 0xA84u, 11u, 51u, (2u, 2u, 673u)
-#define PPUTLIMPL_UDEC_2691u 0xA83u, 11u, 51u, (3u, 3u, 13u, 23u)
-#define PPUTLIMPL_UDEC_2690u 0xA82u, 11u, 51u, (2u, 5u, 269u)
-#define PPUTLIMPL_UDEC_2689u 0xA81u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2688u 0xA80u, 11u, 51u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_2687u 0xA7Fu, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2686u 0xA7Eu, 11u, 51u, (2u, 17u, 79u)
-#define PPUTLIMPL_UDEC_2685u 0xA7Du, 11u, 51u, (3u, 5u, 179u)
-#define PPUTLIMPL_UDEC_2684u 0xA7Cu, 11u, 51u, (2u, 2u, 11u, 61u)
-#define PPUTLIMPL_UDEC_2683u 0xA7Bu, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2682u 0xA7Au, 11u, 51u, (2u, 3u, 3u, 149u)
-#define PPUTLIMPL_UDEC_2681u 0xA79u, 11u, 51u, (7u, 383u)
-#define PPUTLIMPL_UDEC_2680u 0xA78u, 11u, 51u, (2u, 2u, 2u, 5u, 67u)
-#define PPUTLIMPL_UDEC_2679u 0xA77u, 11u, 51u, (3u, 19u, 47u)
-#define PPUTLIMPL_UDEC_2678u 0xA76u, 11u, 51u, (2u, 13u, 103u)
-#define PPUTLIMPL_UDEC_2677u 0xA75u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2676u 0xA74u, 11u, 51u, (2u, 2u, 3u, 223u)
-#define PPUTLIMPL_UDEC_2675u 0xA73u, 11u, 51u, (5u, 5u, 107u)
-#define PPUTLIMPL_UDEC_2674u 0xA72u, 11u, 51u, (2u, 7u, 191u)
-#define PPUTLIMPL_UDEC_2673u 0xA71u, 11u, 51u, (3u, 3u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_2672u 0xA70u, 11u, 51u, (2u, 2u, 2u, 2u, 167u)
-#define PPUTLIMPL_UDEC_2671u 0xA6Fu, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2670u 0xA6Eu, 11u, 51u, (2u, 3u, 5u, 89u)
-#define PPUTLIMPL_UDEC_2669u 0xA6Du, 11u, 51u, (17u, 157u)
-#define PPUTLIMPL_UDEC_2668u 0xA6Cu, 11u, 51u, (2u, 2u, 23u, 29u)
-#define PPUTLIMPL_UDEC_2667u 0xA6Bu, 11u, 51u, (3u, 7u, 127u)
-#define PPUTLIMPL_UDEC_2666u 0xA6Au, 11u, 51u, (2u, 31u, 43u)
-#define PPUTLIMPL_UDEC_2665u 0xA69u, 11u, 51u, (5u, 13u, 41u)
-#define PPUTLIMPL_UDEC_2664u 0xA68u, 11u, 51u, (2u, 2u, 2u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_2663u 0xA67u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2662u 0xA66u, 11u, 51u, (2u, 11u, 11u, 11u)
-#define PPUTLIMPL_UDEC_2661u 0xA65u, 11u, 51u, (3u, 887u)
-#define PPUTLIMPL_UDEC_2660u 0xA64u, 11u, 51u, (2u, 2u, 5u, 7u, 19u)
-#define PPUTLIMPL_UDEC_2659u 0xA63u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2658u 0xA62u, 11u, 51u, (2u, 3u, 443u)
-#define PPUTLIMPL_UDEC_2657u 0xA61u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2656u 0xA60u, 11u, 51u, (2u, 2u, 2u, 2u, 2u, 83u)
-#define PPUTLIMPL_UDEC_2655u 0xA5Fu, 11u, 51u, (3u, 3u, 5u, 59u)
-#define PPUTLIMPL_UDEC_2654u 0xA5Eu, 11u, 51u, (2u, 1327u)
-#define PPUTLIMPL_UDEC_2653u 0xA5Du, 11u, 51u, (7u, 379u)
-#define PPUTLIMPL_UDEC_2652u 0xA5Cu, 11u, 51u, (2u, 2u, 3u, 13u, 17u)
-#define PPUTLIMPL_UDEC_2651u 0xA5Bu, 11u, 51u, (11u, 241u)
-#define PPUTLIMPL_UDEC_2650u 0xA5Au, 11u, 51u, (2u, 5u, 5u, 53u)
-#define PPUTLIMPL_UDEC_2649u 0xA59u, 11u, 51u, (3u, 883u)
-#define PPUTLIMPL_UDEC_2648u 0xA58u, 11u, 51u, (2u, 2u, 2u, 331u)
-#define PPUTLIMPL_UDEC_2647u 0xA57u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2646u 0xA56u, 11u, 51u, (2u, 3u, 3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2645u 0xA55u, 11u, 51u, (5u, 23u, 23u)
-#define PPUTLIMPL_UDEC_2644u 0xA54u, 11u, 51u, (2u, 2u, 661u)
-#define PPUTLIMPL_UDEC_2643u 0xA53u, 11u, 51u, (3u, 881u)
-#define PPUTLIMPL_UDEC_2642u 0xA52u, 11u, 51u, (2u, 1321u)
-#define PPUTLIMPL_UDEC_2641u 0xA51u, 11u, 51u, (19u, 139u)
-#define PPUTLIMPL_UDEC_2640u 0xA50u, 11u, 51u, (2u, 2u, 2u, 2u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_2639u 0xA4Fu, 11u, 51u, (7u, 13u, 29u)
-#define PPUTLIMPL_UDEC_2638u 0xA4Eu, 11u, 51u, (2u, 1319u)
-#define PPUTLIMPL_UDEC_2637u 0xA4Du, 11u, 51u, (3u, 3u, 293u)
-#define PPUTLIMPL_UDEC_2636u 0xA4Cu, 11u, 51u, (2u, 2u, 659u)
-#define PPUTLIMPL_UDEC_2635u 0xA4Bu, 11u, 51u, (5u, 17u, 31u)
-#define PPUTLIMPL_UDEC_2634u 0xA4Au, 11u, 51u, (2u, 3u, 439u)
-#define PPUTLIMPL_UDEC_2633u 0xA49u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2632u 0xA48u, 11u, 51u, (2u, 2u, 2u, 7u, 47u)
-#define PPUTLIMPL_UDEC_2631u 0xA47u, 11u, 51u, (3u, 877u)
-#define PPUTLIMPL_UDEC_2630u 0xA46u, 11u, 51u, (2u, 5u, 263u)
-#define PPUTLIMPL_UDEC_2629u 0xA45u, 11u, 51u, (11u, 239u)
-#define PPUTLIMPL_UDEC_2628u 0xA44u, 11u, 51u, (2u, 2u, 3u, 3u, 73u)
-#define PPUTLIMPL_UDEC_2627u 0xA43u, 11u, 51u, (37u, 71u)
-#define PPUTLIMPL_UDEC_2626u 0xA42u, 11u, 51u, (2u, 13u, 101u)
-#define PPUTLIMPL_UDEC_2625u 0xA41u, 11u, 51u, (3u, 5u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_2624u 0xA40u, 11u, 51u, (2u, 2u, 2u, 2u, 2u, 2u, 41u)
-#define PPUTLIMPL_UDEC_2623u 0xA3Fu, 11u, 51u, (43u, 61u)
-#define PPUTLIMPL_UDEC_2622u 0xA3Eu, 11u, 51u, (2u, 3u, 19u, 23u)
-#define PPUTLIMPL_UDEC_2621u 0xA3Du, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2620u 0xA3Cu, 11u, 51u, (2u, 2u, 5u, 131u)
-#define PPUTLIMPL_UDEC_2619u 0xA3Bu, 11u, 51u, (3u, 3u, 3u, 97u)
-#define PPUTLIMPL_UDEC_2618u 0xA3Au, 11u, 51u, (2u, 7u, 11u, 17u)
-#define PPUTLIMPL_UDEC_2617u 0xA39u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2616u 0xA38u, 11u, 51u, (2u, 2u, 2u, 3u, 109u)
-#define PPUTLIMPL_UDEC_2615u 0xA37u, 11u, 51u, (5u, 523u)
-#define PPUTLIMPL_UDEC_2614u 0xA36u, 11u, 51u, (2u, 1307u)
-#define PPUTLIMPL_UDEC_2613u 0xA35u, 11u, 51u, (3u, 13u, 67u)
-#define PPUTLIMPL_UDEC_2612u 0xA34u, 11u, 51u, (2u, 2u, 653u)
-#define PPUTLIMPL_UDEC_2611u 0xA33u, 11u, 51u, (7u, 373u)
-#define PPUTLIMPL_UDEC_2610u 0xA32u, 11u, 51u, (2u, 3u, 3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_2609u 0xA31u, 11u, 51u, ()
-#define PPUTLIMPL_UDEC_2608u 0xA30u, 11u, 51u, (2u, 2u, 2u, 2u, 163u)
-#define PPUTLIMPL_UDEC_2607u 0xA2Fu, 11u, 51u, (3u, 11u, 79u)
-#define PPUTLIMPL_UDEC_2606u 0xA2Eu, 11u, 51u, (2u, 1303u)
-#define PPUTLIMPL_UDEC_2605u 0xA2Du, 11u, 51u, (5u, 521u)
-#define PPUTLIMPL_UDEC_2604u 0xA2Cu, 11u, 51u, (2u, 2u, 3u, 7u, 31u)
-#define PPUTLIMPL_UDEC_2603u 0xA2Bu, 11u, 51u, (19u, 137u)
-#define PPUTLIMPL_UDEC_2602u 0xA2Au, 11u, 51u, (2u, 1301u)
-#define PPUTLIMPL_UDEC_2601u 0xA29u, 11u, 51u, (3u, 3u, 17u, 17u)
-#define PPUTLIMPL_UDEC_2600u 0xA28u, 11u, 50u, (2u, 2u, 2u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_2599u 0xA27u, 11u, 50u, (23u, 113u)
-#define PPUTLIMPL_UDEC_2598u 0xA26u, 11u, 50u, (2u, 3u, 433u)
-#define PPUTLIMPL_UDEC_2597u 0xA25u, 11u, 50u, (7u, 7u, 53u)
-#define PPUTLIMPL_UDEC_2596u 0xA24u, 11u, 50u, (2u, 2u, 11u, 59u)
-#define PPUTLIMPL_UDEC_2595u 0xA23u, 11u, 50u, (3u, 5u, 173u)
-#define PPUTLIMPL_UDEC_2594u 0xA22u, 11u, 50u, (2u, 1297u)
-#define PPUTLIMPL_UDEC_2593u 0xA21u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2592u 0xA20u, 11u, 50u, (2u, 2u, 2u, 2u, 2u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_2591u 0xA1Fu, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2590u 0xA1Eu, 11u, 50u, (2u, 5u, 7u, 37u)
-#define PPUTLIMPL_UDEC_2589u 0xA1Du, 11u, 50u, (3u, 863u)
-#define PPUTLIMPL_UDEC_2588u 0xA1Cu, 11u, 50u, (2u, 2u, 647u)
-#define PPUTLIMPL_UDEC_2587u 0xA1Bu, 11u, 50u, (13u, 199u)
-#define PPUTLIMPL_UDEC_2586u 0xA1Au, 11u, 50u, (2u, 3u, 431u)
-#define PPUTLIMPL_UDEC_2585u 0xA19u, 11u, 50u, (5u, 11u, 47u)
-#define PPUTLIMPL_UDEC_2584u 0xA18u, 11u, 50u, (2u, 2u, 2u, 17u, 19u)
-#define PPUTLIMPL_UDEC_2583u 0xA17u, 11u, 50u, (3u, 3u, 7u, 41u)
-#define PPUTLIMPL_UDEC_2582u 0xA16u, 11u, 50u, (2u, 1291u)
-#define PPUTLIMPL_UDEC_2581u 0xA15u, 11u, 50u, (29u, 89u)
-#define PPUTLIMPL_UDEC_2580u 0xA14u, 11u, 50u, (2u, 2u, 3u, 5u, 43u)
-#define PPUTLIMPL_UDEC_2579u 0xA13u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2578u 0xA12u, 11u, 50u, (2u, 1289u)
-#define PPUTLIMPL_UDEC_2577u 0xA11u, 11u, 50u, (3u, 859u)
-#define PPUTLIMPL_UDEC_2576u 0xA10u, 11u, 50u, (2u, 2u, 2u, 2u, 7u, 23u)
-#define PPUTLIMPL_UDEC_2575u 0xA0Fu, 11u, 50u, (5u, 5u, 103u)
-#define PPUTLIMPL_UDEC_2574u 0xA0Eu, 11u, 50u, (2u, 3u, 3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_2573u 0xA0Du, 11u, 50u, (31u, 83u)
-#define PPUTLIMPL_UDEC_2572u 0xA0Cu, 11u, 50u, (2u, 2u, 643u)
-#define PPUTLIMPL_UDEC_2571u 0xA0Bu, 11u, 50u, (3u, 857u)
-#define PPUTLIMPL_UDEC_2570u 0xA0Au, 11u, 50u, (2u, 5u, 257u)
-#define PPUTLIMPL_UDEC_2569u 0xA09u, 11u, 50u, (7u, 367u)
-#define PPUTLIMPL_UDEC_2568u 0xA08u, 11u, 50u, (2u, 2u, 2u, 3u, 107u)
-#define PPUTLIMPL_UDEC_2567u 0xA07u, 11u, 50u, (17u, 151u)
-#define PPUTLIMPL_UDEC_2566u 0xA06u, 11u, 50u, (2u, 1283u)
-#define PPUTLIMPL_UDEC_2565u 0xA05u, 11u, 50u, (3u, 3u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_2564u 0xA04u, 11u, 50u, (2u, 2u, 641u)
-#define PPUTLIMPL_UDEC_2563u 0xA03u, 11u, 50u, (11u, 233u)
-#define PPUTLIMPL_UDEC_2562u 0xA02u, 11u, 50u, (2u, 3u, 7u, 61u)
-#define PPUTLIMPL_UDEC_2561u 0xA01u, 11u, 50u, (13u, 197u)
-#define PPUTLIMPL_UDEC_2560u 0xA00u, 11u, 50u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_2559u 0x9FFu, 11u, 50u, (3u, 853u)
-#define PPUTLIMPL_UDEC_2558u 0x9FEu, 11u, 50u, (2u, 1279u)
-#define PPUTLIMPL_UDEC_2557u 0x9FDu, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2556u 0x9FCu, 11u, 50u, (2u, 2u, 3u, 3u, 71u)
-#define PPUTLIMPL_UDEC_2555u 0x9FBu, 11u, 50u, (5u, 7u, 73u)
-#define PPUTLIMPL_UDEC_2554u 0x9FAu, 11u, 50u, (2u, 1277u)
-#define PPUTLIMPL_UDEC_2553u 0x9F9u, 11u, 50u, (3u, 23u, 37u)
-#define PPUTLIMPL_UDEC_2552u 0x9F8u, 11u, 50u, (2u, 2u, 2u, 11u, 29u)
-#define PPUTLIMPL_UDEC_2551u 0x9F7u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2550u 0x9F6u, 11u, 50u, (2u, 3u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_2549u 0x9F5u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2548u 0x9F4u, 11u, 50u, (2u, 2u, 7u, 7u, 13u)
-#define PPUTLIMPL_UDEC_2547u 0x9F3u, 11u, 50u, (3u, 3u, 283u)
-#define PPUTLIMPL_UDEC_2546u 0x9F2u, 11u, 50u, (2u, 19u, 67u)
-#define PPUTLIMPL_UDEC_2545u 0x9F1u, 11u, 50u, (5u, 509u)
-#define PPUTLIMPL_UDEC_2544u 0x9F0u, 11u, 50u, (2u, 2u, 2u, 2u, 3u, 53u)
-#define PPUTLIMPL_UDEC_2543u 0x9EFu, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2542u 0x9EEu, 11u, 50u, (2u, 31u, 41u)
-#define PPUTLIMPL_UDEC_2541u 0x9EDu, 11u, 50u, (3u, 7u, 11u, 11u)
-#define PPUTLIMPL_UDEC_2540u 0x9ECu, 11u, 50u, (2u, 2u, 5u, 127u)
-#define PPUTLIMPL_UDEC_2539u 0x9EBu, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2538u 0x9EAu, 11u, 50u, (2u, 3u, 3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_2537u 0x9E9u, 11u, 50u, (43u, 59u)
-#define PPUTLIMPL_UDEC_2536u 0x9E8u, 11u, 50u, (2u, 2u, 2u, 317u)
-#define PPUTLIMPL_UDEC_2535u 0x9E7u, 11u, 50u, (3u, 5u, 13u, 13u)
-#define PPUTLIMPL_UDEC_2534u 0x9E6u, 11u, 50u, (2u, 7u, 181u)
-#define PPUTLIMPL_UDEC_2533u 0x9E5u, 11u, 50u, (17u, 149u)
-#define PPUTLIMPL_UDEC_2532u 0x9E4u, 11u, 50u, (2u, 2u, 3u, 211u)
-#define PPUTLIMPL_UDEC_2531u 0x9E3u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2530u 0x9E2u, 11u, 50u, (2u, 5u, 11u, 23u)
-#define PPUTLIMPL_UDEC_2529u 0x9E1u, 11u, 50u, (3u, 3u, 281u)
-#define PPUTLIMPL_UDEC_2528u 0x9E0u, 11u, 50u, (2u, 2u, 2u, 2u, 2u, 79u)
-#define PPUTLIMPL_UDEC_2527u 0x9DFu, 11u, 50u, (7u, 19u, 19u)
-#define PPUTLIMPL_UDEC_2526u 0x9DEu, 11u, 50u, (2u, 3u, 421u)
-#define PPUTLIMPL_UDEC_2525u 0x9DDu, 11u, 50u, (5u, 5u, 101u)
-#define PPUTLIMPL_UDEC_2524u 0x9DCu, 11u, 50u, (2u, 2u, 631u)
-#define PPUTLIMPL_UDEC_2523u 0x9DBu, 11u, 50u, (3u, 29u, 29u)
-#define PPUTLIMPL_UDEC_2522u 0x9DAu, 11u, 50u, (2u, 13u, 97u)
-#define PPUTLIMPL_UDEC_2521u 0x9D9u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2520u 0x9D8u, 11u, 50u, (2u, 2u, 2u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_2519u 0x9D7u, 11u, 50u, (11u, 229u)
-#define PPUTLIMPL_UDEC_2518u 0x9D6u, 11u, 50u, (2u, 1259u)
-#define PPUTLIMPL_UDEC_2517u 0x9D5u, 11u, 50u, (3u, 839u)
-#define PPUTLIMPL_UDEC_2516u 0x9D4u, 11u, 50u, (2u, 2u, 17u, 37u)
-#define PPUTLIMPL_UDEC_2515u 0x9D3u, 11u, 50u, (5u, 503u)
-#define PPUTLIMPL_UDEC_2514u 0x9D2u, 11u, 50u, (2u, 3u, 419u)
-#define PPUTLIMPL_UDEC_2513u 0x9D1u, 11u, 50u, (7u, 359u)
-#define PPUTLIMPL_UDEC_2512u 0x9D0u, 11u, 50u, (2u, 2u, 2u, 2u, 157u)
-#define PPUTLIMPL_UDEC_2511u 0x9CFu, 11u, 50u, (3u, 3u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_2510u 0x9CEu, 11u, 50u, (2u, 5u, 251u)
-#define PPUTLIMPL_UDEC_2509u 0x9CDu, 11u, 50u, (13u, 193u)
-#define PPUTLIMPL_UDEC_2508u 0x9CCu, 11u, 50u, (2u, 2u, 3u, 11u, 19u)
-#define PPUTLIMPL_UDEC_2507u 0x9CBu, 11u, 50u, (23u, 109u)
-#define PPUTLIMPL_UDEC_2506u 0x9CAu, 11u, 50u, (2u, 7u, 179u)
-#define PPUTLIMPL_UDEC_2505u 0x9C9u, 11u, 50u, (3u, 5u, 167u)
-#define PPUTLIMPL_UDEC_2504u 0x9C8u, 11u, 50u, (2u, 2u, 2u, 313u)
-#define PPUTLIMPL_UDEC_2503u 0x9C7u, 11u, 50u, ()
-#define PPUTLIMPL_UDEC_2502u 0x9C6u, 11u, 50u, (2u, 3u, 3u, 139u)
-#define PPUTLIMPL_UDEC_2501u 0x9C5u, 11u, 50u, (41u, 61u)
-#define PPUTLIMPL_UDEC_2500u 0x9C4u, 11u, 50u, (2u, 2u, 5u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_2499u 0x9C3u, 11u, 49u, (3u, 7u, 7u, 17u)
-#define PPUTLIMPL_UDEC_2498u 0x9C2u, 11u, 49u, (2u, 1249u)
-#define PPUTLIMPL_UDEC_2497u 0x9C1u, 11u, 49u, (11u, 227u)
-#define PPUTLIMPL_UDEC_2496u 0x9C0u, 11u, 49u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 13u)
-#define PPUTLIMPL_UDEC_2495u 0x9BFu, 11u, 49u, (5u, 499u)
-#define PPUTLIMPL_UDEC_2494u 0x9BEu, 11u, 49u, (2u, 29u, 43u)
-#define PPUTLIMPL_UDEC_2493u 0x9BDu, 11u, 49u, (3u, 3u, 277u)
-#define PPUTLIMPL_UDEC_2492u 0x9BCu, 11u, 49u, (2u, 2u, 7u, 89u)
-#define PPUTLIMPL_UDEC_2491u 0x9BBu, 11u, 49u, (47u, 53u)
-#define PPUTLIMPL_UDEC_2490u 0x9BAu, 11u, 49u, (2u, 3u, 5u, 83u)
-#define PPUTLIMPL_UDEC_2489u 0x9B9u, 11u, 49u, (19u, 131u)
-#define PPUTLIMPL_UDEC_2488u 0x9B8u, 11u, 49u, (2u, 2u, 2u, 311u)
-#define PPUTLIMPL_UDEC_2487u 0x9B7u, 11u, 49u, (3u, 829u)
-#define PPUTLIMPL_UDEC_2486u 0x9B6u, 11u, 49u, (2u, 11u, 113u)
-#define PPUTLIMPL_UDEC_2485u 0x9B5u, 11u, 49u, (5u, 7u, 71u)
-#define PPUTLIMPL_UDEC_2484u 0x9B4u, 11u, 49u, (2u, 2u, 3u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_2483u 0x9B3u, 11u, 49u, (13u, 191u)
-#define PPUTLIMPL_UDEC_2482u 0x9B2u, 11u, 49u, (2u, 17u, 73u)
-#define PPUTLIMPL_UDEC_2481u 0x9B1u, 11u, 49u, (3u, 827u)
-#define PPUTLIMPL_UDEC_2480u 0x9B0u, 11u, 49u, (2u, 2u, 2u, 2u, 5u, 31u)
-#define PPUTLIMPL_UDEC_2479u 0x9AFu, 11u, 49u, (37u, 67u)
-#define PPUTLIMPL_UDEC_2478u 0x9AEu, 11u, 49u, (2u, 3u, 7u, 59u)
-#define PPUTLIMPL_UDEC_2477u 0x9ADu, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2476u 0x9ACu, 11u, 49u, (2u, 2u, 619u)
-#define PPUTLIMPL_UDEC_2475u 0x9ABu, 11u, 49u, (3u, 3u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_2474u 0x9AAu, 11u, 49u, (2u, 1237u)
-#define PPUTLIMPL_UDEC_2473u 0x9A9u, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2472u 0x9A8u, 11u, 49u, (2u, 2u, 2u, 3u, 103u)
-#define PPUTLIMPL_UDEC_2471u 0x9A7u, 11u, 49u, (7u, 353u)
-#define PPUTLIMPL_UDEC_2470u 0x9A6u, 11u, 49u, (2u, 5u, 13u, 19u)
-#define PPUTLIMPL_UDEC_2469u 0x9A5u, 11u, 49u, (3u, 823u)
-#define PPUTLIMPL_UDEC_2468u 0x9A4u, 11u, 49u, (2u, 2u, 617u)
-#define PPUTLIMPL_UDEC_2467u 0x9A3u, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2466u 0x9A2u, 11u, 49u, (2u, 3u, 3u, 137u)
-#define PPUTLIMPL_UDEC_2465u 0x9A1u, 11u, 49u, (5u, 17u, 29u)
-#define PPUTLIMPL_UDEC_2464u 0x9A0u, 11u, 49u, (2u, 2u, 2u, 2u, 2u, 7u, 11u)
-#define PPUTLIMPL_UDEC_2463u 0x99Fu, 11u, 49u, (3u, 821u)
-#define PPUTLIMPL_UDEC_2462u 0x99Eu, 11u, 49u, (2u, 1231u)
-#define PPUTLIMPL_UDEC_2461u 0x99Du, 11u, 49u, (23u, 107u)
-#define PPUTLIMPL_UDEC_2460u 0x99Cu, 11u, 49u, (2u, 2u, 3u, 5u, 41u)
-#define PPUTLIMPL_UDEC_2459u 0x99Bu, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2458u 0x99Au, 11u, 49u, (2u, 1229u)
-#define PPUTLIMPL_UDEC_2457u 0x999u, 11u, 49u, (3u, 3u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_2456u 0x998u, 11u, 49u, (2u, 2u, 2u, 307u)
-#define PPUTLIMPL_UDEC_2455u 0x997u, 11u, 49u, (5u, 491u)
-#define PPUTLIMPL_UDEC_2454u 0x996u, 11u, 49u, (2u, 3u, 409u)
-#define PPUTLIMPL_UDEC_2453u 0x995u, 11u, 49u, (11u, 223u)
-#define PPUTLIMPL_UDEC_2452u 0x994u, 11u, 49u, (2u, 2u, 613u)
-#define PPUTLIMPL_UDEC_2451u 0x993u, 11u, 49u, (3u, 19u, 43u)
-#define PPUTLIMPL_UDEC_2450u 0x992u, 11u, 49u, (2u, 5u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2449u 0x991u, 11u, 49u, (31u, 79u)
-#define PPUTLIMPL_UDEC_2448u 0x990u, 11u, 49u, (2u, 2u, 2u, 2u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_2447u 0x98Fu, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2446u 0x98Eu, 11u, 49u, (2u, 1223u)
-#define PPUTLIMPL_UDEC_2445u 0x98Du, 11u, 49u, (3u, 5u, 163u)
-#define PPUTLIMPL_UDEC_2444u 0x98Cu, 11u, 49u, (2u, 2u, 13u, 47u)
-#define PPUTLIMPL_UDEC_2443u 0x98Bu, 11u, 49u, (7u, 349u)
-#define PPUTLIMPL_UDEC_2442u 0x98Au, 11u, 49u, (2u, 3u, 11u, 37u)
-#define PPUTLIMPL_UDEC_2441u 0x989u, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2440u 0x988u, 11u, 49u, (2u, 2u, 2u, 5u, 61u)
-#define PPUTLIMPL_UDEC_2439u 0x987u, 11u, 49u, (3u, 3u, 271u)
-#define PPUTLIMPL_UDEC_2438u 0x986u, 11u, 49u, (2u, 23u, 53u)
-#define PPUTLIMPL_UDEC_2437u 0x985u, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2436u 0x984u, 11u, 49u, (2u, 2u, 3u, 7u, 29u)
-#define PPUTLIMPL_UDEC_2435u 0x983u, 11u, 49u, (5u, 487u)
-#define PPUTLIMPL_UDEC_2434u 0x982u, 11u, 49u, (2u, 1217u)
-#define PPUTLIMPL_UDEC_2433u 0x981u, 11u, 49u, (3u, 811u)
-#define PPUTLIMPL_UDEC_2432u 0x980u, 11u, 49u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 19u)
-#define PPUTLIMPL_UDEC_2431u 0x97Fu, 11u, 49u, (11u, 13u, 17u)
-#define PPUTLIMPL_UDEC_2430u 0x97Eu, 11u, 49u, (2u, 3u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_2429u 0x97Du, 11u, 49u, (7u, 347u)
-#define PPUTLIMPL_UDEC_2428u 0x97Cu, 11u, 49u, (2u, 2u, 607u)
-#define PPUTLIMPL_UDEC_2427u 0x97Bu, 11u, 49u, (3u, 809u)
-#define PPUTLIMPL_UDEC_2426u 0x97Au, 11u, 49u, (2u, 1213u)
-#define PPUTLIMPL_UDEC_2425u 0x979u, 11u, 49u, (5u, 5u, 97u)
-#define PPUTLIMPL_UDEC_2424u 0x978u, 11u, 49u, (2u, 2u, 2u, 3u, 101u)
-#define PPUTLIMPL_UDEC_2423u 0x977u, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2422u 0x976u, 11u, 49u, (2u, 7u, 173u)
-#define PPUTLIMPL_UDEC_2421u 0x975u, 11u, 49u, (3u, 3u, 269u)
-#define PPUTLIMPL_UDEC_2420u 0x974u, 11u, 49u, (2u, 2u, 5u, 11u, 11u)
-#define PPUTLIMPL_UDEC_2419u 0x973u, 11u, 49u, (41u, 59u)
-#define PPUTLIMPL_UDEC_2418u 0x972u, 11u, 49u, (2u, 3u, 13u, 31u)
-#define PPUTLIMPL_UDEC_2417u 0x971u, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2416u 0x970u, 11u, 49u, (2u, 2u, 2u, 2u, 151u)
-#define PPUTLIMPL_UDEC_2415u 0x96Fu, 11u, 49u, (3u, 5u, 7u, 23u)
-#define PPUTLIMPL_UDEC_2414u 0x96Eu, 11u, 49u, (2u, 17u, 71u)
-#define PPUTLIMPL_UDEC_2413u 0x96Du, 11u, 49u, (19u, 127u)
-#define PPUTLIMPL_UDEC_2412u 0x96Cu, 11u, 49u, (2u, 2u, 3u, 3u, 67u)
-#define PPUTLIMPL_UDEC_2411u 0x96Bu, 11u, 49u, ()
-#define PPUTLIMPL_UDEC_2410u 0x96Au, 11u, 49u, (2u, 5u, 241u)
-#define PPUTLIMPL_UDEC_2409u 0x969u, 11u, 49u, (3u, 11u, 73u)
-#define PPUTLIMPL_UDEC_2408u 0x968u, 11u, 49u, (2u, 2u, 2u, 7u, 43u)
-#define PPUTLIMPL_UDEC_2407u 0x967u, 11u, 49u, (29u, 83u)
-#define PPUTLIMPL_UDEC_2406u 0x966u, 11u, 49u, (2u, 3u, 401u)
-#define PPUTLIMPL_UDEC_2405u 0x965u, 11u, 49u, (5u, 13u, 37u)
-#define PPUTLIMPL_UDEC_2404u 0x964u, 11u, 49u, (2u, 2u, 601u)
-#define PPUTLIMPL_UDEC_2403u 0x963u, 11u, 49u, (3u, 3u, 3u, 89u)
-#define PPUTLIMPL_UDEC_2402u 0x962u, 11u, 49u, (2u, 1201u)
-#define PPUTLIMPL_UDEC_2401u 0x961u, 11u, 49u, (7u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2400u 0x960u, 11u, 48u, (2u, 2u, 2u, 2u, 2u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_2399u 0x95Fu, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2398u 0x95Eu, 11u, 48u, (2u, 11u, 109u)
-#define PPUTLIMPL_UDEC_2397u 0x95Du, 11u, 48u, (3u, 17u, 47u)
-#define PPUTLIMPL_UDEC_2396u 0x95Cu, 11u, 48u, (2u, 2u, 599u)
-#define PPUTLIMPL_UDEC_2395u 0x95Bu, 11u, 48u, (5u, 479u)
-#define PPUTLIMPL_UDEC_2394u 0x95Au, 11u, 48u, (2u, 3u, 3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_2393u 0x959u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2392u 0x958u, 11u, 48u, (2u, 2u, 2u, 13u, 23u)
-#define PPUTLIMPL_UDEC_2391u 0x957u, 11u, 48u, (3u, 797u)
-#define PPUTLIMPL_UDEC_2390u 0x956u, 11u, 48u, (2u, 5u, 239u)
-#define PPUTLIMPL_UDEC_2389u 0x955u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2388u 0x954u, 11u, 48u, (2u, 2u, 3u, 199u)
-#define PPUTLIMPL_UDEC_2387u 0x953u, 11u, 48u, (7u, 11u, 31u)
-#define PPUTLIMPL_UDEC_2386u 0x952u, 11u, 48u, (2u, 1193u)
-#define PPUTLIMPL_UDEC_2385u 0x951u, 11u, 48u, (3u, 3u, 5u, 53u)
-#define PPUTLIMPL_UDEC_2384u 0x950u, 11u, 48u, (2u, 2u, 2u, 2u, 149u)
-#define PPUTLIMPL_UDEC_2383u 0x94Fu, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2382u 0x94Eu, 11u, 48u, (2u, 3u, 397u)
-#define PPUTLIMPL_UDEC_2381u 0x94Du, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2380u 0x94Cu, 11u, 48u, (2u, 2u, 5u, 7u, 17u)
-#define PPUTLIMPL_UDEC_2379u 0x94Bu, 11u, 48u, (3u, 13u, 61u)
-#define PPUTLIMPL_UDEC_2378u 0x94Au, 11u, 48u, (2u, 29u, 41u)
-#define PPUTLIMPL_UDEC_2377u 0x949u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2376u 0x948u, 11u, 48u, (2u, 2u, 2u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_2375u 0x947u, 11u, 48u, (5u, 5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_2374u 0x946u, 11u, 48u, (2u, 1187u)
-#define PPUTLIMPL_UDEC_2373u 0x945u, 11u, 48u, (3u, 7u, 113u)
-#define PPUTLIMPL_UDEC_2372u 0x944u, 11u, 48u, (2u, 2u, 593u)
-#define PPUTLIMPL_UDEC_2371u 0x943u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2370u 0x942u, 11u, 48u, (2u, 3u, 5u, 79u)
-#define PPUTLIMPL_UDEC_2369u 0x941u, 11u, 48u, (23u, 103u)
-#define PPUTLIMPL_UDEC_2368u 0x940u, 11u, 48u, (2u, 2u, 2u, 2u, 2u, 2u, 37u)
-#define PPUTLIMPL_UDEC_2367u 0x93Fu, 11u, 48u, (3u, 3u, 263u)
-#define PPUTLIMPL_UDEC_2366u 0x93Eu, 11u, 48u, (2u, 7u, 13u, 13u)
-#define PPUTLIMPL_UDEC_2365u 0x93Du, 11u, 48u, (5u, 11u, 43u)
-#define PPUTLIMPL_UDEC_2364u 0x93Cu, 11u, 48u, (2u, 2u, 3u, 197u)
-#define PPUTLIMPL_UDEC_2363u 0x93Bu, 11u, 48u, (17u, 139u)
-#define PPUTLIMPL_UDEC_2362u 0x93Au, 11u, 48u, (2u, 1181u)
-#define PPUTLIMPL_UDEC_2361u 0x939u, 11u, 48u, (3u, 787u)
-#define PPUTLIMPL_UDEC_2360u 0x938u, 11u, 48u, (2u, 2u, 2u, 5u, 59u)
-#define PPUTLIMPL_UDEC_2359u 0x937u, 11u, 48u, (7u, 337u)
-#define PPUTLIMPL_UDEC_2358u 0x936u, 11u, 48u, (2u, 3u, 3u, 131u)
-#define PPUTLIMPL_UDEC_2357u 0x935u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2356u 0x934u, 11u, 48u, (2u, 2u, 19u, 31u)
-#define PPUTLIMPL_UDEC_2355u 0x933u, 11u, 48u, (3u, 5u, 157u)
-#define PPUTLIMPL_UDEC_2354u 0x932u, 11u, 48u, (2u, 11u, 107u)
-#define PPUTLIMPL_UDEC_2353u 0x931u, 11u, 48u, (13u, 181u)
-#define PPUTLIMPL_UDEC_2352u 0x930u, 11u, 48u, (2u, 2u, 2u, 2u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2351u 0x92Fu, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2350u 0x92Eu, 11u, 48u, (2u, 5u, 5u, 47u)
-#define PPUTLIMPL_UDEC_2349u 0x92Du, 11u, 48u, (3u, 3u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_2348u 0x92Cu, 11u, 48u, (2u, 2u, 587u)
-#define PPUTLIMPL_UDEC_2347u 0x92Bu, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2346u 0x92Au, 11u, 48u, (2u, 3u, 17u, 23u)
-#define PPUTLIMPL_UDEC_2345u 0x929u, 11u, 48u, (5u, 7u, 67u)
-#define PPUTLIMPL_UDEC_2344u 0x928u, 11u, 48u, (2u, 2u, 2u, 293u)
-#define PPUTLIMPL_UDEC_2343u 0x927u, 11u, 48u, (3u, 11u, 71u)
-#define PPUTLIMPL_UDEC_2342u 0x926u, 11u, 48u, (2u, 1171u)
-#define PPUTLIMPL_UDEC_2341u 0x925u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2340u 0x924u, 11u, 48u, (2u, 2u, 3u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_2339u 0x923u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2338u 0x922u, 11u, 48u, (2u, 7u, 167u)
-#define PPUTLIMPL_UDEC_2337u 0x921u, 11u, 48u, (3u, 19u, 41u)
-#define PPUTLIMPL_UDEC_2336u 0x920u, 11u, 48u, (2u, 2u, 2u, 2u, 2u, 73u)
-#define PPUTLIMPL_UDEC_2335u 0x91Fu, 11u, 48u, (5u, 467u)
-#define PPUTLIMPL_UDEC_2334u 0x91Eu, 11u, 48u, (2u, 3u, 389u)
-#define PPUTLIMPL_UDEC_2333u 0x91Du, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2332u 0x91Cu, 11u, 48u, (2u, 2u, 11u, 53u)
-#define PPUTLIMPL_UDEC_2331u 0x91Bu, 11u, 48u, (3u, 3u, 7u, 37u)
-#define PPUTLIMPL_UDEC_2330u 0x91Au, 11u, 48u, (2u, 5u, 233u)
-#define PPUTLIMPL_UDEC_2329u 0x919u, 11u, 48u, (17u, 137u)
-#define PPUTLIMPL_UDEC_2328u 0x918u, 11u, 48u, (2u, 2u, 2u, 3u, 97u)
-#define PPUTLIMPL_UDEC_2327u 0x917u, 11u, 48u, (13u, 179u)
-#define PPUTLIMPL_UDEC_2326u 0x916u, 11u, 48u, (2u, 1163u)
-#define PPUTLIMPL_UDEC_2325u 0x915u, 11u, 48u, (3u, 5u, 5u, 31u)
-#define PPUTLIMPL_UDEC_2324u 0x914u, 11u, 48u, (2u, 2u, 7u, 83u)
-#define PPUTLIMPL_UDEC_2323u 0x913u, 11u, 48u, (23u, 101u)
-#define PPUTLIMPL_UDEC_2322u 0x912u, 11u, 48u, (2u, 3u, 3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_2321u 0x911u, 11u, 48u, (11u, 211u)
-#define PPUTLIMPL_UDEC_2320u 0x910u, 11u, 48u, (2u, 2u, 2u, 2u, 5u, 29u)
-#define PPUTLIMPL_UDEC_2319u 0x90Fu, 11u, 48u, (3u, 773u)
-#define PPUTLIMPL_UDEC_2318u 0x90Eu, 11u, 48u, (2u, 19u, 61u)
-#define PPUTLIMPL_UDEC_2317u 0x90Du, 11u, 48u, (7u, 331u)
-#define PPUTLIMPL_UDEC_2316u 0x90Cu, 11u, 48u, (2u, 2u, 3u, 193u)
-#define PPUTLIMPL_UDEC_2315u 0x90Bu, 11u, 48u, (5u, 463u)
-#define PPUTLIMPL_UDEC_2314u 0x90Au, 11u, 48u, (2u, 13u, 89u)
-#define PPUTLIMPL_UDEC_2313u 0x909u, 11u, 48u, (3u, 3u, 257u)
-#define PPUTLIMPL_UDEC_2312u 0x908u, 11u, 48u, (2u, 2u, 2u, 17u, 17u)
-#define PPUTLIMPL_UDEC_2311u 0x907u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2310u 0x906u, 11u, 48u, (2u, 3u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_2309u 0x905u, 11u, 48u, ()
-#define PPUTLIMPL_UDEC_2308u 0x904u, 11u, 48u, (2u, 2u, 577u)
-#define PPUTLIMPL_UDEC_2307u 0x903u, 11u, 48u, (3u, 769u)
-#define PPUTLIMPL_UDEC_2306u 0x902u, 11u, 48u, (2u, 1153u)
-#define PPUTLIMPL_UDEC_2305u 0x901u, 11u, 48u, (5u, 461u)
-#define PPUTLIMPL_UDEC_2304u 0x900u, 11u, 48u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_2303u 0x8FFu, 11u, 47u, (7u, 7u, 47u)
-#define PPUTLIMPL_UDEC_2302u 0x8FEu, 11u, 47u, (2u, 1151u)
-#define PPUTLIMPL_UDEC_2301u 0x8FDu, 11u, 47u, (3u, 13u, 59u)
-#define PPUTLIMPL_UDEC_2300u 0x8FCu, 11u, 47u, (2u, 2u, 5u, 5u, 23u)
-#define PPUTLIMPL_UDEC_2299u 0x8FBu, 11u, 47u, (11u, 11u, 19u)
-#define PPUTLIMPL_UDEC_2298u 0x8FAu, 11u, 47u, (2u, 3u, 383u)
-#define PPUTLIMPL_UDEC_2297u 0x8F9u, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2296u 0x8F8u, 11u, 47u, (2u, 2u, 2u, 7u, 41u)
-#define PPUTLIMPL_UDEC_2295u 0x8F7u, 11u, 47u, (3u, 3u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_2294u 0x8F6u, 11u, 47u, (2u, 31u, 37u)
-#define PPUTLIMPL_UDEC_2293u 0x8F5u, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2292u 0x8F4u, 11u, 47u, (2u, 2u, 3u, 191u)
-#define PPUTLIMPL_UDEC_2291u 0x8F3u, 11u, 47u, (29u, 79u)
-#define PPUTLIMPL_UDEC_2290u 0x8F2u, 11u, 47u, (2u, 5u, 229u)
-#define PPUTLIMPL_UDEC_2289u 0x8F1u, 11u, 47u, (3u, 7u, 109u)
-#define PPUTLIMPL_UDEC_2288u 0x8F0u, 11u, 47u, (2u, 2u, 2u, 2u, 11u, 13u)
-#define PPUTLIMPL_UDEC_2287u 0x8EFu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2286u 0x8EEu, 11u, 47u, (2u, 3u, 3u, 127u)
-#define PPUTLIMPL_UDEC_2285u 0x8EDu, 11u, 47u, (5u, 457u)
-#define PPUTLIMPL_UDEC_2284u 0x8ECu, 11u, 47u, (2u, 2u, 571u)
-#define PPUTLIMPL_UDEC_2283u 0x8EBu, 11u, 47u, (3u, 761u)
-#define PPUTLIMPL_UDEC_2282u 0x8EAu, 11u, 47u, (2u, 7u, 163u)
-#define PPUTLIMPL_UDEC_2281u 0x8E9u, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2280u 0x8E8u, 11u, 47u, (2u, 2u, 2u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_2279u 0x8E7u, 11u, 47u, (43u, 53u)
-#define PPUTLIMPL_UDEC_2278u 0x8E6u, 11u, 47u, (2u, 17u, 67u)
-#define PPUTLIMPL_UDEC_2277u 0x8E5u, 11u, 47u, (3u, 3u, 11u, 23u)
-#define PPUTLIMPL_UDEC_2276u 0x8E4u, 11u, 47u, (2u, 2u, 569u)
-#define PPUTLIMPL_UDEC_2275u 0x8E3u, 11u, 47u, (5u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_2274u 0x8E2u, 11u, 47u, (2u, 3u, 379u)
-#define PPUTLIMPL_UDEC_2273u 0x8E1u, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2272u 0x8E0u, 11u, 47u, (2u, 2u, 2u, 2u, 2u, 71u)
-#define PPUTLIMPL_UDEC_2271u 0x8DFu, 11u, 47u, (3u, 757u)
-#define PPUTLIMPL_UDEC_2270u 0x8DEu, 11u, 47u, (2u, 5u, 227u)
-#define PPUTLIMPL_UDEC_2269u 0x8DDu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2268u 0x8DCu, 11u, 47u, (2u, 2u, 3u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_2267u 0x8DBu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2266u 0x8DAu, 11u, 47u, (2u, 11u, 103u)
-#define PPUTLIMPL_UDEC_2265u 0x8D9u, 11u, 47u, (3u, 5u, 151u)
-#define PPUTLIMPL_UDEC_2264u 0x8D8u, 11u, 47u, (2u, 2u, 2u, 283u)
-#define PPUTLIMPL_UDEC_2263u 0x8D7u, 11u, 47u, (31u, 73u)
-#define PPUTLIMPL_UDEC_2262u 0x8D6u, 11u, 47u, (2u, 3u, 13u, 29u)
-#define PPUTLIMPL_UDEC_2261u 0x8D5u, 11u, 47u, (7u, 17u, 19u)
-#define PPUTLIMPL_UDEC_2260u 0x8D4u, 11u, 47u, (2u, 2u, 5u, 113u)
-#define PPUTLIMPL_UDEC_2259u 0x8D3u, 11u, 47u, (3u, 3u, 251u)
-#define PPUTLIMPL_UDEC_2258u 0x8D2u, 11u, 47u, (2u, 1129u)
-#define PPUTLIMPL_UDEC_2257u 0x8D1u, 11u, 47u, (37u, 61u)
-#define PPUTLIMPL_UDEC_2256u 0x8D0u, 11u, 47u, (2u, 2u, 2u, 2u, 3u, 47u)
-#define PPUTLIMPL_UDEC_2255u 0x8CFu, 11u, 47u, (5u, 11u, 41u)
-#define PPUTLIMPL_UDEC_2254u 0x8CEu, 11u, 47u, (2u, 7u, 7u, 23u)
-#define PPUTLIMPL_UDEC_2253u 0x8CDu, 11u, 47u, (3u, 751u)
-#define PPUTLIMPL_UDEC_2252u 0x8CCu, 11u, 47u, (2u, 2u, 563u)
-#define PPUTLIMPL_UDEC_2251u 0x8CBu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2250u 0x8CAu, 11u, 47u, (2u, 3u, 3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_2249u 0x8C9u, 11u, 47u, (13u, 173u)
-#define PPUTLIMPL_UDEC_2248u 0x8C8u, 11u, 47u, (2u, 2u, 2u, 281u)
-#define PPUTLIMPL_UDEC_2247u 0x8C7u, 11u, 47u, (3u, 7u, 107u)
-#define PPUTLIMPL_UDEC_2246u 0x8C6u, 11u, 47u, (2u, 1123u)
-#define PPUTLIMPL_UDEC_2245u 0x8C5u, 11u, 47u, (5u, 449u)
-#define PPUTLIMPL_UDEC_2244u 0x8C4u, 11u, 47u, (2u, 2u, 3u, 11u, 17u)
-#define PPUTLIMPL_UDEC_2243u 0x8C3u, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2242u 0x8C2u, 11u, 47u, (2u, 19u, 59u)
-#define PPUTLIMPL_UDEC_2241u 0x8C1u, 11u, 47u, (3u, 3u, 3u, 83u)
-#define PPUTLIMPL_UDEC_2240u 0x8C0u, 11u, 47u, (2u, 2u, 2u, 2u, 2u, 2u, 5u, 7u)
-#define PPUTLIMPL_UDEC_2239u 0x8BFu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2238u 0x8BEu, 11u, 47u, (2u, 3u, 373u)
-#define PPUTLIMPL_UDEC_2237u 0x8BDu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2236u 0x8BCu, 11u, 47u, (2u, 2u, 13u, 43u)
-#define PPUTLIMPL_UDEC_2235u 0x8BBu, 11u, 47u, (3u, 5u, 149u)
-#define PPUTLIMPL_UDEC_2234u 0x8BAu, 11u, 47u, (2u, 1117u)
-#define PPUTLIMPL_UDEC_2233u 0x8B9u, 11u, 47u, (7u, 11u, 29u)
-#define PPUTLIMPL_UDEC_2232u 0x8B8u, 11u, 47u, (2u, 2u, 2u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_2231u 0x8B7u, 11u, 47u, (23u, 97u)
-#define PPUTLIMPL_UDEC_2230u 0x8B6u, 11u, 47u, (2u, 5u, 223u)
-#define PPUTLIMPL_UDEC_2229u 0x8B5u, 11u, 47u, (3u, 743u)
-#define PPUTLIMPL_UDEC_2228u 0x8B4u, 11u, 47u, (2u, 2u, 557u)
-#define PPUTLIMPL_UDEC_2227u 0x8B3u, 11u, 47u, (17u, 131u)
-#define PPUTLIMPL_UDEC_2226u 0x8B2u, 11u, 47u, (2u, 3u, 7u, 53u)
-#define PPUTLIMPL_UDEC_2225u 0x8B1u, 11u, 47u, (5u, 5u, 89u)
-#define PPUTLIMPL_UDEC_2224u 0x8B0u, 11u, 47u, (2u, 2u, 2u, 2u, 139u)
-#define PPUTLIMPL_UDEC_2223u 0x8AFu, 11u, 47u, (3u, 3u, 13u, 19u)
-#define PPUTLIMPL_UDEC_2222u 0x8AEu, 11u, 47u, (2u, 11u, 101u)
-#define PPUTLIMPL_UDEC_2221u 0x8ADu, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2220u 0x8ACu, 11u, 47u, (2u, 2u, 3u, 5u, 37u)
-#define PPUTLIMPL_UDEC_2219u 0x8ABu, 11u, 47u, (7u, 317u)
-#define PPUTLIMPL_UDEC_2218u 0x8AAu, 11u, 47u, (2u, 1109u)
-#define PPUTLIMPL_UDEC_2217u 0x8A9u, 11u, 47u, (3u, 739u)
-#define PPUTLIMPL_UDEC_2216u 0x8A8u, 11u, 47u, (2u, 2u, 2u, 277u)
-#define PPUTLIMPL_UDEC_2215u 0x8A7u, 11u, 47u, (5u, 443u)
-#define PPUTLIMPL_UDEC_2214u 0x8A6u, 11u, 47u, (2u, 3u, 3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_2213u 0x8A5u, 11u, 47u, ()
-#define PPUTLIMPL_UDEC_2212u 0x8A4u, 11u, 47u, (2u, 2u, 7u, 79u)
-#define PPUTLIMPL_UDEC_2211u 0x8A3u, 11u, 47u, (3u, 11u, 67u)
-#define PPUTLIMPL_UDEC_2210u 0x8A2u, 11u, 47u, (2u, 5u, 13u, 17u)
-#define PPUTLIMPL_UDEC_2209u 0x8A1u, 11u, 47u, (47u, 47u)
-#define PPUTLIMPL_UDEC_2208u 0x8A0u, 11u, 46u, (2u, 2u, 2u, 2u, 2u, 3u, 23u)
-#define PPUTLIMPL_UDEC_2207u 0x89Fu, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2206u 0x89Eu, 11u, 46u, (2u, 1103u)
-#define PPUTLIMPL_UDEC_2205u 0x89Du, 11u, 46u, (3u, 3u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2204u 0x89Cu, 11u, 46u, (2u, 2u, 19u, 29u)
-#define PPUTLIMPL_UDEC_2203u 0x89Bu, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2202u 0x89Au, 11u, 46u, (2u, 3u, 367u)
-#define PPUTLIMPL_UDEC_2201u 0x899u, 11u, 46u, (31u, 71u)
-#define PPUTLIMPL_UDEC_2200u 0x898u, 11u, 46u, (2u, 2u, 2u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_2199u 0x897u, 11u, 46u, (3u, 733u)
-#define PPUTLIMPL_UDEC_2198u 0x896u, 11u, 46u, (2u, 7u, 157u)
-#define PPUTLIMPL_UDEC_2197u 0x895u, 11u, 46u, (13u, 13u, 13u)
-#define PPUTLIMPL_UDEC_2196u 0x894u, 11u, 46u, (2u, 2u, 3u, 3u, 61u)
-#define PPUTLIMPL_UDEC_2195u 0x893u, 11u, 46u, (5u, 439u)
-#define PPUTLIMPL_UDEC_2194u 0x892u, 11u, 46u, (2u, 1097u)
-#define PPUTLIMPL_UDEC_2193u 0x891u, 11u, 46u, (3u, 17u, 43u)
-#define PPUTLIMPL_UDEC_2192u 0x890u, 11u, 46u, (2u, 2u, 2u, 2u, 137u)
-#define PPUTLIMPL_UDEC_2191u 0x88Fu, 11u, 46u, (7u, 313u)
-#define PPUTLIMPL_UDEC_2190u 0x88Eu, 11u, 46u, (2u, 3u, 5u, 73u)
-#define PPUTLIMPL_UDEC_2189u 0x88Du, 11u, 46u, (11u, 199u)
-#define PPUTLIMPL_UDEC_2188u 0x88Cu, 11u, 46u, (2u, 2u, 547u)
-#define PPUTLIMPL_UDEC_2187u 0x88Bu, 11u, 46u, (3u, 3u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_2186u 0x88Au, 11u, 46u, (2u, 1093u)
-#define PPUTLIMPL_UDEC_2185u 0x889u, 11u, 46u, (5u, 19u, 23u)
-#define PPUTLIMPL_UDEC_2184u 0x888u, 11u, 46u, (2u, 2u, 2u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_2183u 0x887u, 11u, 46u, (37u, 59u)
-#define PPUTLIMPL_UDEC_2182u 0x886u, 11u, 46u, (2u, 1091u)
-#define PPUTLIMPL_UDEC_2181u 0x885u, 11u, 46u, (3u, 727u)
-#define PPUTLIMPL_UDEC_2180u 0x884u, 11u, 46u, (2u, 2u, 5u, 109u)
-#define PPUTLIMPL_UDEC_2179u 0x883u, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2178u 0x882u, 11u, 46u, (2u, 3u, 3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_2177u 0x881u, 11u, 46u, (7u, 311u)
-#define PPUTLIMPL_UDEC_2176u 0x880u, 11u, 46u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 17u)
-#define PPUTLIMPL_UDEC_2175u 0x87Fu, 11u, 46u, (3u, 5u, 5u, 29u)
-#define PPUTLIMPL_UDEC_2174u 0x87Eu, 11u, 46u, (2u, 1087u)
-#define PPUTLIMPL_UDEC_2173u 0x87Du, 11u, 46u, (41u, 53u)
-#define PPUTLIMPL_UDEC_2172u 0x87Cu, 11u, 46u, (2u, 2u, 3u, 181u)
-#define PPUTLIMPL_UDEC_2171u 0x87Bu, 11u, 46u, (13u, 167u)
-#define PPUTLIMPL_UDEC_2170u 0x87Au, 11u, 46u, (2u, 5u, 7u, 31u)
-#define PPUTLIMPL_UDEC_2169u 0x879u, 11u, 46u, (3u, 3u, 241u)
-#define PPUTLIMPL_UDEC_2168u 0x878u, 11u, 46u, (2u, 2u, 2u, 271u)
-#define PPUTLIMPL_UDEC_2167u 0x877u, 11u, 46u, (11u, 197u)
-#define PPUTLIMPL_UDEC_2166u 0x876u, 11u, 46u, (2u, 3u, 19u, 19u)
-#define PPUTLIMPL_UDEC_2165u 0x875u, 11u, 46u, (5u, 433u)
-#define PPUTLIMPL_UDEC_2164u 0x874u, 11u, 46u, (2u, 2u, 541u)
-#define PPUTLIMPL_UDEC_2163u 0x873u, 11u, 46u, (3u, 7u, 103u)
-#define PPUTLIMPL_UDEC_2162u 0x872u, 11u, 46u, (2u, 23u, 47u)
-#define PPUTLIMPL_UDEC_2161u 0x871u, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2160u 0x870u, 11u, 46u, (2u, 2u, 2u, 2u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_2159u 0x86Fu, 11u, 46u, (17u, 127u)
-#define PPUTLIMPL_UDEC_2158u 0x86Eu, 11u, 46u, (2u, 13u, 83u)
-#define PPUTLIMPL_UDEC_2157u 0x86Du, 11u, 46u, (3u, 719u)
-#define PPUTLIMPL_UDEC_2156u 0x86Cu, 11u, 46u, (2u, 2u, 7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_2155u 0x86Bu, 11u, 46u, (5u, 431u)
-#define PPUTLIMPL_UDEC_2154u 0x86Au, 11u, 46u, (2u, 3u, 359u)
-#define PPUTLIMPL_UDEC_2153u 0x869u, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2152u 0x868u, 11u, 46u, (2u, 2u, 2u, 269u)
-#define PPUTLIMPL_UDEC_2151u 0x867u, 11u, 46u, (3u, 3u, 239u)
-#define PPUTLIMPL_UDEC_2150u 0x866u, 11u, 46u, (2u, 5u, 5u, 43u)
-#define PPUTLIMPL_UDEC_2149u 0x865u, 11u, 46u, (7u, 307u)
-#define PPUTLIMPL_UDEC_2148u 0x864u, 11u, 46u, (2u, 2u, 3u, 179u)
-#define PPUTLIMPL_UDEC_2147u 0x863u, 11u, 46u, (19u, 113u)
-#define PPUTLIMPL_UDEC_2146u 0x862u, 11u, 46u, (2u, 29u, 37u)
-#define PPUTLIMPL_UDEC_2145u 0x861u, 11u, 46u, (3u, 5u, 11u, 13u)
-#define PPUTLIMPL_UDEC_2144u 0x860u, 11u, 46u, (2u, 2u, 2u, 2u, 2u, 67u)
-#define PPUTLIMPL_UDEC_2143u 0x85Fu, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2142u 0x85Eu, 11u, 46u, (2u, 3u, 3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_2141u 0x85Du, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2140u 0x85Cu, 11u, 46u, (2u, 2u, 5u, 107u)
-#define PPUTLIMPL_UDEC_2139u 0x85Bu, 11u, 46u, (3u, 23u, 31u)
-#define PPUTLIMPL_UDEC_2138u 0x85Au, 11u, 46u, (2u, 1069u)
-#define PPUTLIMPL_UDEC_2137u 0x859u, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2136u 0x858u, 11u, 46u, (2u, 2u, 2u, 3u, 89u)
-#define PPUTLIMPL_UDEC_2135u 0x857u, 11u, 46u, (5u, 7u, 61u)
-#define PPUTLIMPL_UDEC_2134u 0x856u, 11u, 46u, (2u, 11u, 97u)
-#define PPUTLIMPL_UDEC_2133u 0x855u, 11u, 46u, (3u, 3u, 3u, 79u)
-#define PPUTLIMPL_UDEC_2132u 0x854u, 11u, 46u, (2u, 2u, 13u, 41u)
-#define PPUTLIMPL_UDEC_2131u 0x853u, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2130u 0x852u, 11u, 46u, (2u, 3u, 5u, 71u)
-#define PPUTLIMPL_UDEC_2129u 0x851u, 11u, 46u, ()
-#define PPUTLIMPL_UDEC_2128u 0x850u, 11u, 46u, (2u, 2u, 2u, 2u, 7u, 19u)
-#define PPUTLIMPL_UDEC_2127u 0x84Fu, 11u, 46u, (3u, 709u)
-#define PPUTLIMPL_UDEC_2126u 0x84Eu, 11u, 46u, (2u, 1063u)
-#define PPUTLIMPL_UDEC_2125u 0x84Du, 11u, 46u, (5u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_2124u 0x84Cu, 11u, 46u, (2u, 2u, 3u, 3u, 59u)
-#define PPUTLIMPL_UDEC_2123u 0x84Bu, 11u, 46u, (11u, 193u)
-#define PPUTLIMPL_UDEC_2122u 0x84Au, 11u, 46u, (2u, 1061u)
-#define PPUTLIMPL_UDEC_2121u 0x849u, 11u, 46u, (3u, 7u, 101u)
-#define PPUTLIMPL_UDEC_2120u 0x848u, 11u, 46u, (2u, 2u, 2u, 5u, 53u)
-#define PPUTLIMPL_UDEC_2119u 0x847u, 11u, 46u, (13u, 163u)
-#define PPUTLIMPL_UDEC_2118u 0x846u, 11u, 46u, (2u, 3u, 353u)
-#define PPUTLIMPL_UDEC_2117u 0x845u, 11u, 46u, (29u, 73u)
-#define PPUTLIMPL_UDEC_2116u 0x844u, 11u, 46u, (2u, 2u, 23u, 23u)
-#define PPUTLIMPL_UDEC_2115u 0x843u, 11u, 45u, (3u, 3u, 5u, 47u)
-#define PPUTLIMPL_UDEC_2114u 0x842u, 11u, 45u, (2u, 7u, 151u)
-#define PPUTLIMPL_UDEC_2113u 0x841u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2112u 0x840u, 11u, 45u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 11u)
-#define PPUTLIMPL_UDEC_2111u 0x83Fu, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2110u 0x83Eu, 11u, 45u, (2u, 5u, 211u)
-#define PPUTLIMPL_UDEC_2109u 0x83Du, 11u, 45u, (3u, 19u, 37u)
-#define PPUTLIMPL_UDEC_2108u 0x83Cu, 11u, 45u, (2u, 2u, 17u, 31u)
-#define PPUTLIMPL_UDEC_2107u 0x83Bu, 11u, 45u, (7u, 7u, 43u)
-#define PPUTLIMPL_UDEC_2106u 0x83Au, 11u, 45u, (2u, 3u, 3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_2105u 0x839u, 11u, 45u, (5u, 421u)
-#define PPUTLIMPL_UDEC_2104u 0x838u, 11u, 45u, (2u, 2u, 2u, 263u)
-#define PPUTLIMPL_UDEC_2103u 0x837u, 11u, 45u, (3u, 701u)
-#define PPUTLIMPL_UDEC_2102u 0x836u, 11u, 45u, (2u, 1051u)
-#define PPUTLIMPL_UDEC_2101u 0x835u, 11u, 45u, (11u, 191u)
-#define PPUTLIMPL_UDEC_2100u 0x834u, 11u, 45u, (2u, 2u, 3u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_2099u 0x833u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2098u 0x832u, 11u, 45u, (2u, 1049u)
-#define PPUTLIMPL_UDEC_2097u 0x831u, 11u, 45u, (3u, 3u, 233u)
-#define PPUTLIMPL_UDEC_2096u 0x830u, 11u, 45u, (2u, 2u, 2u, 2u, 131u)
-#define PPUTLIMPL_UDEC_2095u 0x82Fu, 11u, 45u, (5u, 419u)
-#define PPUTLIMPL_UDEC_2094u 0x82Eu, 11u, 45u, (2u, 3u, 349u)
-#define PPUTLIMPL_UDEC_2093u 0x82Du, 11u, 45u, (7u, 13u, 23u)
-#define PPUTLIMPL_UDEC_2092u 0x82Cu, 11u, 45u, (2u, 2u, 523u)
-#define PPUTLIMPL_UDEC_2091u 0x82Bu, 11u, 45u, (3u, 17u, 41u)
-#define PPUTLIMPL_UDEC_2090u 0x82Au, 11u, 45u, (2u, 5u, 11u, 19u)
-#define PPUTLIMPL_UDEC_2089u 0x829u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2088u 0x828u, 11u, 45u, (2u, 2u, 2u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_2087u 0x827u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2086u 0x826u, 11u, 45u, (2u, 7u, 149u)
-#define PPUTLIMPL_UDEC_2085u 0x825u, 11u, 45u, (3u, 5u, 139u)
-#define PPUTLIMPL_UDEC_2084u 0x824u, 11u, 45u, (2u, 2u, 521u)
-#define PPUTLIMPL_UDEC_2083u 0x823u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2082u 0x822u, 11u, 45u, (2u, 3u, 347u)
-#define PPUTLIMPL_UDEC_2081u 0x821u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2080u 0x820u, 11u, 45u, (2u, 2u, 2u, 2u, 2u, 5u, 13u)
-#define PPUTLIMPL_UDEC_2079u 0x81Fu, 11u, 45u, (3u, 3u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_2078u 0x81Eu, 11u, 45u, (2u, 1039u)
-#define PPUTLIMPL_UDEC_2077u 0x81Du, 11u, 45u, (31u, 67u)
-#define PPUTLIMPL_UDEC_2076u 0x81Cu, 11u, 45u, (2u, 2u, 3u, 173u)
-#define PPUTLIMPL_UDEC_2075u 0x81Bu, 11u, 45u, (5u, 5u, 83u)
-#define PPUTLIMPL_UDEC_2074u 0x81Au, 11u, 45u, (2u, 17u, 61u)
-#define PPUTLIMPL_UDEC_2073u 0x819u, 11u, 45u, (3u, 691u)
-#define PPUTLIMPL_UDEC_2072u 0x818u, 11u, 45u, (2u, 2u, 2u, 7u, 37u)
-#define PPUTLIMPL_UDEC_2071u 0x817u, 11u, 45u, (19u, 109u)
-#define PPUTLIMPL_UDEC_2070u 0x816u, 11u, 45u, (2u, 3u, 3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_2069u 0x815u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2068u 0x814u, 11u, 45u, (2u, 2u, 11u, 47u)
-#define PPUTLIMPL_UDEC_2067u 0x813u, 11u, 45u, (3u, 13u, 53u)
-#define PPUTLIMPL_UDEC_2066u 0x812u, 11u, 45u, (2u, 1033u)
-#define PPUTLIMPL_UDEC_2065u 0x811u, 11u, 45u, (5u, 7u, 59u)
-#define PPUTLIMPL_UDEC_2064u 0x810u, 11u, 45u, (2u, 2u, 2u, 2u, 3u, 43u)
-#define PPUTLIMPL_UDEC_2063u 0x80Fu, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2062u 0x80Eu, 11u, 45u, (2u, 1031u)
-#define PPUTLIMPL_UDEC_2061u 0x80Du, 11u, 45u, (3u, 3u, 229u)
-#define PPUTLIMPL_UDEC_2060u 0x80Cu, 11u, 45u, (2u, 2u, 5u, 103u)
-#define PPUTLIMPL_UDEC_2059u 0x80Bu, 11u, 45u, (29u, 71u)
-#define PPUTLIMPL_UDEC_2058u 0x80Au, 11u, 45u, (2u, 3u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_2057u 0x809u, 11u, 45u, (11u, 11u, 17u)
-#define PPUTLIMPL_UDEC_2056u 0x808u, 11u, 45u, (2u, 2u, 2u, 257u)
-#define PPUTLIMPL_UDEC_2055u 0x807u, 11u, 45u, (3u, 5u, 137u)
-#define PPUTLIMPL_UDEC_2054u 0x806u, 11u, 45u, (2u, 13u, 79u)
-#define PPUTLIMPL_UDEC_2053u 0x805u, 11u, 45u, ()
-#define PPUTLIMPL_UDEC_2052u 0x804u, 11u, 45u, (2u, 2u, 3u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_2051u 0x803u, 11u, 45u, (7u, 293u)
-#define PPUTLIMPL_UDEC_2050u 0x802u, 11u, 45u, (2u, 5u, 5u, 41u)
-#define PPUTLIMPL_UDEC_2049u 0x801u, 11u, 45u, (3u, 683u)
-#define PPUTLIMPL_UDEC_2048u \
-  0x800u, 11u, 45u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_2047u 0x7FFu, 10u, 45u, (23u, 89u)
-#define PPUTLIMPL_UDEC_2046u 0x7FEu, 10u, 45u, (2u, 3u, 11u, 31u)
-#define PPUTLIMPL_UDEC_2045u 0x7FDu, 10u, 45u, (5u, 409u)
-#define PPUTLIMPL_UDEC_2044u 0x7FCu, 10u, 45u, (2u, 2u, 7u, 73u)
-#define PPUTLIMPL_UDEC_2043u 0x7FBu, 10u, 45u, (3u, 3u, 227u)
-#define PPUTLIMPL_UDEC_2042u 0x7FAu, 10u, 45u, (2u, 1021u)
-#define PPUTLIMPL_UDEC_2041u 0x7F9u, 10u, 45u, (13u, 157u)
-#define PPUTLIMPL_UDEC_2040u 0x7F8u, 10u, 45u, (2u, 2u, 2u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_2039u 0x7F7u, 10u, 45u, ()
-#define PPUTLIMPL_UDEC_2038u 0x7F6u, 10u, 45u, (2u, 1019u)
-#define PPUTLIMPL_UDEC_2037u 0x7F5u, 10u, 45u, (3u, 7u, 97u)
-#define PPUTLIMPL_UDEC_2036u 0x7F4u, 10u, 45u, (2u, 2u, 509u)
-#define PPUTLIMPL_UDEC_2035u 0x7F3u, 10u, 45u, (5u, 11u, 37u)
-#define PPUTLIMPL_UDEC_2034u 0x7F2u, 10u, 45u, (2u, 3u, 3u, 113u)
-#define PPUTLIMPL_UDEC_2033u 0x7F1u, 10u, 45u, (19u, 107u)
-#define PPUTLIMPL_UDEC_2032u 0x7F0u, 10u, 45u, (2u, 2u, 2u, 2u, 127u)
-#define PPUTLIMPL_UDEC_2031u 0x7EFu, 10u, 45u, (3u, 677u)
-#define PPUTLIMPL_UDEC_2030u 0x7EEu, 10u, 45u, (2u, 5u, 7u, 29u)
-#define PPUTLIMPL_UDEC_2029u 0x7EDu, 10u, 45u, ()
-#define PPUTLIMPL_UDEC_2028u 0x7ECu, 10u, 45u, (2u, 2u, 3u, 13u, 13u)
-#define PPUTLIMPL_UDEC_2027u 0x7EBu, 10u, 45u, ()
-#define PPUTLIMPL_UDEC_2026u 0x7EAu, 10u, 45u, (2u, 1013u)
-#define PPUTLIMPL_UDEC_2025u 0x7E9u, 10u, 45u, (3u, 3u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_2024u 0x7E8u, 10u, 44u, (2u, 2u, 2u, 11u, 23u)
-#define PPUTLIMPL_UDEC_2023u 0x7E7u, 10u, 44u, (7u, 17u, 17u)
-#define PPUTLIMPL_UDEC_2022u 0x7E6u, 10u, 44u, (2u, 3u, 337u)
-#define PPUTLIMPL_UDEC_2021u 0x7E5u, 10u, 44u, (43u, 47u)
-#define PPUTLIMPL_UDEC_2020u 0x7E4u, 10u, 44u, (2u, 2u, 5u, 101u)
-#define PPUTLIMPL_UDEC_2019u 0x7E3u, 10u, 44u, (3u, 673u)
-#define PPUTLIMPL_UDEC_2018u 0x7E2u, 10u, 44u, (2u, 1009u)
-#define PPUTLIMPL_UDEC_2017u 0x7E1u, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_2016u 0x7E0u, 10u, 44u, (2u, 2u, 2u, 2u, 2u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_2015u 0x7DFu, 10u, 44u, (5u, 13u, 31u)
-#define PPUTLIMPL_UDEC_2014u 0x7DEu, 10u, 44u, (2u, 19u, 53u)
-#define PPUTLIMPL_UDEC_2013u 0x7DDu, 10u, 44u, (3u, 11u, 61u)
-#define PPUTLIMPL_UDEC_2012u 0x7DCu, 10u, 44u, (2u, 2u, 503u)
-#define PPUTLIMPL_UDEC_2011u 0x7DBu, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_2010u 0x7DAu, 10u, 44u, (2u, 3u, 5u, 67u)
-#define PPUTLIMPL_UDEC_2009u 0x7D9u, 10u, 44u, (7u, 7u, 41u)
-#define PPUTLIMPL_UDEC_2008u 0x7D8u, 10u, 44u, (2u, 2u, 2u, 251u)
-#define PPUTLIMPL_UDEC_2007u 0x7D7u, 10u, 44u, (3u, 3u, 223u)
-#define PPUTLIMPL_UDEC_2006u 0x7D6u, 10u, 44u, (2u, 17u, 59u)
-#define PPUTLIMPL_UDEC_2005u 0x7D5u, 10u, 44u, (5u, 401u)
-#define PPUTLIMPL_UDEC_2004u 0x7D4u, 10u, 44u, (2u, 2u, 3u, 167u)
-#define PPUTLIMPL_UDEC_2003u 0x7D3u, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_2002u 0x7D2u, 10u, 44u, (2u, 7u, 11u, 13u)
-#define PPUTLIMPL_UDEC_2001u 0x7D1u, 10u, 44u, (3u, 23u, 29u)
-#define PPUTLIMPL_UDEC_2000u 0x7D0u, 10u, 44u, (2u, 2u, 2u, 2u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1999u 0x7CFu, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1998u 0x7CEu, 10u, 44u, (2u, 3u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_1997u 0x7CDu, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1996u 0x7CCu, 10u, 44u, (2u, 2u, 499u)
-#define PPUTLIMPL_UDEC_1995u 0x7CBu, 10u, 44u, (3u, 5u, 7u, 19u)
-#define PPUTLIMPL_UDEC_1994u 0x7CAu, 10u, 44u, (2u, 997u)
-#define PPUTLIMPL_UDEC_1993u 0x7C9u, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1992u 0x7C8u, 10u, 44u, (2u, 2u, 2u, 3u, 83u)
-#define PPUTLIMPL_UDEC_1991u 0x7C7u, 10u, 44u, (11u, 181u)
-#define PPUTLIMPL_UDEC_1990u 0x7C6u, 10u, 44u, (2u, 5u, 199u)
-#define PPUTLIMPL_UDEC_1989u 0x7C5u, 10u, 44u, (3u, 3u, 13u, 17u)
-#define PPUTLIMPL_UDEC_1988u 0x7C4u, 10u, 44u, (2u, 2u, 7u, 71u)
-#define PPUTLIMPL_UDEC_1987u 0x7C3u, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1986u 0x7C2u, 10u, 44u, (2u, 3u, 331u)
-#define PPUTLIMPL_UDEC_1985u 0x7C1u, 10u, 44u, (5u, 397u)
-#define PPUTLIMPL_UDEC_1984u 0x7C0u, 10u, 44u, (2u, 2u, 2u, 2u, 2u, 2u, 31u)
-#define PPUTLIMPL_UDEC_1983u 0x7BFu, 10u, 44u, (3u, 661u)
-#define PPUTLIMPL_UDEC_1982u 0x7BEu, 10u, 44u, (2u, 991u)
-#define PPUTLIMPL_UDEC_1981u 0x7BDu, 10u, 44u, (7u, 283u)
-#define PPUTLIMPL_UDEC_1980u 0x7BCu, 10u, 44u, (2u, 2u, 3u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1979u 0x7BBu, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1978u 0x7BAu, 10u, 44u, (2u, 23u, 43u)
-#define PPUTLIMPL_UDEC_1977u 0x7B9u, 10u, 44u, (3u, 659u)
-#define PPUTLIMPL_UDEC_1976u 0x7B8u, 10u, 44u, (2u, 2u, 2u, 13u, 19u)
-#define PPUTLIMPL_UDEC_1975u 0x7B7u, 10u, 44u, (5u, 5u, 79u)
-#define PPUTLIMPL_UDEC_1974u 0x7B6u, 10u, 44u, (2u, 3u, 7u, 47u)
-#define PPUTLIMPL_UDEC_1973u 0x7B5u, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1972u 0x7B4u, 10u, 44u, (2u, 2u, 17u, 29u)
-#define PPUTLIMPL_UDEC_1971u 0x7B3u, 10u, 44u, (3u, 3u, 3u, 73u)
-#define PPUTLIMPL_UDEC_1970u 0x7B2u, 10u, 44u, (2u, 5u, 197u)
-#define PPUTLIMPL_UDEC_1969u 0x7B1u, 10u, 44u, (11u, 179u)
-#define PPUTLIMPL_UDEC_1968u 0x7B0u, 10u, 44u, (2u, 2u, 2u, 2u, 3u, 41u)
-#define PPUTLIMPL_UDEC_1967u 0x7AFu, 10u, 44u, (7u, 281u)
-#define PPUTLIMPL_UDEC_1966u 0x7AEu, 10u, 44u, (2u, 983u)
-#define PPUTLIMPL_UDEC_1965u 0x7ADu, 10u, 44u, (3u, 5u, 131u)
-#define PPUTLIMPL_UDEC_1964u 0x7ACu, 10u, 44u, (2u, 2u, 491u)
-#define PPUTLIMPL_UDEC_1963u 0x7ABu, 10u, 44u, (13u, 151u)
-#define PPUTLIMPL_UDEC_1962u 0x7AAu, 10u, 44u, (2u, 3u, 3u, 109u)
-#define PPUTLIMPL_UDEC_1961u 0x7A9u, 10u, 44u, (37u, 53u)
-#define PPUTLIMPL_UDEC_1960u 0x7A8u, 10u, 44u, (2u, 2u, 2u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1959u 0x7A7u, 10u, 44u, (3u, 653u)
-#define PPUTLIMPL_UDEC_1958u 0x7A6u, 10u, 44u, (2u, 11u, 89u)
-#define PPUTLIMPL_UDEC_1957u 0x7A5u, 10u, 44u, (19u, 103u)
-#define PPUTLIMPL_UDEC_1956u 0x7A4u, 10u, 44u, (2u, 2u, 3u, 163u)
-#define PPUTLIMPL_UDEC_1955u 0x7A3u, 10u, 44u, (5u, 17u, 23u)
-#define PPUTLIMPL_UDEC_1954u 0x7A2u, 10u, 44u, (2u, 977u)
-#define PPUTLIMPL_UDEC_1953u 0x7A1u, 10u, 44u, (3u, 3u, 7u, 31u)
-#define PPUTLIMPL_UDEC_1952u 0x7A0u, 10u, 44u, (2u, 2u, 2u, 2u, 2u, 61u)
-#define PPUTLIMPL_UDEC_1951u 0x79Fu, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1950u 0x79Eu, 10u, 44u, (2u, 3u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1949u 0x79Du, 10u, 44u, ()
-#define PPUTLIMPL_UDEC_1948u 0x79Cu, 10u, 44u, (2u, 2u, 487u)
-#define PPUTLIMPL_UDEC_1947u 0x79Bu, 10u, 44u, (3u, 11u, 59u)
-#define PPUTLIMPL_UDEC_1946u 0x79Au, 10u, 44u, (2u, 7u, 139u)
-#define PPUTLIMPL_UDEC_1945u 0x799u, 10u, 44u, (5u, 389u)
-#define PPUTLIMPL_UDEC_1944u 0x798u, 10u, 44u, (2u, 2u, 2u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_1943u 0x797u, 10u, 44u, (29u, 67u)
-#define PPUTLIMPL_UDEC_1942u 0x796u, 10u, 44u, (2u, 971u)
-#define PPUTLIMPL_UDEC_1941u 0x795u, 10u, 44u, (3u, 647u)
-#define PPUTLIMPL_UDEC_1940u 0x794u, 10u, 44u, (2u, 2u, 5u, 97u)
-#define PPUTLIMPL_UDEC_1939u 0x793u, 10u, 44u, (7u, 277u)
-#define PPUTLIMPL_UDEC_1938u 0x792u, 10u, 44u, (2u, 3u, 17u, 19u)
-#define PPUTLIMPL_UDEC_1937u 0x791u, 10u, 44u, (13u, 149u)
-#define PPUTLIMPL_UDEC_1936u 0x790u, 10u, 44u, (2u, 2u, 2u, 2u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1935u 0x78Fu, 10u, 43u, (3u, 3u, 5u, 43u)
-#define PPUTLIMPL_UDEC_1934u 0x78Eu, 10u, 43u, (2u, 967u)
-#define PPUTLIMPL_UDEC_1933u 0x78Du, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1932u 0x78Cu, 10u, 43u, (2u, 2u, 3u, 7u, 23u)
-#define PPUTLIMPL_UDEC_1931u 0x78Bu, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1930u 0x78Au, 10u, 43u, (2u, 5u, 193u)
-#define PPUTLIMPL_UDEC_1929u 0x789u, 10u, 43u, (3u, 643u)
-#define PPUTLIMPL_UDEC_1928u 0x788u, 10u, 43u, (2u, 2u, 2u, 241u)
-#define PPUTLIMPL_UDEC_1927u 0x787u, 10u, 43u, (41u, 47u)
-#define PPUTLIMPL_UDEC_1926u 0x786u, 10u, 43u, (2u, 3u, 3u, 107u)
-#define PPUTLIMPL_UDEC_1925u 0x785u, 10u, 43u, (5u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1924u 0x784u, 10u, 43u, (2u, 2u, 13u, 37u)
-#define PPUTLIMPL_UDEC_1923u 0x783u, 10u, 43u, (3u, 641u)
-#define PPUTLIMPL_UDEC_1922u 0x782u, 10u, 43u, (2u, 31u, 31u)
-#define PPUTLIMPL_UDEC_1921u 0x781u, 10u, 43u, (17u, 113u)
-#define PPUTLIMPL_UDEC_1920u 0x780u, 10u, 43u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_1919u 0x77Fu, 10u, 43u, (19u, 101u)
-#define PPUTLIMPL_UDEC_1918u 0x77Eu, 10u, 43u, (2u, 7u, 137u)
-#define PPUTLIMPL_UDEC_1917u 0x77Du, 10u, 43u, (3u, 3u, 3u, 71u)
-#define PPUTLIMPL_UDEC_1916u 0x77Cu, 10u, 43u, (2u, 2u, 479u)
-#define PPUTLIMPL_UDEC_1915u 0x77Bu, 10u, 43u, (5u, 383u)
-#define PPUTLIMPL_UDEC_1914u 0x77Au, 10u, 43u, (2u, 3u, 11u, 29u)
-#define PPUTLIMPL_UDEC_1913u 0x779u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1912u 0x778u, 10u, 43u, (2u, 2u, 2u, 239u)
-#define PPUTLIMPL_UDEC_1911u 0x777u, 10u, 43u, (3u, 7u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1910u 0x776u, 10u, 43u, (2u, 5u, 191u)
-#define PPUTLIMPL_UDEC_1909u 0x775u, 10u, 43u, (23u, 83u)
-#define PPUTLIMPL_UDEC_1908u 0x774u, 10u, 43u, (2u, 2u, 3u, 3u, 53u)
-#define PPUTLIMPL_UDEC_1907u 0x773u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1906u 0x772u, 10u, 43u, (2u, 953u)
-#define PPUTLIMPL_UDEC_1905u 0x771u, 10u, 43u, (3u, 5u, 127u)
-#define PPUTLIMPL_UDEC_1904u 0x770u, 10u, 43u, (2u, 2u, 2u, 2u, 7u, 17u)
-#define PPUTLIMPL_UDEC_1903u 0x76Fu, 10u, 43u, (11u, 173u)
-#define PPUTLIMPL_UDEC_1902u 0x76Eu, 10u, 43u, (2u, 3u, 317u)
-#define PPUTLIMPL_UDEC_1901u 0x76Du, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1900u 0x76Cu, 10u, 43u, (2u, 2u, 5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_1899u 0x76Bu, 10u, 43u, (3u, 3u, 211u)
-#define PPUTLIMPL_UDEC_1898u 0x76Au, 10u, 43u, (2u, 13u, 73u)
-#define PPUTLIMPL_UDEC_1897u 0x769u, 10u, 43u, (7u, 271u)
-#define PPUTLIMPL_UDEC_1896u 0x768u, 10u, 43u, (2u, 2u, 2u, 3u, 79u)
-#define PPUTLIMPL_UDEC_1895u 0x767u, 10u, 43u, (5u, 379u)
-#define PPUTLIMPL_UDEC_1894u 0x766u, 10u, 43u, (2u, 947u)
-#define PPUTLIMPL_UDEC_1893u 0x765u, 10u, 43u, (3u, 631u)
-#define PPUTLIMPL_UDEC_1892u 0x764u, 10u, 43u, (2u, 2u, 11u, 43u)
-#define PPUTLIMPL_UDEC_1891u 0x763u, 10u, 43u, (31u, 61u)
-#define PPUTLIMPL_UDEC_1890u 0x762u, 10u, 43u, (2u, 3u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1889u 0x761u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1888u 0x760u, 10u, 43u, (2u, 2u, 2u, 2u, 2u, 59u)
-#define PPUTLIMPL_UDEC_1887u 0x75Fu, 10u, 43u, (3u, 17u, 37u)
-#define PPUTLIMPL_UDEC_1886u 0x75Eu, 10u, 43u, (2u, 23u, 41u)
-#define PPUTLIMPL_UDEC_1885u 0x75Du, 10u, 43u, (5u, 13u, 29u)
-#define PPUTLIMPL_UDEC_1884u 0x75Cu, 10u, 43u, (2u, 2u, 3u, 157u)
-#define PPUTLIMPL_UDEC_1883u 0x75Bu, 10u, 43u, (7u, 269u)
-#define PPUTLIMPL_UDEC_1882u 0x75Au, 10u, 43u, (2u, 941u)
-#define PPUTLIMPL_UDEC_1881u 0x759u, 10u, 43u, (3u, 3u, 11u, 19u)
-#define PPUTLIMPL_UDEC_1880u 0x758u, 10u, 43u, (2u, 2u, 2u, 5u, 47u)
-#define PPUTLIMPL_UDEC_1879u 0x757u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1878u 0x756u, 10u, 43u, (2u, 3u, 313u)
-#define PPUTLIMPL_UDEC_1877u 0x755u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1876u 0x754u, 10u, 43u, (2u, 2u, 7u, 67u)
-#define PPUTLIMPL_UDEC_1875u 0x753u, 10u, 43u, (3u, 5u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1874u 0x752u, 10u, 43u, (2u, 937u)
-#define PPUTLIMPL_UDEC_1873u 0x751u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1872u 0x750u, 10u, 43u, (2u, 2u, 2u, 2u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_1871u 0x74Fu, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1870u 0x74Eu, 10u, 43u, (2u, 5u, 11u, 17u)
-#define PPUTLIMPL_UDEC_1869u 0x74Du, 10u, 43u, (3u, 7u, 89u)
-#define PPUTLIMPL_UDEC_1868u 0x74Cu, 10u, 43u, (2u, 2u, 467u)
-#define PPUTLIMPL_UDEC_1867u 0x74Bu, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1866u 0x74Au, 10u, 43u, (2u, 3u, 311u)
-#define PPUTLIMPL_UDEC_1865u 0x749u, 10u, 43u, (5u, 373u)
-#define PPUTLIMPL_UDEC_1864u 0x748u, 10u, 43u, (2u, 2u, 2u, 233u)
-#define PPUTLIMPL_UDEC_1863u 0x747u, 10u, 43u, (3u, 3u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_1862u 0x746u, 10u, 43u, (2u, 7u, 7u, 19u)
-#define PPUTLIMPL_UDEC_1861u 0x745u, 10u, 43u, ()
-#define PPUTLIMPL_UDEC_1860u 0x744u, 10u, 43u, (2u, 2u, 3u, 5u, 31u)
-#define PPUTLIMPL_UDEC_1859u 0x743u, 10u, 43u, (11u, 13u, 13u)
-#define PPUTLIMPL_UDEC_1858u 0x742u, 10u, 43u, (2u, 929u)
-#define PPUTLIMPL_UDEC_1857u 0x741u, 10u, 43u, (3u, 619u)
-#define PPUTLIMPL_UDEC_1856u 0x740u, 10u, 43u, (2u, 2u, 2u, 2u, 2u, 2u, 29u)
-#define PPUTLIMPL_UDEC_1855u 0x73Fu, 10u, 43u, (5u, 7u, 53u)
-#define PPUTLIMPL_UDEC_1854u 0x73Eu, 10u, 43u, (2u, 3u, 3u, 103u)
-#define PPUTLIMPL_UDEC_1853u 0x73Du, 10u, 43u, (17u, 109u)
-#define PPUTLIMPL_UDEC_1852u 0x73Cu, 10u, 43u, (2u, 2u, 463u)
-#define PPUTLIMPL_UDEC_1851u 0x73Bu, 10u, 43u, (3u, 617u)
-#define PPUTLIMPL_UDEC_1850u 0x73Au, 10u, 43u, (2u, 5u, 5u, 37u)
-#define PPUTLIMPL_UDEC_1849u 0x739u, 10u, 43u, (43u, 43u)
-#define PPUTLIMPL_UDEC_1848u 0x738u, 10u, 42u, (2u, 2u, 2u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1847u 0x737u, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1846u 0x736u, 10u, 42u, (2u, 13u, 71u)
-#define PPUTLIMPL_UDEC_1845u 0x735u, 10u, 42u, (3u, 3u, 5u, 41u)
-#define PPUTLIMPL_UDEC_1844u 0x734u, 10u, 42u, (2u, 2u, 461u)
-#define PPUTLIMPL_UDEC_1843u 0x733u, 10u, 42u, (19u, 97u)
-#define PPUTLIMPL_UDEC_1842u 0x732u, 10u, 42u, (2u, 3u, 307u)
-#define PPUTLIMPL_UDEC_1841u 0x731u, 10u, 42u, (7u, 263u)
-#define PPUTLIMPL_UDEC_1840u 0x730u, 10u, 42u, (2u, 2u, 2u, 2u, 5u, 23u)
-#define PPUTLIMPL_UDEC_1839u 0x72Fu, 10u, 42u, (3u, 613u)
-#define PPUTLIMPL_UDEC_1838u 0x72Eu, 10u, 42u, (2u, 919u)
-#define PPUTLIMPL_UDEC_1837u 0x72Du, 10u, 42u, (11u, 167u)
-#define PPUTLIMPL_UDEC_1836u 0x72Cu, 10u, 42u, (2u, 2u, 3u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_1835u 0x72Bu, 10u, 42u, (5u, 367u)
-#define PPUTLIMPL_UDEC_1834u 0x72Au, 10u, 42u, (2u, 7u, 131u)
-#define PPUTLIMPL_UDEC_1833u 0x729u, 10u, 42u, (3u, 13u, 47u)
-#define PPUTLIMPL_UDEC_1832u 0x728u, 10u, 42u, (2u, 2u, 2u, 229u)
-#define PPUTLIMPL_UDEC_1831u 0x727u, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1830u 0x726u, 10u, 42u, (2u, 3u, 5u, 61u)
-#define PPUTLIMPL_UDEC_1829u 0x725u, 10u, 42u, (31u, 59u)
-#define PPUTLIMPL_UDEC_1828u 0x724u, 10u, 42u, (2u, 2u, 457u)
-#define PPUTLIMPL_UDEC_1827u 0x723u, 10u, 42u, (3u, 3u, 7u, 29u)
-#define PPUTLIMPL_UDEC_1826u 0x722u, 10u, 42u, (2u, 11u, 83u)
-#define PPUTLIMPL_UDEC_1825u 0x721u, 10u, 42u, (5u, 5u, 73u)
-#define PPUTLIMPL_UDEC_1824u 0x720u, 10u, 42u, (2u, 2u, 2u, 2u, 2u, 3u, 19u)
-#define PPUTLIMPL_UDEC_1823u 0x71Fu, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1822u 0x71Eu, 10u, 42u, (2u, 911u)
-#define PPUTLIMPL_UDEC_1821u 0x71Du, 10u, 42u, (3u, 607u)
-#define PPUTLIMPL_UDEC_1820u 0x71Cu, 10u, 42u, (2u, 2u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1819u 0x71Bu, 10u, 42u, (17u, 107u)
-#define PPUTLIMPL_UDEC_1818u 0x71Au, 10u, 42u, (2u, 3u, 3u, 101u)
-#define PPUTLIMPL_UDEC_1817u 0x719u, 10u, 42u, (23u, 79u)
-#define PPUTLIMPL_UDEC_1816u 0x718u, 10u, 42u, (2u, 2u, 2u, 227u)
-#define PPUTLIMPL_UDEC_1815u 0x717u, 10u, 42u, (3u, 5u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1814u 0x716u, 10u, 42u, (2u, 907u)
-#define PPUTLIMPL_UDEC_1813u 0x715u, 10u, 42u, (7u, 7u, 37u)
-#define PPUTLIMPL_UDEC_1812u 0x714u, 10u, 42u, (2u, 2u, 3u, 151u)
-#define PPUTLIMPL_UDEC_1811u 0x713u, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1810u 0x712u, 10u, 42u, (2u, 5u, 181u)
-#define PPUTLIMPL_UDEC_1809u 0x711u, 10u, 42u, (3u, 3u, 3u, 67u)
-#define PPUTLIMPL_UDEC_1808u 0x710u, 10u, 42u, (2u, 2u, 2u, 2u, 113u)
-#define PPUTLIMPL_UDEC_1807u 0x70Fu, 10u, 42u, (13u, 139u)
-#define PPUTLIMPL_UDEC_1806u 0x70Eu, 10u, 42u, (2u, 3u, 7u, 43u)
-#define PPUTLIMPL_UDEC_1805u 0x70Du, 10u, 42u, (5u, 19u, 19u)
-#define PPUTLIMPL_UDEC_1804u 0x70Cu, 10u, 42u, (2u, 2u, 11u, 41u)
-#define PPUTLIMPL_UDEC_1803u 0x70Bu, 10u, 42u, (3u, 601u)
-#define PPUTLIMPL_UDEC_1802u 0x70Au, 10u, 42u, (2u, 17u, 53u)
-#define PPUTLIMPL_UDEC_1801u 0x709u, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1800u 0x708u, 10u, 42u, (2u, 2u, 2u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1799u 0x707u, 10u, 42u, (7u, 257u)
-#define PPUTLIMPL_UDEC_1798u 0x706u, 10u, 42u, (2u, 29u, 31u)
-#define PPUTLIMPL_UDEC_1797u 0x705u, 10u, 42u, (3u, 599u)
-#define PPUTLIMPL_UDEC_1796u 0x704u, 10u, 42u, (2u, 2u, 449u)
-#define PPUTLIMPL_UDEC_1795u 0x703u, 10u, 42u, (5u, 359u)
-#define PPUTLIMPL_UDEC_1794u 0x702u, 10u, 42u, (2u, 3u, 13u, 23u)
-#define PPUTLIMPL_UDEC_1793u 0x701u, 10u, 42u, (11u, 163u)
-#define PPUTLIMPL_UDEC_1792u 0x700u, 10u, 42u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_1791u 0x6FFu, 10u, 42u, (3u, 3u, 199u)
-#define PPUTLIMPL_UDEC_1790u 0x6FEu, 10u, 42u, (2u, 5u, 179u)
-#define PPUTLIMPL_UDEC_1789u 0x6FDu, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1788u 0x6FCu, 10u, 42u, (2u, 2u, 3u, 149u)
-#define PPUTLIMPL_UDEC_1787u 0x6FBu, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1786u 0x6FAu, 10u, 42u, (2u, 19u, 47u)
-#define PPUTLIMPL_UDEC_1785u 0x6F9u, 10u, 42u, (3u, 5u, 7u, 17u)
-#define PPUTLIMPL_UDEC_1784u 0x6F8u, 10u, 42u, (2u, 2u, 2u, 223u)
-#define PPUTLIMPL_UDEC_1783u 0x6F7u, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1782u 0x6F6u, 10u, 42u, (2u, 3u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_1781u 0x6F5u, 10u, 42u, (13u, 137u)
-#define PPUTLIMPL_UDEC_1780u 0x6F4u, 10u, 42u, (2u, 2u, 5u, 89u)
-#define PPUTLIMPL_UDEC_1779u 0x6F3u, 10u, 42u, (3u, 593u)
-#define PPUTLIMPL_UDEC_1778u 0x6F2u, 10u, 42u, (2u, 7u, 127u)
-#define PPUTLIMPL_UDEC_1777u 0x6F1u, 10u, 42u, ()
-#define PPUTLIMPL_UDEC_1776u 0x6F0u, 10u, 42u, (2u, 2u, 2u, 2u, 3u, 37u)
-#define PPUTLIMPL_UDEC_1775u 0x6EFu, 10u, 42u, (5u, 5u, 71u)
-#define PPUTLIMPL_UDEC_1774u 0x6EEu, 10u, 42u, (2u, 887u)
-#define PPUTLIMPL_UDEC_1773u 0x6EDu, 10u, 42u, (3u, 3u, 197u)
-#define PPUTLIMPL_UDEC_1772u 0x6ECu, 10u, 42u, (2u, 2u, 443u)
-#define PPUTLIMPL_UDEC_1771u 0x6EBu, 10u, 42u, (7u, 11u, 23u)
-#define PPUTLIMPL_UDEC_1770u 0x6EAu, 10u, 42u, (2u, 3u, 5u, 59u)
-#define PPUTLIMPL_UDEC_1769u 0x6E9u, 10u, 42u, (29u, 61u)
-#define PPUTLIMPL_UDEC_1768u 0x6E8u, 10u, 42u, (2u, 2u, 2u, 13u, 17u)
-#define PPUTLIMPL_UDEC_1767u 0x6E7u, 10u, 42u, (3u, 19u, 31u)
-#define PPUTLIMPL_UDEC_1766u 0x6E6u, 10u, 42u, (2u, 883u)
-#define PPUTLIMPL_UDEC_1765u 0x6E5u, 10u, 42u, (5u, 353u)
-#define PPUTLIMPL_UDEC_1764u 0x6E4u, 10u, 42u, (2u, 2u, 3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1763u 0x6E3u, 10u, 41u, (41u, 43u)
-#define PPUTLIMPL_UDEC_1762u 0x6E2u, 10u, 41u, (2u, 881u)
-#define PPUTLIMPL_UDEC_1761u 0x6E1u, 10u, 41u, (3u, 587u)
-#define PPUTLIMPL_UDEC_1760u 0x6E0u, 10u, 41u, (2u, 2u, 2u, 2u, 2u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1759u 0x6DFu, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1758u 0x6DEu, 10u, 41u, (2u, 3u, 293u)
-#define PPUTLIMPL_UDEC_1757u 0x6DDu, 10u, 41u, (7u, 251u)
-#define PPUTLIMPL_UDEC_1756u 0x6DCu, 10u, 41u, (2u, 2u, 439u)
-#define PPUTLIMPL_UDEC_1755u 0x6DBu, 10u, 41u, (3u, 3u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1754u 0x6DAu, 10u, 41u, (2u, 877u)
-#define PPUTLIMPL_UDEC_1753u 0x6D9u, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1752u 0x6D8u, 10u, 41u, (2u, 2u, 2u, 3u, 73u)
-#define PPUTLIMPL_UDEC_1751u 0x6D7u, 10u, 41u, (17u, 103u)
-#define PPUTLIMPL_UDEC_1750u 0x6D6u, 10u, 41u, (2u, 5u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1749u 0x6D5u, 10u, 41u, (3u, 11u, 53u)
-#define PPUTLIMPL_UDEC_1748u 0x6D4u, 10u, 41u, (2u, 2u, 19u, 23u)
-#define PPUTLIMPL_UDEC_1747u 0x6D3u, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1746u 0x6D2u, 10u, 41u, (2u, 3u, 3u, 97u)
-#define PPUTLIMPL_UDEC_1745u 0x6D1u, 10u, 41u, (5u, 349u)
-#define PPUTLIMPL_UDEC_1744u 0x6D0u, 10u, 41u, (2u, 2u, 2u, 2u, 109u)
-#define PPUTLIMPL_UDEC_1743u 0x6CFu, 10u, 41u, (3u, 7u, 83u)
-#define PPUTLIMPL_UDEC_1742u 0x6CEu, 10u, 41u, (2u, 13u, 67u)
-#define PPUTLIMPL_UDEC_1741u 0x6CDu, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1740u 0x6CCu, 10u, 41u, (2u, 2u, 3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_1739u 0x6CBu, 10u, 41u, (37u, 47u)
-#define PPUTLIMPL_UDEC_1738u 0x6CAu, 10u, 41u, (2u, 11u, 79u)
-#define PPUTLIMPL_UDEC_1737u 0x6C9u, 10u, 41u, (3u, 3u, 193u)
-#define PPUTLIMPL_UDEC_1736u 0x6C8u, 10u, 41u, (2u, 2u, 2u, 7u, 31u)
-#define PPUTLIMPL_UDEC_1735u 0x6C7u, 10u, 41u, (5u, 347u)
-#define PPUTLIMPL_UDEC_1734u 0x6C6u, 10u, 41u, (2u, 3u, 17u, 17u)
-#define PPUTLIMPL_UDEC_1733u 0x6C5u, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1732u 0x6C4u, 10u, 41u, (2u, 2u, 433u)
-#define PPUTLIMPL_UDEC_1731u 0x6C3u, 10u, 41u, (3u, 577u)
-#define PPUTLIMPL_UDEC_1730u 0x6C2u, 10u, 41u, (2u, 5u, 173u)
-#define PPUTLIMPL_UDEC_1729u 0x6C1u, 10u, 41u, (7u, 13u, 19u)
-#define PPUTLIMPL_UDEC_1728u 0x6C0u, 10u, 41u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_1727u 0x6BFu, 10u, 41u, (11u, 157u)
-#define PPUTLIMPL_UDEC_1726u 0x6BEu, 10u, 41u, (2u, 863u)
-#define PPUTLIMPL_UDEC_1725u 0x6BDu, 10u, 41u, (3u, 5u, 5u, 23u)
-#define PPUTLIMPL_UDEC_1724u 0x6BCu, 10u, 41u, (2u, 2u, 431u)
-#define PPUTLIMPL_UDEC_1723u 0x6BBu, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1722u 0x6BAu, 10u, 41u, (2u, 3u, 7u, 41u)
-#define PPUTLIMPL_UDEC_1721u 0x6B9u, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1720u 0x6B8u, 10u, 41u, (2u, 2u, 2u, 5u, 43u)
-#define PPUTLIMPL_UDEC_1719u 0x6B7u, 10u, 41u, (3u, 3u, 191u)
-#define PPUTLIMPL_UDEC_1718u 0x6B6u, 10u, 41u, (2u, 859u)
-#define PPUTLIMPL_UDEC_1717u 0x6B5u, 10u, 41u, (17u, 101u)
-#define PPUTLIMPL_UDEC_1716u 0x6B4u, 10u, 41u, (2u, 2u, 3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_1715u 0x6B3u, 10u, 41u, (5u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1714u 0x6B2u, 10u, 41u, (2u, 857u)
-#define PPUTLIMPL_UDEC_1713u 0x6B1u, 10u, 41u, (3u, 571u)
-#define PPUTLIMPL_UDEC_1712u 0x6B0u, 10u, 41u, (2u, 2u, 2u, 2u, 107u)
-#define PPUTLIMPL_UDEC_1711u 0x6AFu, 10u, 41u, (29u, 59u)
-#define PPUTLIMPL_UDEC_1710u 0x6AEu, 10u, 41u, (2u, 3u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_1709u 0x6ADu, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1708u 0x6ACu, 10u, 41u, (2u, 2u, 7u, 61u)
-#define PPUTLIMPL_UDEC_1707u 0x6ABu, 10u, 41u, (3u, 569u)
-#define PPUTLIMPL_UDEC_1706u 0x6AAu, 10u, 41u, (2u, 853u)
-#define PPUTLIMPL_UDEC_1705u 0x6A9u, 10u, 41u, (5u, 11u, 31u)
-#define PPUTLIMPL_UDEC_1704u 0x6A8u, 10u, 41u, (2u, 2u, 2u, 3u, 71u)
-#define PPUTLIMPL_UDEC_1703u 0x6A7u, 10u, 41u, (13u, 131u)
-#define PPUTLIMPL_UDEC_1702u 0x6A6u, 10u, 41u, (2u, 23u, 37u)
-#define PPUTLIMPL_UDEC_1701u 0x6A5u, 10u, 41u, (3u, 3u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_1700u 0x6A4u, 10u, 41u, (2u, 2u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_1699u 0x6A3u, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1698u 0x6A2u, 10u, 41u, (2u, 3u, 283u)
-#define PPUTLIMPL_UDEC_1697u 0x6A1u, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1696u 0x6A0u, 10u, 41u, (2u, 2u, 2u, 2u, 2u, 53u)
-#define PPUTLIMPL_UDEC_1695u 0x69Fu, 10u, 41u, (3u, 5u, 113u)
-#define PPUTLIMPL_UDEC_1694u 0x69Eu, 10u, 41u, (2u, 7u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1693u 0x69Du, 10u, 41u, ()
-#define PPUTLIMPL_UDEC_1692u 0x69Cu, 10u, 41u, (2u, 2u, 3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_1691u 0x69Bu, 10u, 41u, (19u, 89u)
-#define PPUTLIMPL_UDEC_1690u 0x69Au, 10u, 41u, (2u, 5u, 13u, 13u)
-#define PPUTLIMPL_UDEC_1689u 0x699u, 10u, 41u, (3u, 563u)
-#define PPUTLIMPL_UDEC_1688u 0x698u, 10u, 41u, (2u, 2u, 2u, 211u)
-#define PPUTLIMPL_UDEC_1687u 0x697u, 10u, 41u, (7u, 241u)
-#define PPUTLIMPL_UDEC_1686u 0x696u, 10u, 41u, (2u, 3u, 281u)
-#define PPUTLIMPL_UDEC_1685u 0x695u, 10u, 41u, (5u, 337u)
-#define PPUTLIMPL_UDEC_1684u 0x694u, 10u, 41u, (2u, 2u, 421u)
-#define PPUTLIMPL_UDEC_1683u 0x693u, 10u, 41u, (3u, 3u, 11u, 17u)
-#define PPUTLIMPL_UDEC_1682u 0x692u, 10u, 41u, (2u, 29u, 29u)
-#define PPUTLIMPL_UDEC_1681u 0x691u, 10u, 41u, (41u, 41u)
-#define PPUTLIMPL_UDEC_1680u 0x690u, 10u, 40u, (2u, 2u, 2u, 2u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1679u 0x68Fu, 10u, 40u, (23u, 73u)
-#define PPUTLIMPL_UDEC_1678u 0x68Eu, 10u, 40u, (2u, 839u)
-#define PPUTLIMPL_UDEC_1677u 0x68Du, 10u, 40u, (3u, 13u, 43u)
-#define PPUTLIMPL_UDEC_1676u 0x68Cu, 10u, 40u, (2u, 2u, 419u)
-#define PPUTLIMPL_UDEC_1675u 0x68Bu, 10u, 40u, (5u, 5u, 67u)
-#define PPUTLIMPL_UDEC_1674u 0x68Au, 10u, 40u, (2u, 3u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_1673u 0x689u, 10u, 40u, (7u, 239u)
-#define PPUTLIMPL_UDEC_1672u 0x688u, 10u, 40u, (2u, 2u, 2u, 11u, 19u)
-#define PPUTLIMPL_UDEC_1671u 0x687u, 10u, 40u, (3u, 557u)
-#define PPUTLIMPL_UDEC_1670u 0x686u, 10u, 40u, (2u, 5u, 167u)
-#define PPUTLIMPL_UDEC_1669u 0x685u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1668u 0x684u, 10u, 40u, (2u, 2u, 3u, 139u)
-#define PPUTLIMPL_UDEC_1667u 0x683u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1666u 0x682u, 10u, 40u, (2u, 7u, 7u, 17u)
-#define PPUTLIMPL_UDEC_1665u 0x681u, 10u, 40u, (3u, 3u, 5u, 37u)
-#define PPUTLIMPL_UDEC_1664u 0x680u, 10u, 40u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_1663u 0x67Fu, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1662u 0x67Eu, 10u, 40u, (2u, 3u, 277u)
-#define PPUTLIMPL_UDEC_1661u 0x67Du, 10u, 40u, (11u, 151u)
-#define PPUTLIMPL_UDEC_1660u 0x67Cu, 10u, 40u, (2u, 2u, 5u, 83u)
-#define PPUTLIMPL_UDEC_1659u 0x67Bu, 10u, 40u, (3u, 7u, 79u)
-#define PPUTLIMPL_UDEC_1658u 0x67Au, 10u, 40u, (2u, 829u)
-#define PPUTLIMPL_UDEC_1657u 0x679u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1656u 0x678u, 10u, 40u, (2u, 2u, 2u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_1655u 0x677u, 10u, 40u, (5u, 331u)
-#define PPUTLIMPL_UDEC_1654u 0x676u, 10u, 40u, (2u, 827u)
-#define PPUTLIMPL_UDEC_1653u 0x675u, 10u, 40u, (3u, 19u, 29u)
-#define PPUTLIMPL_UDEC_1652u 0x674u, 10u, 40u, (2u, 2u, 7u, 59u)
-#define PPUTLIMPL_UDEC_1651u 0x673u, 10u, 40u, (13u, 127u)
-#define PPUTLIMPL_UDEC_1650u 0x672u, 10u, 40u, (2u, 3u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1649u 0x671u, 10u, 40u, (17u, 97u)
-#define PPUTLIMPL_UDEC_1648u 0x670u, 10u, 40u, (2u, 2u, 2u, 2u, 103u)
-#define PPUTLIMPL_UDEC_1647u 0x66Fu, 10u, 40u, (3u, 3u, 3u, 61u)
-#define PPUTLIMPL_UDEC_1646u 0x66Eu, 10u, 40u, (2u, 823u)
-#define PPUTLIMPL_UDEC_1645u 0x66Du, 10u, 40u, (5u, 7u, 47u)
-#define PPUTLIMPL_UDEC_1644u 0x66Cu, 10u, 40u, (2u, 2u, 3u, 137u)
-#define PPUTLIMPL_UDEC_1643u 0x66Bu, 10u, 40u, (31u, 53u)
-#define PPUTLIMPL_UDEC_1642u 0x66Au, 10u, 40u, (2u, 821u)
-#define PPUTLIMPL_UDEC_1641u 0x669u, 10u, 40u, (3u, 547u)
-#define PPUTLIMPL_UDEC_1640u 0x668u, 10u, 40u, (2u, 2u, 2u, 5u, 41u)
-#define PPUTLIMPL_UDEC_1639u 0x667u, 10u, 40u, (11u, 149u)
-#define PPUTLIMPL_UDEC_1638u 0x666u, 10u, 40u, (2u, 3u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1637u 0x665u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1636u 0x664u, 10u, 40u, (2u, 2u, 409u)
-#define PPUTLIMPL_UDEC_1635u 0x663u, 10u, 40u, (3u, 5u, 109u)
-#define PPUTLIMPL_UDEC_1634u 0x662u, 10u, 40u, (2u, 19u, 43u)
-#define PPUTLIMPL_UDEC_1633u 0x661u, 10u, 40u, (23u, 71u)
-#define PPUTLIMPL_UDEC_1632u 0x660u, 10u, 40u, (2u, 2u, 2u, 2u, 2u, 3u, 17u)
-#define PPUTLIMPL_UDEC_1631u 0x65Fu, 10u, 40u, (7u, 233u)
-#define PPUTLIMPL_UDEC_1630u 0x65Eu, 10u, 40u, (2u, 5u, 163u)
-#define PPUTLIMPL_UDEC_1629u 0x65Du, 10u, 40u, (3u, 3u, 181u)
-#define PPUTLIMPL_UDEC_1628u 0x65Cu, 10u, 40u, (2u, 2u, 11u, 37u)
-#define PPUTLIMPL_UDEC_1627u 0x65Bu, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1626u 0x65Au, 10u, 40u, (2u, 3u, 271u)
-#define PPUTLIMPL_UDEC_1625u 0x659u, 10u, 40u, (5u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1624u 0x658u, 10u, 40u, (2u, 2u, 2u, 7u, 29u)
-#define PPUTLIMPL_UDEC_1623u 0x657u, 10u, 40u, (3u, 541u)
-#define PPUTLIMPL_UDEC_1622u 0x656u, 10u, 40u, (2u, 811u)
-#define PPUTLIMPL_UDEC_1621u 0x655u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1620u 0x654u, 10u, 40u, (2u, 2u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_1619u 0x653u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1618u 0x652u, 10u, 40u, (2u, 809u)
-#define PPUTLIMPL_UDEC_1617u 0x651u, 10u, 40u, (3u, 7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1616u 0x650u, 10u, 40u, (2u, 2u, 2u, 2u, 101u)
-#define PPUTLIMPL_UDEC_1615u 0x64Fu, 10u, 40u, (5u, 17u, 19u)
-#define PPUTLIMPL_UDEC_1614u 0x64Eu, 10u, 40u, (2u, 3u, 269u)
-#define PPUTLIMPL_UDEC_1613u 0x64Du, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1612u 0x64Cu, 10u, 40u, (2u, 2u, 13u, 31u)
-#define PPUTLIMPL_UDEC_1611u 0x64Bu, 10u, 40u, (3u, 3u, 179u)
-#define PPUTLIMPL_UDEC_1610u 0x64Au, 10u, 40u, (2u, 5u, 7u, 23u)
-#define PPUTLIMPL_UDEC_1609u 0x649u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1608u 0x648u, 10u, 40u, (2u, 2u, 2u, 3u, 67u)
-#define PPUTLIMPL_UDEC_1607u 0x647u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1606u 0x646u, 10u, 40u, (2u, 11u, 73u)
-#define PPUTLIMPL_UDEC_1605u 0x645u, 10u, 40u, (3u, 5u, 107u)
-#define PPUTLIMPL_UDEC_1604u 0x644u, 10u, 40u, (2u, 2u, 401u)
-#define PPUTLIMPL_UDEC_1603u 0x643u, 10u, 40u, (7u, 229u)
-#define PPUTLIMPL_UDEC_1602u 0x642u, 10u, 40u, (2u, 3u, 3u, 89u)
-#define PPUTLIMPL_UDEC_1601u 0x641u, 10u, 40u, ()
-#define PPUTLIMPL_UDEC_1600u 0x640u, 10u, 40u, (2u, 2u, 2u, 2u, 2u, 2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1599u 0x63Fu, 10u, 39u, (3u, 13u, 41u)
-#define PPUTLIMPL_UDEC_1598u 0x63Eu, 10u, 39u, (2u, 17u, 47u)
-#define PPUTLIMPL_UDEC_1597u 0x63Du, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1596u 0x63Cu, 10u, 39u, (2u, 2u, 3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_1595u 0x63Bu, 10u, 39u, (5u, 11u, 29u)
-#define PPUTLIMPL_UDEC_1594u 0x63Au, 10u, 39u, (2u, 797u)
-#define PPUTLIMPL_UDEC_1593u 0x639u, 10u, 39u, (3u, 3u, 3u, 59u)
-#define PPUTLIMPL_UDEC_1592u 0x638u, 10u, 39u, (2u, 2u, 2u, 199u)
-#define PPUTLIMPL_UDEC_1591u 0x637u, 10u, 39u, (37u, 43u)
-#define PPUTLIMPL_UDEC_1590u 0x636u, 10u, 39u, (2u, 3u, 5u, 53u)
-#define PPUTLIMPL_UDEC_1589u 0x635u, 10u, 39u, (7u, 227u)
-#define PPUTLIMPL_UDEC_1588u 0x634u, 10u, 39u, (2u, 2u, 397u)
-#define PPUTLIMPL_UDEC_1587u 0x633u, 10u, 39u, (3u, 23u, 23u)
-#define PPUTLIMPL_UDEC_1586u 0x632u, 10u, 39u, (2u, 13u, 61u)
-#define PPUTLIMPL_UDEC_1585u 0x631u, 10u, 39u, (5u, 317u)
-#define PPUTLIMPL_UDEC_1584u 0x630u, 10u, 39u, (2u, 2u, 2u, 2u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_1583u 0x62Fu, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1582u 0x62Eu, 10u, 39u, (2u, 7u, 113u)
-#define PPUTLIMPL_UDEC_1581u 0x62Du, 10u, 39u, (3u, 17u, 31u)
-#define PPUTLIMPL_UDEC_1580u 0x62Cu, 10u, 39u, (2u, 2u, 5u, 79u)
-#define PPUTLIMPL_UDEC_1579u 0x62Bu, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1578u 0x62Au, 10u, 39u, (2u, 3u, 263u)
-#define PPUTLIMPL_UDEC_1577u 0x629u, 10u, 39u, (19u, 83u)
-#define PPUTLIMPL_UDEC_1576u 0x628u, 10u, 39u, (2u, 2u, 2u, 197u)
-#define PPUTLIMPL_UDEC_1575u 0x627u, 10u, 39u, (3u, 3u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1574u 0x626u, 10u, 39u, (2u, 787u)
-#define PPUTLIMPL_UDEC_1573u 0x625u, 10u, 39u, (11u, 11u, 13u)
-#define PPUTLIMPL_UDEC_1572u 0x624u, 10u, 39u, (2u, 2u, 3u, 131u)
-#define PPUTLIMPL_UDEC_1571u 0x623u, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1570u 0x622u, 10u, 39u, (2u, 5u, 157u)
-#define PPUTLIMPL_UDEC_1569u 0x621u, 10u, 39u, (3u, 523u)
-#define PPUTLIMPL_UDEC_1568u 0x620u, 10u, 39u, (2u, 2u, 2u, 2u, 2u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1567u 0x61Fu, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1566u 0x61Eu, 10u, 39u, (2u, 3u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_1565u 0x61Du, 10u, 39u, (5u, 313u)
-#define PPUTLIMPL_UDEC_1564u 0x61Cu, 10u, 39u, (2u, 2u, 17u, 23u)
-#define PPUTLIMPL_UDEC_1563u 0x61Bu, 10u, 39u, (3u, 521u)
-#define PPUTLIMPL_UDEC_1562u 0x61Au, 10u, 39u, (2u, 11u, 71u)
-#define PPUTLIMPL_UDEC_1561u 0x619u, 10u, 39u, (7u, 223u)
-#define PPUTLIMPL_UDEC_1560u 0x618u, 10u, 39u, (2u, 2u, 2u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1559u 0x617u, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1558u 0x616u, 10u, 39u, (2u, 19u, 41u)
-#define PPUTLIMPL_UDEC_1557u 0x615u, 10u, 39u, (3u, 3u, 173u)
-#define PPUTLIMPL_UDEC_1556u 0x614u, 10u, 39u, (2u, 2u, 389u)
-#define PPUTLIMPL_UDEC_1555u 0x613u, 10u, 39u, (5u, 311u)
-#define PPUTLIMPL_UDEC_1554u 0x612u, 10u, 39u, (2u, 3u, 7u, 37u)
-#define PPUTLIMPL_UDEC_1553u 0x611u, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1552u 0x610u, 10u, 39u, (2u, 2u, 2u, 2u, 97u)
-#define PPUTLIMPL_UDEC_1551u 0x60Fu, 10u, 39u, (3u, 11u, 47u)
-#define PPUTLIMPL_UDEC_1550u 0x60Eu, 10u, 39u, (2u, 5u, 5u, 31u)
-#define PPUTLIMPL_UDEC_1549u 0x60Du, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1548u 0x60Cu, 10u, 39u, (2u, 2u, 3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_1547u 0x60Bu, 10u, 39u, (7u, 13u, 17u)
-#define PPUTLIMPL_UDEC_1546u 0x60Au, 10u, 39u, (2u, 773u)
-#define PPUTLIMPL_UDEC_1545u 0x609u, 10u, 39u, (3u, 5u, 103u)
-#define PPUTLIMPL_UDEC_1544u 0x608u, 10u, 39u, (2u, 2u, 2u, 193u)
-#define PPUTLIMPL_UDEC_1543u 0x607u, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1542u 0x606u, 10u, 39u, (2u, 3u, 257u)
-#define PPUTLIMPL_UDEC_1541u 0x605u, 10u, 39u, (23u, 67u)
-#define PPUTLIMPL_UDEC_1540u 0x604u, 10u, 39u, (2u, 2u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1539u 0x603u, 10u, 39u, (3u, 3u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_1538u 0x602u, 10u, 39u, (2u, 769u)
-#define PPUTLIMPL_UDEC_1537u 0x601u, 10u, 39u, (29u, 53u)
-#define PPUTLIMPL_UDEC_1536u 0x600u, 10u, 39u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_1535u 0x5FFu, 10u, 39u, (5u, 307u)
-#define PPUTLIMPL_UDEC_1534u 0x5FEu, 10u, 39u, (2u, 13u, 59u)
-#define PPUTLIMPL_UDEC_1533u 0x5FDu, 10u, 39u, (3u, 7u, 73u)
-#define PPUTLIMPL_UDEC_1532u 0x5FCu, 10u, 39u, (2u, 2u, 383u)
-#define PPUTLIMPL_UDEC_1531u 0x5FBu, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1530u 0x5FAu, 10u, 39u, (2u, 3u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_1529u 0x5F9u, 10u, 39u, (11u, 139u)
-#define PPUTLIMPL_UDEC_1528u 0x5F8u, 10u, 39u, (2u, 2u, 2u, 191u)
-#define PPUTLIMPL_UDEC_1527u 0x5F7u, 10u, 39u, (3u, 509u)
-#define PPUTLIMPL_UDEC_1526u 0x5F6u, 10u, 39u, (2u, 7u, 109u)
-#define PPUTLIMPL_UDEC_1525u 0x5F5u, 10u, 39u, (5u, 5u, 61u)
-#define PPUTLIMPL_UDEC_1524u 0x5F4u, 10u, 39u, (2u, 2u, 3u, 127u)
-#define PPUTLIMPL_UDEC_1523u 0x5F3u, 10u, 39u, ()
-#define PPUTLIMPL_UDEC_1522u 0x5F2u, 10u, 39u, (2u, 761u)
-#define PPUTLIMPL_UDEC_1521u 0x5F1u, 10u, 39u, (3u, 3u, 13u, 13u)
-#define PPUTLIMPL_UDEC_1520u 0x5F0u, 10u, 38u, (2u, 2u, 2u, 2u, 5u, 19u)
-#define PPUTLIMPL_UDEC_1519u 0x5EFu, 10u, 38u, (7u, 7u, 31u)
-#define PPUTLIMPL_UDEC_1518u 0x5EEu, 10u, 38u, (2u, 3u, 11u, 23u)
-#define PPUTLIMPL_UDEC_1517u 0x5EDu, 10u, 38u, (37u, 41u)
-#define PPUTLIMPL_UDEC_1516u 0x5ECu, 10u, 38u, (2u, 2u, 379u)
-#define PPUTLIMPL_UDEC_1515u 0x5EBu, 10u, 38u, (3u, 5u, 101u)
-#define PPUTLIMPL_UDEC_1514u 0x5EAu, 10u, 38u, (2u, 757u)
-#define PPUTLIMPL_UDEC_1513u 0x5E9u, 10u, 38u, (17u, 89u)
-#define PPUTLIMPL_UDEC_1512u 0x5E8u, 10u, 38u, (2u, 2u, 2u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_1511u 0x5E7u, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1510u 0x5E6u, 10u, 38u, (2u, 5u, 151u)
-#define PPUTLIMPL_UDEC_1509u 0x5E5u, 10u, 38u, (3u, 503u)
-#define PPUTLIMPL_UDEC_1508u 0x5E4u, 10u, 38u, (2u, 2u, 13u, 29u)
-#define PPUTLIMPL_UDEC_1507u 0x5E3u, 10u, 38u, (11u, 137u)
-#define PPUTLIMPL_UDEC_1506u 0x5E2u, 10u, 38u, (2u, 3u, 251u)
-#define PPUTLIMPL_UDEC_1505u 0x5E1u, 10u, 38u, (5u, 7u, 43u)
-#define PPUTLIMPL_UDEC_1504u 0x5E0u, 10u, 38u, (2u, 2u, 2u, 2u, 2u, 47u)
-#define PPUTLIMPL_UDEC_1503u 0x5DFu, 10u, 38u, (3u, 3u, 167u)
-#define PPUTLIMPL_UDEC_1502u 0x5DEu, 10u, 38u, (2u, 751u)
-#define PPUTLIMPL_UDEC_1501u 0x5DDu, 10u, 38u, (19u, 79u)
-#define PPUTLIMPL_UDEC_1500u 0x5DCu, 10u, 38u, (2u, 2u, 3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1499u 0x5DBu, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1498u 0x5DAu, 10u, 38u, (2u, 7u, 107u)
-#define PPUTLIMPL_UDEC_1497u 0x5D9u, 10u, 38u, (3u, 499u)
-#define PPUTLIMPL_UDEC_1496u 0x5D8u, 10u, 38u, (2u, 2u, 2u, 11u, 17u)
-#define PPUTLIMPL_UDEC_1495u 0x5D7u, 10u, 38u, (5u, 13u, 23u)
-#define PPUTLIMPL_UDEC_1494u 0x5D6u, 10u, 38u, (2u, 3u, 3u, 83u)
-#define PPUTLIMPL_UDEC_1493u 0x5D5u, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1492u 0x5D4u, 10u, 38u, (2u, 2u, 373u)
-#define PPUTLIMPL_UDEC_1491u 0x5D3u, 10u, 38u, (3u, 7u, 71u)
-#define PPUTLIMPL_UDEC_1490u 0x5D2u, 10u, 38u, (2u, 5u, 149u)
-#define PPUTLIMPL_UDEC_1489u 0x5D1u, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1488u 0x5D0u, 10u, 38u, (2u, 2u, 2u, 2u, 3u, 31u)
-#define PPUTLIMPL_UDEC_1487u 0x5CFu, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1486u 0x5CEu, 10u, 38u, (2u, 743u)
-#define PPUTLIMPL_UDEC_1485u 0x5CDu, 10u, 38u, (3u, 3u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1484u 0x5CCu, 10u, 38u, (2u, 2u, 7u, 53u)
-#define PPUTLIMPL_UDEC_1483u 0x5CBu, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1482u 0x5CAu, 10u, 38u, (2u, 3u, 13u, 19u)
-#define PPUTLIMPL_UDEC_1481u 0x5C9u, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1480u 0x5C8u, 10u, 38u, (2u, 2u, 2u, 5u, 37u)
-#define PPUTLIMPL_UDEC_1479u 0x5C7u, 10u, 38u, (3u, 17u, 29u)
-#define PPUTLIMPL_UDEC_1478u 0x5C6u, 10u, 38u, (2u, 739u)
-#define PPUTLIMPL_UDEC_1477u 0x5C5u, 10u, 38u, (7u, 211u)
-#define PPUTLIMPL_UDEC_1476u 0x5C4u, 10u, 38u, (2u, 2u, 3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_1475u 0x5C3u, 10u, 38u, (5u, 5u, 59u)
-#define PPUTLIMPL_UDEC_1474u 0x5C2u, 10u, 38u, (2u, 11u, 67u)
-#define PPUTLIMPL_UDEC_1473u 0x5C1u, 10u, 38u, (3u, 491u)
-#define PPUTLIMPL_UDEC_1472u 0x5C0u, 10u, 38u, (2u, 2u, 2u, 2u, 2u, 2u, 23u)
-#define PPUTLIMPL_UDEC_1471u 0x5BFu, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1470u 0x5BEu, 10u, 38u, (2u, 3u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1469u 0x5BDu, 10u, 38u, (13u, 113u)
-#define PPUTLIMPL_UDEC_1468u 0x5BCu, 10u, 38u, (2u, 2u, 367u)
-#define PPUTLIMPL_UDEC_1467u 0x5BBu, 10u, 38u, (3u, 3u, 163u)
-#define PPUTLIMPL_UDEC_1466u 0x5BAu, 10u, 38u, (2u, 733u)
-#define PPUTLIMPL_UDEC_1465u 0x5B9u, 10u, 38u, (5u, 293u)
-#define PPUTLIMPL_UDEC_1464u 0x5B8u, 10u, 38u, (2u, 2u, 2u, 3u, 61u)
-#define PPUTLIMPL_UDEC_1463u 0x5B7u, 10u, 38u, (7u, 11u, 19u)
-#define PPUTLIMPL_UDEC_1462u 0x5B6u, 10u, 38u, (2u, 17u, 43u)
-#define PPUTLIMPL_UDEC_1461u 0x5B5u, 10u, 38u, (3u, 487u)
-#define PPUTLIMPL_UDEC_1460u 0x5B4u, 10u, 38u, (2u, 2u, 5u, 73u)
-#define PPUTLIMPL_UDEC_1459u 0x5B3u, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1458u 0x5B2u, 10u, 38u, (2u, 3u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_1457u 0x5B1u, 10u, 38u, (31u, 47u)
-#define PPUTLIMPL_UDEC_1456u 0x5B0u, 10u, 38u, (2u, 2u, 2u, 2u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1455u 0x5AFu, 10u, 38u, (3u, 5u, 97u)
-#define PPUTLIMPL_UDEC_1454u 0x5AEu, 10u, 38u, (2u, 727u)
-#define PPUTLIMPL_UDEC_1453u 0x5ADu, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1452u 0x5ACu, 10u, 38u, (2u, 2u, 3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1451u 0x5ABu, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1450u 0x5AAu, 10u, 38u, (2u, 5u, 5u, 29u)
-#define PPUTLIMPL_UDEC_1449u 0x5A9u, 10u, 38u, (3u, 3u, 7u, 23u)
-#define PPUTLIMPL_UDEC_1448u 0x5A8u, 10u, 38u, (2u, 2u, 2u, 181u)
-#define PPUTLIMPL_UDEC_1447u 0x5A7u, 10u, 38u, ()
-#define PPUTLIMPL_UDEC_1446u 0x5A6u, 10u, 38u, (2u, 3u, 241u)
-#define PPUTLIMPL_UDEC_1445u 0x5A5u, 10u, 38u, (5u, 17u, 17u)
-#define PPUTLIMPL_UDEC_1444u 0x5A4u, 10u, 38u, (2u, 2u, 19u, 19u)
-#define PPUTLIMPL_UDEC_1443u 0x5A3u, 10u, 37u, (3u, 13u, 37u)
-#define PPUTLIMPL_UDEC_1442u 0x5A2u, 10u, 37u, (2u, 7u, 103u)
-#define PPUTLIMPL_UDEC_1441u 0x5A1u, 10u, 37u, (11u, 131u)
-#define PPUTLIMPL_UDEC_1440u 0x5A0u, 10u, 37u, (2u, 2u, 2u, 2u, 2u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_1439u 0x59Fu, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1438u 0x59Eu, 10u, 37u, (2u, 719u)
-#define PPUTLIMPL_UDEC_1437u 0x59Du, 10u, 37u, (3u, 479u)
-#define PPUTLIMPL_UDEC_1436u 0x59Cu, 10u, 37u, (2u, 2u, 359u)
-#define PPUTLIMPL_UDEC_1435u 0x59Bu, 10u, 37u, (5u, 7u, 41u)
-#define PPUTLIMPL_UDEC_1434u 0x59Au, 10u, 37u, (2u, 3u, 239u)
-#define PPUTLIMPL_UDEC_1433u 0x599u, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1432u 0x598u, 10u, 37u, (2u, 2u, 2u, 179u)
-#define PPUTLIMPL_UDEC_1431u 0x597u, 10u, 37u, (3u, 3u, 3u, 53u)
-#define PPUTLIMPL_UDEC_1430u 0x596u, 10u, 37u, (2u, 5u, 11u, 13u)
-#define PPUTLIMPL_UDEC_1429u 0x595u, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1428u 0x594u, 10u, 37u, (2u, 2u, 3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_1427u 0x593u, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1426u 0x592u, 10u, 37u, (2u, 23u, 31u)
-#define PPUTLIMPL_UDEC_1425u 0x591u, 10u, 37u, (3u, 5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_1424u 0x590u, 10u, 37u, (2u, 2u, 2u, 2u, 89u)
-#define PPUTLIMPL_UDEC_1423u 0x58Fu, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1422u 0x58Eu, 10u, 37u, (2u, 3u, 3u, 79u)
-#define PPUTLIMPL_UDEC_1421u 0x58Du, 10u, 37u, (7u, 7u, 29u)
-#define PPUTLIMPL_UDEC_1420u 0x58Cu, 10u, 37u, (2u, 2u, 5u, 71u)
-#define PPUTLIMPL_UDEC_1419u 0x58Bu, 10u, 37u, (3u, 11u, 43u)
-#define PPUTLIMPL_UDEC_1418u 0x58Au, 10u, 37u, (2u, 709u)
-#define PPUTLIMPL_UDEC_1417u 0x589u, 10u, 37u, (13u, 109u)
-#define PPUTLIMPL_UDEC_1416u 0x588u, 10u, 37u, (2u, 2u, 2u, 3u, 59u)
-#define PPUTLIMPL_UDEC_1415u 0x587u, 10u, 37u, (5u, 283u)
-#define PPUTLIMPL_UDEC_1414u 0x586u, 10u, 37u, (2u, 7u, 101u)
-#define PPUTLIMPL_UDEC_1413u 0x585u, 10u, 37u, (3u, 3u, 157u)
-#define PPUTLIMPL_UDEC_1412u 0x584u, 10u, 37u, (2u, 2u, 353u)
-#define PPUTLIMPL_UDEC_1411u 0x583u, 10u, 37u, (17u, 83u)
-#define PPUTLIMPL_UDEC_1410u 0x582u, 10u, 37u, (2u, 3u, 5u, 47u)
-#define PPUTLIMPL_UDEC_1409u 0x581u, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1408u 0x580u, 10u, 37u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_1407u 0x57Fu, 10u, 37u, (3u, 7u, 67u)
-#define PPUTLIMPL_UDEC_1406u 0x57Eu, 10u, 37u, (2u, 19u, 37u)
-#define PPUTLIMPL_UDEC_1405u 0x57Du, 10u, 37u, (5u, 281u)
-#define PPUTLIMPL_UDEC_1404u 0x57Cu, 10u, 37u, (2u, 2u, 3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_1403u 0x57Bu, 10u, 37u, (23u, 61u)
-#define PPUTLIMPL_UDEC_1402u 0x57Au, 10u, 37u, (2u, 701u)
-#define PPUTLIMPL_UDEC_1401u 0x579u, 10u, 37u, (3u, 467u)
-#define PPUTLIMPL_UDEC_1400u 0x578u, 10u, 37u, (2u, 2u, 2u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1399u 0x577u, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1398u 0x576u, 10u, 37u, (2u, 3u, 233u)
-#define PPUTLIMPL_UDEC_1397u 0x575u, 10u, 37u, (11u, 127u)
-#define PPUTLIMPL_UDEC_1396u 0x574u, 10u, 37u, (2u, 2u, 349u)
-#define PPUTLIMPL_UDEC_1395u 0x573u, 10u, 37u, (3u, 3u, 5u, 31u)
-#define PPUTLIMPL_UDEC_1394u 0x572u, 10u, 37u, (2u, 17u, 41u)
-#define PPUTLIMPL_UDEC_1393u 0x571u, 10u, 37u, (7u, 199u)
-#define PPUTLIMPL_UDEC_1392u 0x570u, 10u, 37u, (2u, 2u, 2u, 2u, 3u, 29u)
-#define PPUTLIMPL_UDEC_1391u 0x56Fu, 10u, 37u, (13u, 107u)
-#define PPUTLIMPL_UDEC_1390u 0x56Eu, 10u, 37u, (2u, 5u, 139u)
-#define PPUTLIMPL_UDEC_1389u 0x56Du, 10u, 37u, (3u, 463u)
-#define PPUTLIMPL_UDEC_1388u 0x56Cu, 10u, 37u, (2u, 2u, 347u)
-#define PPUTLIMPL_UDEC_1387u 0x56Bu, 10u, 37u, (19u, 73u)
-#define PPUTLIMPL_UDEC_1386u 0x56Au, 10u, 37u, (2u, 3u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1385u 0x569u, 10u, 37u, (5u, 277u)
-#define PPUTLIMPL_UDEC_1384u 0x568u, 10u, 37u, (2u, 2u, 2u, 173u)
-#define PPUTLIMPL_UDEC_1383u 0x567u, 10u, 37u, (3u, 461u)
-#define PPUTLIMPL_UDEC_1382u 0x566u, 10u, 37u, (2u, 691u)
-#define PPUTLIMPL_UDEC_1381u 0x565u, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1380u 0x564u, 10u, 37u, (2u, 2u, 3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_1379u 0x563u, 10u, 37u, (7u, 197u)
-#define PPUTLIMPL_UDEC_1378u 0x562u, 10u, 37u, (2u, 13u, 53u)
-#define PPUTLIMPL_UDEC_1377u 0x561u, 10u, 37u, (3u, 3u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_1376u 0x560u, 10u, 37u, (2u, 2u, 2u, 2u, 2u, 43u)
-#define PPUTLIMPL_UDEC_1375u 0x55Fu, 10u, 37u, (5u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1374u 0x55Eu, 10u, 37u, (2u, 3u, 229u)
-#define PPUTLIMPL_UDEC_1373u 0x55Du, 10u, 37u, ()
-#define PPUTLIMPL_UDEC_1372u 0x55Cu, 10u, 37u, (2u, 2u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1371u 0x55Bu, 10u, 37u, (3u, 457u)
-#define PPUTLIMPL_UDEC_1370u 0x55Au, 10u, 37u, (2u, 5u, 137u)
-#define PPUTLIMPL_UDEC_1369u 0x559u, 10u, 37u, (37u, 37u)
-#define PPUTLIMPL_UDEC_1368u 0x558u, 10u, 36u, (2u, 2u, 2u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_1367u 0x557u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1366u 0x556u, 10u, 36u, (2u, 683u)
-#define PPUTLIMPL_UDEC_1365u 0x555u, 10u, 36u, (3u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1364u 0x554u, 10u, 36u, (2u, 2u, 11u, 31u)
-#define PPUTLIMPL_UDEC_1363u 0x553u, 10u, 36u, (29u, 47u)
-#define PPUTLIMPL_UDEC_1362u 0x552u, 10u, 36u, (2u, 3u, 227u)
-#define PPUTLIMPL_UDEC_1361u 0x551u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1360u 0x550u, 10u, 36u, (2u, 2u, 2u, 2u, 5u, 17u)
-#define PPUTLIMPL_UDEC_1359u 0x54Fu, 10u, 36u, (3u, 3u, 151u)
-#define PPUTLIMPL_UDEC_1358u 0x54Eu, 10u, 36u, (2u, 7u, 97u)
-#define PPUTLIMPL_UDEC_1357u 0x54Du, 10u, 36u, (23u, 59u)
-#define PPUTLIMPL_UDEC_1356u 0x54Cu, 10u, 36u, (2u, 2u, 3u, 113u)
-#define PPUTLIMPL_UDEC_1355u 0x54Bu, 10u, 36u, (5u, 271u)
-#define PPUTLIMPL_UDEC_1354u 0x54Au, 10u, 36u, (2u, 677u)
-#define PPUTLIMPL_UDEC_1353u 0x549u, 10u, 36u, (3u, 11u, 41u)
-#define PPUTLIMPL_UDEC_1352u 0x548u, 10u, 36u, (2u, 2u, 2u, 13u, 13u)
-#define PPUTLIMPL_UDEC_1351u 0x547u, 10u, 36u, (7u, 193u)
-#define PPUTLIMPL_UDEC_1350u 0x546u, 10u, 36u, (2u, 3u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1349u 0x545u, 10u, 36u, (19u, 71u)
-#define PPUTLIMPL_UDEC_1348u 0x544u, 10u, 36u, (2u, 2u, 337u)
-#define PPUTLIMPL_UDEC_1347u 0x543u, 10u, 36u, (3u, 449u)
-#define PPUTLIMPL_UDEC_1346u 0x542u, 10u, 36u, (2u, 673u)
-#define PPUTLIMPL_UDEC_1345u 0x541u, 10u, 36u, (5u, 269u)
-#define PPUTLIMPL_UDEC_1344u 0x540u, 10u, 36u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_1343u 0x53Fu, 10u, 36u, (17u, 79u)
-#define PPUTLIMPL_UDEC_1342u 0x53Eu, 10u, 36u, (2u, 11u, 61u)
-#define PPUTLIMPL_UDEC_1341u 0x53Du, 10u, 36u, (3u, 3u, 149u)
-#define PPUTLIMPL_UDEC_1340u 0x53Cu, 10u, 36u, (2u, 2u, 5u, 67u)
-#define PPUTLIMPL_UDEC_1339u 0x53Bu, 10u, 36u, (13u, 103u)
-#define PPUTLIMPL_UDEC_1338u 0x53Au, 10u, 36u, (2u, 3u, 223u)
-#define PPUTLIMPL_UDEC_1337u 0x539u, 10u, 36u, (7u, 191u)
-#define PPUTLIMPL_UDEC_1336u 0x538u, 10u, 36u, (2u, 2u, 2u, 167u)
-#define PPUTLIMPL_UDEC_1335u 0x537u, 10u, 36u, (3u, 5u, 89u)
-#define PPUTLIMPL_UDEC_1334u 0x536u, 10u, 36u, (2u, 23u, 29u)
-#define PPUTLIMPL_UDEC_1333u 0x535u, 10u, 36u, (31u, 43u)
-#define PPUTLIMPL_UDEC_1332u 0x534u, 10u, 36u, (2u, 2u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_1331u 0x533u, 10u, 36u, (11u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1330u 0x532u, 10u, 36u, (2u, 5u, 7u, 19u)
-#define PPUTLIMPL_UDEC_1329u 0x531u, 10u, 36u, (3u, 443u)
-#define PPUTLIMPL_UDEC_1328u 0x530u, 10u, 36u, (2u, 2u, 2u, 2u, 83u)
-#define PPUTLIMPL_UDEC_1327u 0x52Fu, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1326u 0x52Eu, 10u, 36u, (2u, 3u, 13u, 17u)
-#define PPUTLIMPL_UDEC_1325u 0x52Du, 10u, 36u, (5u, 5u, 53u)
-#define PPUTLIMPL_UDEC_1324u 0x52Cu, 10u, 36u, (2u, 2u, 331u)
-#define PPUTLIMPL_UDEC_1323u 0x52Bu, 10u, 36u, (3u, 3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1322u 0x52Au, 10u, 36u, (2u, 661u)
-#define PPUTLIMPL_UDEC_1321u 0x529u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1320u 0x528u, 10u, 36u, (2u, 2u, 2u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1319u 0x527u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1318u 0x526u, 10u, 36u, (2u, 659u)
-#define PPUTLIMPL_UDEC_1317u 0x525u, 10u, 36u, (3u, 439u)
-#define PPUTLIMPL_UDEC_1316u 0x524u, 10u, 36u, (2u, 2u, 7u, 47u)
-#define PPUTLIMPL_UDEC_1315u 0x523u, 10u, 36u, (5u, 263u)
-#define PPUTLIMPL_UDEC_1314u 0x522u, 10u, 36u, (2u, 3u, 3u, 73u)
-#define PPUTLIMPL_UDEC_1313u 0x521u, 10u, 36u, (13u, 101u)
-#define PPUTLIMPL_UDEC_1312u 0x520u, 10u, 36u, (2u, 2u, 2u, 2u, 2u, 41u)
-#define PPUTLIMPL_UDEC_1311u 0x51Fu, 10u, 36u, (3u, 19u, 23u)
-#define PPUTLIMPL_UDEC_1310u 0x51Eu, 10u, 36u, (2u, 5u, 131u)
-#define PPUTLIMPL_UDEC_1309u 0x51Du, 10u, 36u, (7u, 11u, 17u)
-#define PPUTLIMPL_UDEC_1308u 0x51Cu, 10u, 36u, (2u, 2u, 3u, 109u)
-#define PPUTLIMPL_UDEC_1307u 0x51Bu, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1306u 0x51Au, 10u, 36u, (2u, 653u)
-#define PPUTLIMPL_UDEC_1305u 0x519u, 10u, 36u, (3u, 3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_1304u 0x518u, 10u, 36u, (2u, 2u, 2u, 163u)
-#define PPUTLIMPL_UDEC_1303u 0x517u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1302u 0x516u, 10u, 36u, (2u, 3u, 7u, 31u)
-#define PPUTLIMPL_UDEC_1301u 0x515u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1300u 0x514u, 10u, 36u, (2u, 2u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1299u 0x513u, 10u, 36u, (3u, 433u)
-#define PPUTLIMPL_UDEC_1298u 0x512u, 10u, 36u, (2u, 11u, 59u)
-#define PPUTLIMPL_UDEC_1297u 0x511u, 10u, 36u, ()
-#define PPUTLIMPL_UDEC_1296u 0x510u, 10u, 36u, (2u, 2u, 2u, 2u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_1295u 0x50Fu, 10u, 35u, (5u, 7u, 37u)
-#define PPUTLIMPL_UDEC_1294u 0x50Eu, 10u, 35u, (2u, 647u)
-#define PPUTLIMPL_UDEC_1293u 0x50Du, 10u, 35u, (3u, 431u)
-#define PPUTLIMPL_UDEC_1292u 0x50Cu, 10u, 35u, (2u, 2u, 17u, 19u)
-#define PPUTLIMPL_UDEC_1291u 0x50Bu, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1290u 0x50Au, 10u, 35u, (2u, 3u, 5u, 43u)
-#define PPUTLIMPL_UDEC_1289u 0x509u, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1288u 0x508u, 10u, 35u, (2u, 2u, 2u, 7u, 23u)
-#define PPUTLIMPL_UDEC_1287u 0x507u, 10u, 35u, (3u, 3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_1286u 0x506u, 10u, 35u, (2u, 643u)
-#define PPUTLIMPL_UDEC_1285u 0x505u, 10u, 35u, (5u, 257u)
-#define PPUTLIMPL_UDEC_1284u 0x504u, 10u, 35u, (2u, 2u, 3u, 107u)
-#define PPUTLIMPL_UDEC_1283u 0x503u, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1282u 0x502u, 10u, 35u, (2u, 641u)
-#define PPUTLIMPL_UDEC_1281u 0x501u, 10u, 35u, (3u, 7u, 61u)
-#define PPUTLIMPL_UDEC_1280u 0x500u, 10u, 35u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_1279u 0x4FFu, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1278u 0x4FEu, 10u, 35u, (2u, 3u, 3u, 71u)
-#define PPUTLIMPL_UDEC_1277u 0x4FDu, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1276u 0x4FCu, 10u, 35u, (2u, 2u, 11u, 29u)
-#define PPUTLIMPL_UDEC_1275u 0x4FBu, 10u, 35u, (3u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_1274u 0x4FAu, 10u, 35u, (2u, 7u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1273u 0x4F9u, 10u, 35u, (19u, 67u)
-#define PPUTLIMPL_UDEC_1272u 0x4F8u, 10u, 35u, (2u, 2u, 2u, 3u, 53u)
-#define PPUTLIMPL_UDEC_1271u 0x4F7u, 10u, 35u, (31u, 41u)
-#define PPUTLIMPL_UDEC_1270u 0x4F6u, 10u, 35u, (2u, 5u, 127u)
-#define PPUTLIMPL_UDEC_1269u 0x4F5u, 10u, 35u, (3u, 3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_1268u 0x4F4u, 10u, 35u, (2u, 2u, 317u)
-#define PPUTLIMPL_UDEC_1267u 0x4F3u, 10u, 35u, (7u, 181u)
-#define PPUTLIMPL_UDEC_1266u 0x4F2u, 10u, 35u, (2u, 3u, 211u)
-#define PPUTLIMPL_UDEC_1265u 0x4F1u, 10u, 35u, (5u, 11u, 23u)
-#define PPUTLIMPL_UDEC_1264u 0x4F0u, 10u, 35u, (2u, 2u, 2u, 2u, 79u)
-#define PPUTLIMPL_UDEC_1263u 0x4EFu, 10u, 35u, (3u, 421u)
-#define PPUTLIMPL_UDEC_1262u 0x4EEu, 10u, 35u, (2u, 631u)
-#define PPUTLIMPL_UDEC_1261u 0x4EDu, 10u, 35u, (13u, 97u)
-#define PPUTLIMPL_UDEC_1260u 0x4ECu, 10u, 35u, (2u, 2u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1259u 0x4EBu, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1258u 0x4EAu, 10u, 35u, (2u, 17u, 37u)
-#define PPUTLIMPL_UDEC_1257u 0x4E9u, 10u, 35u, (3u, 419u)
-#define PPUTLIMPL_UDEC_1256u 0x4E8u, 10u, 35u, (2u, 2u, 2u, 157u)
-#define PPUTLIMPL_UDEC_1255u 0x4E7u, 10u, 35u, (5u, 251u)
-#define PPUTLIMPL_UDEC_1254u 0x4E6u, 10u, 35u, (2u, 3u, 11u, 19u)
-#define PPUTLIMPL_UDEC_1253u 0x4E5u, 10u, 35u, (7u, 179u)
-#define PPUTLIMPL_UDEC_1252u 0x4E4u, 10u, 35u, (2u, 2u, 313u)
-#define PPUTLIMPL_UDEC_1251u 0x4E3u, 10u, 35u, (3u, 3u, 139u)
-#define PPUTLIMPL_UDEC_1250u 0x4E2u, 10u, 35u, (2u, 5u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1249u 0x4E1u, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1248u 0x4E0u, 10u, 35u, (2u, 2u, 2u, 2u, 2u, 3u, 13u)
-#define PPUTLIMPL_UDEC_1247u 0x4DFu, 10u, 35u, (29u, 43u)
-#define PPUTLIMPL_UDEC_1246u 0x4DEu, 10u, 35u, (2u, 7u, 89u)
-#define PPUTLIMPL_UDEC_1245u 0x4DDu, 10u, 35u, (3u, 5u, 83u)
-#define PPUTLIMPL_UDEC_1244u 0x4DCu, 10u, 35u, (2u, 2u, 311u)
-#define PPUTLIMPL_UDEC_1243u 0x4DBu, 10u, 35u, (11u, 113u)
-#define PPUTLIMPL_UDEC_1242u 0x4DAu, 10u, 35u, (2u, 3u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_1241u 0x4D9u, 10u, 35u, (17u, 73u)
-#define PPUTLIMPL_UDEC_1240u 0x4D8u, 10u, 35u, (2u, 2u, 2u, 5u, 31u)
-#define PPUTLIMPL_UDEC_1239u 0x4D7u, 10u, 35u, (3u, 7u, 59u)
-#define PPUTLIMPL_UDEC_1238u 0x4D6u, 10u, 35u, (2u, 619u)
-#define PPUTLIMPL_UDEC_1237u 0x4D5u, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1236u 0x4D4u, 10u, 35u, (2u, 2u, 3u, 103u)
-#define PPUTLIMPL_UDEC_1235u 0x4D3u, 10u, 35u, (5u, 13u, 19u)
-#define PPUTLIMPL_UDEC_1234u 0x4D2u, 10u, 35u, (2u, 617u)
-#define PPUTLIMPL_UDEC_1233u 0x4D1u, 10u, 35u, (3u, 3u, 137u)
-#define PPUTLIMPL_UDEC_1232u 0x4D0u, 10u, 35u, (2u, 2u, 2u, 2u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1231u 0x4CFu, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1230u 0x4CEu, 10u, 35u, (2u, 3u, 5u, 41u)
-#define PPUTLIMPL_UDEC_1229u 0x4CDu, 10u, 35u, ()
-#define PPUTLIMPL_UDEC_1228u 0x4CCu, 10u, 35u, (2u, 2u, 307u)
-#define PPUTLIMPL_UDEC_1227u 0x4CBu, 10u, 35u, (3u, 409u)
-#define PPUTLIMPL_UDEC_1226u 0x4CAu, 10u, 35u, (2u, 613u)
-#define PPUTLIMPL_UDEC_1225u 0x4C9u, 10u, 35u, (5u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1224u 0x4C8u, 10u, 34u, (2u, 2u, 2u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_1223u 0x4C7u, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1222u 0x4C6u, 10u, 34u, (2u, 13u, 47u)
-#define PPUTLIMPL_UDEC_1221u 0x4C5u, 10u, 34u, (3u, 11u, 37u)
-#define PPUTLIMPL_UDEC_1220u 0x4C4u, 10u, 34u, (2u, 2u, 5u, 61u)
-#define PPUTLIMPL_UDEC_1219u 0x4C3u, 10u, 34u, (23u, 53u)
-#define PPUTLIMPL_UDEC_1218u 0x4C2u, 10u, 34u, (2u, 3u, 7u, 29u)
-#define PPUTLIMPL_UDEC_1217u 0x4C1u, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1216u 0x4C0u, 10u, 34u, (2u, 2u, 2u, 2u, 2u, 2u, 19u)
-#define PPUTLIMPL_UDEC_1215u 0x4BFu, 10u, 34u, (3u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_1214u 0x4BEu, 10u, 34u, (2u, 607u)
-#define PPUTLIMPL_UDEC_1213u 0x4BDu, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1212u 0x4BCu, 10u, 34u, (2u, 2u, 3u, 101u)
-#define PPUTLIMPL_UDEC_1211u 0x4BBu, 10u, 34u, (7u, 173u)
-#define PPUTLIMPL_UDEC_1210u 0x4BAu, 10u, 34u, (2u, 5u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1209u 0x4B9u, 10u, 34u, (3u, 13u, 31u)
-#define PPUTLIMPL_UDEC_1208u 0x4B8u, 10u, 34u, (2u, 2u, 2u, 151u)
-#define PPUTLIMPL_UDEC_1207u 0x4B7u, 10u, 34u, (17u, 71u)
-#define PPUTLIMPL_UDEC_1206u 0x4B6u, 10u, 34u, (2u, 3u, 3u, 67u)
-#define PPUTLIMPL_UDEC_1205u 0x4B5u, 10u, 34u, (5u, 241u)
-#define PPUTLIMPL_UDEC_1204u 0x4B4u, 10u, 34u, (2u, 2u, 7u, 43u)
-#define PPUTLIMPL_UDEC_1203u 0x4B3u, 10u, 34u, (3u, 401u)
-#define PPUTLIMPL_UDEC_1202u 0x4B2u, 10u, 34u, (2u, 601u)
-#define PPUTLIMPL_UDEC_1201u 0x4B1u, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1200u 0x4B0u, 10u, 34u, (2u, 2u, 2u, 2u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1199u 0x4AFu, 10u, 34u, (11u, 109u)
-#define PPUTLIMPL_UDEC_1198u 0x4AEu, 10u, 34u, (2u, 599u)
-#define PPUTLIMPL_UDEC_1197u 0x4ADu, 10u, 34u, (3u, 3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_1196u 0x4ACu, 10u, 34u, (2u, 2u, 13u, 23u)
-#define PPUTLIMPL_UDEC_1195u 0x4ABu, 10u, 34u, (5u, 239u)
-#define PPUTLIMPL_UDEC_1194u 0x4AAu, 10u, 34u, (2u, 3u, 199u)
-#define PPUTLIMPL_UDEC_1193u 0x4A9u, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1192u 0x4A8u, 10u, 34u, (2u, 2u, 2u, 149u)
-#define PPUTLIMPL_UDEC_1191u 0x4A7u, 10u, 34u, (3u, 397u)
-#define PPUTLIMPL_UDEC_1190u 0x4A6u, 10u, 34u, (2u, 5u, 7u, 17u)
-#define PPUTLIMPL_UDEC_1189u 0x4A5u, 10u, 34u, (29u, 41u)
-#define PPUTLIMPL_UDEC_1188u 0x4A4u, 10u, 34u, (2u, 2u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_1187u 0x4A3u, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1186u 0x4A2u, 10u, 34u, (2u, 593u)
-#define PPUTLIMPL_UDEC_1185u 0x4A1u, 10u, 34u, (3u, 5u, 79u)
-#define PPUTLIMPL_UDEC_1184u 0x4A0u, 10u, 34u, (2u, 2u, 2u, 2u, 2u, 37u)
-#define PPUTLIMPL_UDEC_1183u 0x49Fu, 10u, 34u, (7u, 13u, 13u)
-#define PPUTLIMPL_UDEC_1182u 0x49Eu, 10u, 34u, (2u, 3u, 197u)
-#define PPUTLIMPL_UDEC_1181u 0x49Du, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1180u 0x49Cu, 10u, 34u, (2u, 2u, 5u, 59u)
-#define PPUTLIMPL_UDEC_1179u 0x49Bu, 10u, 34u, (3u, 3u, 131u)
-#define PPUTLIMPL_UDEC_1178u 0x49Au, 10u, 34u, (2u, 19u, 31u)
-#define PPUTLIMPL_UDEC_1177u 0x499u, 10u, 34u, (11u, 107u)
-#define PPUTLIMPL_UDEC_1176u 0x498u, 10u, 34u, (2u, 2u, 2u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1175u 0x497u, 10u, 34u, (5u, 5u, 47u)
-#define PPUTLIMPL_UDEC_1174u 0x496u, 10u, 34u, (2u, 587u)
-#define PPUTLIMPL_UDEC_1173u 0x495u, 10u, 34u, (3u, 17u, 23u)
-#define PPUTLIMPL_UDEC_1172u 0x494u, 10u, 34u, (2u, 2u, 293u)
-#define PPUTLIMPL_UDEC_1171u 0x493u, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1170u 0x492u, 10u, 34u, (2u, 3u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1169u 0x491u, 10u, 34u, (7u, 167u)
-#define PPUTLIMPL_UDEC_1168u 0x490u, 10u, 34u, (2u, 2u, 2u, 2u, 73u)
-#define PPUTLIMPL_UDEC_1167u 0x48Fu, 10u, 34u, (3u, 389u)
-#define PPUTLIMPL_UDEC_1166u 0x48Eu, 10u, 34u, (2u, 11u, 53u)
-#define PPUTLIMPL_UDEC_1165u 0x48Du, 10u, 34u, (5u, 233u)
-#define PPUTLIMPL_UDEC_1164u 0x48Cu, 10u, 34u, (2u, 2u, 3u, 97u)
-#define PPUTLIMPL_UDEC_1163u 0x48Bu, 10u, 34u, ()
-#define PPUTLIMPL_UDEC_1162u 0x48Au, 10u, 34u, (2u, 7u, 83u)
-#define PPUTLIMPL_UDEC_1161u 0x489u, 10u, 34u, (3u, 3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_1160u 0x488u, 10u, 34u, (2u, 2u, 2u, 5u, 29u)
-#define PPUTLIMPL_UDEC_1159u 0x487u, 10u, 34u, (19u, 61u)
-#define PPUTLIMPL_UDEC_1158u 0x486u, 10u, 34u, (2u, 3u, 193u)
-#define PPUTLIMPL_UDEC_1157u 0x485u, 10u, 34u, (13u, 89u)
-#define PPUTLIMPL_UDEC_1156u 0x484u, 10u, 34u, (2u, 2u, 17u, 17u)
-#define PPUTLIMPL_UDEC_1155u 0x483u, 10u, 33u, (3u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1154u 0x482u, 10u, 33u, (2u, 577u)
-#define PPUTLIMPL_UDEC_1153u 0x481u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1152u 0x480u, 10u, 33u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_1151u 0x47Fu, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1150u 0x47Eu, 10u, 33u, (2u, 5u, 5u, 23u)
-#define PPUTLIMPL_UDEC_1149u 0x47Du, 10u, 33u, (3u, 383u)
-#define PPUTLIMPL_UDEC_1148u 0x47Cu, 10u, 33u, (2u, 2u, 7u, 41u)
-#define PPUTLIMPL_UDEC_1147u 0x47Bu, 10u, 33u, (31u, 37u)
-#define PPUTLIMPL_UDEC_1146u 0x47Au, 10u, 33u, (2u, 3u, 191u)
-#define PPUTLIMPL_UDEC_1145u 0x479u, 10u, 33u, (5u, 229u)
-#define PPUTLIMPL_UDEC_1144u 0x478u, 10u, 33u, (2u, 2u, 2u, 11u, 13u)
-#define PPUTLIMPL_UDEC_1143u 0x477u, 10u, 33u, (3u, 3u, 127u)
-#define PPUTLIMPL_UDEC_1142u 0x476u, 10u, 33u, (2u, 571u)
-#define PPUTLIMPL_UDEC_1141u 0x475u, 10u, 33u, (7u, 163u)
-#define PPUTLIMPL_UDEC_1140u 0x474u, 10u, 33u, (2u, 2u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_1139u 0x473u, 10u, 33u, (17u, 67u)
-#define PPUTLIMPL_UDEC_1138u 0x472u, 10u, 33u, (2u, 569u)
-#define PPUTLIMPL_UDEC_1137u 0x471u, 10u, 33u, (3u, 379u)
-#define PPUTLIMPL_UDEC_1136u 0x470u, 10u, 33u, (2u, 2u, 2u, 2u, 71u)
-#define PPUTLIMPL_UDEC_1135u 0x46Fu, 10u, 33u, (5u, 227u)
-#define PPUTLIMPL_UDEC_1134u 0x46Eu, 10u, 33u, (2u, 3u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_1133u 0x46Du, 10u, 33u, (11u, 103u)
-#define PPUTLIMPL_UDEC_1132u 0x46Cu, 10u, 33u, (2u, 2u, 283u)
-#define PPUTLIMPL_UDEC_1131u 0x46Bu, 10u, 33u, (3u, 13u, 29u)
-#define PPUTLIMPL_UDEC_1130u 0x46Au, 10u, 33u, (2u, 5u, 113u)
-#define PPUTLIMPL_UDEC_1129u 0x469u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1128u 0x468u, 10u, 33u, (2u, 2u, 2u, 3u, 47u)
-#define PPUTLIMPL_UDEC_1127u 0x467u, 10u, 33u, (7u, 7u, 23u)
-#define PPUTLIMPL_UDEC_1126u 0x466u, 10u, 33u, (2u, 563u)
-#define PPUTLIMPL_UDEC_1125u 0x465u, 10u, 33u, (3u, 3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_1124u 0x464u, 10u, 33u, (2u, 2u, 281u)
-#define PPUTLIMPL_UDEC_1123u 0x463u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1122u 0x462u, 10u, 33u, (2u, 3u, 11u, 17u)
-#define PPUTLIMPL_UDEC_1121u 0x461u, 10u, 33u, (19u, 59u)
-#define PPUTLIMPL_UDEC_1120u 0x460u, 10u, 33u, (2u, 2u, 2u, 2u, 2u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1119u 0x45Fu, 10u, 33u, (3u, 373u)
-#define PPUTLIMPL_UDEC_1118u 0x45Eu, 10u, 33u, (2u, 13u, 43u)
-#define PPUTLIMPL_UDEC_1117u 0x45Du, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1116u 0x45Cu, 10u, 33u, (2u, 2u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_1115u 0x45Bu, 10u, 33u, (5u, 223u)
-#define PPUTLIMPL_UDEC_1114u 0x45Au, 10u, 33u, (2u, 557u)
-#define PPUTLIMPL_UDEC_1113u 0x459u, 10u, 33u, (3u, 7u, 53u)
-#define PPUTLIMPL_UDEC_1112u 0x458u, 10u, 33u, (2u, 2u, 2u, 139u)
-#define PPUTLIMPL_UDEC_1111u 0x457u, 10u, 33u, (11u, 101u)
-#define PPUTLIMPL_UDEC_1110u 0x456u, 10u, 33u, (2u, 3u, 5u, 37u)
-#define PPUTLIMPL_UDEC_1109u 0x455u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1108u 0x454u, 10u, 33u, (2u, 2u, 277u)
-#define PPUTLIMPL_UDEC_1107u 0x453u, 10u, 33u, (3u, 3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_1106u 0x452u, 10u, 33u, (2u, 7u, 79u)
-#define PPUTLIMPL_UDEC_1105u 0x451u, 10u, 33u, (5u, 13u, 17u)
-#define PPUTLIMPL_UDEC_1104u 0x450u, 10u, 33u, (2u, 2u, 2u, 2u, 3u, 23u)
-#define PPUTLIMPL_UDEC_1103u 0x44Fu, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1102u 0x44Eu, 10u, 33u, (2u, 19u, 29u)
-#define PPUTLIMPL_UDEC_1101u 0x44Du, 10u, 33u, (3u, 367u)
-#define PPUTLIMPL_UDEC_1100u 0x44Cu, 10u, 33u, (2u, 2u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_1099u 0x44Bu, 10u, 33u, (7u, 157u)
-#define PPUTLIMPL_UDEC_1098u 0x44Au, 10u, 33u, (2u, 3u, 3u, 61u)
-#define PPUTLIMPL_UDEC_1097u 0x449u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1096u 0x448u, 10u, 33u, (2u, 2u, 2u, 137u)
-#define PPUTLIMPL_UDEC_1095u 0x447u, 10u, 33u, (3u, 5u, 73u)
-#define PPUTLIMPL_UDEC_1094u 0x446u, 10u, 33u, (2u, 547u)
-#define PPUTLIMPL_UDEC_1093u 0x445u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1092u 0x444u, 10u, 33u, (2u, 2u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_1091u 0x443u, 10u, 33u, ()
-#define PPUTLIMPL_UDEC_1090u 0x442u, 10u, 33u, (2u, 5u, 109u)
-#define PPUTLIMPL_UDEC_1089u 0x441u, 10u, 33u, (3u, 3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_1088u 0x440u, 10u, 32u, (2u, 2u, 2u, 2u, 2u, 2u, 17u)
-#define PPUTLIMPL_UDEC_1087u 0x43Fu, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1086u 0x43Eu, 10u, 32u, (2u, 3u, 181u)
-#define PPUTLIMPL_UDEC_1085u 0x43Du, 10u, 32u, (5u, 7u, 31u)
-#define PPUTLIMPL_UDEC_1084u 0x43Cu, 10u, 32u, (2u, 2u, 271u)
-#define PPUTLIMPL_UDEC_1083u 0x43Bu, 10u, 32u, (3u, 19u, 19u)
-#define PPUTLIMPL_UDEC_1082u 0x43Au, 10u, 32u, (2u, 541u)
-#define PPUTLIMPL_UDEC_1081u 0x439u, 10u, 32u, (23u, 47u)
-#define PPUTLIMPL_UDEC_1080u 0x438u, 10u, 32u, (2u, 2u, 2u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_1079u 0x437u, 10u, 32u, (13u, 83u)
-#define PPUTLIMPL_UDEC_1078u 0x436u, 10u, 32u, (2u, 7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_1077u 0x435u, 10u, 32u, (3u, 359u)
-#define PPUTLIMPL_UDEC_1076u 0x434u, 10u, 32u, (2u, 2u, 269u)
-#define PPUTLIMPL_UDEC_1075u 0x433u, 10u, 32u, (5u, 5u, 43u)
-#define PPUTLIMPL_UDEC_1074u 0x432u, 10u, 32u, (2u, 3u, 179u)
-#define PPUTLIMPL_UDEC_1073u 0x431u, 10u, 32u, (29u, 37u)
-#define PPUTLIMPL_UDEC_1072u 0x430u, 10u, 32u, (2u, 2u, 2u, 2u, 67u)
-#define PPUTLIMPL_UDEC_1071u 0x42Fu, 10u, 32u, (3u, 3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_1070u 0x42Eu, 10u, 32u, (2u, 5u, 107u)
-#define PPUTLIMPL_UDEC_1069u 0x42Du, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1068u 0x42Cu, 10u, 32u, (2u, 2u, 3u, 89u)
-#define PPUTLIMPL_UDEC_1067u 0x42Bu, 10u, 32u, (11u, 97u)
-#define PPUTLIMPL_UDEC_1066u 0x42Au, 10u, 32u, (2u, 13u, 41u)
-#define PPUTLIMPL_UDEC_1065u 0x429u, 10u, 32u, (3u, 5u, 71u)
-#define PPUTLIMPL_UDEC_1064u 0x428u, 10u, 32u, (2u, 2u, 2u, 7u, 19u)
-#define PPUTLIMPL_UDEC_1063u 0x427u, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1062u 0x426u, 10u, 32u, (2u, 3u, 3u, 59u)
-#define PPUTLIMPL_UDEC_1061u 0x425u, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1060u 0x424u, 10u, 32u, (2u, 2u, 5u, 53u)
-#define PPUTLIMPL_UDEC_1059u 0x423u, 10u, 32u, (3u, 353u)
-#define PPUTLIMPL_UDEC_1058u 0x422u, 10u, 32u, (2u, 23u, 23u)
-#define PPUTLIMPL_UDEC_1057u 0x421u, 10u, 32u, (7u, 151u)
-#define PPUTLIMPL_UDEC_1056u 0x420u, 10u, 32u, (2u, 2u, 2u, 2u, 2u, 3u, 11u)
-#define PPUTLIMPL_UDEC_1055u 0x41Fu, 10u, 32u, (5u, 211u)
-#define PPUTLIMPL_UDEC_1054u 0x41Eu, 10u, 32u, (2u, 17u, 31u)
-#define PPUTLIMPL_UDEC_1053u 0x41Du, 10u, 32u, (3u, 3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_1052u 0x41Cu, 10u, 32u, (2u, 2u, 263u)
-#define PPUTLIMPL_UDEC_1051u 0x41Bu, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1050u 0x41Au, 10u, 32u, (2u, 3u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_1049u 0x419u, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1048u 0x418u, 10u, 32u, (2u, 2u, 2u, 131u)
-#define PPUTLIMPL_UDEC_1047u 0x417u, 10u, 32u, (3u, 349u)
-#define PPUTLIMPL_UDEC_1046u 0x416u, 10u, 32u, (2u, 523u)
-#define PPUTLIMPL_UDEC_1045u 0x415u, 10u, 32u, (5u, 11u, 19u)
-#define PPUTLIMPL_UDEC_1044u 0x414u, 10u, 32u, (2u, 2u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_1043u 0x413u, 10u, 32u, (7u, 149u)
-#define PPUTLIMPL_UDEC_1042u 0x412u, 10u, 32u, (2u, 521u)
-#define PPUTLIMPL_UDEC_1041u 0x411u, 10u, 32u, (3u, 347u)
-#define PPUTLIMPL_UDEC_1040u 0x410u, 10u, 32u, (2u, 2u, 2u, 2u, 5u, 13u)
-#define PPUTLIMPL_UDEC_1039u 0x40Fu, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1038u 0x40Eu, 10u, 32u, (2u, 3u, 173u)
-#define PPUTLIMPL_UDEC_1037u 0x40Du, 10u, 32u, (17u, 61u)
-#define PPUTLIMPL_UDEC_1036u 0x40Cu, 10u, 32u, (2u, 2u, 7u, 37u)
-#define PPUTLIMPL_UDEC_1035u 0x40Bu, 10u, 32u, (3u, 3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_1034u 0x40Au, 10u, 32u, (2u, 11u, 47u)
-#define PPUTLIMPL_UDEC_1033u 0x409u, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1032u 0x408u, 10u, 32u, (2u, 2u, 2u, 3u, 43u)
-#define PPUTLIMPL_UDEC_1031u 0x407u, 10u, 32u, ()
-#define PPUTLIMPL_UDEC_1030u 0x406u, 10u, 32u, (2u, 5u, 103u)
-#define PPUTLIMPL_UDEC_1029u 0x405u, 10u, 32u, (3u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_1028u 0x404u, 10u, 32u, (2u, 2u, 257u)
-#define PPUTLIMPL_UDEC_1027u 0x403u, 10u, 32u, (13u, 79u)
-#define PPUTLIMPL_UDEC_1026u 0x402u, 10u, 32u, (2u, 3u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_1025u 0x401u, 10u, 32u, (5u, 5u, 41u)
-#define PPUTLIMPL_UDEC_1024u 0x400u, 10u, 32u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_1023u 0x3FFu, 9u, 31u, (3u, 11u, 31u)
-#define PPUTLIMPL_UDEC_1022u 0x3FEu, 9u, 31u, (2u, 7u, 73u)
-#define PPUTLIMPL_UDEC_1021u 0x3FDu, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_1020u 0x3FCu, 9u, 31u, (2u, 2u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_1019u 0x3FBu, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_1018u 0x3FAu, 9u, 31u, (2u, 509u)
-#define PPUTLIMPL_UDEC_1017u 0x3F9u, 9u, 31u, (3u, 3u, 113u)
-#define PPUTLIMPL_UDEC_1016u 0x3F8u, 9u, 31u, (2u, 2u, 2u, 127u)
-#define PPUTLIMPL_UDEC_1015u 0x3F7u, 9u, 31u, (5u, 7u, 29u)
-#define PPUTLIMPL_UDEC_1014u 0x3F6u, 9u, 31u, (2u, 3u, 13u, 13u)
-#define PPUTLIMPL_UDEC_1013u 0x3F5u, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_1012u 0x3F4u, 9u, 31u, (2u, 2u, 11u, 23u)
-#define PPUTLIMPL_UDEC_1011u 0x3F3u, 9u, 31u, (3u, 337u)
-#define PPUTLIMPL_UDEC_1010u 0x3F2u, 9u, 31u, (2u, 5u, 101u)
-#define PPUTLIMPL_UDEC_1009u 0x3F1u, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_1008u 0x3F0u, 9u, 31u, (2u, 2u, 2u, 2u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_1007u 0x3EFu, 9u, 31u, (19u, 53u)
-#define PPUTLIMPL_UDEC_1006u 0x3EEu, 9u, 31u, (2u, 503u)
-#define PPUTLIMPL_UDEC_1005u 0x3EDu, 9u, 31u, (3u, 5u, 67u)
-#define PPUTLIMPL_UDEC_1004u 0x3ECu, 9u, 31u, (2u, 2u, 251u)
-#define PPUTLIMPL_UDEC_1003u 0x3EBu, 9u, 31u, (17u, 59u)
-#define PPUTLIMPL_UDEC_1002u 0x3EAu, 9u, 31u, (2u, 3u, 167u)
-#define PPUTLIMPL_UDEC_1001u 0x3E9u, 9u, 31u, (7u, 11u, 13u)
-#define PPUTLIMPL_UDEC_1000u 0x3E8u, 9u, 31u, (2u, 2u, 2u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_999u  0x3E7u, 9u, 31u, (3u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_998u  0x3E6u, 9u, 31u, (2u, 499u)
-#define PPUTLIMPL_UDEC_997u  0x3E5u, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_996u  0x3E4u, 9u, 31u, (2u, 2u, 3u, 83u)
-#define PPUTLIMPL_UDEC_995u  0x3E3u, 9u, 31u, (5u, 199u)
-#define PPUTLIMPL_UDEC_994u  0x3E2u, 9u, 31u, (2u, 7u, 71u)
-#define PPUTLIMPL_UDEC_993u  0x3E1u, 9u, 31u, (3u, 331u)
-#define PPUTLIMPL_UDEC_992u  0x3E0u, 9u, 31u, (2u, 2u, 2u, 2u, 2u, 31u)
-#define PPUTLIMPL_UDEC_991u  0x3DFu, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_990u  0x3DEu, 9u, 31u, (2u, 3u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_989u  0x3DDu, 9u, 31u, (23u, 43u)
-#define PPUTLIMPL_UDEC_988u  0x3DCu, 9u, 31u, (2u, 2u, 13u, 19u)
-#define PPUTLIMPL_UDEC_987u  0x3DBu, 9u, 31u, (3u, 7u, 47u)
-#define PPUTLIMPL_UDEC_986u  0x3DAu, 9u, 31u, (2u, 17u, 29u)
-#define PPUTLIMPL_UDEC_985u  0x3D9u, 9u, 31u, (5u, 197u)
-#define PPUTLIMPL_UDEC_984u  0x3D8u, 9u, 31u, (2u, 2u, 2u, 3u, 41u)
-#define PPUTLIMPL_UDEC_983u  0x3D7u, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_982u  0x3D6u, 9u, 31u, (2u, 491u)
-#define PPUTLIMPL_UDEC_981u  0x3D5u, 9u, 31u, (3u, 3u, 109u)
-#define PPUTLIMPL_UDEC_980u  0x3D4u, 9u, 31u, (2u, 2u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_979u  0x3D3u, 9u, 31u, (11u, 89u)
-#define PPUTLIMPL_UDEC_978u  0x3D2u, 9u, 31u, (2u, 3u, 163u)
-#define PPUTLIMPL_UDEC_977u  0x3D1u, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_976u  0x3D0u, 9u, 31u, (2u, 2u, 2u, 2u, 61u)
-#define PPUTLIMPL_UDEC_975u  0x3CFu, 9u, 31u, (3u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_974u  0x3CEu, 9u, 31u, (2u, 487u)
-#define PPUTLIMPL_UDEC_973u  0x3CDu, 9u, 31u, (7u, 139u)
-#define PPUTLIMPL_UDEC_972u  0x3CCu, 9u, 31u, (2u, 2u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_971u  0x3CBu, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_970u  0x3CAu, 9u, 31u, (2u, 5u, 97u)
-#define PPUTLIMPL_UDEC_969u  0x3C9u, 9u, 31u, (3u, 17u, 19u)
-#define PPUTLIMPL_UDEC_968u  0x3C8u, 9u, 31u, (2u, 2u, 2u, 11u, 11u)
-#define PPUTLIMPL_UDEC_967u  0x3C7u, 9u, 31u, ()
-#define PPUTLIMPL_UDEC_966u  0x3C6u, 9u, 31u, (2u, 3u, 7u, 23u)
-#define PPUTLIMPL_UDEC_965u  0x3C5u, 9u, 31u, (5u, 193u)
-#define PPUTLIMPL_UDEC_964u  0x3C4u, 9u, 31u, (2u, 2u, 241u)
-#define PPUTLIMPL_UDEC_963u  0x3C3u, 9u, 31u, (3u, 3u, 107u)
-#define PPUTLIMPL_UDEC_962u  0x3C2u, 9u, 31u, (2u, 13u, 37u)
-#define PPUTLIMPL_UDEC_961u  0x3C1u, 9u, 31u, (31u, 31u)
-#define PPUTLIMPL_UDEC_960u  0x3C0u, 9u, 30u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_959u  0x3BFu, 9u, 30u, (7u, 137u)
-#define PPUTLIMPL_UDEC_958u  0x3BEu, 9u, 30u, (2u, 479u)
-#define PPUTLIMPL_UDEC_957u  0x3BDu, 9u, 30u, (3u, 11u, 29u)
-#define PPUTLIMPL_UDEC_956u  0x3BCu, 9u, 30u, (2u, 2u, 239u)
-#define PPUTLIMPL_UDEC_955u  0x3BBu, 9u, 30u, (5u, 191u)
-#define PPUTLIMPL_UDEC_954u  0x3BAu, 9u, 30u, (2u, 3u, 3u, 53u)
-#define PPUTLIMPL_UDEC_953u  0x3B9u, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_952u  0x3B8u, 9u, 30u, (2u, 2u, 2u, 7u, 17u)
-#define PPUTLIMPL_UDEC_951u  0x3B7u, 9u, 30u, (3u, 317u)
-#define PPUTLIMPL_UDEC_950u  0x3B6u, 9u, 30u, (2u, 5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_949u  0x3B5u, 9u, 30u, (13u, 73u)
-#define PPUTLIMPL_UDEC_948u  0x3B4u, 9u, 30u, (2u, 2u, 3u, 79u)
-#define PPUTLIMPL_UDEC_947u  0x3B3u, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_946u  0x3B2u, 9u, 30u, (2u, 11u, 43u)
-#define PPUTLIMPL_UDEC_945u  0x3B1u, 9u, 30u, (3u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_944u  0x3B0u, 9u, 30u, (2u, 2u, 2u, 2u, 59u)
-#define PPUTLIMPL_UDEC_943u  0x3AFu, 9u, 30u, (23u, 41u)
-#define PPUTLIMPL_UDEC_942u  0x3AEu, 9u, 30u, (2u, 3u, 157u)
-#define PPUTLIMPL_UDEC_941u  0x3ADu, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_940u  0x3ACu, 9u, 30u, (2u, 2u, 5u, 47u)
-#define PPUTLIMPL_UDEC_939u  0x3ABu, 9u, 30u, (3u, 313u)
-#define PPUTLIMPL_UDEC_938u  0x3AAu, 9u, 30u, (2u, 7u, 67u)
-#define PPUTLIMPL_UDEC_937u  0x3A9u, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_936u  0x3A8u, 9u, 30u, (2u, 2u, 2u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_935u  0x3A7u, 9u, 30u, (5u, 11u, 17u)
-#define PPUTLIMPL_UDEC_934u  0x3A6u, 9u, 30u, (2u, 467u)
-#define PPUTLIMPL_UDEC_933u  0x3A5u, 9u, 30u, (3u, 311u)
-#define PPUTLIMPL_UDEC_932u  0x3A4u, 9u, 30u, (2u, 2u, 233u)
-#define PPUTLIMPL_UDEC_931u  0x3A3u, 9u, 30u, (7u, 7u, 19u)
-#define PPUTLIMPL_UDEC_930u  0x3A2u, 9u, 30u, (2u, 3u, 5u, 31u)
-#define PPUTLIMPL_UDEC_929u  0x3A1u, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_928u  0x3A0u, 9u, 30u, (2u, 2u, 2u, 2u, 2u, 29u)
-#define PPUTLIMPL_UDEC_927u  0x39Fu, 9u, 30u, (3u, 3u, 103u)
-#define PPUTLIMPL_UDEC_926u  0x39Eu, 9u, 30u, (2u, 463u)
-#define PPUTLIMPL_UDEC_925u  0x39Du, 9u, 30u, (5u, 5u, 37u)
-#define PPUTLIMPL_UDEC_924u  0x39Cu, 9u, 30u, (2u, 2u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_923u  0x39Bu, 9u, 30u, (13u, 71u)
-#define PPUTLIMPL_UDEC_922u  0x39Au, 9u, 30u, (2u, 461u)
-#define PPUTLIMPL_UDEC_921u  0x399u, 9u, 30u, (3u, 307u)
-#define PPUTLIMPL_UDEC_920u  0x398u, 9u, 30u, (2u, 2u, 2u, 5u, 23u)
-#define PPUTLIMPL_UDEC_919u  0x397u, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_918u  0x396u, 9u, 30u, (2u, 3u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_917u  0x395u, 9u, 30u, (7u, 131u)
-#define PPUTLIMPL_UDEC_916u  0x394u, 9u, 30u, (2u, 2u, 229u)
-#define PPUTLIMPL_UDEC_915u  0x393u, 9u, 30u, (3u, 5u, 61u)
-#define PPUTLIMPL_UDEC_914u  0x392u, 9u, 30u, (2u, 457u)
-#define PPUTLIMPL_UDEC_913u  0x391u, 9u, 30u, (11u, 83u)
-#define PPUTLIMPL_UDEC_912u  0x390u, 9u, 30u, (2u, 2u, 2u, 2u, 3u, 19u)
-#define PPUTLIMPL_UDEC_911u  0x38Fu, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_910u  0x38Eu, 9u, 30u, (2u, 5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_909u  0x38Du, 9u, 30u, (3u, 3u, 101u)
-#define PPUTLIMPL_UDEC_908u  0x38Cu, 9u, 30u, (2u, 2u, 227u)
-#define PPUTLIMPL_UDEC_907u  0x38Bu, 9u, 30u, ()
-#define PPUTLIMPL_UDEC_906u  0x38Au, 9u, 30u, (2u, 3u, 151u)
-#define PPUTLIMPL_UDEC_905u  0x389u, 9u, 30u, (5u, 181u)
-#define PPUTLIMPL_UDEC_904u  0x388u, 9u, 30u, (2u, 2u, 2u, 113u)
-#define PPUTLIMPL_UDEC_903u  0x387u, 9u, 30u, (3u, 7u, 43u)
-#define PPUTLIMPL_UDEC_902u  0x386u, 9u, 30u, (2u, 11u, 41u)
-#define PPUTLIMPL_UDEC_901u  0x385u, 9u, 30u, (17u, 53u)
-#define PPUTLIMPL_UDEC_900u  0x384u, 9u, 30u, (2u, 2u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_899u  0x383u, 9u, 29u, (29u, 31u)
-#define PPUTLIMPL_UDEC_898u  0x382u, 9u, 29u, (2u, 449u)
-#define PPUTLIMPL_UDEC_897u  0x381u, 9u, 29u, (3u, 13u, 23u)
-#define PPUTLIMPL_UDEC_896u  0x380u, 9u, 29u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_895u  0x37Fu, 9u, 29u, (5u, 179u)
-#define PPUTLIMPL_UDEC_894u  0x37Eu, 9u, 29u, (2u, 3u, 149u)
-#define PPUTLIMPL_UDEC_893u  0x37Du, 9u, 29u, (19u, 47u)
-#define PPUTLIMPL_UDEC_892u  0x37Cu, 9u, 29u, (2u, 2u, 223u)
-#define PPUTLIMPL_UDEC_891u  0x37Bu, 9u, 29u, (3u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_890u  0x37Au, 9u, 29u, (2u, 5u, 89u)
-#define PPUTLIMPL_UDEC_889u  0x379u, 9u, 29u, (7u, 127u)
-#define PPUTLIMPL_UDEC_888u  0x378u, 9u, 29u, (2u, 2u, 2u, 3u, 37u)
-#define PPUTLIMPL_UDEC_887u  0x377u, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_886u  0x376u, 9u, 29u, (2u, 443u)
-#define PPUTLIMPL_UDEC_885u  0x375u, 9u, 29u, (3u, 5u, 59u)
-#define PPUTLIMPL_UDEC_884u  0x374u, 9u, 29u, (2u, 2u, 13u, 17u)
-#define PPUTLIMPL_UDEC_883u  0x373u, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_882u  0x372u, 9u, 29u, (2u, 3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_881u  0x371u, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_880u  0x370u, 9u, 29u, (2u, 2u, 2u, 2u, 5u, 11u)
-#define PPUTLIMPL_UDEC_879u  0x36Fu, 9u, 29u, (3u, 293u)
-#define PPUTLIMPL_UDEC_878u  0x36Eu, 9u, 29u, (2u, 439u)
-#define PPUTLIMPL_UDEC_877u  0x36Du, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_876u  0x36Cu, 9u, 29u, (2u, 2u, 3u, 73u)
-#define PPUTLIMPL_UDEC_875u  0x36Bu, 9u, 29u, (5u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_874u  0x36Au, 9u, 29u, (2u, 19u, 23u)
-#define PPUTLIMPL_UDEC_873u  0x369u, 9u, 29u, (3u, 3u, 97u)
-#define PPUTLIMPL_UDEC_872u  0x368u, 9u, 29u, (2u, 2u, 2u, 109u)
-#define PPUTLIMPL_UDEC_871u  0x367u, 9u, 29u, (13u, 67u)
-#define PPUTLIMPL_UDEC_870u  0x366u, 9u, 29u, (2u, 3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_869u  0x365u, 9u, 29u, (11u, 79u)
-#define PPUTLIMPL_UDEC_868u  0x364u, 9u, 29u, (2u, 2u, 7u, 31u)
-#define PPUTLIMPL_UDEC_867u  0x363u, 9u, 29u, (3u, 17u, 17u)
-#define PPUTLIMPL_UDEC_866u  0x362u, 9u, 29u, (2u, 433u)
-#define PPUTLIMPL_UDEC_865u  0x361u, 9u, 29u, (5u, 173u)
-#define PPUTLIMPL_UDEC_864u  0x360u, 9u, 29u, (2u, 2u, 2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_863u  0x35Fu, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_862u  0x35Eu, 9u, 29u, (2u, 431u)
-#define PPUTLIMPL_UDEC_861u  0x35Du, 9u, 29u, (3u, 7u, 41u)
-#define PPUTLIMPL_UDEC_860u  0x35Cu, 9u, 29u, (2u, 2u, 5u, 43u)
-#define PPUTLIMPL_UDEC_859u  0x35Bu, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_858u  0x35Au, 9u, 29u, (2u, 3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_857u  0x359u, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_856u  0x358u, 9u, 29u, (2u, 2u, 2u, 107u)
-#define PPUTLIMPL_UDEC_855u  0x357u, 9u, 29u, (3u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_854u  0x356u, 9u, 29u, (2u, 7u, 61u)
-#define PPUTLIMPL_UDEC_853u  0x355u, 9u, 29u, ()
-#define PPUTLIMPL_UDEC_852u  0x354u, 9u, 29u, (2u, 2u, 3u, 71u)
-#define PPUTLIMPL_UDEC_851u  0x353u, 9u, 29u, (23u, 37u)
-#define PPUTLIMPL_UDEC_850u  0x352u, 9u, 29u, (2u, 5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_849u  0x351u, 9u, 29u, (3u, 283u)
-#define PPUTLIMPL_UDEC_848u  0x350u, 9u, 29u, (2u, 2u, 2u, 2u, 53u)
-#define PPUTLIMPL_UDEC_847u  0x34Fu, 9u, 29u, (7u, 11u, 11u)
-#define PPUTLIMPL_UDEC_846u  0x34Eu, 9u, 29u, (2u, 3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_845u  0x34Du, 9u, 29u, (5u, 13u, 13u)
-#define PPUTLIMPL_UDEC_844u  0x34Cu, 9u, 29u, (2u, 2u, 211u)
-#define PPUTLIMPL_UDEC_843u  0x34Bu, 9u, 29u, (3u, 281u)
-#define PPUTLIMPL_UDEC_842u  0x34Au, 9u, 29u, (2u, 421u)
-#define PPUTLIMPL_UDEC_841u  0x349u, 9u, 29u, (29u, 29u)
-#define PPUTLIMPL_UDEC_840u  0x348u, 9u, 28u, (2u, 2u, 2u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_839u  0x347u, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_838u  0x346u, 9u, 28u, (2u, 419u)
-#define PPUTLIMPL_UDEC_837u  0x345u, 9u, 28u, (3u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_836u  0x344u, 9u, 28u, (2u, 2u, 11u, 19u)
-#define PPUTLIMPL_UDEC_835u  0x343u, 9u, 28u, (5u, 167u)
-#define PPUTLIMPL_UDEC_834u  0x342u, 9u, 28u, (2u, 3u, 139u)
-#define PPUTLIMPL_UDEC_833u  0x341u, 9u, 28u, (7u, 7u, 17u)
-#define PPUTLIMPL_UDEC_832u  0x340u, 9u, 28u, (2u, 2u, 2u, 2u, 2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_831u  0x33Fu, 9u, 28u, (3u, 277u)
-#define PPUTLIMPL_UDEC_830u  0x33Eu, 9u, 28u, (2u, 5u, 83u)
-#define PPUTLIMPL_UDEC_829u  0x33Du, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_828u  0x33Cu, 9u, 28u, (2u, 2u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_827u  0x33Bu, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_826u  0x33Au, 9u, 28u, (2u, 7u, 59u)
-#define PPUTLIMPL_UDEC_825u  0x339u, 9u, 28u, (3u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_824u  0x338u, 9u, 28u, (2u, 2u, 2u, 103u)
-#define PPUTLIMPL_UDEC_823u  0x337u, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_822u  0x336u, 9u, 28u, (2u, 3u, 137u)
-#define PPUTLIMPL_UDEC_821u  0x335u, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_820u  0x334u, 9u, 28u, (2u, 2u, 5u, 41u)
-#define PPUTLIMPL_UDEC_819u  0x333u, 9u, 28u, (3u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_818u  0x332u, 9u, 28u, (2u, 409u)
-#define PPUTLIMPL_UDEC_817u  0x331u, 9u, 28u, (19u, 43u)
-#define PPUTLIMPL_UDEC_816u  0x330u, 9u, 28u, (2u, 2u, 2u, 2u, 3u, 17u)
-#define PPUTLIMPL_UDEC_815u  0x32Fu, 9u, 28u, (5u, 163u)
-#define PPUTLIMPL_UDEC_814u  0x32Eu, 9u, 28u, (2u, 11u, 37u)
-#define PPUTLIMPL_UDEC_813u  0x32Du, 9u, 28u, (3u, 271u)
-#define PPUTLIMPL_UDEC_812u  0x32Cu, 9u, 28u, (2u, 2u, 7u, 29u)
-#define PPUTLIMPL_UDEC_811u  0x32Bu, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_810u  0x32Au, 9u, 28u, (2u, 3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_809u  0x329u, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_808u  0x328u, 9u, 28u, (2u, 2u, 2u, 101u)
-#define PPUTLIMPL_UDEC_807u  0x327u, 9u, 28u, (3u, 269u)
-#define PPUTLIMPL_UDEC_806u  0x326u, 9u, 28u, (2u, 13u, 31u)
-#define PPUTLIMPL_UDEC_805u  0x325u, 9u, 28u, (5u, 7u, 23u)
-#define PPUTLIMPL_UDEC_804u  0x324u, 9u, 28u, (2u, 2u, 3u, 67u)
-#define PPUTLIMPL_UDEC_803u  0x323u, 9u, 28u, (11u, 73u)
-#define PPUTLIMPL_UDEC_802u  0x322u, 9u, 28u, (2u, 401u)
-#define PPUTLIMPL_UDEC_801u  0x321u, 9u, 28u, (3u, 3u, 89u)
-#define PPUTLIMPL_UDEC_800u  0x320u, 9u, 28u, (2u, 2u, 2u, 2u, 2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_799u  0x31Fu, 9u, 28u, (17u, 47u)
-#define PPUTLIMPL_UDEC_798u  0x31Eu, 9u, 28u, (2u, 3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_797u  0x31Du, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_796u  0x31Cu, 9u, 28u, (2u, 2u, 199u)
-#define PPUTLIMPL_UDEC_795u  0x31Bu, 9u, 28u, (3u, 5u, 53u)
-#define PPUTLIMPL_UDEC_794u  0x31Au, 9u, 28u, (2u, 397u)
-#define PPUTLIMPL_UDEC_793u  0x319u, 9u, 28u, (13u, 61u)
-#define PPUTLIMPL_UDEC_792u  0x318u, 9u, 28u, (2u, 2u, 2u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_791u  0x317u, 9u, 28u, (7u, 113u)
-#define PPUTLIMPL_UDEC_790u  0x316u, 9u, 28u, (2u, 5u, 79u)
-#define PPUTLIMPL_UDEC_789u  0x315u, 9u, 28u, (3u, 263u)
-#define PPUTLIMPL_UDEC_788u  0x314u, 9u, 28u, (2u, 2u, 197u)
-#define PPUTLIMPL_UDEC_787u  0x313u, 9u, 28u, ()
-#define PPUTLIMPL_UDEC_786u  0x312u, 9u, 28u, (2u, 3u, 131u)
-#define PPUTLIMPL_UDEC_785u  0x311u, 9u, 28u, (5u, 157u)
-#define PPUTLIMPL_UDEC_784u  0x310u, 9u, 28u, (2u, 2u, 2u, 2u, 7u, 7u)
-#define PPUTLIMPL_UDEC_783u  0x30Fu, 9u, 27u, (3u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_782u  0x30Eu, 9u, 27u, (2u, 17u, 23u)
-#define PPUTLIMPL_UDEC_781u  0x30Du, 9u, 27u, (11u, 71u)
-#define PPUTLIMPL_UDEC_780u  0x30Cu, 9u, 27u, (2u, 2u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_779u  0x30Bu, 9u, 27u, (19u, 41u)
-#define PPUTLIMPL_UDEC_778u  0x30Au, 9u, 27u, (2u, 389u)
-#define PPUTLIMPL_UDEC_777u  0x309u, 9u, 27u, (3u, 7u, 37u)
-#define PPUTLIMPL_UDEC_776u  0x308u, 9u, 27u, (2u, 2u, 2u, 97u)
-#define PPUTLIMPL_UDEC_775u  0x307u, 9u, 27u, (5u, 5u, 31u)
-#define PPUTLIMPL_UDEC_774u  0x306u, 9u, 27u, (2u, 3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_773u  0x305u, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_772u  0x304u, 9u, 27u, (2u, 2u, 193u)
-#define PPUTLIMPL_UDEC_771u  0x303u, 9u, 27u, (3u, 257u)
-#define PPUTLIMPL_UDEC_770u  0x302u, 9u, 27u, (2u, 5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_769u  0x301u, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_768u  0x300u, 9u, 27u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_767u  0x2FFu, 9u, 27u, (13u, 59u)
-#define PPUTLIMPL_UDEC_766u  0x2FEu, 9u, 27u, (2u, 383u)
-#define PPUTLIMPL_UDEC_765u  0x2FDu, 9u, 27u, (3u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_764u  0x2FCu, 9u, 27u, (2u, 2u, 191u)
-#define PPUTLIMPL_UDEC_763u  0x2FBu, 9u, 27u, (7u, 109u)
-#define PPUTLIMPL_UDEC_762u  0x2FAu, 9u, 27u, (2u, 3u, 127u)
-#define PPUTLIMPL_UDEC_761u  0x2F9u, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_760u  0x2F8u, 9u, 27u, (2u, 2u, 2u, 5u, 19u)
-#define PPUTLIMPL_UDEC_759u  0x2F7u, 9u, 27u, (3u, 11u, 23u)
-#define PPUTLIMPL_UDEC_758u  0x2F6u, 9u, 27u, (2u, 379u)
-#define PPUTLIMPL_UDEC_757u  0x2F5u, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_756u  0x2F4u, 9u, 27u, (2u, 2u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_755u  0x2F3u, 9u, 27u, (5u, 151u)
-#define PPUTLIMPL_UDEC_754u  0x2F2u, 9u, 27u, (2u, 13u, 29u)
-#define PPUTLIMPL_UDEC_753u  0x2F1u, 9u, 27u, (3u, 251u)
-#define PPUTLIMPL_UDEC_752u  0x2F0u, 9u, 27u, (2u, 2u, 2u, 2u, 47u)
-#define PPUTLIMPL_UDEC_751u  0x2EFu, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_750u  0x2EEu, 9u, 27u, (2u, 3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_749u  0x2EDu, 9u, 27u, (7u, 107u)
-#define PPUTLIMPL_UDEC_748u  0x2ECu, 9u, 27u, (2u, 2u, 11u, 17u)
-#define PPUTLIMPL_UDEC_747u  0x2EBu, 9u, 27u, (3u, 3u, 83u)
-#define PPUTLIMPL_UDEC_746u  0x2EAu, 9u, 27u, (2u, 373u)
-#define PPUTLIMPL_UDEC_745u  0x2E9u, 9u, 27u, (5u, 149u)
-#define PPUTLIMPL_UDEC_744u  0x2E8u, 9u, 27u, (2u, 2u, 2u, 3u, 31u)
-#define PPUTLIMPL_UDEC_743u  0x2E7u, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_742u  0x2E6u, 9u, 27u, (2u, 7u, 53u)
-#define PPUTLIMPL_UDEC_741u  0x2E5u, 9u, 27u, (3u, 13u, 19u)
-#define PPUTLIMPL_UDEC_740u  0x2E4u, 9u, 27u, (2u, 2u, 5u, 37u)
-#define PPUTLIMPL_UDEC_739u  0x2E3u, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_738u  0x2E2u, 9u, 27u, (2u, 3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_737u  0x2E1u, 9u, 27u, (11u, 67u)
-#define PPUTLIMPL_UDEC_736u  0x2E0u, 9u, 27u, (2u, 2u, 2u, 2u, 2u, 23u)
-#define PPUTLIMPL_UDEC_735u  0x2DFu, 9u, 27u, (3u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_734u  0x2DEu, 9u, 27u, (2u, 367u)
-#define PPUTLIMPL_UDEC_733u  0x2DDu, 9u, 27u, ()
-#define PPUTLIMPL_UDEC_732u  0x2DCu, 9u, 27u, (2u, 2u, 3u, 61u)
-#define PPUTLIMPL_UDEC_731u  0x2DBu, 9u, 27u, (17u, 43u)
-#define PPUTLIMPL_UDEC_730u  0x2DAu, 9u, 27u, (2u, 5u, 73u)
-#define PPUTLIMPL_UDEC_729u  0x2D9u, 9u, 27u, (3u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_728u  0x2D8u, 9u, 26u, (2u, 2u, 2u, 7u, 13u)
-#define PPUTLIMPL_UDEC_727u  0x2D7u, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_726u  0x2D6u, 9u, 26u, (2u, 3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_725u  0x2D5u, 9u, 26u, (5u, 5u, 29u)
-#define PPUTLIMPL_UDEC_724u  0x2D4u, 9u, 26u, (2u, 2u, 181u)
-#define PPUTLIMPL_UDEC_723u  0x2D3u, 9u, 26u, (3u, 241u)
-#define PPUTLIMPL_UDEC_722u  0x2D2u, 9u, 26u, (2u, 19u, 19u)
-#define PPUTLIMPL_UDEC_721u  0x2D1u, 9u, 26u, (7u, 103u)
-#define PPUTLIMPL_UDEC_720u  0x2D0u, 9u, 26u, (2u, 2u, 2u, 2u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_719u  0x2CFu, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_718u  0x2CEu, 9u, 26u, (2u, 359u)
-#define PPUTLIMPL_UDEC_717u  0x2CDu, 9u, 26u, (3u, 239u)
-#define PPUTLIMPL_UDEC_716u  0x2CCu, 9u, 26u, (2u, 2u, 179u)
-#define PPUTLIMPL_UDEC_715u  0x2CBu, 9u, 26u, (5u, 11u, 13u)
-#define PPUTLIMPL_UDEC_714u  0x2CAu, 9u, 26u, (2u, 3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_713u  0x2C9u, 9u, 26u, (23u, 31u)
-#define PPUTLIMPL_UDEC_712u  0x2C8u, 9u, 26u, (2u, 2u, 2u, 89u)
-#define PPUTLIMPL_UDEC_711u  0x2C7u, 9u, 26u, (3u, 3u, 79u)
-#define PPUTLIMPL_UDEC_710u  0x2C6u, 9u, 26u, (2u, 5u, 71u)
-#define PPUTLIMPL_UDEC_709u  0x2C5u, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_708u  0x2C4u, 9u, 26u, (2u, 2u, 3u, 59u)
-#define PPUTLIMPL_UDEC_707u  0x2C3u, 9u, 26u, (7u, 101u)
-#define PPUTLIMPL_UDEC_706u  0x2C2u, 9u, 26u, (2u, 353u)
-#define PPUTLIMPL_UDEC_705u  0x2C1u, 9u, 26u, (3u, 5u, 47u)
-#define PPUTLIMPL_UDEC_704u  0x2C0u, 9u, 26u, (2u, 2u, 2u, 2u, 2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_703u  0x2BFu, 9u, 26u, (19u, 37u)
-#define PPUTLIMPL_UDEC_702u  0x2BEu, 9u, 26u, (2u, 3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_701u  0x2BDu, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_700u  0x2BCu, 9u, 26u, (2u, 2u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_699u  0x2BBu, 9u, 26u, (3u, 233u)
-#define PPUTLIMPL_UDEC_698u  0x2BAu, 9u, 26u, (2u, 349u)
-#define PPUTLIMPL_UDEC_697u  0x2B9u, 9u, 26u, (17u, 41u)
-#define PPUTLIMPL_UDEC_696u  0x2B8u, 9u, 26u, (2u, 2u, 2u, 3u, 29u)
-#define PPUTLIMPL_UDEC_695u  0x2B7u, 9u, 26u, (5u, 139u)
-#define PPUTLIMPL_UDEC_694u  0x2B6u, 9u, 26u, (2u, 347u)
-#define PPUTLIMPL_UDEC_693u  0x2B5u, 9u, 26u, (3u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_692u  0x2B4u, 9u, 26u, (2u, 2u, 173u)
-#define PPUTLIMPL_UDEC_691u  0x2B3u, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_690u  0x2B2u, 9u, 26u, (2u, 3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_689u  0x2B1u, 9u, 26u, (13u, 53u)
-#define PPUTLIMPL_UDEC_688u  0x2B0u, 9u, 26u, (2u, 2u, 2u, 2u, 43u)
-#define PPUTLIMPL_UDEC_687u  0x2AFu, 9u, 26u, (3u, 229u)
-#define PPUTLIMPL_UDEC_686u  0x2AEu, 9u, 26u, (2u, 7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_685u  0x2ADu, 9u, 26u, (5u, 137u)
-#define PPUTLIMPL_UDEC_684u  0x2ACu, 9u, 26u, (2u, 2u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_683u  0x2ABu, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_682u  0x2AAu, 9u, 26u, (2u, 11u, 31u)
-#define PPUTLIMPL_UDEC_681u  0x2A9u, 9u, 26u, (3u, 227u)
-#define PPUTLIMPL_UDEC_680u  0x2A8u, 9u, 26u, (2u, 2u, 2u, 5u, 17u)
-#define PPUTLIMPL_UDEC_679u  0x2A7u, 9u, 26u, (7u, 97u)
-#define PPUTLIMPL_UDEC_678u  0x2A6u, 9u, 26u, (2u, 3u, 113u)
-#define PPUTLIMPL_UDEC_677u  0x2A5u, 9u, 26u, ()
-#define PPUTLIMPL_UDEC_676u  0x2A4u, 9u, 26u, (2u, 2u, 13u, 13u)
-#define PPUTLIMPL_UDEC_675u  0x2A3u, 9u, 25u, (3u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_674u  0x2A2u, 9u, 25u, (2u, 337u)
-#define PPUTLIMPL_UDEC_673u  0x2A1u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_672u  0x2A0u, 9u, 25u, (2u, 2u, 2u, 2u, 2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_671u  0x29Fu, 9u, 25u, (11u, 61u)
-#define PPUTLIMPL_UDEC_670u  0x29Eu, 9u, 25u, (2u, 5u, 67u)
-#define PPUTLIMPL_UDEC_669u  0x29Du, 9u, 25u, (3u, 223u)
-#define PPUTLIMPL_UDEC_668u  0x29Cu, 9u, 25u, (2u, 2u, 167u)
-#define PPUTLIMPL_UDEC_667u  0x29Bu, 9u, 25u, (23u, 29u)
-#define PPUTLIMPL_UDEC_666u  0x29Au, 9u, 25u, (2u, 3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_665u  0x299u, 9u, 25u, (5u, 7u, 19u)
-#define PPUTLIMPL_UDEC_664u  0x298u, 9u, 25u, (2u, 2u, 2u, 83u)
-#define PPUTLIMPL_UDEC_663u  0x297u, 9u, 25u, (3u, 13u, 17u)
-#define PPUTLIMPL_UDEC_662u  0x296u, 9u, 25u, (2u, 331u)
-#define PPUTLIMPL_UDEC_661u  0x295u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_660u  0x294u, 9u, 25u, (2u, 2u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_659u  0x293u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_658u  0x292u, 9u, 25u, (2u, 7u, 47u)
-#define PPUTLIMPL_UDEC_657u  0x291u, 9u, 25u, (3u, 3u, 73u)
-#define PPUTLIMPL_UDEC_656u  0x290u, 9u, 25u, (2u, 2u, 2u, 2u, 41u)
-#define PPUTLIMPL_UDEC_655u  0x28Fu, 9u, 25u, (5u, 131u)
-#define PPUTLIMPL_UDEC_654u  0x28Eu, 9u, 25u, (2u, 3u, 109u)
-#define PPUTLIMPL_UDEC_653u  0x28Du, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_652u  0x28Cu, 9u, 25u, (2u, 2u, 163u)
-#define PPUTLIMPL_UDEC_651u  0x28Bu, 9u, 25u, (3u, 7u, 31u)
-#define PPUTLIMPL_UDEC_650u  0x28Au, 9u, 25u, (2u, 5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_649u  0x289u, 9u, 25u, (11u, 59u)
-#define PPUTLIMPL_UDEC_648u  0x288u, 9u, 25u, (2u, 2u, 2u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_647u  0x287u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_646u  0x286u, 9u, 25u, (2u, 17u, 19u)
-#define PPUTLIMPL_UDEC_645u  0x285u, 9u, 25u, (3u, 5u, 43u)
-#define PPUTLIMPL_UDEC_644u  0x284u, 9u, 25u, (2u, 2u, 7u, 23u)
-#define PPUTLIMPL_UDEC_643u  0x283u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_642u  0x282u, 9u, 25u, (2u, 3u, 107u)
-#define PPUTLIMPL_UDEC_641u  0x281u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_640u  0x280u, 9u, 25u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_639u  0x27Fu, 9u, 25u, (3u, 3u, 71u)
-#define PPUTLIMPL_UDEC_638u  0x27Eu, 9u, 25u, (2u, 11u, 29u)
-#define PPUTLIMPL_UDEC_637u  0x27Du, 9u, 25u, (7u, 7u, 13u)
-#define PPUTLIMPL_UDEC_636u  0x27Cu, 9u, 25u, (2u, 2u, 3u, 53u)
-#define PPUTLIMPL_UDEC_635u  0x27Bu, 9u, 25u, (5u, 127u)
-#define PPUTLIMPL_UDEC_634u  0x27Au, 9u, 25u, (2u, 317u)
-#define PPUTLIMPL_UDEC_633u  0x279u, 9u, 25u, (3u, 211u)
-#define PPUTLIMPL_UDEC_632u  0x278u, 9u, 25u, (2u, 2u, 2u, 79u)
-#define PPUTLIMPL_UDEC_631u  0x277u, 9u, 25u, ()
-#define PPUTLIMPL_UDEC_630u  0x276u, 9u, 25u, (2u, 3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_629u  0x275u, 9u, 25u, (17u, 37u)
-#define PPUTLIMPL_UDEC_628u  0x274u, 9u, 25u, (2u, 2u, 157u)
-#define PPUTLIMPL_UDEC_627u  0x273u, 9u, 25u, (3u, 11u, 19u)
-#define PPUTLIMPL_UDEC_626u  0x272u, 9u, 25u, (2u, 313u)
-#define PPUTLIMPL_UDEC_625u  0x271u, 9u, 25u, (5u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_624u  0x270u, 9u, 24u, (2u, 2u, 2u, 2u, 3u, 13u)
-#define PPUTLIMPL_UDEC_623u  0x26Fu, 9u, 24u, (7u, 89u)
-#define PPUTLIMPL_UDEC_622u  0x26Eu, 9u, 24u, (2u, 311u)
-#define PPUTLIMPL_UDEC_621u  0x26Du, 9u, 24u, (3u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_620u  0x26Cu, 9u, 24u, (2u, 2u, 5u, 31u)
-#define PPUTLIMPL_UDEC_619u  0x26Bu, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_618u  0x26Au, 9u, 24u, (2u, 3u, 103u)
-#define PPUTLIMPL_UDEC_617u  0x269u, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_616u  0x268u, 9u, 24u, (2u, 2u, 2u, 7u, 11u)
-#define PPUTLIMPL_UDEC_615u  0x267u, 9u, 24u, (3u, 5u, 41u)
-#define PPUTLIMPL_UDEC_614u  0x266u, 9u, 24u, (2u, 307u)
-#define PPUTLIMPL_UDEC_613u  0x265u, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_612u  0x264u, 9u, 24u, (2u, 2u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_611u  0x263u, 9u, 24u, (13u, 47u)
-#define PPUTLIMPL_UDEC_610u  0x262u, 9u, 24u, (2u, 5u, 61u)
-#define PPUTLIMPL_UDEC_609u  0x261u, 9u, 24u, (3u, 7u, 29u)
-#define PPUTLIMPL_UDEC_608u  0x260u, 9u, 24u, (2u, 2u, 2u, 2u, 2u, 19u)
-#define PPUTLIMPL_UDEC_607u  0x25Fu, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_606u  0x25Eu, 9u, 24u, (2u, 3u, 101u)
-#define PPUTLIMPL_UDEC_605u  0x25Du, 9u, 24u, (5u, 11u, 11u)
-#define PPUTLIMPL_UDEC_604u  0x25Cu, 9u, 24u, (2u, 2u, 151u)
-#define PPUTLIMPL_UDEC_603u  0x25Bu, 9u, 24u, (3u, 3u, 67u)
-#define PPUTLIMPL_UDEC_602u  0x25Au, 9u, 24u, (2u, 7u, 43u)
-#define PPUTLIMPL_UDEC_601u  0x259u, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_600u  0x258u, 9u, 24u, (2u, 2u, 2u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_599u  0x257u, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_598u  0x256u, 9u, 24u, (2u, 13u, 23u)
-#define PPUTLIMPL_UDEC_597u  0x255u, 9u, 24u, (3u, 199u)
-#define PPUTLIMPL_UDEC_596u  0x254u, 9u, 24u, (2u, 2u, 149u)
-#define PPUTLIMPL_UDEC_595u  0x253u, 9u, 24u, (5u, 7u, 17u)
-#define PPUTLIMPL_UDEC_594u  0x252u, 9u, 24u, (2u, 3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_593u  0x251u, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_592u  0x250u, 9u, 24u, (2u, 2u, 2u, 2u, 37u)
-#define PPUTLIMPL_UDEC_591u  0x24Fu, 9u, 24u, (3u, 197u)
-#define PPUTLIMPL_UDEC_590u  0x24Eu, 9u, 24u, (2u, 5u, 59u)
-#define PPUTLIMPL_UDEC_589u  0x24Du, 9u, 24u, (19u, 31u)
-#define PPUTLIMPL_UDEC_588u  0x24Cu, 9u, 24u, (2u, 2u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_587u  0x24Bu, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_586u  0x24Au, 9u, 24u, (2u, 293u)
-#define PPUTLIMPL_UDEC_585u  0x249u, 9u, 24u, (3u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_584u  0x248u, 9u, 24u, (2u, 2u, 2u, 73u)
-#define PPUTLIMPL_UDEC_583u  0x247u, 9u, 24u, (11u, 53u)
-#define PPUTLIMPL_UDEC_582u  0x246u, 9u, 24u, (2u, 3u, 97u)
-#define PPUTLIMPL_UDEC_581u  0x245u, 9u, 24u, (7u, 83u)
-#define PPUTLIMPL_UDEC_580u  0x244u, 9u, 24u, (2u, 2u, 5u, 29u)
-#define PPUTLIMPL_UDEC_579u  0x243u, 9u, 24u, (3u, 193u)
-#define PPUTLIMPL_UDEC_578u  0x242u, 9u, 24u, (2u, 17u, 17u)
-#define PPUTLIMPL_UDEC_577u  0x241u, 9u, 24u, ()
-#define PPUTLIMPL_UDEC_576u  0x240u, 9u, 24u, (2u, 2u, 2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_575u  0x23Fu, 9u, 23u, (5u, 5u, 23u)
-#define PPUTLIMPL_UDEC_574u  0x23Eu, 9u, 23u, (2u, 7u, 41u)
-#define PPUTLIMPL_UDEC_573u  0x23Du, 9u, 23u, (3u, 191u)
-#define PPUTLIMPL_UDEC_572u  0x23Cu, 9u, 23u, (2u, 2u, 11u, 13u)
-#define PPUTLIMPL_UDEC_571u  0x23Bu, 9u, 23u, ()
-#define PPUTLIMPL_UDEC_570u  0x23Au, 9u, 23u, (2u, 3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_569u  0x239u, 9u, 23u, ()
-#define PPUTLIMPL_UDEC_568u  0x238u, 9u, 23u, (2u, 2u, 2u, 71u)
-#define PPUTLIMPL_UDEC_567u  0x237u, 9u, 23u, (3u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_566u  0x236u, 9u, 23u, (2u, 283u)
-#define PPUTLIMPL_UDEC_565u  0x235u, 9u, 23u, (5u, 113u)
-#define PPUTLIMPL_UDEC_564u  0x234u, 9u, 23u, (2u, 2u, 3u, 47u)
-#define PPUTLIMPL_UDEC_563u  0x233u, 9u, 23u, ()
-#define PPUTLIMPL_UDEC_562u  0x232u, 9u, 23u, (2u, 281u)
-#define PPUTLIMPL_UDEC_561u  0x231u, 9u, 23u, (3u, 11u, 17u)
-#define PPUTLIMPL_UDEC_560u  0x230u, 9u, 23u, (2u, 2u, 2u, 2u, 5u, 7u)
-#define PPUTLIMPL_UDEC_559u  0x22Fu, 9u, 23u, (13u, 43u)
-#define PPUTLIMPL_UDEC_558u  0x22Eu, 9u, 23u, (2u, 3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_557u  0x22Du, 9u, 23u, ()
-#define PPUTLIMPL_UDEC_556u  0x22Cu, 9u, 23u, (2u, 2u, 139u)
-#define PPUTLIMPL_UDEC_555u  0x22Bu, 9u, 23u, (3u, 5u, 37u)
-#define PPUTLIMPL_UDEC_554u  0x22Au, 9u, 23u, (2u, 277u)
-#define PPUTLIMPL_UDEC_553u  0x229u, 9u, 23u, (7u, 79u)
-#define PPUTLIMPL_UDEC_552u  0x228u, 9u, 23u, (2u, 2u, 2u, 3u, 23u)
-#define PPUTLIMPL_UDEC_551u  0x227u, 9u, 23u, (19u, 29u)
-#define PPUTLIMPL_UDEC_550u  0x226u, 9u, 23u, (2u, 5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_549u  0x225u, 9u, 23u, (3u, 3u, 61u)
-#define PPUTLIMPL_UDEC_548u  0x224u, 9u, 23u, (2u, 2u, 137u)
-#define PPUTLIMPL_UDEC_547u  0x223u, 9u, 23u, ()
-#define PPUTLIMPL_UDEC_546u  0x222u, 9u, 23u, (2u, 3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_545u  0x221u, 9u, 23u, (5u, 109u)
-#define PPUTLIMPL_UDEC_544u  0x220u, 9u, 23u, (2u, 2u, 2u, 2u, 2u, 17u)
-#define PPUTLIMPL_UDEC_543u  0x21Fu, 9u, 23u, (3u, 181u)
-#define PPUTLIMPL_UDEC_542u  0x21Eu, 9u, 23u, (2u, 271u)
-#define PPUTLIMPL_UDEC_541u  0x21Du, 9u, 23u, ()
-#define PPUTLIMPL_UDEC_540u  0x21Cu, 9u, 23u, (2u, 2u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_539u  0x21Bu, 9u, 23u, (7u, 7u, 11u)
-#define PPUTLIMPL_UDEC_538u  0x21Au, 9u, 23u, (2u, 269u)
-#define PPUTLIMPL_UDEC_537u  0x219u, 9u, 23u, (3u, 179u)
-#define PPUTLIMPL_UDEC_536u  0x218u, 9u, 23u, (2u, 2u, 2u, 67u)
-#define PPUTLIMPL_UDEC_535u  0x217u, 9u, 23u, (5u, 107u)
-#define PPUTLIMPL_UDEC_534u  0x216u, 9u, 23u, (2u, 3u, 89u)
-#define PPUTLIMPL_UDEC_533u  0x215u, 9u, 23u, (13u, 41u)
-#define PPUTLIMPL_UDEC_532u  0x214u, 9u, 23u, (2u, 2u, 7u, 19u)
-#define PPUTLIMPL_UDEC_531u  0x213u, 9u, 23u, (3u, 3u, 59u)
-#define PPUTLIMPL_UDEC_530u  0x212u, 9u, 23u, (2u, 5u, 53u)
-#define PPUTLIMPL_UDEC_529u  0x211u, 9u, 23u, (23u, 23u)
-#define PPUTLIMPL_UDEC_528u  0x210u, 9u, 22u, (2u, 2u, 2u, 2u, 3u, 11u)
-#define PPUTLIMPL_UDEC_527u  0x20Fu, 9u, 22u, (17u, 31u)
-#define PPUTLIMPL_UDEC_526u  0x20Eu, 9u, 22u, (2u, 263u)
-#define PPUTLIMPL_UDEC_525u  0x20Du, 9u, 22u, (3u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_524u  0x20Cu, 9u, 22u, (2u, 2u, 131u)
-#define PPUTLIMPL_UDEC_523u  0x20Bu, 9u, 22u, ()
-#define PPUTLIMPL_UDEC_522u  0x20Au, 9u, 22u, (2u, 3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_521u  0x209u, 9u, 22u, ()
-#define PPUTLIMPL_UDEC_520u  0x208u, 9u, 22u, (2u, 2u, 2u, 5u, 13u)
-#define PPUTLIMPL_UDEC_519u  0x207u, 9u, 22u, (3u, 173u)
-#define PPUTLIMPL_UDEC_518u  0x206u, 9u, 22u, (2u, 7u, 37u)
-#define PPUTLIMPL_UDEC_517u  0x205u, 9u, 22u, (11u, 47u)
-#define PPUTLIMPL_UDEC_516u  0x204u, 9u, 22u, (2u, 2u, 3u, 43u)
-#define PPUTLIMPL_UDEC_515u  0x203u, 9u, 22u, (5u, 103u)
-#define PPUTLIMPL_UDEC_514u  0x202u, 9u, 22u, (2u, 257u)
-#define PPUTLIMPL_UDEC_513u  0x201u, 9u, 22u, (3u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_512u  0x200u, 9u, 22u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_511u  0x1FFu, 8u, 22u, (7u, 73u)
-#define PPUTLIMPL_UDEC_510u  0x1FEu, 8u, 22u, (2u, 3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_509u  0x1FDu, 8u, 22u, ()
-#define PPUTLIMPL_UDEC_508u  0x1FCu, 8u, 22u, (2u, 2u, 127u)
-#define PPUTLIMPL_UDEC_507u  0x1FBu, 8u, 22u, (3u, 13u, 13u)
-#define PPUTLIMPL_UDEC_506u  0x1FAu, 8u, 22u, (2u, 11u, 23u)
-#define PPUTLIMPL_UDEC_505u  0x1F9u, 8u, 22u, (5u, 101u)
-#define PPUTLIMPL_UDEC_504u  0x1F8u, 8u, 22u, (2u, 2u, 2u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_503u  0x1F7u, 8u, 22u, ()
-#define PPUTLIMPL_UDEC_502u  0x1F6u, 8u, 22u, (2u, 251u)
-#define PPUTLIMPL_UDEC_501u  0x1F5u, 8u, 22u, (3u, 167u)
-#define PPUTLIMPL_UDEC_500u  0x1F4u, 8u, 22u, (2u, 2u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_499u  0x1F3u, 8u, 22u, ()
-#define PPUTLIMPL_UDEC_498u  0x1F2u, 8u, 22u, (2u, 3u, 83u)
-#define PPUTLIMPL_UDEC_497u  0x1F1u, 8u, 22u, (7u, 71u)
-#define PPUTLIMPL_UDEC_496u  0x1F0u, 8u, 22u, (2u, 2u, 2u, 2u, 31u)
-#define PPUTLIMPL_UDEC_495u  0x1EFu, 8u, 22u, (3u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_494u  0x1EEu, 8u, 22u, (2u, 13u, 19u)
-#define PPUTLIMPL_UDEC_493u  0x1EDu, 8u, 22u, (17u, 29u)
-#define PPUTLIMPL_UDEC_492u  0x1ECu, 8u, 22u, (2u, 2u, 3u, 41u)
-#define PPUTLIMPL_UDEC_491u  0x1EBu, 8u, 22u, ()
-#define PPUTLIMPL_UDEC_490u  0x1EAu, 8u, 22u, (2u, 5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_489u  0x1E9u, 8u, 22u, (3u, 163u)
-#define PPUTLIMPL_UDEC_488u  0x1E8u, 8u, 22u, (2u, 2u, 2u, 61u)
-#define PPUTLIMPL_UDEC_487u  0x1E7u, 8u, 22u, ()
-#define PPUTLIMPL_UDEC_486u  0x1E6u, 8u, 22u, (2u, 3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_485u  0x1E5u, 8u, 22u, (5u, 97u)
-#define PPUTLIMPL_UDEC_484u  0x1E4u, 8u, 22u, (2u, 2u, 11u, 11u)
-#define PPUTLIMPL_UDEC_483u  0x1E3u, 8u, 21u, (3u, 7u, 23u)
-#define PPUTLIMPL_UDEC_482u  0x1E2u, 8u, 21u, (2u, 241u)
-#define PPUTLIMPL_UDEC_481u  0x1E1u, 8u, 21u, (13u, 37u)
-#define PPUTLIMPL_UDEC_480u  0x1E0u, 8u, 21u, (2u, 2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_479u  0x1DFu, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_478u  0x1DEu, 8u, 21u, (2u, 239u)
-#define PPUTLIMPL_UDEC_477u  0x1DDu, 8u, 21u, (3u, 3u, 53u)
-#define PPUTLIMPL_UDEC_476u  0x1DCu, 8u, 21u, (2u, 2u, 7u, 17u)
-#define PPUTLIMPL_UDEC_475u  0x1DBu, 8u, 21u, (5u, 5u, 19u)
-#define PPUTLIMPL_UDEC_474u  0x1DAu, 8u, 21u, (2u, 3u, 79u)
-#define PPUTLIMPL_UDEC_473u  0x1D9u, 8u, 21u, (11u, 43u)
-#define PPUTLIMPL_UDEC_472u  0x1D8u, 8u, 21u, (2u, 2u, 2u, 59u)
-#define PPUTLIMPL_UDEC_471u  0x1D7u, 8u, 21u, (3u, 157u)
-#define PPUTLIMPL_UDEC_470u  0x1D6u, 8u, 21u, (2u, 5u, 47u)
-#define PPUTLIMPL_UDEC_469u  0x1D5u, 8u, 21u, (7u, 67u)
-#define PPUTLIMPL_UDEC_468u  0x1D4u, 8u, 21u, (2u, 2u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_467u  0x1D3u, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_466u  0x1D2u, 8u, 21u, (2u, 233u)
-#define PPUTLIMPL_UDEC_465u  0x1D1u, 8u, 21u, (3u, 5u, 31u)
-#define PPUTLIMPL_UDEC_464u  0x1D0u, 8u, 21u, (2u, 2u, 2u, 2u, 29u)
-#define PPUTLIMPL_UDEC_463u  0x1CFu, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_462u  0x1CEu, 8u, 21u, (2u, 3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_461u  0x1CDu, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_460u  0x1CCu, 8u, 21u, (2u, 2u, 5u, 23u)
-#define PPUTLIMPL_UDEC_459u  0x1CBu, 8u, 21u, (3u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_458u  0x1CAu, 8u, 21u, (2u, 229u)
-#define PPUTLIMPL_UDEC_457u  0x1C9u, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_456u  0x1C8u, 8u, 21u, (2u, 2u, 2u, 3u, 19u)
-#define PPUTLIMPL_UDEC_455u  0x1C7u, 8u, 21u, (5u, 7u, 13u)
-#define PPUTLIMPL_UDEC_454u  0x1C6u, 8u, 21u, (2u, 227u)
-#define PPUTLIMPL_UDEC_453u  0x1C5u, 8u, 21u, (3u, 151u)
-#define PPUTLIMPL_UDEC_452u  0x1C4u, 8u, 21u, (2u, 2u, 113u)
-#define PPUTLIMPL_UDEC_451u  0x1C3u, 8u, 21u, (11u, 41u)
-#define PPUTLIMPL_UDEC_450u  0x1C2u, 8u, 21u, (2u, 3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_449u  0x1C1u, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_448u  0x1C0u, 8u, 21u, (2u, 2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_447u  0x1BFu, 8u, 21u, (3u, 149u)
-#define PPUTLIMPL_UDEC_446u  0x1BEu, 8u, 21u, (2u, 223u)
-#define PPUTLIMPL_UDEC_445u  0x1BDu, 8u, 21u, (5u, 89u)
-#define PPUTLIMPL_UDEC_444u  0x1BCu, 8u, 21u, (2u, 2u, 3u, 37u)
-#define PPUTLIMPL_UDEC_443u  0x1BBu, 8u, 21u, ()
-#define PPUTLIMPL_UDEC_442u  0x1BAu, 8u, 21u, (2u, 13u, 17u)
-#define PPUTLIMPL_UDEC_441u  0x1B9u, 8u, 21u, (3u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_440u  0x1B8u, 8u, 20u, (2u, 2u, 2u, 5u, 11u)
-#define PPUTLIMPL_UDEC_439u  0x1B7u, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_438u  0x1B6u, 8u, 20u, (2u, 3u, 73u)
-#define PPUTLIMPL_UDEC_437u  0x1B5u, 8u, 20u, (19u, 23u)
-#define PPUTLIMPL_UDEC_436u  0x1B4u, 8u, 20u, (2u, 2u, 109u)
-#define PPUTLIMPL_UDEC_435u  0x1B3u, 8u, 20u, (3u, 5u, 29u)
-#define PPUTLIMPL_UDEC_434u  0x1B2u, 8u, 20u, (2u, 7u, 31u)
-#define PPUTLIMPL_UDEC_433u  0x1B1u, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_432u  0x1B0u, 8u, 20u, (2u, 2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_431u  0x1AFu, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_430u  0x1AEu, 8u, 20u, (2u, 5u, 43u)
-#define PPUTLIMPL_UDEC_429u  0x1ADu, 8u, 20u, (3u, 11u, 13u)
-#define PPUTLIMPL_UDEC_428u  0x1ACu, 8u, 20u, (2u, 2u, 107u)
-#define PPUTLIMPL_UDEC_427u  0x1ABu, 8u, 20u, (7u, 61u)
-#define PPUTLIMPL_UDEC_426u  0x1AAu, 8u, 20u, (2u, 3u, 71u)
-#define PPUTLIMPL_UDEC_425u  0x1A9u, 8u, 20u, (5u, 5u, 17u)
-#define PPUTLIMPL_UDEC_424u  0x1A8u, 8u, 20u, (2u, 2u, 2u, 53u)
-#define PPUTLIMPL_UDEC_423u  0x1A7u, 8u, 20u, (3u, 3u, 47u)
-#define PPUTLIMPL_UDEC_422u  0x1A6u, 8u, 20u, (2u, 211u)
-#define PPUTLIMPL_UDEC_421u  0x1A5u, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_420u  0x1A4u, 8u, 20u, (2u, 2u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_419u  0x1A3u, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_418u  0x1A2u, 8u, 20u, (2u, 11u, 19u)
-#define PPUTLIMPL_UDEC_417u  0x1A1u, 8u, 20u, (3u, 139u)
-#define PPUTLIMPL_UDEC_416u  0x1A0u, 8u, 20u, (2u, 2u, 2u, 2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_415u  0x19Fu, 8u, 20u, (5u, 83u)
-#define PPUTLIMPL_UDEC_414u  0x19Eu, 8u, 20u, (2u, 3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_413u  0x19Du, 8u, 20u, (7u, 59u)
-#define PPUTLIMPL_UDEC_412u  0x19Cu, 8u, 20u, (2u, 2u, 103u)
-#define PPUTLIMPL_UDEC_411u  0x19Bu, 8u, 20u, (3u, 137u)
-#define PPUTLIMPL_UDEC_410u  0x19Au, 8u, 20u, (2u, 5u, 41u)
-#define PPUTLIMPL_UDEC_409u  0x199u, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_408u  0x198u, 8u, 20u, (2u, 2u, 2u, 3u, 17u)
-#define PPUTLIMPL_UDEC_407u  0x197u, 8u, 20u, (11u, 37u)
-#define PPUTLIMPL_UDEC_406u  0x196u, 8u, 20u, (2u, 7u, 29u)
-#define PPUTLIMPL_UDEC_405u  0x195u, 8u, 20u, (3u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_404u  0x194u, 8u, 20u, (2u, 2u, 101u)
-#define PPUTLIMPL_UDEC_403u  0x193u, 8u, 20u, (13u, 31u)
-#define PPUTLIMPL_UDEC_402u  0x192u, 8u, 20u, (2u, 3u, 67u)
-#define PPUTLIMPL_UDEC_401u  0x191u, 8u, 20u, ()
-#define PPUTLIMPL_UDEC_400u  0x190u, 8u, 20u, (2u, 2u, 2u, 2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_399u  0x18Fu, 8u, 19u, (3u, 7u, 19u)
-#define PPUTLIMPL_UDEC_398u  0x18Eu, 8u, 19u, (2u, 199u)
-#define PPUTLIMPL_UDEC_397u  0x18Du, 8u, 19u, ()
-#define PPUTLIMPL_UDEC_396u  0x18Cu, 8u, 19u, (2u, 2u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_395u  0x18Bu, 8u, 19u, (5u, 79u)
-#define PPUTLIMPL_UDEC_394u  0x18Au, 8u, 19u, (2u, 197u)
-#define PPUTLIMPL_UDEC_393u  0x189u, 8u, 19u, (3u, 131u)
-#define PPUTLIMPL_UDEC_392u  0x188u, 8u, 19u, (2u, 2u, 2u, 7u, 7u)
-#define PPUTLIMPL_UDEC_391u  0x187u, 8u, 19u, (17u, 23u)
-#define PPUTLIMPL_UDEC_390u  0x186u, 8u, 19u, (2u, 3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_389u  0x185u, 8u, 19u, ()
-#define PPUTLIMPL_UDEC_388u  0x184u, 8u, 19u, (2u, 2u, 97u)
-#define PPUTLIMPL_UDEC_387u  0x183u, 8u, 19u, (3u, 3u, 43u)
-#define PPUTLIMPL_UDEC_386u  0x182u, 8u, 19u, (2u, 193u)
-#define PPUTLIMPL_UDEC_385u  0x181u, 8u, 19u, (5u, 7u, 11u)
-#define PPUTLIMPL_UDEC_384u  0x180u, 8u, 19u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_383u  0x17Fu, 8u, 19u, ()
-#define PPUTLIMPL_UDEC_382u  0x17Eu, 8u, 19u, (2u, 191u)
-#define PPUTLIMPL_UDEC_381u  0x17Du, 8u, 19u, (3u, 127u)
-#define PPUTLIMPL_UDEC_380u  0x17Cu, 8u, 19u, (2u, 2u, 5u, 19u)
-#define PPUTLIMPL_UDEC_379u  0x17Bu, 8u, 19u, ()
-#define PPUTLIMPL_UDEC_378u  0x17Au, 8u, 19u, (2u, 3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_377u  0x179u, 8u, 19u, (13u, 29u)
-#define PPUTLIMPL_UDEC_376u  0x178u, 8u, 19u, (2u, 2u, 2u, 47u)
-#define PPUTLIMPL_UDEC_375u  0x177u, 8u, 19u, (3u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_374u  0x176u, 8u, 19u, (2u, 11u, 17u)
-#define PPUTLIMPL_UDEC_373u  0x175u, 8u, 19u, ()
-#define PPUTLIMPL_UDEC_372u  0x174u, 8u, 19u, (2u, 2u, 3u, 31u)
-#define PPUTLIMPL_UDEC_371u  0x173u, 8u, 19u, (7u, 53u)
-#define PPUTLIMPL_UDEC_370u  0x172u, 8u, 19u, (2u, 5u, 37u)
-#define PPUTLIMPL_UDEC_369u  0x171u, 8u, 19u, (3u, 3u, 41u)
-#define PPUTLIMPL_UDEC_368u  0x170u, 8u, 19u, (2u, 2u, 2u, 2u, 23u)
-#define PPUTLIMPL_UDEC_367u  0x16Fu, 8u, 19u, ()
-#define PPUTLIMPL_UDEC_366u  0x16Eu, 8u, 19u, (2u, 3u, 61u)
-#define PPUTLIMPL_UDEC_365u  0x16Du, 8u, 19u, (5u, 73u)
-#define PPUTLIMPL_UDEC_364u  0x16Cu, 8u, 19u, (2u, 2u, 7u, 13u)
-#define PPUTLIMPL_UDEC_363u  0x16Bu, 8u, 19u, (3u, 11u, 11u)
-#define PPUTLIMPL_UDEC_362u  0x16Au, 8u, 19u, (2u, 181u)
-#define PPUTLIMPL_UDEC_361u  0x169u, 8u, 19u, (19u, 19u)
-#define PPUTLIMPL_UDEC_360u  0x168u, 8u, 18u, (2u, 2u, 2u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_359u  0x167u, 8u, 18u, ()
-#define PPUTLIMPL_UDEC_358u  0x166u, 8u, 18u, (2u, 179u)
-#define PPUTLIMPL_UDEC_357u  0x165u, 8u, 18u, (3u, 7u, 17u)
-#define PPUTLIMPL_UDEC_356u  0x164u, 8u, 18u, (2u, 2u, 89u)
-#define PPUTLIMPL_UDEC_355u  0x163u, 8u, 18u, (5u, 71u)
-#define PPUTLIMPL_UDEC_354u  0x162u, 8u, 18u, (2u, 3u, 59u)
-#define PPUTLIMPL_UDEC_353u  0x161u, 8u, 18u, ()
-#define PPUTLIMPL_UDEC_352u  0x160u, 8u, 18u, (2u, 2u, 2u, 2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_351u  0x15Fu, 8u, 18u, (3u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_350u  0x15Eu, 8u, 18u, (2u, 5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_349u  0x15Du, 8u, 18u, ()
-#define PPUTLIMPL_UDEC_348u  0x15Cu, 8u, 18u, (2u, 2u, 3u, 29u)
-#define PPUTLIMPL_UDEC_347u  0x15Bu, 8u, 18u, ()
-#define PPUTLIMPL_UDEC_346u  0x15Au, 8u, 18u, (2u, 173u)
-#define PPUTLIMPL_UDEC_345u  0x159u, 8u, 18u, (3u, 5u, 23u)
-#define PPUTLIMPL_UDEC_344u  0x158u, 8u, 18u, (2u, 2u, 2u, 43u)
-#define PPUTLIMPL_UDEC_343u  0x157u, 8u, 18u, (7u, 7u, 7u)
-#define PPUTLIMPL_UDEC_342u  0x156u, 8u, 18u, (2u, 3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_341u  0x155u, 8u, 18u, (11u, 31u)
-#define PPUTLIMPL_UDEC_340u  0x154u, 8u, 18u, (2u, 2u, 5u, 17u)
-#define PPUTLIMPL_UDEC_339u  0x153u, 8u, 18u, (3u, 113u)
-#define PPUTLIMPL_UDEC_338u  0x152u, 8u, 18u, (2u, 13u, 13u)
-#define PPUTLIMPL_UDEC_337u  0x151u, 8u, 18u, ()
-#define PPUTLIMPL_UDEC_336u  0x150u, 8u, 18u, (2u, 2u, 2u, 2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_335u  0x14Fu, 8u, 18u, (5u, 67u)
-#define PPUTLIMPL_UDEC_334u  0x14Eu, 8u, 18u, (2u, 167u)
-#define PPUTLIMPL_UDEC_333u  0x14Du, 8u, 18u, (3u, 3u, 37u)
-#define PPUTLIMPL_UDEC_332u  0x14Cu, 8u, 18u, (2u, 2u, 83u)
-#define PPUTLIMPL_UDEC_331u  0x14Bu, 8u, 18u, ()
-#define PPUTLIMPL_UDEC_330u  0x14Au, 8u, 18u, (2u, 3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_329u  0x149u, 8u, 18u, (7u, 47u)
-#define PPUTLIMPL_UDEC_328u  0x148u, 8u, 18u, (2u, 2u, 2u, 41u)
-#define PPUTLIMPL_UDEC_327u  0x147u, 8u, 18u, (3u, 109u)
-#define PPUTLIMPL_UDEC_326u  0x146u, 8u, 18u, (2u, 163u)
-#define PPUTLIMPL_UDEC_325u  0x145u, 8u, 18u, (5u, 5u, 13u)
-#define PPUTLIMPL_UDEC_324u  0x144u, 8u, 18u, (2u, 2u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_323u  0x143u, 8u, 17u, (17u, 19u)
-#define PPUTLIMPL_UDEC_322u  0x142u, 8u, 17u, (2u, 7u, 23u)
-#define PPUTLIMPL_UDEC_321u  0x141u, 8u, 17u, (3u, 107u)
-#define PPUTLIMPL_UDEC_320u  0x140u, 8u, 17u, (2u, 2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_319u  0x13Fu, 8u, 17u, (11u, 29u)
-#define PPUTLIMPL_UDEC_318u  0x13Eu, 8u, 17u, (2u, 3u, 53u)
-#define PPUTLIMPL_UDEC_317u  0x13Du, 8u, 17u, ()
-#define PPUTLIMPL_UDEC_316u  0x13Cu, 8u, 17u, (2u, 2u, 79u)
-#define PPUTLIMPL_UDEC_315u  0x13Bu, 8u, 17u, (3u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_314u  0x13Au, 8u, 17u, (2u, 157u)
-#define PPUTLIMPL_UDEC_313u  0x139u, 8u, 17u, ()
-#define PPUTLIMPL_UDEC_312u  0x138u, 8u, 17u, (2u, 2u, 2u, 3u, 13u)
-#define PPUTLIMPL_UDEC_311u  0x137u, 8u, 17u, ()
-#define PPUTLIMPL_UDEC_310u  0x136u, 8u, 17u, (2u, 5u, 31u)
-#define PPUTLIMPL_UDEC_309u  0x135u, 8u, 17u, (3u, 103u)
-#define PPUTLIMPL_UDEC_308u  0x134u, 8u, 17u, (2u, 2u, 7u, 11u)
-#define PPUTLIMPL_UDEC_307u  0x133u, 8u, 17u, ()
-#define PPUTLIMPL_UDEC_306u  0x132u, 8u, 17u, (2u, 3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_305u  0x131u, 8u, 17u, (5u, 61u)
-#define PPUTLIMPL_UDEC_304u  0x130u, 8u, 17u, (2u, 2u, 2u, 2u, 19u)
-#define PPUTLIMPL_UDEC_303u  0x12Fu, 8u, 17u, (3u, 101u)
-#define PPUTLIMPL_UDEC_302u  0x12Eu, 8u, 17u, (2u, 151u)
-#define PPUTLIMPL_UDEC_301u  0x12Du, 8u, 17u, (7u, 43u)
-#define PPUTLIMPL_UDEC_300u  0x12Cu, 8u, 17u, (2u, 2u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_299u  0x12Bu, 8u, 17u, (13u, 23u)
-#define PPUTLIMPL_UDEC_298u  0x12Au, 8u, 17u, (2u, 149u)
-#define PPUTLIMPL_UDEC_297u  0x129u, 8u, 17u, (3u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_296u  0x128u, 8u, 17u, (2u, 2u, 2u, 37u)
-#define PPUTLIMPL_UDEC_295u  0x127u, 8u, 17u, (5u, 59u)
-#define PPUTLIMPL_UDEC_294u  0x126u, 8u, 17u, (2u, 3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_293u  0x125u, 8u, 17u, ()
-#define PPUTLIMPL_UDEC_292u  0x124u, 8u, 17u, (2u, 2u, 73u)
-#define PPUTLIMPL_UDEC_291u  0x123u, 8u, 17u, (3u, 97u)
-#define PPUTLIMPL_UDEC_290u  0x122u, 8u, 17u, (2u, 5u, 29u)
-#define PPUTLIMPL_UDEC_289u  0x121u, 8u, 17u, (17u, 17u)
-#define PPUTLIMPL_UDEC_288u  0x120u, 8u, 16u, (2u, 2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_287u  0x11Fu, 8u, 16u, (7u, 41u)
-#define PPUTLIMPL_UDEC_286u  0x11Eu, 8u, 16u, (2u, 11u, 13u)
-#define PPUTLIMPL_UDEC_285u  0x11Du, 8u, 16u, (3u, 5u, 19u)
-#define PPUTLIMPL_UDEC_284u  0x11Cu, 8u, 16u, (2u, 2u, 71u)
-#define PPUTLIMPL_UDEC_283u  0x11Bu, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_282u  0x11Au, 8u, 16u, (2u, 3u, 47u)
-#define PPUTLIMPL_UDEC_281u  0x119u, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_280u  0x118u, 8u, 16u, (2u, 2u, 2u, 5u, 7u)
-#define PPUTLIMPL_UDEC_279u  0x117u, 8u, 16u, (3u, 3u, 31u)
-#define PPUTLIMPL_UDEC_278u  0x116u, 8u, 16u, (2u, 139u)
-#define PPUTLIMPL_UDEC_277u  0x115u, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_276u  0x114u, 8u, 16u, (2u, 2u, 3u, 23u)
-#define PPUTLIMPL_UDEC_275u  0x113u, 8u, 16u, (5u, 5u, 11u)
-#define PPUTLIMPL_UDEC_274u  0x112u, 8u, 16u, (2u, 137u)
-#define PPUTLIMPL_UDEC_273u  0x111u, 8u, 16u, (3u, 7u, 13u)
-#define PPUTLIMPL_UDEC_272u  0x110u, 8u, 16u, (2u, 2u, 2u, 2u, 17u)
-#define PPUTLIMPL_UDEC_271u  0x10Fu, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_270u  0x10Eu, 8u, 16u, (2u, 3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_269u  0x10Du, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_268u  0x10Cu, 8u, 16u, (2u, 2u, 67u)
-#define PPUTLIMPL_UDEC_267u  0x10Bu, 8u, 16u, (3u, 89u)
-#define PPUTLIMPL_UDEC_266u  0x10Au, 8u, 16u, (2u, 7u, 19u)
-#define PPUTLIMPL_UDEC_265u  0x109u, 8u, 16u, (5u, 53u)
-#define PPUTLIMPL_UDEC_264u  0x108u, 8u, 16u, (2u, 2u, 2u, 3u, 11u)
-#define PPUTLIMPL_UDEC_263u  0x107u, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_262u  0x106u, 8u, 16u, (2u, 131u)
-#define PPUTLIMPL_UDEC_261u  0x105u, 8u, 16u, (3u, 3u, 29u)
-#define PPUTLIMPL_UDEC_260u  0x104u, 8u, 16u, (2u, 2u, 5u, 13u)
-#define PPUTLIMPL_UDEC_259u  0x103u, 8u, 16u, (7u, 37u)
-#define PPUTLIMPL_UDEC_258u  0x102u, 8u, 16u, (2u, 3u, 43u)
-#define PPUTLIMPL_UDEC_257u  0x101u, 8u, 16u, ()
-#define PPUTLIMPL_UDEC_256u  0x100u, 8u, 16u, (2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_255u  0x0FFu, 7u, 15u, (3u, 5u, 17u)
-#define PPUTLIMPL_UDEC_254u  0x0FEu, 7u, 15u, (2u, 127u)
-#define PPUTLIMPL_UDEC_253u  0x0FDu, 7u, 15u, (11u, 23u)
-#define PPUTLIMPL_UDEC_252u  0x0FCu, 7u, 15u, (2u, 2u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_251u  0x0FBu, 7u, 15u, ()
-#define PPUTLIMPL_UDEC_250u  0x0FAu, 7u, 15u, (2u, 5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_249u  0x0F9u, 7u, 15u, (3u, 83u)
-#define PPUTLIMPL_UDEC_248u  0x0F8u, 7u, 15u, (2u, 2u, 2u, 31u)
-#define PPUTLIMPL_UDEC_247u  0x0F7u, 7u, 15u, (13u, 19u)
-#define PPUTLIMPL_UDEC_246u  0x0F6u, 7u, 15u, (2u, 3u, 41u)
-#define PPUTLIMPL_UDEC_245u  0x0F5u, 7u, 15u, (5u, 7u, 7u)
-#define PPUTLIMPL_UDEC_244u  0x0F4u, 7u, 15u, (2u, 2u, 61u)
-#define PPUTLIMPL_UDEC_243u  0x0F3u, 7u, 15u, (3u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_242u  0x0F2u, 7u, 15u, (2u, 11u, 11u)
-#define PPUTLIMPL_UDEC_241u  0x0F1u, 7u, 15u, ()
-#define PPUTLIMPL_UDEC_240u  0x0F0u, 7u, 15u, (2u, 2u, 2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_239u  0x0EFu, 7u, 15u, ()
-#define PPUTLIMPL_UDEC_238u  0x0EEu, 7u, 15u, (2u, 7u, 17u)
-#define PPUTLIMPL_UDEC_237u  0x0EDu, 7u, 15u, (3u, 79u)
-#define PPUTLIMPL_UDEC_236u  0x0ECu, 7u, 15u, (2u, 2u, 59u)
-#define PPUTLIMPL_UDEC_235u  0x0EBu, 7u, 15u, (5u, 47u)
-#define PPUTLIMPL_UDEC_234u  0x0EAu, 7u, 15u, (2u, 3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_233u  0x0E9u, 7u, 15u, ()
-#define PPUTLIMPL_UDEC_232u  0x0E8u, 7u, 15u, (2u, 2u, 2u, 29u)
-#define PPUTLIMPL_UDEC_231u  0x0E7u, 7u, 15u, (3u, 7u, 11u)
-#define PPUTLIMPL_UDEC_230u  0x0E6u, 7u, 15u, (2u, 5u, 23u)
-#define PPUTLIMPL_UDEC_229u  0x0E5u, 7u, 15u, ()
-#define PPUTLIMPL_UDEC_228u  0x0E4u, 7u, 15u, (2u, 2u, 3u, 19u)
-#define PPUTLIMPL_UDEC_227u  0x0E3u, 7u, 15u, ()
-#define PPUTLIMPL_UDEC_226u  0x0E2u, 7u, 15u, (2u, 113u)
-#define PPUTLIMPL_UDEC_225u  0x0E1u, 7u, 15u, (3u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_224u  0x0E0u, 7u, 14u, (2u, 2u, 2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_223u  0x0DFu, 7u, 14u, ()
-#define PPUTLIMPL_UDEC_222u  0x0DEu, 7u, 14u, (2u, 3u, 37u)
-#define PPUTLIMPL_UDEC_221u  0x0DDu, 7u, 14u, (13u, 17u)
-#define PPUTLIMPL_UDEC_220u  0x0DCu, 7u, 14u, (2u, 2u, 5u, 11u)
-#define PPUTLIMPL_UDEC_219u  0x0DBu, 7u, 14u, (3u, 73u)
-#define PPUTLIMPL_UDEC_218u  0x0DAu, 7u, 14u, (2u, 109u)
-#define PPUTLIMPL_UDEC_217u  0x0D9u, 7u, 14u, (7u, 31u)
-#define PPUTLIMPL_UDEC_216u  0x0D8u, 7u, 14u, (2u, 2u, 2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_215u  0x0D7u, 7u, 14u, (5u, 43u)
-#define PPUTLIMPL_UDEC_214u  0x0D6u, 7u, 14u, (2u, 107u)
-#define PPUTLIMPL_UDEC_213u  0x0D5u, 7u, 14u, (3u, 71u)
-#define PPUTLIMPL_UDEC_212u  0x0D4u, 7u, 14u, (2u, 2u, 53u)
-#define PPUTLIMPL_UDEC_211u  0x0D3u, 7u, 14u, ()
-#define PPUTLIMPL_UDEC_210u  0x0D2u, 7u, 14u, (2u, 3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_209u  0x0D1u, 7u, 14u, (11u, 19u)
-#define PPUTLIMPL_UDEC_208u  0x0D0u, 7u, 14u, (2u, 2u, 2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_207u  0x0CFu, 7u, 14u, (3u, 3u, 23u)
-#define PPUTLIMPL_UDEC_206u  0x0CEu, 7u, 14u, (2u, 103u)
-#define PPUTLIMPL_UDEC_205u  0x0CDu, 7u, 14u, (5u, 41u)
-#define PPUTLIMPL_UDEC_204u  0x0CCu, 7u, 14u, (2u, 2u, 3u, 17u)
-#define PPUTLIMPL_UDEC_203u  0x0CBu, 7u, 14u, (7u, 29u)
-#define PPUTLIMPL_UDEC_202u  0x0CAu, 7u, 14u, (2u, 101u)
-#define PPUTLIMPL_UDEC_201u  0x0C9u, 7u, 14u, (3u, 67u)
-#define PPUTLIMPL_UDEC_200u  0x0C8u, 7u, 14u, (2u, 2u, 2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_199u  0x0C7u, 7u, 14u, ()
-#define PPUTLIMPL_UDEC_198u  0x0C6u, 7u, 14u, (2u, 3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_197u  0x0C5u, 7u, 14u, ()
-#define PPUTLIMPL_UDEC_196u  0x0C4u, 7u, 14u, (2u, 2u, 7u, 7u)
-#define PPUTLIMPL_UDEC_195u  0x0C3u, 7u, 13u, (3u, 5u, 13u)
-#define PPUTLIMPL_UDEC_194u  0x0C2u, 7u, 13u, (2u, 97u)
-#define PPUTLIMPL_UDEC_193u  0x0C1u, 7u, 13u, ()
-#define PPUTLIMPL_UDEC_192u  0x0C0u, 7u, 13u, (2u, 2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_191u  0x0BFu, 7u, 13u, ()
-#define PPUTLIMPL_UDEC_190u  0x0BEu, 7u, 13u, (2u, 5u, 19u)
-#define PPUTLIMPL_UDEC_189u  0x0BDu, 7u, 13u, (3u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_188u  0x0BCu, 7u, 13u, (2u, 2u, 47u)
-#define PPUTLIMPL_UDEC_187u  0x0BBu, 7u, 13u, (11u, 17u)
-#define PPUTLIMPL_UDEC_186u  0x0BAu, 7u, 13u, (2u, 3u, 31u)
-#define PPUTLIMPL_UDEC_185u  0x0B9u, 7u, 13u, (5u, 37u)
-#define PPUTLIMPL_UDEC_184u  0x0B8u, 7u, 13u, (2u, 2u, 2u, 23u)
-#define PPUTLIMPL_UDEC_183u  0x0B7u, 7u, 13u, (3u, 61u)
-#define PPUTLIMPL_UDEC_182u  0x0B6u, 7u, 13u, (2u, 7u, 13u)
-#define PPUTLIMPL_UDEC_181u  0x0B5u, 7u, 13u, ()
-#define PPUTLIMPL_UDEC_180u  0x0B4u, 7u, 13u, (2u, 2u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_179u  0x0B3u, 7u, 13u, ()
-#define PPUTLIMPL_UDEC_178u  0x0B2u, 7u, 13u, (2u, 89u)
-#define PPUTLIMPL_UDEC_177u  0x0B1u, 7u, 13u, (3u, 59u)
-#define PPUTLIMPL_UDEC_176u  0x0B0u, 7u, 13u, (2u, 2u, 2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_175u  0x0AFu, 7u, 13u, (5u, 5u, 7u)
-#define PPUTLIMPL_UDEC_174u  0x0AEu, 7u, 13u, (2u, 3u, 29u)
-#define PPUTLIMPL_UDEC_173u  0x0ADu, 7u, 13u, ()
-#define PPUTLIMPL_UDEC_172u  0x0ACu, 7u, 13u, (2u, 2u, 43u)
-#define PPUTLIMPL_UDEC_171u  0x0ABu, 7u, 13u, (3u, 3u, 19u)
-#define PPUTLIMPL_UDEC_170u  0x0AAu, 7u, 13u, (2u, 5u, 17u)
-#define PPUTLIMPL_UDEC_169u  0x0A9u, 7u, 13u, (13u, 13u)
-#define PPUTLIMPL_UDEC_168u  0x0A8u, 7u, 12u, (2u, 2u, 2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_167u  0x0A7u, 7u, 12u, ()
-#define PPUTLIMPL_UDEC_166u  0x0A6u, 7u, 12u, (2u, 83u)
-#define PPUTLIMPL_UDEC_165u  0x0A5u, 7u, 12u, (3u, 5u, 11u)
-#define PPUTLIMPL_UDEC_164u  0x0A4u, 7u, 12u, (2u, 2u, 41u)
-#define PPUTLIMPL_UDEC_163u  0x0A3u, 7u, 12u, ()
-#define PPUTLIMPL_UDEC_162u  0x0A2u, 7u, 12u, (2u, 3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_161u  0x0A1u, 7u, 12u, (7u, 23u)
-#define PPUTLIMPL_UDEC_160u  0x0A0u, 7u, 12u, (2u, 2u, 2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_159u  0x09Fu, 7u, 12u, (3u, 53u)
-#define PPUTLIMPL_UDEC_158u  0x09Eu, 7u, 12u, (2u, 79u)
-#define PPUTLIMPL_UDEC_157u  0x09Du, 7u, 12u, ()
-#define PPUTLIMPL_UDEC_156u  0x09Cu, 7u, 12u, (2u, 2u, 3u, 13u)
-#define PPUTLIMPL_UDEC_155u  0x09Bu, 7u, 12u, (5u, 31u)
-#define PPUTLIMPL_UDEC_154u  0x09Au, 7u, 12u, (2u, 7u, 11u)
-#define PPUTLIMPL_UDEC_153u  0x099u, 7u, 12u, (3u, 3u, 17u)
-#define PPUTLIMPL_UDEC_152u  0x098u, 7u, 12u, (2u, 2u, 2u, 19u)
-#define PPUTLIMPL_UDEC_151u  0x097u, 7u, 12u, ()
-#define PPUTLIMPL_UDEC_150u  0x096u, 7u, 12u, (2u, 3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_149u  0x095u, 7u, 12u, ()
-#define PPUTLIMPL_UDEC_148u  0x094u, 7u, 12u, (2u, 2u, 37u)
-#define PPUTLIMPL_UDEC_147u  0x093u, 7u, 12u, (3u, 7u, 7u)
-#define PPUTLIMPL_UDEC_146u  0x092u, 7u, 12u, (2u, 73u)
-#define PPUTLIMPL_UDEC_145u  0x091u, 7u, 12u, (5u, 29u)
-#define PPUTLIMPL_UDEC_144u  0x090u, 7u, 12u, (2u, 2u, 2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_143u  0x08Fu, 7u, 11u, (11u, 13u)
-#define PPUTLIMPL_UDEC_142u  0x08Eu, 7u, 11u, (2u, 71u)
-#define PPUTLIMPL_UDEC_141u  0x08Du, 7u, 11u, (3u, 47u)
-#define PPUTLIMPL_UDEC_140u  0x08Cu, 7u, 11u, (2u, 2u, 5u, 7u)
-#define PPUTLIMPL_UDEC_139u  0x08Bu, 7u, 11u, ()
-#define PPUTLIMPL_UDEC_138u  0x08Au, 7u, 11u, (2u, 3u, 23u)
-#define PPUTLIMPL_UDEC_137u  0x089u, 7u, 11u, ()
-#define PPUTLIMPL_UDEC_136u  0x088u, 7u, 11u, (2u, 2u, 2u, 17u)
-#define PPUTLIMPL_UDEC_135u  0x087u, 7u, 11u, (3u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_134u  0x086u, 7u, 11u, (2u, 67u)
-#define PPUTLIMPL_UDEC_133u  0x085u, 7u, 11u, (7u, 19u)
-#define PPUTLIMPL_UDEC_132u  0x084u, 7u, 11u, (2u, 2u, 3u, 11u)
-#define PPUTLIMPL_UDEC_131u  0x083u, 7u, 11u, ()
-#define PPUTLIMPL_UDEC_130u  0x082u, 7u, 11u, (2u, 5u, 13u)
-#define PPUTLIMPL_UDEC_129u  0x081u, 7u, 11u, (3u, 43u)
-#define PPUTLIMPL_UDEC_128u  0x080u, 7u, 11u, (2u, 2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_127u  0x07Fu, 6u, 11u, ()
-#define PPUTLIMPL_UDEC_126u  0x07Eu, 6u, 11u, (2u, 3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_125u  0x07Du, 6u, 11u, (5u, 5u, 5u)
-#define PPUTLIMPL_UDEC_124u  0x07Cu, 6u, 11u, (2u, 2u, 31u)
-#define PPUTLIMPL_UDEC_123u  0x07Bu, 6u, 11u, (3u, 41u)
-#define PPUTLIMPL_UDEC_122u  0x07Au, 6u, 11u, (2u, 61u)
-#define PPUTLIMPL_UDEC_121u  0x079u, 6u, 11u, (11u, 11u)
-#define PPUTLIMPL_UDEC_120u  0x078u, 6u, 10u, (2u, 2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_119u  0x077u, 6u, 10u, (7u, 17u)
-#define PPUTLIMPL_UDEC_118u  0x076u, 6u, 10u, (2u, 59u)
-#define PPUTLIMPL_UDEC_117u  0x075u, 6u, 10u, (3u, 3u, 13u)
-#define PPUTLIMPL_UDEC_116u  0x074u, 6u, 10u, (2u, 2u, 29u)
-#define PPUTLIMPL_UDEC_115u  0x073u, 6u, 10u, (5u, 23u)
-#define PPUTLIMPL_UDEC_114u  0x072u, 6u, 10u, (2u, 3u, 19u)
-#define PPUTLIMPL_UDEC_113u  0x071u, 6u, 10u, ()
-#define PPUTLIMPL_UDEC_112u  0x070u, 6u, 10u, (2u, 2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_111u  0x06Fu, 6u, 10u, (3u, 37u)
-#define PPUTLIMPL_UDEC_110u  0x06Eu, 6u, 10u, (2u, 5u, 11u)
-#define PPUTLIMPL_UDEC_109u  0x06Du, 6u, 10u, ()
-#define PPUTLIMPL_UDEC_108u  0x06Cu, 6u, 10u, (2u, 2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_107u  0x06Bu, 6u, 10u, ()
-#define PPUTLIMPL_UDEC_106u  0x06Au, 6u, 10u, (2u, 53u)
-#define PPUTLIMPL_UDEC_105u  0x069u, 6u, 10u, (3u, 5u, 7u)
-#define PPUTLIMPL_UDEC_104u  0x068u, 6u, 10u, (2u, 2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_103u  0x067u, 6u, 10u, ()
-#define PPUTLIMPL_UDEC_102u  0x066u, 6u, 10u, (2u, 3u, 17u)
-#define PPUTLIMPL_UDEC_101u  0x065u, 6u, 10u, ()
-#define PPUTLIMPL_UDEC_100u  0x064u, 6u, 10u, (2u, 2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_99u   0x063u, 6u, 9u, (3u, 3u, 11u)
-#define PPUTLIMPL_UDEC_98u   0x062u, 6u, 9u, (2u, 7u, 7u)
-#define PPUTLIMPL_UDEC_97u   0x061u, 6u, 9u, ()
-#define PPUTLIMPL_UDEC_96u   0x060u, 6u, 9u, (2u, 2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_95u   0x05Fu, 6u, 9u, (5u, 19u)
-#define PPUTLIMPL_UDEC_94u   0x05Eu, 6u, 9u, (2u, 47u)
-#define PPUTLIMPL_UDEC_93u   0x05Du, 6u, 9u, (3u, 31u)
-#define PPUTLIMPL_UDEC_92u   0x05Cu, 6u, 9u, (2u, 2u, 23u)
-#define PPUTLIMPL_UDEC_91u   0x05Bu, 6u, 9u, (7u, 13u)
-#define PPUTLIMPL_UDEC_90u   0x05Au, 6u, 9u, (2u, 3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_89u   0x059u, 6u, 9u, ()
-#define PPUTLIMPL_UDEC_88u   0x058u, 6u, 9u, (2u, 2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_87u   0x057u, 6u, 9u, (3u, 29u)
-#define PPUTLIMPL_UDEC_86u   0x056u, 6u, 9u, (2u, 43u)
-#define PPUTLIMPL_UDEC_85u   0x055u, 6u, 9u, (5u, 17u)
-#define PPUTLIMPL_UDEC_84u   0x054u, 6u, 9u, (2u, 2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_83u   0x053u, 6u, 9u, ()
-#define PPUTLIMPL_UDEC_82u   0x052u, 6u, 9u, (2u, 41u)
-#define PPUTLIMPL_UDEC_81u   0x051u, 6u, 9u, (3u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_80u   0x050u, 6u, 8u, (2u, 2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_79u   0x04Fu, 6u, 8u, ()
-#define PPUTLIMPL_UDEC_78u   0x04Eu, 6u, 8u, (2u, 3u, 13u)
-#define PPUTLIMPL_UDEC_77u   0x04Du, 6u, 8u, (7u, 11u)
-#define PPUTLIMPL_UDEC_76u   0x04Cu, 6u, 8u, (2u, 2u, 19u)
-#define PPUTLIMPL_UDEC_75u   0x04Bu, 6u, 8u, (3u, 5u, 5u)
-#define PPUTLIMPL_UDEC_74u   0x04Au, 6u, 8u, (2u, 37u)
-#define PPUTLIMPL_UDEC_73u   0x049u, 6u, 8u, ()
-#define PPUTLIMPL_UDEC_72u   0x048u, 6u, 8u, (2u, 2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_71u   0x047u, 6u, 8u, ()
-#define PPUTLIMPL_UDEC_70u   0x046u, 6u, 8u, (2u, 5u, 7u)
-#define PPUTLIMPL_UDEC_69u   0x045u, 6u, 8u, (3u, 23u)
-#define PPUTLIMPL_UDEC_68u   0x044u, 6u, 8u, (2u, 2u, 17u)
-#define PPUTLIMPL_UDEC_67u   0x043u, 6u, 8u, ()
-#define PPUTLIMPL_UDEC_66u   0x042u, 6u, 8u, (2u, 3u, 11u)
-#define PPUTLIMPL_UDEC_65u   0x041u, 6u, 8u, (5u, 13u)
-#define PPUTLIMPL_UDEC_64u   0x040u, 6u, 8u, (2u, 2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_63u   0x03Fu, 5u, 7u, (3u, 3u, 7u)
-#define PPUTLIMPL_UDEC_62u   0x03Eu, 5u, 7u, (2u, 31u)
-#define PPUTLIMPL_UDEC_61u   0x03Du, 5u, 7u, ()
-#define PPUTLIMPL_UDEC_60u   0x03Cu, 5u, 7u, (2u, 2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_59u   0x03Bu, 5u, 7u, ()
-#define PPUTLIMPL_UDEC_58u   0x03Au, 5u, 7u, (2u, 29u)
-#define PPUTLIMPL_UDEC_57u   0x039u, 5u, 7u, (3u, 19u)
-#define PPUTLIMPL_UDEC_56u   0x038u, 5u, 7u, (2u, 2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_55u   0x037u, 5u, 7u, (5u, 11u)
-#define PPUTLIMPL_UDEC_54u   0x036u, 5u, 7u, (2u, 3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_53u   0x035u, 5u, 7u, ()
-#define PPUTLIMPL_UDEC_52u   0x034u, 5u, 7u, (2u, 2u, 13u)
-#define PPUTLIMPL_UDEC_51u   0x033u, 5u, 7u, (3u, 17u)
-#define PPUTLIMPL_UDEC_50u   0x032u, 5u, 7u, (2u, 5u, 5u)
-#define PPUTLIMPL_UDEC_49u   0x031u, 5u, 7u, (7u, 7u)
-#define PPUTLIMPL_UDEC_48u   0x030u, 5u, 6u, (2u, 2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_47u   0x02Fu, 5u, 6u, ()
-#define PPUTLIMPL_UDEC_46u   0x02Eu, 5u, 6u, (2u, 23u)
-#define PPUTLIMPL_UDEC_45u   0x02Du, 5u, 6u, (3u, 3u, 5u)
-#define PPUTLIMPL_UDEC_44u   0x02Cu, 5u, 6u, (2u, 2u, 11u)
-#define PPUTLIMPL_UDEC_43u   0x02Bu, 5u, 6u, ()
-#define PPUTLIMPL_UDEC_42u   0x02Au, 5u, 6u, (2u, 3u, 7u)
-#define PPUTLIMPL_UDEC_41u   0x029u, 5u, 6u, ()
-#define PPUTLIMPL_UDEC_40u   0x028u, 5u, 6u, (2u, 2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_39u   0x027u, 5u, 6u, (3u, 13u)
-#define PPUTLIMPL_UDEC_38u   0x026u, 5u, 6u, (2u, 19u)
-#define PPUTLIMPL_UDEC_37u   0x025u, 5u, 6u, ()
-#define PPUTLIMPL_UDEC_36u   0x024u, 5u, 6u, (2u, 2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_35u   0x023u, 5u, 5u, (5u, 7u)
-#define PPUTLIMPL_UDEC_34u   0x022u, 5u, 5u, (2u, 17u)
-#define PPUTLIMPL_UDEC_33u   0x021u, 5u, 5u, (3u, 11u)
-#define PPUTLIMPL_UDEC_32u   0x020u, 5u, 5u, (2u, 2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_31u   0x01Fu, 4u, 5u, ()
-#define PPUTLIMPL_UDEC_30u   0x01Eu, 4u, 5u, (2u, 3u, 5u)
-#define PPUTLIMPL_UDEC_29u   0x01Du, 4u, 5u, ()
-#define PPUTLIMPL_UDEC_28u   0x01Cu, 4u, 5u, (2u, 2u, 7u)
-#define PPUTLIMPL_UDEC_27u   0x01Bu, 4u, 5u, (3u, 3u, 3u)
-#define PPUTLIMPL_UDEC_26u   0x01Au, 4u, 5u, (2u, 13u)
-#define PPUTLIMPL_UDEC_25u   0x019u, 4u, 5u, (5u, 5u)
-#define PPUTLIMPL_UDEC_24u   0x018u, 4u, 4u, (2u, 2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_23u   0x017u, 4u, 4u, ()
-#define PPUTLIMPL_UDEC_22u   0x016u, 4u, 4u, (2u, 11u)
-#define PPUTLIMPL_UDEC_21u   0x015u, 4u, 4u, (3u, 7u)
-#define PPUTLIMPL_UDEC_20u   0x014u, 4u, 4u, (2u, 2u, 5u)
-#define PPUTLIMPL_UDEC_19u   0x013u, 4u, 4u, ()
-#define PPUTLIMPL_UDEC_18u   0x012u, 4u, 4u, (2u, 3u, 3u)
-#define PPUTLIMPL_UDEC_17u   0x011u, 4u, 4u, ()
-#define PPUTLIMPL_UDEC_16u   0x010u, 4u, 4u, (2u, 2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_15u   0x00Fu, 3u, 3u, (3u, 5u)
-#define PPUTLIMPL_UDEC_14u   0x00Eu, 3u, 3u, (2u, 7u)
-#define PPUTLIMPL_UDEC_13u   0x00Du, 3u, 3u, ()
-#define PPUTLIMPL_UDEC_12u   0x00Cu, 3u, 3u, (2u, 2u, 3u)
-#define PPUTLIMPL_UDEC_11u   0x00Bu, 3u, 3u, ()
-#define PPUTLIMPL_UDEC_10u   0x00Au, 3u, 3u, (2u, 5u)
-#define PPUTLIMPL_UDEC_9u    0x009u, 3u, 3u, (3u, 3u)
-#define PPUTLIMPL_UDEC_8u    0x008u, 3u, 2u, (2u, 2u, 2u)
-#define PPUTLIMPL_UDEC_7u    0x007u, 2u, 2u, ()
-#define PPUTLIMPL_UDEC_6u    0x006u, 2u, 2u, (2u, 3u)
-#define PPUTLIMPL_UDEC_5u    0x005u, 2u, 2u, ()
-#define PPUTLIMPL_UDEC_4u    0x004u, 2u, 2u, (2u, 2u)
-#define PPUTLIMPL_UDEC_3u    0x003u, 1u, 1u, ()
-#define PPUTLIMPL_UDEC_2u    0x002u, 1u, 1u, ()
-#define PPUTLIMPL_UDEC_1u    0x001u, 0u, 1u, ()
-#define PPUTLIMPL_UDEC_0u    0x000u, , 0u, ()
+#define PPUTLIMPL_UDEC_4095u 0xFFFu, 11, 63, 3, 3, 5, 7, 13
+#define PPUTLIMPL_UDEC_4094u 0xFFEu, 11, 63, 2, 23, 89
+#define PPUTLIMPL_UDEC_4093u 0xFFDu, 11, 63,
+#define PPUTLIMPL_UDEC_4092u 0xFFCu, 11, 63, 2, 2, 3, 11, 31
+#define PPUTLIMPL_UDEC_4091u 0xFFBu, 11, 63,
+#define PPUTLIMPL_UDEC_4090u 0xFFAu, 11, 63, 2, 5, 409
+#define PPUTLIMPL_UDEC_4089u 0xFF9u, 11, 63, 3, 29, 47
+#define PPUTLIMPL_UDEC_4088u 0xFF8u, 11, 63, 2, 2, 2, 7, 73
+#define PPUTLIMPL_UDEC_4087u 0xFF7u, 11, 63, 61, 67
+#define PPUTLIMPL_UDEC_4086u 0xFF6u, 11, 63, 2, 3, 3, 227
+#define PPUTLIMPL_UDEC_4085u 0xFF5u, 11, 63, 5, 19, 43
+#define PPUTLIMPL_UDEC_4084u 0xFF4u, 11, 63, 2, 2, 1021
+#define PPUTLIMPL_UDEC_4083u 0xFF3u, 11, 63, 3, 1361
+#define PPUTLIMPL_UDEC_4082u 0xFF2u, 11, 63, 2, 13, 157
+#define PPUTLIMPL_UDEC_4081u 0xFF1u, 11, 63, 7, 11, 53
+#define PPUTLIMPL_UDEC_4080u 0xFF0u, 11, 63, 2, 2, 2, 2, 3, 5, 17
+#define PPUTLIMPL_UDEC_4079u 0xFEFu, 11, 63,
+#define PPUTLIMPL_UDEC_4078u 0xFEEu, 11, 63, 2, 2039
+#define PPUTLIMPL_UDEC_4077u 0xFEDu, 11, 63, 3, 3, 3, 151
+#define PPUTLIMPL_UDEC_4076u 0xFECu, 11, 63, 2, 2, 1019
+#define PPUTLIMPL_UDEC_4075u 0xFEBu, 11, 63, 5, 5, 163
+#define PPUTLIMPL_UDEC_4074u 0xFEAu, 11, 63, 2, 3, 7, 97
+#define PPUTLIMPL_UDEC_4073u 0xFE9u, 11, 63,
+#define PPUTLIMPL_UDEC_4072u 0xFE8u, 11, 63, 2, 2, 2, 509
+#define PPUTLIMPL_UDEC_4071u 0xFE7u, 11, 63, 3, 23, 59
+#define PPUTLIMPL_UDEC_4070u 0xFE6u, 11, 63, 2, 5, 11, 37
+#define PPUTLIMPL_UDEC_4069u 0xFE5u, 11, 63, 13, 313
+#define PPUTLIMPL_UDEC_4068u 0xFE4u, 11, 63, 2, 2, 3, 3, 113
+#define PPUTLIMPL_UDEC_4067u 0xFE3u, 11, 63, 7, 7, 83
+#define PPUTLIMPL_UDEC_4066u 0xFE2u, 11, 63, 2, 19, 107
+#define PPUTLIMPL_UDEC_4065u 0xFE1u, 11, 63, 3, 5, 271
+#define PPUTLIMPL_UDEC_4064u 0xFE0u, 11, 63, 2, 2, 2, 2, 2, 127
+#define PPUTLIMPL_UDEC_4063u 0xFDFu, 11, 63, 17, 239
+#define PPUTLIMPL_UDEC_4062u 0xFDEu, 11, 63, 2, 3, 677
+#define PPUTLIMPL_UDEC_4061u 0xFDDu, 11, 63, 31, 131
+#define PPUTLIMPL_UDEC_4060u 0xFDCu, 11, 63, 2, 2, 5, 7, 29
+#define PPUTLIMPL_UDEC_4059u 0xFDBu, 11, 63, 3, 3, 11, 41
+#define PPUTLIMPL_UDEC_4058u 0xFDAu, 11, 63, 2, 2029
+#define PPUTLIMPL_UDEC_4057u 0xFD9u, 11, 63,
+#define PPUTLIMPL_UDEC_4056u 0xFD8u, 11, 63, 2, 2, 2, 3, 13, 13
+#define PPUTLIMPL_UDEC_4055u 0xFD7u, 11, 63, 5, 811
+#define PPUTLIMPL_UDEC_4054u 0xFD6u, 11, 63, 2, 2027
+#define PPUTLIMPL_UDEC_4053u 0xFD5u, 11, 63, 3, 7, 193
+#define PPUTLIMPL_UDEC_4052u 0xFD4u, 11, 63, 2, 2, 1013
+#define PPUTLIMPL_UDEC_4051u 0xFD3u, 11, 63,
+#define PPUTLIMPL_UDEC_4050u 0xFD2u, 11, 63, 2, 3, 3, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_4049u 0xFD1u, 11, 63,
+#define PPUTLIMPL_UDEC_4048u 0xFD0u, 11, 63, 2, 2, 2, 2, 11, 23
+#define PPUTLIMPL_UDEC_4047u 0xFCFu, 11, 63, 3, 19, 71
+#define PPUTLIMPL_UDEC_4046u 0xFCEu, 11, 63, 2, 7, 17, 17
+#define PPUTLIMPL_UDEC_4045u 0xFCDu, 11, 63, 5, 809
+#define PPUTLIMPL_UDEC_4044u 0xFCCu, 11, 63, 2, 2, 3, 337
+#define PPUTLIMPL_UDEC_4043u 0xFCBu, 11, 63, 13, 311
+#define PPUTLIMPL_UDEC_4042u 0xFCAu, 11, 63, 2, 43, 47
+#define PPUTLIMPL_UDEC_4041u 0xFC9u, 11, 63, 3, 3, 449
+#define PPUTLIMPL_UDEC_4040u 0xFC8u, 11, 63, 2, 2, 2, 5, 101
+#define PPUTLIMPL_UDEC_4039u 0xFC7u, 11, 63, 7, 577
+#define PPUTLIMPL_UDEC_4038u 0xFC6u, 11, 63, 2, 3, 673
+#define PPUTLIMPL_UDEC_4037u 0xFC5u, 11, 63, 11, 367
+#define PPUTLIMPL_UDEC_4036u 0xFC4u, 11, 63, 2, 2, 1009
+#define PPUTLIMPL_UDEC_4035u 0xFC3u, 11, 63, 3, 5, 269
+#define PPUTLIMPL_UDEC_4034u 0xFC2u, 11, 63, 2, 2017
+#define PPUTLIMPL_UDEC_4033u 0xFC1u, 11, 63, 37, 109
+#define PPUTLIMPL_UDEC_4032u 0xFC0u, 11, 63, 2, 2, 2, 2, 2, 2, 3, 3, 7
+#define PPUTLIMPL_UDEC_4031u 0xFBFu, 11, 63, 29, 139
+#define PPUTLIMPL_UDEC_4030u 0xFBEu, 11, 63, 2, 5, 13, 31
+#define PPUTLIMPL_UDEC_4029u 0xFBDu, 11, 63, 3, 17, 79
+#define PPUTLIMPL_UDEC_4028u 0xFBCu, 11, 63, 2, 2, 19, 53
+#define PPUTLIMPL_UDEC_4027u 0xFBBu, 11, 63,
+#define PPUTLIMPL_UDEC_4026u 0xFBAu, 11, 63, 2, 3, 11, 61
+#define PPUTLIMPL_UDEC_4025u 0xFB9u, 11, 63, 5, 5, 7, 23
+#define PPUTLIMPL_UDEC_4024u 0xFB8u, 11, 63, 2, 2, 2, 503
+#define PPUTLIMPL_UDEC_4023u 0xFB7u, 11, 63, 3, 3, 3, 149
+#define PPUTLIMPL_UDEC_4022u 0xFB6u, 11, 63, 2, 2011
+#define PPUTLIMPL_UDEC_4021u 0xFB5u, 11, 63,
+#define PPUTLIMPL_UDEC_4020u 0xFB4u, 11, 63, 2, 2, 3, 5, 67
+#define PPUTLIMPL_UDEC_4019u 0xFB3u, 11, 63,
+#define PPUTLIMPL_UDEC_4018u 0xFB2u, 11, 63, 2, 7, 7, 41
+#define PPUTLIMPL_UDEC_4017u 0xFB1u, 11, 63, 3, 13, 103
+#define PPUTLIMPL_UDEC_4016u 0xFB0u, 11, 63, 2, 2, 2, 2, 251
+#define PPUTLIMPL_UDEC_4015u 0xFAFu, 11, 63, 5, 11, 73
+#define PPUTLIMPL_UDEC_4014u 0xFAEu, 11, 63, 2, 3, 3, 223
+#define PPUTLIMPL_UDEC_4013u 0xFADu, 11, 63,
+#define PPUTLIMPL_UDEC_4012u 0xFACu, 11, 63, 2, 2, 17, 59
+#define PPUTLIMPL_UDEC_4011u 0xFABu, 11, 63, 3, 7, 191
+#define PPUTLIMPL_UDEC_4010u 0xFAAu, 11, 63, 2, 5, 401
+#define PPUTLIMPL_UDEC_4009u 0xFA9u, 11, 63, 19, 211
+#define PPUTLIMPL_UDEC_4008u 0xFA8u, 11, 63, 2, 2, 2, 3, 167
+#define PPUTLIMPL_UDEC_4007u 0xFA7u, 11, 63,
+#define PPUTLIMPL_UDEC_4006u 0xFA6u, 11, 63, 2, 2003
+#define PPUTLIMPL_UDEC_4005u 0xFA5u, 11, 63, 3, 3, 5, 89
+#define PPUTLIMPL_UDEC_4004u 0xFA4u, 11, 63, 2, 2, 7, 11, 13
+#define PPUTLIMPL_UDEC_4003u 0xFA3u, 11, 63,
+#define PPUTLIMPL_UDEC_4002u 0xFA2u, 11, 63, 2, 3, 23, 29
+#define PPUTLIMPL_UDEC_4001u 0xFA1u, 11, 63,
+#define PPUTLIMPL_UDEC_4000u 0xFA0u, 11, 63, 2, 2, 2, 2, 2, 5, 5, 5
+#define PPUTLIMPL_UDEC_3999u 0xF9Fu, 11, 63, 3, 31, 43
+#define PPUTLIMPL_UDEC_3998u 0xF9Eu, 11, 63, 2, 1999
+#define PPUTLIMPL_UDEC_3997u 0xF9Du, 11, 63, 7, 571
+#define PPUTLIMPL_UDEC_3996u 0xF9Cu, 11, 63, 2, 2, 3, 3, 3, 37
+#define PPUTLIMPL_UDEC_3995u 0xF9Bu, 11, 63, 5, 17, 47
+#define PPUTLIMPL_UDEC_3994u 0xF9Au, 11, 63, 2, 1997
+#define PPUTLIMPL_UDEC_3993u 0xF99u, 11, 63, 3, 11, 11, 11
+#define PPUTLIMPL_UDEC_3992u 0xF98u, 11, 63, 2, 2, 2, 499
+#define PPUTLIMPL_UDEC_3991u 0xF97u, 11, 63, 13, 307
+#define PPUTLIMPL_UDEC_3990u 0xF96u, 11, 63, 2, 3, 5, 7, 19
+#define PPUTLIMPL_UDEC_3989u 0xF95u, 11, 63,
+#define PPUTLIMPL_UDEC_3988u 0xF94u, 11, 63, 2, 2, 997
+#define PPUTLIMPL_UDEC_3987u 0xF93u, 11, 63, 3, 3, 443
+#define PPUTLIMPL_UDEC_3986u 0xF92u, 11, 63, 2, 1993
+#define PPUTLIMPL_UDEC_3985u 0xF91u, 11, 63, 5, 797
+#define PPUTLIMPL_UDEC_3984u 0xF90u, 11, 63, 2, 2, 2, 2, 3, 83
+#define PPUTLIMPL_UDEC_3983u 0xF8Fu, 11, 63, 7, 569
+#define PPUTLIMPL_UDEC_3982u 0xF8Eu, 11, 63, 2, 11, 181
+#define PPUTLIMPL_UDEC_3981u 0xF8Du, 11, 63, 3, 1327
+#define PPUTLIMPL_UDEC_3980u 0xF8Cu, 11, 63, 2, 2, 5, 199
+#define PPUTLIMPL_UDEC_3979u 0xF8Bu, 11, 63, 23, 173
+#define PPUTLIMPL_UDEC_3978u 0xF8Au, 11, 63, 2, 3, 3, 13, 17
+#define PPUTLIMPL_UDEC_3977u 0xF89u, 11, 63, 41, 97
+#define PPUTLIMPL_UDEC_3976u 0xF88u, 11, 63, 2, 2, 2, 7, 71
+#define PPUTLIMPL_UDEC_3975u 0xF87u, 11, 63, 3, 5, 5, 53
+#define PPUTLIMPL_UDEC_3974u 0xF86u, 11, 63, 2, 1987
+#define PPUTLIMPL_UDEC_3973u 0xF85u, 11, 63, 29, 137
+#define PPUTLIMPL_UDEC_3972u 0xF84u, 11, 63, 2, 2, 3, 331
+#define PPUTLIMPL_UDEC_3971u 0xF83u, 11, 63, 11, 19, 19
+#define PPUTLIMPL_UDEC_3970u 0xF82u, 11, 63, 2, 5, 397
+#define PPUTLIMPL_UDEC_3969u 0xF81u, 11, 63, 3, 3, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_3968u 0xF80u, 11, 62, 2, 2, 2, 2, 2, 2, 2, 31
+#define PPUTLIMPL_UDEC_3967u 0xF7Fu, 11, 62,
+#define PPUTLIMPL_UDEC_3966u 0xF7Eu, 11, 62, 2, 3, 661
+#define PPUTLIMPL_UDEC_3965u 0xF7Du, 11, 62, 5, 13, 61
+#define PPUTLIMPL_UDEC_3964u 0xF7Cu, 11, 62, 2, 2, 991
+#define PPUTLIMPL_UDEC_3963u 0xF7Bu, 11, 62, 3, 1321
+#define PPUTLIMPL_UDEC_3962u 0xF7Au, 11, 62, 2, 7, 283
+#define PPUTLIMPL_UDEC_3961u 0xF79u, 11, 62, 17, 233
+#define PPUTLIMPL_UDEC_3960u 0xF78u, 11, 62, 2, 2, 2, 3, 3, 5, 11
+#define PPUTLIMPL_UDEC_3959u 0xF77u, 11, 62, 37, 107
+#define PPUTLIMPL_UDEC_3958u 0xF76u, 11, 62, 2, 1979
+#define PPUTLIMPL_UDEC_3957u 0xF75u, 11, 62, 3, 1319
+#define PPUTLIMPL_UDEC_3956u 0xF74u, 11, 62, 2, 2, 23, 43
+#define PPUTLIMPL_UDEC_3955u 0xF73u, 11, 62, 5, 7, 113
+#define PPUTLIMPL_UDEC_3954u 0xF72u, 11, 62, 2, 3, 659
+#define PPUTLIMPL_UDEC_3953u 0xF71u, 11, 62, 59, 67
+#define PPUTLIMPL_UDEC_3952u 0xF70u, 11, 62, 2, 2, 2, 2, 13, 19
+#define PPUTLIMPL_UDEC_3951u 0xF6Fu, 11, 62, 3, 3, 439
+#define PPUTLIMPL_UDEC_3950u 0xF6Eu, 11, 62, 2, 5, 5, 79
+#define PPUTLIMPL_UDEC_3949u 0xF6Du, 11, 62, 11, 359
+#define PPUTLIMPL_UDEC_3948u 0xF6Cu, 11, 62, 2, 2, 3, 7, 47
+#define PPUTLIMPL_UDEC_3947u 0xF6Bu, 11, 62,
+#define PPUTLIMPL_UDEC_3946u 0xF6Au, 11, 62, 2, 1973
+#define PPUTLIMPL_UDEC_3945u 0xF69u, 11, 62, 3, 5, 263
+#define PPUTLIMPL_UDEC_3944u 0xF68u, 11, 62, 2, 2, 2, 17, 29
+#define PPUTLIMPL_UDEC_3943u 0xF67u, 11, 62,
+#define PPUTLIMPL_UDEC_3942u 0xF66u, 11, 62, 2, 3, 3, 3, 73
+#define PPUTLIMPL_UDEC_3941u 0xF65u, 11, 62, 7, 563
+#define PPUTLIMPL_UDEC_3940u 0xF64u, 11, 62, 2, 2, 5, 197
+#define PPUTLIMPL_UDEC_3939u 0xF63u, 11, 62, 3, 13, 101
+#define PPUTLIMPL_UDEC_3938u 0xF62u, 11, 62, 2, 11, 179
+#define PPUTLIMPL_UDEC_3937u 0xF61u, 11, 62, 31, 127
+#define PPUTLIMPL_UDEC_3936u 0xF60u, 11, 62, 2, 2, 2, 2, 2, 3, 41
+#define PPUTLIMPL_UDEC_3935u 0xF5Fu, 11, 62, 5, 787
+#define PPUTLIMPL_UDEC_3934u 0xF5Eu, 11, 62, 2, 7, 281
+#define PPUTLIMPL_UDEC_3933u 0xF5Du, 11, 62, 3, 3, 19, 23
+#define PPUTLIMPL_UDEC_3932u 0xF5Cu, 11, 62, 2, 2, 983
+#define PPUTLIMPL_UDEC_3931u 0xF5Bu, 11, 62,
+#define PPUTLIMPL_UDEC_3930u 0xF5Au, 11, 62, 2, 3, 5, 131
+#define PPUTLIMPL_UDEC_3929u 0xF59u, 11, 62,
+#define PPUTLIMPL_UDEC_3928u 0xF58u, 11, 62, 2, 2, 2, 491
+#define PPUTLIMPL_UDEC_3927u 0xF57u, 11, 62, 3, 7, 11, 17
+#define PPUTLIMPL_UDEC_3926u 0xF56u, 11, 62, 2, 13, 151
+#define PPUTLIMPL_UDEC_3925u 0xF55u, 11, 62, 5, 5, 157
+#define PPUTLIMPL_UDEC_3924u 0xF54u, 11, 62, 2, 2, 3, 3, 109
+#define PPUTLIMPL_UDEC_3923u 0xF53u, 11, 62,
+#define PPUTLIMPL_UDEC_3922u 0xF52u, 11, 62, 2, 37, 53
+#define PPUTLIMPL_UDEC_3921u 0xF51u, 11, 62, 3, 1307
+#define PPUTLIMPL_UDEC_3920u 0xF50u, 11, 62, 2, 2, 2, 2, 5, 7, 7
+#define PPUTLIMPL_UDEC_3919u 0xF4Fu, 11, 62,
+#define PPUTLIMPL_UDEC_3918u 0xF4Eu, 11, 62, 2, 3, 653
+#define PPUTLIMPL_UDEC_3917u 0xF4Du, 11, 62,
+#define PPUTLIMPL_UDEC_3916u 0xF4Cu, 11, 62, 2, 2, 11, 89
+#define PPUTLIMPL_UDEC_3915u 0xF4Bu, 11, 62, 3, 3, 3, 5, 29
+#define PPUTLIMPL_UDEC_3914u 0xF4Au, 11, 62, 2, 19, 103
+#define PPUTLIMPL_UDEC_3913u 0xF49u, 11, 62, 7, 13, 43
+#define PPUTLIMPL_UDEC_3912u 0xF48u, 11, 62, 2, 2, 2, 3, 163
+#define PPUTLIMPL_UDEC_3911u 0xF47u, 11, 62,
+#define PPUTLIMPL_UDEC_3910u 0xF46u, 11, 62, 2, 5, 17, 23
+#define PPUTLIMPL_UDEC_3909u 0xF45u, 11, 62, 3, 1303
+#define PPUTLIMPL_UDEC_3908u 0xF44u, 11, 62, 2, 2, 977
+#define PPUTLIMPL_UDEC_3907u 0xF43u, 11, 62,
+#define PPUTLIMPL_UDEC_3906u 0xF42u, 11, 62, 2, 3, 3, 7, 31
+#define PPUTLIMPL_UDEC_3905u 0xF41u, 11, 62, 5, 11, 71
+#define PPUTLIMPL_UDEC_3904u 0xF40u, 11, 62, 2, 2, 2, 2, 2, 2, 61
+#define PPUTLIMPL_UDEC_3903u 0xF3Fu, 11, 62, 3, 1301
+#define PPUTLIMPL_UDEC_3902u 0xF3Eu, 11, 62, 2, 1951
+#define PPUTLIMPL_UDEC_3901u 0xF3Du, 11, 62, 47, 83
+#define PPUTLIMPL_UDEC_3900u 0xF3Cu, 11, 62, 2, 2, 3, 5, 5, 13
+#define PPUTLIMPL_UDEC_3899u 0xF3Bu, 11, 62, 7, 557
+#define PPUTLIMPL_UDEC_3898u 0xF3Au, 11, 62, 2, 1949
+#define PPUTLIMPL_UDEC_3897u 0xF39u, 11, 62, 3, 3, 433
+#define PPUTLIMPL_UDEC_3896u 0xF38u, 11, 62, 2, 2, 2, 487
+#define PPUTLIMPL_UDEC_3895u 0xF37u, 11, 62, 5, 19, 41
+#define PPUTLIMPL_UDEC_3894u 0xF36u, 11, 62, 2, 3, 11, 59
+#define PPUTLIMPL_UDEC_3893u 0xF35u, 11, 62, 17, 229
+#define PPUTLIMPL_UDEC_3892u 0xF34u, 11, 62, 2, 2, 7, 139
+#define PPUTLIMPL_UDEC_3891u 0xF33u, 11, 62, 3, 1297
+#define PPUTLIMPL_UDEC_3890u 0xF32u, 11, 62, 2, 5, 389
+#define PPUTLIMPL_UDEC_3889u 0xF31u, 11, 62,
+#define PPUTLIMPL_UDEC_3888u 0xF30u, 11, 62, 2, 2, 2, 2, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_3887u 0xF2Fu, 11, 62, 13, 13, 23
+#define PPUTLIMPL_UDEC_3886u 0xF2Eu, 11, 62, 2, 29, 67
+#define PPUTLIMPL_UDEC_3885u 0xF2Du, 11, 62, 3, 5, 7, 37
+#define PPUTLIMPL_UDEC_3884u 0xF2Cu, 11, 62, 2, 2, 971
+#define PPUTLIMPL_UDEC_3883u 0xF2Bu, 11, 62, 11, 353
+#define PPUTLIMPL_UDEC_3882u 0xF2Au, 11, 62, 2, 3, 647
+#define PPUTLIMPL_UDEC_3881u 0xF29u, 11, 62,
+#define PPUTLIMPL_UDEC_3880u 0xF28u, 11, 62, 2, 2, 2, 5, 97
+#define PPUTLIMPL_UDEC_3879u 0xF27u, 11, 62, 3, 3, 431
+#define PPUTLIMPL_UDEC_3878u 0xF26u, 11, 62, 2, 7, 277
+#define PPUTLIMPL_UDEC_3877u 0xF25u, 11, 62,
+#define PPUTLIMPL_UDEC_3876u 0xF24u, 11, 62, 2, 2, 3, 17, 19
+#define PPUTLIMPL_UDEC_3875u 0xF23u, 11, 62, 5, 5, 5, 31
+#define PPUTLIMPL_UDEC_3874u 0xF22u, 11, 62, 2, 13, 149
+#define PPUTLIMPL_UDEC_3873u 0xF21u, 11, 62, 3, 1291
+#define PPUTLIMPL_UDEC_3872u 0xF20u, 11, 62, 2, 2, 2, 2, 2, 11, 11
+#define PPUTLIMPL_UDEC_3871u 0xF1Fu, 11, 62, 7, 7, 79
+#define PPUTLIMPL_UDEC_3870u 0xF1Eu, 11, 62, 2, 3, 3, 5, 43
+#define PPUTLIMPL_UDEC_3869u 0xF1Du, 11, 62, 53, 73
+#define PPUTLIMPL_UDEC_3868u 0xF1Cu, 11, 62, 2, 2, 967
+#define PPUTLIMPL_UDEC_3867u 0xF1Bu, 11, 62, 3, 1289
+#define PPUTLIMPL_UDEC_3866u 0xF1Au, 11, 62, 2, 1933
+#define PPUTLIMPL_UDEC_3865u 0xF19u, 11, 62, 5, 773
+#define PPUTLIMPL_UDEC_3864u 0xF18u, 11, 62, 2, 2, 2, 3, 7, 23
+#define PPUTLIMPL_UDEC_3863u 0xF17u, 11, 62,
+#define PPUTLIMPL_UDEC_3862u 0xF16u, 11, 62, 2, 1931
+#define PPUTLIMPL_UDEC_3861u 0xF15u, 11, 62, 3, 3, 3, 11, 13
+#define PPUTLIMPL_UDEC_3860u 0xF14u, 11, 62, 2, 2, 5, 193
+#define PPUTLIMPL_UDEC_3859u 0xF13u, 11, 62, 17, 227
+#define PPUTLIMPL_UDEC_3858u 0xF12u, 11, 62, 2, 3, 643
+#define PPUTLIMPL_UDEC_3857u 0xF11u, 11, 62, 7, 19, 29
+#define PPUTLIMPL_UDEC_3856u 0xF10u, 11, 62, 2, 2, 2, 2, 241
+#define PPUTLIMPL_UDEC_3855u 0xF0Fu, 11, 62, 3, 5, 257
+#define PPUTLIMPL_UDEC_3854u 0xF0Eu, 11, 62, 2, 41, 47
+#define PPUTLIMPL_UDEC_3853u 0xF0Du, 11, 62,
+#define PPUTLIMPL_UDEC_3852u 0xF0Cu, 11, 62, 2, 2, 3, 3, 107
+#define PPUTLIMPL_UDEC_3851u 0xF0Bu, 11, 62,
+#define PPUTLIMPL_UDEC_3850u 0xF0Au, 11, 62, 2, 5, 5, 7, 11
+#define PPUTLIMPL_UDEC_3849u 0xF09u, 11, 62, 3, 1283
+#define PPUTLIMPL_UDEC_3848u 0xF08u, 11, 62, 2, 2, 2, 13, 37
+#define PPUTLIMPL_UDEC_3847u 0xF07u, 11, 62,
+#define PPUTLIMPL_UDEC_3846u 0xF06u, 11, 62, 2, 3, 641
+#define PPUTLIMPL_UDEC_3845u 0xF05u, 11, 62, 5, 769
+#define PPUTLIMPL_UDEC_3844u 0xF04u, 11, 62, 2, 2, 31, 31
+#define PPUTLIMPL_UDEC_3843u 0xF03u, 11, 61, 3, 3, 7, 61
+#define PPUTLIMPL_UDEC_3842u 0xF02u, 11, 61, 2, 17, 113
+#define PPUTLIMPL_UDEC_3841u 0xF01u, 11, 61, 23, 167
+#define PPUTLIMPL_UDEC_3840u 0xF00u, 11, 61, 2, 2, 2, 2, 2, 2, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_3839u 0xEFFu, 11, 61, 11, 349
+#define PPUTLIMPL_UDEC_3838u 0xEFEu, 11, 61, 2, 19, 101
+#define PPUTLIMPL_UDEC_3837u 0xEFDu, 11, 61, 3, 1279
+#define PPUTLIMPL_UDEC_3836u 0xEFCu, 11, 61, 2, 2, 7, 137
+#define PPUTLIMPL_UDEC_3835u 0xEFBu, 11, 61, 5, 13, 59
+#define PPUTLIMPL_UDEC_3834u 0xEFAu, 11, 61, 2, 3, 3, 3, 71
+#define PPUTLIMPL_UDEC_3833u 0xEF9u, 11, 61,
+#define PPUTLIMPL_UDEC_3832u 0xEF8u, 11, 61, 2, 2, 2, 479
+#define PPUTLIMPL_UDEC_3831u 0xEF7u, 11, 61, 3, 1277
+#define PPUTLIMPL_UDEC_3830u 0xEF6u, 11, 61, 2, 5, 383
+#define PPUTLIMPL_UDEC_3829u 0xEF5u, 11, 61, 7, 547
+#define PPUTLIMPL_UDEC_3828u 0xEF4u, 11, 61, 2, 2, 3, 11, 29
+#define PPUTLIMPL_UDEC_3827u 0xEF3u, 11, 61, 43, 89
+#define PPUTLIMPL_UDEC_3826u 0xEF2u, 11, 61, 2, 1913
+#define PPUTLIMPL_UDEC_3825u 0xEF1u, 11, 61, 3, 3, 5, 5, 17
+#define PPUTLIMPL_UDEC_3824u 0xEF0u, 11, 61, 2, 2, 2, 2, 239
+#define PPUTLIMPL_UDEC_3823u 0xEEFu, 11, 61,
+#define PPUTLIMPL_UDEC_3822u 0xEEEu, 11, 61, 2, 3, 7, 7, 13
+#define PPUTLIMPL_UDEC_3821u 0xEEDu, 11, 61,
+#define PPUTLIMPL_UDEC_3820u 0xEECu, 11, 61, 2, 2, 5, 191
+#define PPUTLIMPL_UDEC_3819u 0xEEBu, 11, 61, 3, 19, 67
+#define PPUTLIMPL_UDEC_3818u 0xEEAu, 11, 61, 2, 23, 83
+#define PPUTLIMPL_UDEC_3817u 0xEE9u, 11, 61, 11, 347
+#define PPUTLIMPL_UDEC_3816u 0xEE8u, 11, 61, 2, 2, 2, 3, 3, 53
+#define PPUTLIMPL_UDEC_3815u 0xEE7u, 11, 61, 5, 7, 109
+#define PPUTLIMPL_UDEC_3814u 0xEE6u, 11, 61, 2, 1907
+#define PPUTLIMPL_UDEC_3813u 0xEE5u, 11, 61, 3, 31, 41
+#define PPUTLIMPL_UDEC_3812u 0xEE4u, 11, 61, 2, 2, 953
+#define PPUTLIMPL_UDEC_3811u 0xEE3u, 11, 61, 37, 103
+#define PPUTLIMPL_UDEC_3810u 0xEE2u, 11, 61, 2, 3, 5, 127
+#define PPUTLIMPL_UDEC_3809u 0xEE1u, 11, 61, 13, 293
+#define PPUTLIMPL_UDEC_3808u 0xEE0u, 11, 61, 2, 2, 2, 2, 2, 7, 17
+#define PPUTLIMPL_UDEC_3807u 0xEDFu, 11, 61, 3, 3, 3, 3, 47
+#define PPUTLIMPL_UDEC_3806u 0xEDEu, 11, 61, 2, 11, 173
+#define PPUTLIMPL_UDEC_3805u 0xEDDu, 11, 61, 5, 761
+#define PPUTLIMPL_UDEC_3804u 0xEDCu, 11, 61, 2, 2, 3, 317
+#define PPUTLIMPL_UDEC_3803u 0xEDBu, 11, 61,
+#define PPUTLIMPL_UDEC_3802u 0xEDAu, 11, 61, 2, 1901
+#define PPUTLIMPL_UDEC_3801u 0xED9u, 11, 61, 3, 7, 181
+#define PPUTLIMPL_UDEC_3800u 0xED8u, 11, 61, 2, 2, 2, 5, 5, 19
+#define PPUTLIMPL_UDEC_3799u 0xED7u, 11, 61, 29, 131
+#define PPUTLIMPL_UDEC_3798u 0xED6u, 11, 61, 2, 3, 3, 211
+#define PPUTLIMPL_UDEC_3797u 0xED5u, 11, 61,
+#define PPUTLIMPL_UDEC_3796u 0xED4u, 11, 61, 2, 2, 13, 73
+#define PPUTLIMPL_UDEC_3795u 0xED3u, 11, 61, 3, 5, 11, 23
+#define PPUTLIMPL_UDEC_3794u 0xED2u, 11, 61, 2, 7, 271
+#define PPUTLIMPL_UDEC_3793u 0xED1u, 11, 61,
+#define PPUTLIMPL_UDEC_3792u 0xED0u, 11, 61, 2, 2, 2, 2, 3, 79
+#define PPUTLIMPL_UDEC_3791u 0xECFu, 11, 61, 17, 223
+#define PPUTLIMPL_UDEC_3790u 0xECEu, 11, 61, 2, 5, 379
+#define PPUTLIMPL_UDEC_3789u 0xECDu, 11, 61, 3, 3, 421
+#define PPUTLIMPL_UDEC_3788u 0xECCu, 11, 61, 2, 2, 947
+#define PPUTLIMPL_UDEC_3787u 0xECBu, 11, 61, 7, 541
+#define PPUTLIMPL_UDEC_3786u 0xECAu, 11, 61, 2, 3, 631
+#define PPUTLIMPL_UDEC_3785u 0xEC9u, 11, 61, 5, 757
+#define PPUTLIMPL_UDEC_3784u 0xEC8u, 11, 61, 2, 2, 2, 11, 43
+#define PPUTLIMPL_UDEC_3783u 0xEC7u, 11, 61, 3, 13, 97
+#define PPUTLIMPL_UDEC_3782u 0xEC6u, 11, 61, 2, 31, 61
+#define PPUTLIMPL_UDEC_3781u 0xEC5u, 11, 61, 19, 199
+#define PPUTLIMPL_UDEC_3780u 0xEC4u, 11, 61, 2, 2, 3, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_3779u 0xEC3u, 11, 61,
+#define PPUTLIMPL_UDEC_3778u 0xEC2u, 11, 61, 2, 1889
+#define PPUTLIMPL_UDEC_3777u 0xEC1u, 11, 61, 3, 1259
+#define PPUTLIMPL_UDEC_3776u 0xEC0u, 11, 61, 2, 2, 2, 2, 2, 2, 59
+#define PPUTLIMPL_UDEC_3775u 0xEBFu, 11, 61, 5, 5, 151
+#define PPUTLIMPL_UDEC_3774u 0xEBEu, 11, 61, 2, 3, 17, 37
+#define PPUTLIMPL_UDEC_3773u 0xEBDu, 11, 61, 7, 7, 7, 11
+#define PPUTLIMPL_UDEC_3772u 0xEBCu, 11, 61, 2, 2, 23, 41
+#define PPUTLIMPL_UDEC_3771u 0xEBBu, 11, 61, 3, 3, 419
+#define PPUTLIMPL_UDEC_3770u 0xEBAu, 11, 61, 2, 5, 13, 29
+#define PPUTLIMPL_UDEC_3769u 0xEB9u, 11, 61,
+#define PPUTLIMPL_UDEC_3768u 0xEB8u, 11, 61, 2, 2, 2, 3, 157
+#define PPUTLIMPL_UDEC_3767u 0xEB7u, 11, 61,
+#define PPUTLIMPL_UDEC_3766u 0xEB6u, 11, 61, 2, 7, 269
+#define PPUTLIMPL_UDEC_3765u 0xEB5u, 11, 61, 3, 5, 251
+#define PPUTLIMPL_UDEC_3764u 0xEB4u, 11, 61, 2, 2, 941
+#define PPUTLIMPL_UDEC_3763u 0xEB3u, 11, 61, 53, 71
+#define PPUTLIMPL_UDEC_3762u 0xEB2u, 11, 61, 2, 3, 3, 11, 19
+#define PPUTLIMPL_UDEC_3761u 0xEB1u, 11, 61,
+#define PPUTLIMPL_UDEC_3760u 0xEB0u, 11, 61, 2, 2, 2, 2, 5, 47
+#define PPUTLIMPL_UDEC_3759u 0xEAFu, 11, 61, 3, 7, 179
+#define PPUTLIMPL_UDEC_3758u 0xEAEu, 11, 61, 2, 1879
+#define PPUTLIMPL_UDEC_3757u 0xEADu, 11, 61, 13, 17, 17
+#define PPUTLIMPL_UDEC_3756u 0xEACu, 11, 61, 2, 2, 3, 313
+#define PPUTLIMPL_UDEC_3755u 0xEABu, 11, 61, 5, 751
+#define PPUTLIMPL_UDEC_3754u 0xEAAu, 11, 61, 2, 1877
+#define PPUTLIMPL_UDEC_3753u 0xEA9u, 11, 61, 3, 3, 3, 139
+#define PPUTLIMPL_UDEC_3752u 0xEA8u, 11, 61, 2, 2, 2, 7, 67
+#define PPUTLIMPL_UDEC_3751u 0xEA7u, 11, 61, 11, 11, 31
+#define PPUTLIMPL_UDEC_3750u 0xEA6u, 11, 61, 2, 3, 5, 5, 5, 5
+#define PPUTLIMPL_UDEC_3749u 0xEA5u, 11, 61, 23, 163
+#define PPUTLIMPL_UDEC_3748u 0xEA4u, 11, 61, 2, 2, 937
+#define PPUTLIMPL_UDEC_3747u 0xEA3u, 11, 61, 3, 1249
+#define PPUTLIMPL_UDEC_3746u 0xEA2u, 11, 61, 2, 1873
+#define PPUTLIMPL_UDEC_3745u 0xEA1u, 11, 61, 5, 7, 107
+#define PPUTLIMPL_UDEC_3744u 0xEA0u, 11, 61, 2, 2, 2, 2, 2, 3, 3, 13
+#define PPUTLIMPL_UDEC_3743u 0xE9Fu, 11, 61, 19, 197
+#define PPUTLIMPL_UDEC_3742u 0xE9Eu, 11, 61, 2, 1871
+#define PPUTLIMPL_UDEC_3741u 0xE9Du, 11, 61, 3, 29, 43
+#define PPUTLIMPL_UDEC_3740u 0xE9Cu, 11, 61, 2, 2, 5, 11, 17
+#define PPUTLIMPL_UDEC_3739u 0xE9Bu, 11, 61,
+#define PPUTLIMPL_UDEC_3738u 0xE9Au, 11, 61, 2, 3, 7, 89
+#define PPUTLIMPL_UDEC_3737u 0xE99u, 11, 61, 37, 101
+#define PPUTLIMPL_UDEC_3736u 0xE98u, 11, 61, 2, 2, 2, 467
+#define PPUTLIMPL_UDEC_3735u 0xE97u, 11, 61, 3, 3, 5, 83
+#define PPUTLIMPL_UDEC_3734u 0xE96u, 11, 61, 2, 1867
+#define PPUTLIMPL_UDEC_3733u 0xE95u, 11, 61,
+#define PPUTLIMPL_UDEC_3732u 0xE94u, 11, 61, 2, 2, 3, 311
+#define PPUTLIMPL_UDEC_3731u 0xE93u, 11, 61, 7, 13, 41
+#define PPUTLIMPL_UDEC_3730u 0xE92u, 11, 61, 2, 5, 373
+#define PPUTLIMPL_UDEC_3729u 0xE91u, 11, 61, 3, 11, 113
+#define PPUTLIMPL_UDEC_3728u 0xE90u, 11, 61, 2, 2, 2, 2, 233
+#define PPUTLIMPL_UDEC_3727u 0xE8Fu, 11, 61,
+#define PPUTLIMPL_UDEC_3726u 0xE8Eu, 11, 61, 2, 3, 3, 3, 3, 23
+#define PPUTLIMPL_UDEC_3725u 0xE8Du, 11, 61, 5, 5, 149
+#define PPUTLIMPL_UDEC_3724u 0xE8Cu, 11, 61, 2, 2, 7, 7, 19
+#define PPUTLIMPL_UDEC_3723u 0xE8Bu, 11, 61, 3, 17, 73
+#define PPUTLIMPL_UDEC_3722u 0xE8Au, 11, 61, 2, 1861
+#define PPUTLIMPL_UDEC_3721u 0xE89u, 11, 61, 61, 61
+#define PPUTLIMPL_UDEC_3720u 0xE88u, 11, 60, 2, 2, 2, 3, 5, 31
+#define PPUTLIMPL_UDEC_3719u 0xE87u, 11, 60,
+#define PPUTLIMPL_UDEC_3718u 0xE86u, 11, 60, 2, 11, 13, 13
+#define PPUTLIMPL_UDEC_3717u 0xE85u, 11, 60, 3, 3, 7, 59
+#define PPUTLIMPL_UDEC_3716u 0xE84u, 11, 60, 2, 2, 929
+#define PPUTLIMPL_UDEC_3715u 0xE83u, 11, 60, 5, 743
+#define PPUTLIMPL_UDEC_3714u 0xE82u, 11, 60, 2, 3, 619
+#define PPUTLIMPL_UDEC_3713u 0xE81u, 11, 60, 47, 79
+#define PPUTLIMPL_UDEC_3712u 0xE80u, 11, 60, 2, 2, 2, 2, 2, 2, 2, 29
+#define PPUTLIMPL_UDEC_3711u 0xE7Fu, 11, 60, 3, 1237
+#define PPUTLIMPL_UDEC_3710u 0xE7Eu, 11, 60, 2, 5, 7, 53
+#define PPUTLIMPL_UDEC_3709u 0xE7Du, 11, 60,
+#define PPUTLIMPL_UDEC_3708u 0xE7Cu, 11, 60, 2, 2, 3, 3, 103
+#define PPUTLIMPL_UDEC_3707u 0xE7Bu, 11, 60, 11, 337
+#define PPUTLIMPL_UDEC_3706u 0xE7Au, 11, 60, 2, 17, 109
+#define PPUTLIMPL_UDEC_3705u 0xE79u, 11, 60, 3, 5, 13, 19
+#define PPUTLIMPL_UDEC_3704u 0xE78u, 11, 60, 2, 2, 2, 463
+#define PPUTLIMPL_UDEC_3703u 0xE77u, 11, 60, 7, 23, 23
+#define PPUTLIMPL_UDEC_3702u 0xE76u, 11, 60, 2, 3, 617
+#define PPUTLIMPL_UDEC_3701u 0xE75u, 11, 60,
+#define PPUTLIMPL_UDEC_3700u 0xE74u, 11, 60, 2, 2, 5, 5, 37
+#define PPUTLIMPL_UDEC_3699u 0xE73u, 11, 60, 3, 3, 3, 137
+#define PPUTLIMPL_UDEC_3698u 0xE72u, 11, 60, 2, 43, 43
+#define PPUTLIMPL_UDEC_3697u 0xE71u, 11, 60,
+#define PPUTLIMPL_UDEC_3696u 0xE70u, 11, 60, 2, 2, 2, 2, 3, 7, 11
+#define PPUTLIMPL_UDEC_3695u 0xE6Fu, 11, 60, 5, 739
+#define PPUTLIMPL_UDEC_3694u 0xE6Eu, 11, 60, 2, 1847
+#define PPUTLIMPL_UDEC_3693u 0xE6Du, 11, 60, 3, 1231
+#define PPUTLIMPL_UDEC_3692u 0xE6Cu, 11, 60, 2, 2, 13, 71
+#define PPUTLIMPL_UDEC_3691u 0xE6Bu, 11, 60,
+#define PPUTLIMPL_UDEC_3690u 0xE6Au, 11, 60, 2, 3, 3, 5, 41
+#define PPUTLIMPL_UDEC_3689u 0xE69u, 11, 60, 7, 17, 31
+#define PPUTLIMPL_UDEC_3688u 0xE68u, 11, 60, 2, 2, 2, 461
+#define PPUTLIMPL_UDEC_3687u 0xE67u, 11, 60, 3, 1229
+#define PPUTLIMPL_UDEC_3686u 0xE66u, 11, 60, 2, 19, 97
+#define PPUTLIMPL_UDEC_3685u 0xE65u, 11, 60, 5, 11, 67
+#define PPUTLIMPL_UDEC_3684u 0xE64u, 11, 60, 2, 2, 3, 307
+#define PPUTLIMPL_UDEC_3683u 0xE63u, 11, 60, 29, 127
+#define PPUTLIMPL_UDEC_3682u 0xE62u, 11, 60, 2, 7, 263
+#define PPUTLIMPL_UDEC_3681u 0xE61u, 11, 60, 3, 3, 409
+#define PPUTLIMPL_UDEC_3680u 0xE60u, 11, 60, 2, 2, 2, 2, 2, 5, 23
+#define PPUTLIMPL_UDEC_3679u 0xE5Fu, 11, 60, 13, 283
+#define PPUTLIMPL_UDEC_3678u 0xE5Eu, 11, 60, 2, 3, 613
+#define PPUTLIMPL_UDEC_3677u 0xE5Du, 11, 60,
+#define PPUTLIMPL_UDEC_3676u 0xE5Cu, 11, 60, 2, 2, 919
+#define PPUTLIMPL_UDEC_3675u 0xE5Bu, 11, 60, 3, 5, 5, 7, 7
+#define PPUTLIMPL_UDEC_3674u 0xE5Au, 11, 60, 2, 11, 167
+#define PPUTLIMPL_UDEC_3673u 0xE59u, 11, 60,
+#define PPUTLIMPL_UDEC_3672u 0xE58u, 11, 60, 2, 2, 2, 3, 3, 3, 17
+#define PPUTLIMPL_UDEC_3671u 0xE57u, 11, 60,
+#define PPUTLIMPL_UDEC_3670u 0xE56u, 11, 60, 2, 5, 367
+#define PPUTLIMPL_UDEC_3669u 0xE55u, 11, 60, 3, 1223
+#define PPUTLIMPL_UDEC_3668u 0xE54u, 11, 60, 2, 2, 7, 131
+#define PPUTLIMPL_UDEC_3667u 0xE53u, 11, 60, 19, 193
+#define PPUTLIMPL_UDEC_3666u 0xE52u, 11, 60, 2, 3, 13, 47
+#define PPUTLIMPL_UDEC_3665u 0xE51u, 11, 60, 5, 733
+#define PPUTLIMPL_UDEC_3664u 0xE50u, 11, 60, 2, 2, 2, 2, 229
+#define PPUTLIMPL_UDEC_3663u 0xE4Fu, 11, 60, 3, 3, 11, 37
+#define PPUTLIMPL_UDEC_3662u 0xE4Eu, 11, 60, 2, 1831
+#define PPUTLIMPL_UDEC_3661u 0xE4Du, 11, 60, 7, 523
+#define PPUTLIMPL_UDEC_3660u 0xE4Cu, 11, 60, 2, 2, 3, 5, 61
+#define PPUTLIMPL_UDEC_3659u 0xE4Bu, 11, 60,
+#define PPUTLIMPL_UDEC_3658u 0xE4Au, 11, 60, 2, 31, 59
+#define PPUTLIMPL_UDEC_3657u 0xE49u, 11, 60, 3, 23, 53
+#define PPUTLIMPL_UDEC_3656u 0xE48u, 11, 60, 2, 2, 2, 457
+#define PPUTLIMPL_UDEC_3655u 0xE47u, 11, 60, 5, 17, 43
+#define PPUTLIMPL_UDEC_3654u 0xE46u, 11, 60, 2, 3, 3, 7, 29
+#define PPUTLIMPL_UDEC_3653u 0xE45u, 11, 60, 13, 281
+#define PPUTLIMPL_UDEC_3652u 0xE44u, 11, 60, 2, 2, 11, 83
+#define PPUTLIMPL_UDEC_3651u 0xE43u, 11, 60, 3, 1217
+#define PPUTLIMPL_UDEC_3650u 0xE42u, 11, 60, 2, 5, 5, 73
+#define PPUTLIMPL_UDEC_3649u 0xE41u, 11, 60, 41, 89
+#define PPUTLIMPL_UDEC_3648u 0xE40u, 11, 60, 2, 2, 2, 2, 2, 2, 3, 19
+#define PPUTLIMPL_UDEC_3647u 0xE3Fu, 11, 60, 7, 521
+#define PPUTLIMPL_UDEC_3646u 0xE3Eu, 11, 60, 2, 1823
+#define PPUTLIMPL_UDEC_3645u 0xE3Du, 11, 60, 3, 3, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_3644u 0xE3Cu, 11, 60, 2, 2, 911
+#define PPUTLIMPL_UDEC_3643u 0xE3Bu, 11, 60,
+#define PPUTLIMPL_UDEC_3642u 0xE3Au, 11, 60, 2, 3, 607
+#define PPUTLIMPL_UDEC_3641u 0xE39u, 11, 60, 11, 331
+#define PPUTLIMPL_UDEC_3640u 0xE38u, 11, 60, 2, 2, 2, 5, 7, 13
+#define PPUTLIMPL_UDEC_3639u 0xE37u, 11, 60, 3, 1213
+#define PPUTLIMPL_UDEC_3638u 0xE36u, 11, 60, 2, 17, 107
+#define PPUTLIMPL_UDEC_3637u 0xE35u, 11, 60,
+#define PPUTLIMPL_UDEC_3636u 0xE34u, 11, 60, 2, 2, 3, 3, 101
+#define PPUTLIMPL_UDEC_3635u 0xE33u, 11, 60, 5, 727
+#define PPUTLIMPL_UDEC_3634u 0xE32u, 11, 60, 2, 23, 79
+#define PPUTLIMPL_UDEC_3633u 0xE31u, 11, 60, 3, 7, 173
+#define PPUTLIMPL_UDEC_3632u 0xE30u, 11, 60, 2, 2, 2, 2, 227
+#define PPUTLIMPL_UDEC_3631u 0xE2Fu, 11, 60,
+#define PPUTLIMPL_UDEC_3630u 0xE2Eu, 11, 60, 2, 3, 5, 11, 11
+#define PPUTLIMPL_UDEC_3629u 0xE2Du, 11, 60, 19, 191
+#define PPUTLIMPL_UDEC_3628u 0xE2Cu, 11, 60, 2, 2, 907
+#define PPUTLIMPL_UDEC_3627u 0xE2Bu, 11, 60, 3, 3, 13, 31
+#define PPUTLIMPL_UDEC_3626u 0xE2Au, 11, 60, 2, 7, 7, 37
+#define PPUTLIMPL_UDEC_3625u 0xE29u, 11, 60, 5, 5, 5, 29
+#define PPUTLIMPL_UDEC_3624u 0xE28u, 11, 60, 2, 2, 2, 3, 151
+#define PPUTLIMPL_UDEC_3623u 0xE27u, 11, 60,
+#define PPUTLIMPL_UDEC_3622u 0xE26u, 11, 60, 2, 1811
+#define PPUTLIMPL_UDEC_3621u 0xE25u, 11, 60, 3, 17, 71
+#define PPUTLIMPL_UDEC_3620u 0xE24u, 11, 60, 2, 2, 5, 181
+#define PPUTLIMPL_UDEC_3619u 0xE23u, 11, 60, 7, 11, 47
+#define PPUTLIMPL_UDEC_3618u 0xE22u, 11, 60, 2, 3, 3, 3, 67
+#define PPUTLIMPL_UDEC_3617u 0xE21u, 11, 60,
+#define PPUTLIMPL_UDEC_3616u 0xE20u, 11, 60, 2, 2, 2, 2, 2, 113
+#define PPUTLIMPL_UDEC_3615u 0xE1Fu, 11, 60, 3, 5, 241
+#define PPUTLIMPL_UDEC_3614u 0xE1Eu, 11, 60, 2, 13, 139
+#define PPUTLIMPL_UDEC_3613u 0xE1Du, 11, 60,
+#define PPUTLIMPL_UDEC_3612u 0xE1Cu, 11, 60, 2, 2, 3, 7, 43
+#define PPUTLIMPL_UDEC_3611u 0xE1Bu, 11, 60, 23, 157
+#define PPUTLIMPL_UDEC_3610u 0xE1Au, 11, 60, 2, 5, 19, 19
+#define PPUTLIMPL_UDEC_3609u 0xE19u, 11, 60, 3, 3, 401
+#define PPUTLIMPL_UDEC_3608u 0xE18u, 11, 60, 2, 2, 2, 11, 41
+#define PPUTLIMPL_UDEC_3607u 0xE17u, 11, 60,
+#define PPUTLIMPL_UDEC_3606u 0xE16u, 11, 60, 2, 3, 601
+#define PPUTLIMPL_UDEC_3605u 0xE15u, 11, 60, 5, 7, 103
+#define PPUTLIMPL_UDEC_3604u 0xE14u, 11, 60, 2, 2, 17, 53
+#define PPUTLIMPL_UDEC_3603u 0xE13u, 11, 60, 3, 1201
+#define PPUTLIMPL_UDEC_3602u 0xE12u, 11, 60, 2, 1801
+#define PPUTLIMPL_UDEC_3601u 0xE11u, 11, 60, 13, 277
+#define PPUTLIMPL_UDEC_3600u 0xE10u, 11, 60, 2, 2, 2, 2, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_3599u 0xE0Fu, 11, 59, 59, 61
+#define PPUTLIMPL_UDEC_3598u 0xE0Eu, 11, 59, 2, 7, 257
+#define PPUTLIMPL_UDEC_3597u 0xE0Du, 11, 59, 3, 11, 109
+#define PPUTLIMPL_UDEC_3596u 0xE0Cu, 11, 59, 2, 2, 29, 31
+#define PPUTLIMPL_UDEC_3595u 0xE0Bu, 11, 59, 5, 719
+#define PPUTLIMPL_UDEC_3594u 0xE0Au, 11, 59, 2, 3, 599
+#define PPUTLIMPL_UDEC_3593u 0xE09u, 11, 59,
+#define PPUTLIMPL_UDEC_3592u 0xE08u, 11, 59, 2, 2, 2, 449
+#define PPUTLIMPL_UDEC_3591u 0xE07u, 11, 59, 3, 3, 3, 7, 19
+#define PPUTLIMPL_UDEC_3590u 0xE06u, 11, 59, 2, 5, 359
+#define PPUTLIMPL_UDEC_3589u 0xE05u, 11, 59, 37, 97
+#define PPUTLIMPL_UDEC_3588u 0xE04u, 11, 59, 2, 2, 3, 13, 23
+#define PPUTLIMPL_UDEC_3587u 0xE03u, 11, 59, 17, 211
+#define PPUTLIMPL_UDEC_3586u 0xE02u, 11, 59, 2, 11, 163
+#define PPUTLIMPL_UDEC_3585u 0xE01u, 11, 59, 3, 5, 239
+#define PPUTLIMPL_UDEC_3584u 0xE00u, 11, 59, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_3583u 0xDFFu, 11, 59,
+#define PPUTLIMPL_UDEC_3582u 0xDFEu, 11, 59, 2, 3, 3, 199
+#define PPUTLIMPL_UDEC_3581u 0xDFDu, 11, 59,
+#define PPUTLIMPL_UDEC_3580u 0xDFCu, 11, 59, 2, 2, 5, 179
+#define PPUTLIMPL_UDEC_3579u 0xDFBu, 11, 59, 3, 1193
+#define PPUTLIMPL_UDEC_3578u 0xDFAu, 11, 59, 2, 1789
+#define PPUTLIMPL_UDEC_3577u 0xDF9u, 11, 59, 7, 7, 73
+#define PPUTLIMPL_UDEC_3576u 0xDF8u, 11, 59, 2, 2, 2, 3, 149
+#define PPUTLIMPL_UDEC_3575u 0xDF7u, 11, 59, 5, 5, 11, 13
+#define PPUTLIMPL_UDEC_3574u 0xDF6u, 11, 59, 2, 1787
+#define PPUTLIMPL_UDEC_3573u 0xDF5u, 11, 59, 3, 3, 397
+#define PPUTLIMPL_UDEC_3572u 0xDF4u, 11, 59, 2, 2, 19, 47
+#define PPUTLIMPL_UDEC_3571u 0xDF3u, 11, 59,
+#define PPUTLIMPL_UDEC_3570u 0xDF2u, 11, 59, 2, 3, 5, 7, 17
+#define PPUTLIMPL_UDEC_3569u 0xDF1u, 11, 59, 43, 83
+#define PPUTLIMPL_UDEC_3568u 0xDF0u, 11, 59, 2, 2, 2, 2, 223
+#define PPUTLIMPL_UDEC_3567u 0xDEFu, 11, 59, 3, 29, 41
+#define PPUTLIMPL_UDEC_3566u 0xDEEu, 11, 59, 2, 1783
+#define PPUTLIMPL_UDEC_3565u 0xDEDu, 11, 59, 5, 23, 31
+#define PPUTLIMPL_UDEC_3564u 0xDECu, 11, 59, 2, 2, 3, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_3563u 0xDEBu, 11, 59, 7, 509
+#define PPUTLIMPL_UDEC_3562u 0xDEAu, 11, 59, 2, 13, 137
+#define PPUTLIMPL_UDEC_3561u 0xDE9u, 11, 59, 3, 1187
+#define PPUTLIMPL_UDEC_3560u 0xDE8u, 11, 59, 2, 2, 2, 5, 89
+#define PPUTLIMPL_UDEC_3559u 0xDE7u, 11, 59,
+#define PPUTLIMPL_UDEC_3558u 0xDE6u, 11, 59, 2, 3, 593
+#define PPUTLIMPL_UDEC_3557u 0xDE5u, 11, 59,
+#define PPUTLIMPL_UDEC_3556u 0xDE4u, 11, 59, 2, 2, 7, 127
+#define PPUTLIMPL_UDEC_3555u 0xDE3u, 11, 59, 3, 3, 5, 79
+#define PPUTLIMPL_UDEC_3554u 0xDE2u, 11, 59, 2, 1777
+#define PPUTLIMPL_UDEC_3553u 0xDE1u, 11, 59, 11, 17, 19
+#define PPUTLIMPL_UDEC_3552u 0xDE0u, 11, 59, 2, 2, 2, 2, 2, 3, 37
+#define PPUTLIMPL_UDEC_3551u 0xDDFu, 11, 59, 53, 67
+#define PPUTLIMPL_UDEC_3550u 0xDDEu, 11, 59, 2, 5, 5, 71
+#define PPUTLIMPL_UDEC_3549u 0xDDDu, 11, 59, 3, 7, 13, 13
+#define PPUTLIMPL_UDEC_3548u 0xDDCu, 11, 59, 2, 2, 887
+#define PPUTLIMPL_UDEC_3547u 0xDDBu, 11, 59,
+#define PPUTLIMPL_UDEC_3546u 0xDDAu, 11, 59, 2, 3, 3, 197
+#define PPUTLIMPL_UDEC_3545u 0xDD9u, 11, 59, 5, 709
+#define PPUTLIMPL_UDEC_3544u 0xDD8u, 11, 59, 2, 2, 2, 443
+#define PPUTLIMPL_UDEC_3543u 0xDD7u, 11, 59, 3, 1181
+#define PPUTLIMPL_UDEC_3542u 0xDD6u, 11, 59, 2, 7, 11, 23
+#define PPUTLIMPL_UDEC_3541u 0xDD5u, 11, 59,
+#define PPUTLIMPL_UDEC_3540u 0xDD4u, 11, 59, 2, 2, 3, 5, 59
+#define PPUTLIMPL_UDEC_3539u 0xDD3u, 11, 59,
+#define PPUTLIMPL_UDEC_3538u 0xDD2u, 11, 59, 2, 29, 61
+#define PPUTLIMPL_UDEC_3537u 0xDD1u, 11, 59, 3, 3, 3, 131
+#define PPUTLIMPL_UDEC_3536u 0xDD0u, 11, 59, 2, 2, 2, 2, 13, 17
+#define PPUTLIMPL_UDEC_3535u 0xDCFu, 11, 59, 5, 7, 101
+#define PPUTLIMPL_UDEC_3534u 0xDCEu, 11, 59, 2, 3, 19, 31
+#define PPUTLIMPL_UDEC_3533u 0xDCDu, 11, 59,
+#define PPUTLIMPL_UDEC_3532u 0xDCCu, 11, 59, 2, 2, 883
+#define PPUTLIMPL_UDEC_3531u 0xDCBu, 11, 59, 3, 11, 107
+#define PPUTLIMPL_UDEC_3530u 0xDCAu, 11, 59, 2, 5, 353
+#define PPUTLIMPL_UDEC_3529u 0xDC9u, 11, 59,
+#define PPUTLIMPL_UDEC_3528u 0xDC8u, 11, 59, 2, 2, 2, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_3527u 0xDC7u, 11, 59,
+#define PPUTLIMPL_UDEC_3526u 0xDC6u, 11, 59, 2, 41, 43
+#define PPUTLIMPL_UDEC_3525u 0xDC5u, 11, 59, 3, 5, 5, 47
+#define PPUTLIMPL_UDEC_3524u 0xDC4u, 11, 59, 2, 2, 881
+#define PPUTLIMPL_UDEC_3523u 0xDC3u, 11, 59, 13, 271
+#define PPUTLIMPL_UDEC_3522u 0xDC2u, 11, 59, 2, 3, 587
+#define PPUTLIMPL_UDEC_3521u 0xDC1u, 11, 59, 7, 503
+#define PPUTLIMPL_UDEC_3520u 0xDC0u, 11, 59, 2, 2, 2, 2, 2, 2, 5, 11
+#define PPUTLIMPL_UDEC_3519u 0xDBFu, 11, 59, 3, 3, 17, 23
+#define PPUTLIMPL_UDEC_3518u 0xDBEu, 11, 59, 2, 1759
+#define PPUTLIMPL_UDEC_3517u 0xDBDu, 11, 59,
+#define PPUTLIMPL_UDEC_3516u 0xDBCu, 11, 59, 2, 2, 3, 293
+#define PPUTLIMPL_UDEC_3515u 0xDBBu, 11, 59, 5, 19, 37
+#define PPUTLIMPL_UDEC_3514u 0xDBAu, 11, 59, 2, 7, 251
+#define PPUTLIMPL_UDEC_3513u 0xDB9u, 11, 59, 3, 1171
+#define PPUTLIMPL_UDEC_3512u 0xDB8u, 11, 59, 2, 2, 2, 439
+#define PPUTLIMPL_UDEC_3511u 0xDB7u, 11, 59,
+#define PPUTLIMPL_UDEC_3510u 0xDB6u, 11, 59, 2, 3, 3, 3, 5, 13
+#define PPUTLIMPL_UDEC_3509u 0xDB5u, 11, 59, 11, 11, 29
+#define PPUTLIMPL_UDEC_3508u 0xDB4u, 11, 59, 2, 2, 877
+#define PPUTLIMPL_UDEC_3507u 0xDB3u, 11, 59, 3, 7, 167
+#define PPUTLIMPL_UDEC_3506u 0xDB2u, 11, 59, 2, 1753
+#define PPUTLIMPL_UDEC_3505u 0xDB1u, 11, 59, 5, 701
+#define PPUTLIMPL_UDEC_3504u 0xDB0u, 11, 59, 2, 2, 2, 2, 3, 73
+#define PPUTLIMPL_UDEC_3503u 0xDAFu, 11, 59, 31, 113
+#define PPUTLIMPL_UDEC_3502u 0xDAEu, 11, 59, 2, 17, 103
+#define PPUTLIMPL_UDEC_3501u 0xDADu, 11, 59, 3, 3, 389
+#define PPUTLIMPL_UDEC_3500u 0xDACu, 11, 59, 2, 2, 5, 5, 5, 7
+#define PPUTLIMPL_UDEC_3499u 0xDABu, 11, 59,
+#define PPUTLIMPL_UDEC_3498u 0xDAAu, 11, 59, 2, 3, 11, 53
+#define PPUTLIMPL_UDEC_3497u 0xDA9u, 11, 59, 13, 269
+#define PPUTLIMPL_UDEC_3496u 0xDA8u, 11, 59, 2, 2, 2, 19, 23
+#define PPUTLIMPL_UDEC_3495u 0xDA7u, 11, 59, 3, 5, 233
+#define PPUTLIMPL_UDEC_3494u 0xDA6u, 11, 59, 2, 1747
+#define PPUTLIMPL_UDEC_3493u 0xDA5u, 11, 59, 7, 499
+#define PPUTLIMPL_UDEC_3492u 0xDA4u, 11, 59, 2, 2, 3, 3, 97
+#define PPUTLIMPL_UDEC_3491u 0xDA3u, 11, 59,
+#define PPUTLIMPL_UDEC_3490u 0xDA2u, 11, 59, 2, 5, 349
+#define PPUTLIMPL_UDEC_3489u 0xDA1u, 11, 59, 3, 1163
+#define PPUTLIMPL_UDEC_3488u 0xDA0u, 11, 59, 2, 2, 2, 2, 2, 109
+#define PPUTLIMPL_UDEC_3487u 0xD9Fu, 11, 59, 11, 317
+#define PPUTLIMPL_UDEC_3486u 0xD9Eu, 11, 59, 2, 3, 7, 83
+#define PPUTLIMPL_UDEC_3485u 0xD9Du, 11, 59, 5, 17, 41
+#define PPUTLIMPL_UDEC_3484u 0xD9Cu, 11, 59, 2, 2, 13, 67
+#define PPUTLIMPL_UDEC_3483u 0xD9Bu, 11, 59, 3, 3, 3, 3, 43
+#define PPUTLIMPL_UDEC_3482u 0xD9Au, 11, 59, 2, 1741
+#define PPUTLIMPL_UDEC_3481u 0xD99u, 11, 59, 59, 59
+#define PPUTLIMPL_UDEC_3480u 0xD98u, 11, 58, 2, 2, 2, 3, 5, 29
+#define PPUTLIMPL_UDEC_3479u 0xD97u, 11, 58, 7, 7, 71
+#define PPUTLIMPL_UDEC_3478u 0xD96u, 11, 58, 2, 37, 47
+#define PPUTLIMPL_UDEC_3477u 0xD95u, 11, 58, 3, 19, 61
+#define PPUTLIMPL_UDEC_3476u 0xD94u, 11, 58, 2, 2, 11, 79
+#define PPUTLIMPL_UDEC_3475u 0xD93u, 11, 58, 5, 5, 139
+#define PPUTLIMPL_UDEC_3474u 0xD92u, 11, 58, 2, 3, 3, 193
+#define PPUTLIMPL_UDEC_3473u 0xD91u, 11, 58, 23, 151
+#define PPUTLIMPL_UDEC_3472u 0xD90u, 11, 58, 2, 2, 2, 2, 7, 31
+#define PPUTLIMPL_UDEC_3471u 0xD8Fu, 11, 58, 3, 13, 89
+#define PPUTLIMPL_UDEC_3470u 0xD8Eu, 11, 58, 2, 5, 347
+#define PPUTLIMPL_UDEC_3469u 0xD8Du, 11, 58,
+#define PPUTLIMPL_UDEC_3468u 0xD8Cu, 11, 58, 2, 2, 3, 17, 17
+#define PPUTLIMPL_UDEC_3467u 0xD8Bu, 11, 58,
+#define PPUTLIMPL_UDEC_3466u 0xD8Au, 11, 58, 2, 1733
+#define PPUTLIMPL_UDEC_3465u 0xD89u, 11, 58, 3, 3, 5, 7, 11
+#define PPUTLIMPL_UDEC_3464u 0xD88u, 11, 58, 2, 2, 2, 433
+#define PPUTLIMPL_UDEC_3463u 0xD87u, 11, 58,
+#define PPUTLIMPL_UDEC_3462u 0xD86u, 11, 58, 2, 3, 577
+#define PPUTLIMPL_UDEC_3461u 0xD85u, 11, 58,
+#define PPUTLIMPL_UDEC_3460u 0xD84u, 11, 58, 2, 2, 5, 173
+#define PPUTLIMPL_UDEC_3459u 0xD83u, 11, 58, 3, 1153
+#define PPUTLIMPL_UDEC_3458u 0xD82u, 11, 58, 2, 7, 13, 19
+#define PPUTLIMPL_UDEC_3457u 0xD81u, 11, 58,
+#define PPUTLIMPL_UDEC_3456u 0xD80u, 11, 58, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_3455u 0xD7Fu, 11, 58, 5, 691
+#define PPUTLIMPL_UDEC_3454u 0xD7Eu, 11, 58, 2, 11, 157
+#define PPUTLIMPL_UDEC_3453u 0xD7Du, 11, 58, 3, 1151
+#define PPUTLIMPL_UDEC_3452u 0xD7Cu, 11, 58, 2, 2, 863
+#define PPUTLIMPL_UDEC_3451u 0xD7Bu, 11, 58, 7, 17, 29
+#define PPUTLIMPL_UDEC_3450u 0xD7Au, 11, 58, 2, 3, 5, 5, 23
+#define PPUTLIMPL_UDEC_3449u 0xD79u, 11, 58,
+#define PPUTLIMPL_UDEC_3448u 0xD78u, 11, 58, 2, 2, 2, 431
+#define PPUTLIMPL_UDEC_3447u 0xD77u, 11, 58, 3, 3, 383
+#define PPUTLIMPL_UDEC_3446u 0xD76u, 11, 58, 2, 1723
+#define PPUTLIMPL_UDEC_3445u 0xD75u, 11, 58, 5, 13, 53
+#define PPUTLIMPL_UDEC_3444u 0xD74u, 11, 58, 2, 2, 3, 7, 41
+#define PPUTLIMPL_UDEC_3443u 0xD73u, 11, 58, 11, 313
+#define PPUTLIMPL_UDEC_3442u 0xD72u, 11, 58, 2, 1721
+#define PPUTLIMPL_UDEC_3441u 0xD71u, 11, 58, 3, 31, 37
+#define PPUTLIMPL_UDEC_3440u 0xD70u, 11, 58, 2, 2, 2, 2, 5, 43
+#define PPUTLIMPL_UDEC_3439u 0xD6Fu, 11, 58, 19, 181
+#define PPUTLIMPL_UDEC_3438u 0xD6Eu, 11, 58, 2, 3, 3, 191
+#define PPUTLIMPL_UDEC_3437u 0xD6Du, 11, 58, 7, 491
+#define PPUTLIMPL_UDEC_3436u 0xD6Cu, 11, 58, 2, 2, 859
+#define PPUTLIMPL_UDEC_3435u 0xD6Bu, 11, 58, 3, 5, 229
+#define PPUTLIMPL_UDEC_3434u 0xD6Au, 11, 58, 2, 17, 101
+#define PPUTLIMPL_UDEC_3433u 0xD69u, 11, 58,
+#define PPUTLIMPL_UDEC_3432u 0xD68u, 11, 58, 2, 2, 2, 3, 11, 13
+#define PPUTLIMPL_UDEC_3431u 0xD67u, 11, 58, 47, 73
+#define PPUTLIMPL_UDEC_3430u 0xD66u, 11, 58, 2, 5, 7, 7, 7
+#define PPUTLIMPL_UDEC_3429u 0xD65u, 11, 58, 3, 3, 3, 127
+#define PPUTLIMPL_UDEC_3428u 0xD64u, 11, 58, 2, 2, 857
+#define PPUTLIMPL_UDEC_3427u 0xD63u, 11, 58, 23, 149
+#define PPUTLIMPL_UDEC_3426u 0xD62u, 11, 58, 2, 3, 571
+#define PPUTLIMPL_UDEC_3425u 0xD61u, 11, 58, 5, 5, 137
+#define PPUTLIMPL_UDEC_3424u 0xD60u, 11, 58, 2, 2, 2, 2, 2, 107
+#define PPUTLIMPL_UDEC_3423u 0xD5Fu, 11, 58, 3, 7, 163
+#define PPUTLIMPL_UDEC_3422u 0xD5Eu, 11, 58, 2, 29, 59
+#define PPUTLIMPL_UDEC_3421u 0xD5Du, 11, 58, 11, 311
+#define PPUTLIMPL_UDEC_3420u 0xD5Cu, 11, 58, 2, 2, 3, 3, 5, 19
+#define PPUTLIMPL_UDEC_3419u 0xD5Bu, 11, 58, 13, 263
+#define PPUTLIMPL_UDEC_3418u 0xD5Au, 11, 58, 2, 1709
+#define PPUTLIMPL_UDEC_3417u 0xD59u, 11, 58, 3, 17, 67
+#define PPUTLIMPL_UDEC_3416u 0xD58u, 11, 58, 2, 2, 2, 7, 61
+#define PPUTLIMPL_UDEC_3415u 0xD57u, 11, 58, 5, 683
+#define PPUTLIMPL_UDEC_3414u 0xD56u, 11, 58, 2, 3, 569
+#define PPUTLIMPL_UDEC_3413u 0xD55u, 11, 58,
+#define PPUTLIMPL_UDEC_3412u 0xD54u, 11, 58, 2, 2, 853
+#define PPUTLIMPL_UDEC_3411u 0xD53u, 11, 58, 3, 3, 379
+#define PPUTLIMPL_UDEC_3410u 0xD52u, 11, 58, 2, 5, 11, 31
+#define PPUTLIMPL_UDEC_3409u 0xD51u, 11, 58, 7, 487
+#define PPUTLIMPL_UDEC_3408u 0xD50u, 11, 58, 2, 2, 2, 2, 3, 71
+#define PPUTLIMPL_UDEC_3407u 0xD4Fu, 11, 58,
+#define PPUTLIMPL_UDEC_3406u 0xD4Eu, 11, 58, 2, 13, 131
+#define PPUTLIMPL_UDEC_3405u 0xD4Du, 11, 58, 3, 5, 227
+#define PPUTLIMPL_UDEC_3404u 0xD4Cu, 11, 58, 2, 2, 23, 37
+#define PPUTLIMPL_UDEC_3403u 0xD4Bu, 11, 58, 41, 83
+#define PPUTLIMPL_UDEC_3402u 0xD4Au, 11, 58, 2, 3, 3, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_3401u 0xD49u, 11, 58, 19, 179
+#define PPUTLIMPL_UDEC_3400u 0xD48u, 11, 58, 2, 2, 2, 5, 5, 17
+#define PPUTLIMPL_UDEC_3399u 0xD47u, 11, 58, 3, 11, 103
+#define PPUTLIMPL_UDEC_3398u 0xD46u, 11, 58, 2, 1699
+#define PPUTLIMPL_UDEC_3397u 0xD45u, 11, 58, 43, 79
+#define PPUTLIMPL_UDEC_3396u 0xD44u, 11, 58, 2, 2, 3, 283
+#define PPUTLIMPL_UDEC_3395u 0xD43u, 11, 58, 5, 7, 97
+#define PPUTLIMPL_UDEC_3394u 0xD42u, 11, 58, 2, 1697
+#define PPUTLIMPL_UDEC_3393u 0xD41u, 11, 58, 3, 3, 13, 29
+#define PPUTLIMPL_UDEC_3392u 0xD40u, 11, 58, 2, 2, 2, 2, 2, 2, 53
+#define PPUTLIMPL_UDEC_3391u 0xD3Fu, 11, 58,
+#define PPUTLIMPL_UDEC_3390u 0xD3Eu, 11, 58, 2, 3, 5, 113
+#define PPUTLIMPL_UDEC_3389u 0xD3Du, 11, 58,
+#define PPUTLIMPL_UDEC_3388u 0xD3Cu, 11, 58, 2, 2, 7, 11, 11
+#define PPUTLIMPL_UDEC_3387u 0xD3Bu, 11, 58, 3, 1129
+#define PPUTLIMPL_UDEC_3386u 0xD3Au, 11, 58, 2, 1693
+#define PPUTLIMPL_UDEC_3385u 0xD39u, 11, 58, 5, 677
+#define PPUTLIMPL_UDEC_3384u 0xD38u, 11, 58, 2, 2, 2, 3, 3, 47
+#define PPUTLIMPL_UDEC_3383u 0xD37u, 11, 58, 17, 199
+#define PPUTLIMPL_UDEC_3382u 0xD36u, 11, 58, 2, 19, 89
+#define PPUTLIMPL_UDEC_3381u 0xD35u, 11, 58, 3, 7, 7, 23
+#define PPUTLIMPL_UDEC_3380u 0xD34u, 11, 58, 2, 2, 5, 13, 13
+#define PPUTLIMPL_UDEC_3379u 0xD33u, 11, 58, 31, 109
+#define PPUTLIMPL_UDEC_3378u 0xD32u, 11, 58, 2, 3, 563
+#define PPUTLIMPL_UDEC_3377u 0xD31u, 11, 58, 11, 307
+#define PPUTLIMPL_UDEC_3376u 0xD30u, 11, 58, 2, 2, 2, 2, 211
+#define PPUTLIMPL_UDEC_3375u 0xD2Fu, 11, 58, 3, 3, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_3374u 0xD2Eu, 11, 58, 2, 7, 241
+#define PPUTLIMPL_UDEC_3373u 0xD2Du, 11, 58,
+#define PPUTLIMPL_UDEC_3372u 0xD2Cu, 11, 58, 2, 2, 3, 281
+#define PPUTLIMPL_UDEC_3371u 0xD2Bu, 11, 58,
+#define PPUTLIMPL_UDEC_3370u 0xD2Au, 11, 58, 2, 5, 337
+#define PPUTLIMPL_UDEC_3369u 0xD29u, 11, 58, 3, 1123
+#define PPUTLIMPL_UDEC_3368u 0xD28u, 11, 58, 2, 2, 2, 421
+#define PPUTLIMPL_UDEC_3367u 0xD27u, 11, 58, 7, 13, 37
+#define PPUTLIMPL_UDEC_3366u 0xD26u, 11, 58, 2, 3, 3, 11, 17
+#define PPUTLIMPL_UDEC_3365u 0xD25u, 11, 58, 5, 673
+#define PPUTLIMPL_UDEC_3364u 0xD24u, 11, 58, 2, 2, 29, 29
+#define PPUTLIMPL_UDEC_3363u 0xD23u, 11, 57, 3, 19, 59
+#define PPUTLIMPL_UDEC_3362u 0xD22u, 11, 57, 2, 41, 41
+#define PPUTLIMPL_UDEC_3361u 0xD21u, 11, 57,
+#define PPUTLIMPL_UDEC_3360u 0xD20u, 11, 57, 2, 2, 2, 2, 2, 3, 5, 7
+#define PPUTLIMPL_UDEC_3359u 0xD1Fu, 11, 57,
+#define PPUTLIMPL_UDEC_3358u 0xD1Eu, 11, 57, 2, 23, 73
+#define PPUTLIMPL_UDEC_3357u 0xD1Du, 11, 57, 3, 3, 373
+#define PPUTLIMPL_UDEC_3356u 0xD1Cu, 11, 57, 2, 2, 839
+#define PPUTLIMPL_UDEC_3355u 0xD1Bu, 11, 57, 5, 11, 61
+#define PPUTLIMPL_UDEC_3354u 0xD1Au, 11, 57, 2, 3, 13, 43
+#define PPUTLIMPL_UDEC_3353u 0xD19u, 11, 57, 7, 479
+#define PPUTLIMPL_UDEC_3352u 0xD18u, 11, 57, 2, 2, 2, 419
+#define PPUTLIMPL_UDEC_3351u 0xD17u, 11, 57, 3, 1117
+#define PPUTLIMPL_UDEC_3350u 0xD16u, 11, 57, 2, 5, 5, 67
+#define PPUTLIMPL_UDEC_3349u 0xD15u, 11, 57, 17, 197
+#define PPUTLIMPL_UDEC_3348u 0xD14u, 11, 57, 2, 2, 3, 3, 3, 31
+#define PPUTLIMPL_UDEC_3347u 0xD13u, 11, 57,
+#define PPUTLIMPL_UDEC_3346u 0xD12u, 11, 57, 2, 7, 239
+#define PPUTLIMPL_UDEC_3345u 0xD11u, 11, 57, 3, 5, 223
+#define PPUTLIMPL_UDEC_3344u 0xD10u, 11, 57, 2, 2, 2, 2, 11, 19
+#define PPUTLIMPL_UDEC_3343u 0xD0Fu, 11, 57,
+#define PPUTLIMPL_UDEC_3342u 0xD0Eu, 11, 57, 2, 3, 557
+#define PPUTLIMPL_UDEC_3341u 0xD0Du, 11, 57, 13, 257
+#define PPUTLIMPL_UDEC_3340u 0xD0Cu, 11, 57, 2, 2, 5, 167
+#define PPUTLIMPL_UDEC_3339u 0xD0Bu, 11, 57, 3, 3, 7, 53
+#define PPUTLIMPL_UDEC_3338u 0xD0Au, 11, 57, 2, 1669
+#define PPUTLIMPL_UDEC_3337u 0xD09u, 11, 57, 47, 71
+#define PPUTLIMPL_UDEC_3336u 0xD08u, 11, 57, 2, 2, 2, 3, 139
+#define PPUTLIMPL_UDEC_3335u 0xD07u, 11, 57, 5, 23, 29
+#define PPUTLIMPL_UDEC_3334u 0xD06u, 11, 57, 2, 1667
+#define PPUTLIMPL_UDEC_3333u 0xD05u, 11, 57, 3, 11, 101
+#define PPUTLIMPL_UDEC_3332u 0xD04u, 11, 57, 2, 2, 7, 7, 17
+#define PPUTLIMPL_UDEC_3331u 0xD03u, 11, 57,
+#define PPUTLIMPL_UDEC_3330u 0xD02u, 11, 57, 2, 3, 3, 5, 37
+#define PPUTLIMPL_UDEC_3329u 0xD01u, 11, 57,
+#define PPUTLIMPL_UDEC_3328u 0xD00u, 11, 57, 2, 2, 2, 2, 2, 2, 2, 2, 13
+#define PPUTLIMPL_UDEC_3327u 0xCFFu, 11, 57, 3, 1109
+#define PPUTLIMPL_UDEC_3326u 0xCFEu, 11, 57, 2, 1663
+#define PPUTLIMPL_UDEC_3325u 0xCFDu, 11, 57, 5, 5, 7, 19
+#define PPUTLIMPL_UDEC_3324u 0xCFCu, 11, 57, 2, 2, 3, 277
+#define PPUTLIMPL_UDEC_3323u 0xCFBu, 11, 57,
+#define PPUTLIMPL_UDEC_3322u 0xCFAu, 11, 57, 2, 11, 151
+#define PPUTLIMPL_UDEC_3321u 0xCF9u, 11, 57, 3, 3, 3, 3, 41
+#define PPUTLIMPL_UDEC_3320u 0xCF8u, 11, 57, 2, 2, 2, 5, 83
+#define PPUTLIMPL_UDEC_3319u 0xCF7u, 11, 57,
+#define PPUTLIMPL_UDEC_3318u 0xCF6u, 11, 57, 2, 3, 7, 79
+#define PPUTLIMPL_UDEC_3317u 0xCF5u, 11, 57, 31, 107
+#define PPUTLIMPL_UDEC_3316u 0xCF4u, 11, 57, 2, 2, 829
+#define PPUTLIMPL_UDEC_3315u 0xCF3u, 11, 57, 3, 5, 13, 17
+#define PPUTLIMPL_UDEC_3314u 0xCF2u, 11, 57, 2, 1657
+#define PPUTLIMPL_UDEC_3313u 0xCF1u, 11, 57,
+#define PPUTLIMPL_UDEC_3312u 0xCF0u, 11, 57, 2, 2, 2, 2, 3, 3, 23
+#define PPUTLIMPL_UDEC_3311u 0xCEFu, 11, 57, 7, 11, 43
+#define PPUTLIMPL_UDEC_3310u 0xCEEu, 11, 57, 2, 5, 331
+#define PPUTLIMPL_UDEC_3309u 0xCEDu, 11, 57, 3, 1103
+#define PPUTLIMPL_UDEC_3308u 0xCECu, 11, 57, 2, 2, 827
+#define PPUTLIMPL_UDEC_3307u 0xCEBu, 11, 57,
+#define PPUTLIMPL_UDEC_3306u 0xCEAu, 11, 57, 2, 3, 19, 29
+#define PPUTLIMPL_UDEC_3305u 0xCE9u, 11, 57, 5, 661
+#define PPUTLIMPL_UDEC_3304u 0xCE8u, 11, 57, 2, 2, 2, 7, 59
+#define PPUTLIMPL_UDEC_3303u 0xCE7u, 11, 57, 3, 3, 367
+#define PPUTLIMPL_UDEC_3302u 0xCE6u, 11, 57, 2, 13, 127
+#define PPUTLIMPL_UDEC_3301u 0xCE5u, 11, 57,
+#define PPUTLIMPL_UDEC_3300u 0xCE4u, 11, 57, 2, 2, 3, 5, 5, 11
+#define PPUTLIMPL_UDEC_3299u 0xCE3u, 11, 57,
+#define PPUTLIMPL_UDEC_3298u 0xCE2u, 11, 57, 2, 17, 97
+#define PPUTLIMPL_UDEC_3297u 0xCE1u, 11, 57, 3, 7, 157
+#define PPUTLIMPL_UDEC_3296u 0xCE0u, 11, 57, 2, 2, 2, 2, 2, 103
+#define PPUTLIMPL_UDEC_3295u 0xCDFu, 11, 57, 5, 659
+#define PPUTLIMPL_UDEC_3294u 0xCDEu, 11, 57, 2, 3, 3, 3, 61
+#define PPUTLIMPL_UDEC_3293u 0xCDDu, 11, 57, 37, 89
+#define PPUTLIMPL_UDEC_3292u 0xCDCu, 11, 57, 2, 2, 823
+#define PPUTLIMPL_UDEC_3291u 0xCDBu, 11, 57, 3, 1097
+#define PPUTLIMPL_UDEC_3290u 0xCDAu, 11, 57, 2, 5, 7, 47
+#define PPUTLIMPL_UDEC_3289u 0xCD9u, 11, 57, 11, 13, 23
+#define PPUTLIMPL_UDEC_3288u 0xCD8u, 11, 57, 2, 2, 2, 3, 137
+#define PPUTLIMPL_UDEC_3287u 0xCD7u, 11, 57, 19, 173
+#define PPUTLIMPL_UDEC_3286u 0xCD6u, 11, 57, 2, 31, 53
+#define PPUTLIMPL_UDEC_3285u 0xCD5u, 11, 57, 3, 3, 5, 73
+#define PPUTLIMPL_UDEC_3284u 0xCD4u, 11, 57, 2, 2, 821
+#define PPUTLIMPL_UDEC_3283u 0xCD3u, 11, 57, 7, 7, 67
+#define PPUTLIMPL_UDEC_3282u 0xCD2u, 11, 57, 2, 3, 547
+#define PPUTLIMPL_UDEC_3281u 0xCD1u, 11, 57, 17, 193
+#define PPUTLIMPL_UDEC_3280u 0xCD0u, 11, 57, 2, 2, 2, 2, 5, 41
+#define PPUTLIMPL_UDEC_3279u 0xCCFu, 11, 57, 3, 1093
+#define PPUTLIMPL_UDEC_3278u 0xCCEu, 11, 57, 2, 11, 149
+#define PPUTLIMPL_UDEC_3277u 0xCCDu, 11, 57, 29, 113
+#define PPUTLIMPL_UDEC_3276u 0xCCCu, 11, 57, 2, 2, 3, 3, 7, 13
+#define PPUTLIMPL_UDEC_3275u 0xCCBu, 11, 57, 5, 5, 131
+#define PPUTLIMPL_UDEC_3274u 0xCCAu, 11, 57, 2, 1637
+#define PPUTLIMPL_UDEC_3273u 0xCC9u, 11, 57, 3, 1091
+#define PPUTLIMPL_UDEC_3272u 0xCC8u, 11, 57, 2, 2, 2, 409
+#define PPUTLIMPL_UDEC_3271u 0xCC7u, 11, 57,
+#define PPUTLIMPL_UDEC_3270u 0xCC6u, 11, 57, 2, 3, 5, 109
+#define PPUTLIMPL_UDEC_3269u 0xCC5u, 11, 57, 7, 467
+#define PPUTLIMPL_UDEC_3268u 0xCC4u, 11, 57, 2, 2, 19, 43
+#define PPUTLIMPL_UDEC_3267u 0xCC3u, 11, 57, 3, 3, 3, 11, 11
+#define PPUTLIMPL_UDEC_3266u 0xCC2u, 11, 57, 2, 23, 71
+#define PPUTLIMPL_UDEC_3265u 0xCC1u, 11, 57, 5, 653
+#define PPUTLIMPL_UDEC_3264u 0xCC0u, 11, 57, 2, 2, 2, 2, 2, 2, 3, 17
+#define PPUTLIMPL_UDEC_3263u 0xCBFu, 11, 57, 13, 251
+#define PPUTLIMPL_UDEC_3262u 0xCBEu, 11, 57, 2, 7, 233
+#define PPUTLIMPL_UDEC_3261u 0xCBDu, 11, 57, 3, 1087
+#define PPUTLIMPL_UDEC_3260u 0xCBCu, 11, 57, 2, 2, 5, 163
+#define PPUTLIMPL_UDEC_3259u 0xCBBu, 11, 57,
+#define PPUTLIMPL_UDEC_3258u 0xCBAu, 11, 57, 2, 3, 3, 181
+#define PPUTLIMPL_UDEC_3257u 0xCB9u, 11, 57,
+#define PPUTLIMPL_UDEC_3256u 0xCB8u, 11, 57, 2, 2, 2, 11, 37
+#define PPUTLIMPL_UDEC_3255u 0xCB7u, 11, 57, 3, 5, 7, 31
+#define PPUTLIMPL_UDEC_3254u 0xCB6u, 11, 57, 2, 1627
+#define PPUTLIMPL_UDEC_3253u 0xCB5u, 11, 57,
+#define PPUTLIMPL_UDEC_3252u 0xCB4u, 11, 57, 2, 2, 3, 271
+#define PPUTLIMPL_UDEC_3251u 0xCB3u, 11, 57,
+#define PPUTLIMPL_UDEC_3250u 0xCB2u, 11, 57, 2, 5, 5, 5, 13
+#define PPUTLIMPL_UDEC_3249u 0xCB1u, 11, 57, 3, 3, 19, 19
+#define PPUTLIMPL_UDEC_3248u 0xCB0u, 11, 56, 2, 2, 2, 2, 7, 29
+#define PPUTLIMPL_UDEC_3247u 0xCAFu, 11, 56, 17, 191
+#define PPUTLIMPL_UDEC_3246u 0xCAEu, 11, 56, 2, 3, 541
+#define PPUTLIMPL_UDEC_3245u 0xCADu, 11, 56, 5, 11, 59
+#define PPUTLIMPL_UDEC_3244u 0xCACu, 11, 56, 2, 2, 811
+#define PPUTLIMPL_UDEC_3243u 0xCABu, 11, 56, 3, 23, 47
+#define PPUTLIMPL_UDEC_3242u 0xCAAu, 11, 56, 2, 1621
+#define PPUTLIMPL_UDEC_3241u 0xCA9u, 11, 56, 7, 463
+#define PPUTLIMPL_UDEC_3240u 0xCA8u, 11, 56, 2, 2, 2, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_3239u 0xCA7u, 11, 56, 41, 79
+#define PPUTLIMPL_UDEC_3238u 0xCA6u, 11, 56, 2, 1619
+#define PPUTLIMPL_UDEC_3237u 0xCA5u, 11, 56, 3, 13, 83
+#define PPUTLIMPL_UDEC_3236u 0xCA4u, 11, 56, 2, 2, 809
+#define PPUTLIMPL_UDEC_3235u 0xCA3u, 11, 56, 5, 647
+#define PPUTLIMPL_UDEC_3234u 0xCA2u, 11, 56, 2, 3, 7, 7, 11
+#define PPUTLIMPL_UDEC_3233u 0xCA1u, 11, 56, 53, 61
+#define PPUTLIMPL_UDEC_3232u 0xCA0u, 11, 56, 2, 2, 2, 2, 2, 101
+#define PPUTLIMPL_UDEC_3231u 0xC9Fu, 11, 56, 3, 3, 359
+#define PPUTLIMPL_UDEC_3230u 0xC9Eu, 11, 56, 2, 5, 17, 19
+#define PPUTLIMPL_UDEC_3229u 0xC9Du, 11, 56,
+#define PPUTLIMPL_UDEC_3228u 0xC9Cu, 11, 56, 2, 2, 3, 269
+#define PPUTLIMPL_UDEC_3227u 0xC9Bu, 11, 56, 7, 461
+#define PPUTLIMPL_UDEC_3226u 0xC9Au, 11, 56, 2, 1613
+#define PPUTLIMPL_UDEC_3225u 0xC99u, 11, 56, 3, 5, 5, 43
+#define PPUTLIMPL_UDEC_3224u 0xC98u, 11, 56, 2, 2, 2, 13, 31
+#define PPUTLIMPL_UDEC_3223u 0xC97u, 11, 56, 11, 293
+#define PPUTLIMPL_UDEC_3222u 0xC96u, 11, 56, 2, 3, 3, 179
+#define PPUTLIMPL_UDEC_3221u 0xC95u, 11, 56,
+#define PPUTLIMPL_UDEC_3220u 0xC94u, 11, 56, 2, 2, 5, 7, 23
+#define PPUTLIMPL_UDEC_3219u 0xC93u, 11, 56, 3, 29, 37
+#define PPUTLIMPL_UDEC_3218u 0xC92u, 11, 56, 2, 1609
+#define PPUTLIMPL_UDEC_3217u 0xC91u, 11, 56,
+#define PPUTLIMPL_UDEC_3216u 0xC90u, 11, 56, 2, 2, 2, 2, 3, 67
+#define PPUTLIMPL_UDEC_3215u 0xC8Fu, 11, 56, 5, 643
+#define PPUTLIMPL_UDEC_3214u 0xC8Eu, 11, 56, 2, 1607
+#define PPUTLIMPL_UDEC_3213u 0xC8Du, 11, 56, 3, 3, 3, 7, 17
+#define PPUTLIMPL_UDEC_3212u 0xC8Cu, 11, 56, 2, 2, 11, 73
+#define PPUTLIMPL_UDEC_3211u 0xC8Bu, 11, 56, 13, 13, 19
+#define PPUTLIMPL_UDEC_3210u 0xC8Au, 11, 56, 2, 3, 5, 107
+#define PPUTLIMPL_UDEC_3209u 0xC89u, 11, 56,
+#define PPUTLIMPL_UDEC_3208u 0xC88u, 11, 56, 2, 2, 2, 401
+#define PPUTLIMPL_UDEC_3207u 0xC87u, 11, 56, 3, 1069
+#define PPUTLIMPL_UDEC_3206u 0xC86u, 11, 56, 2, 7, 229
+#define PPUTLIMPL_UDEC_3205u 0xC85u, 11, 56, 5, 641
+#define PPUTLIMPL_UDEC_3204u 0xC84u, 11, 56, 2, 2, 3, 3, 89
+#define PPUTLIMPL_UDEC_3203u 0xC83u, 11, 56,
+#define PPUTLIMPL_UDEC_3202u 0xC82u, 11, 56, 2, 1601
+#define PPUTLIMPL_UDEC_3201u 0xC81u, 11, 56, 3, 11, 97
+#define PPUTLIMPL_UDEC_3200u 0xC80u, 11, 56, 2, 2, 2, 2, 2, 2, 2, 5, 5
+#define PPUTLIMPL_UDEC_3199u 0xC7Fu, 11, 56, 7, 457
+#define PPUTLIMPL_UDEC_3198u 0xC7Eu, 11, 56, 2, 3, 13, 41
+#define PPUTLIMPL_UDEC_3197u 0xC7Du, 11, 56, 23, 139
+#define PPUTLIMPL_UDEC_3196u 0xC7Cu, 11, 56, 2, 2, 17, 47
+#define PPUTLIMPL_UDEC_3195u 0xC7Bu, 11, 56, 3, 3, 5, 71
+#define PPUTLIMPL_UDEC_3194u 0xC7Au, 11, 56, 2, 1597
+#define PPUTLIMPL_UDEC_3193u 0xC79u, 11, 56, 31, 103
+#define PPUTLIMPL_UDEC_3192u 0xC78u, 11, 56, 2, 2, 2, 3, 7, 19
+#define PPUTLIMPL_UDEC_3191u 0xC77u, 11, 56,
+#define PPUTLIMPL_UDEC_3190u 0xC76u, 11, 56, 2, 5, 11, 29
+#define PPUTLIMPL_UDEC_3189u 0xC75u, 11, 56, 3, 1063
+#define PPUTLIMPL_UDEC_3188u 0xC74u, 11, 56, 2, 2, 797
+#define PPUTLIMPL_UDEC_3187u 0xC73u, 11, 56,
+#define PPUTLIMPL_UDEC_3186u 0xC72u, 11, 56, 2, 3, 3, 3, 59
+#define PPUTLIMPL_UDEC_3185u 0xC71u, 11, 56, 5, 7, 7, 13
+#define PPUTLIMPL_UDEC_3184u 0xC70u, 11, 56, 2, 2, 2, 2, 199
+#define PPUTLIMPL_UDEC_3183u 0xC6Fu, 11, 56, 3, 1061
+#define PPUTLIMPL_UDEC_3182u 0xC6Eu, 11, 56, 2, 37, 43
+#define PPUTLIMPL_UDEC_3181u 0xC6Du, 11, 56,
+#define PPUTLIMPL_UDEC_3180u 0xC6Cu, 11, 56, 2, 2, 3, 5, 53
+#define PPUTLIMPL_UDEC_3179u 0xC6Bu, 11, 56, 11, 17, 17
+#define PPUTLIMPL_UDEC_3178u 0xC6Au, 11, 56, 2, 7, 227
+#define PPUTLIMPL_UDEC_3177u 0xC69u, 11, 56, 3, 3, 353
+#define PPUTLIMPL_UDEC_3176u 0xC68u, 11, 56, 2, 2, 2, 397
+#define PPUTLIMPL_UDEC_3175u 0xC67u, 11, 56, 5, 5, 127
+#define PPUTLIMPL_UDEC_3174u 0xC66u, 11, 56, 2, 3, 23, 23
+#define PPUTLIMPL_UDEC_3173u 0xC65u, 11, 56, 19, 167
+#define PPUTLIMPL_UDEC_3172u 0xC64u, 11, 56, 2, 2, 13, 61
+#define PPUTLIMPL_UDEC_3171u 0xC63u, 11, 56, 3, 7, 151
+#define PPUTLIMPL_UDEC_3170u 0xC62u, 11, 56, 2, 5, 317
+#define PPUTLIMPL_UDEC_3169u 0xC61u, 11, 56,
+#define PPUTLIMPL_UDEC_3168u 0xC60u, 11, 56, 2, 2, 2, 2, 2, 3, 3, 11
+#define PPUTLIMPL_UDEC_3167u 0xC5Fu, 11, 56,
+#define PPUTLIMPL_UDEC_3166u 0xC5Eu, 11, 56, 2, 1583
+#define PPUTLIMPL_UDEC_3165u 0xC5Du, 11, 56, 3, 5, 211
+#define PPUTLIMPL_UDEC_3164u 0xC5Cu, 11, 56, 2, 2, 7, 113
+#define PPUTLIMPL_UDEC_3163u 0xC5Bu, 11, 56,
+#define PPUTLIMPL_UDEC_3162u 0xC5Au, 11, 56, 2, 3, 17, 31
+#define PPUTLIMPL_UDEC_3161u 0xC59u, 11, 56, 29, 109
+#define PPUTLIMPL_UDEC_3160u 0xC58u, 11, 56, 2, 2, 2, 5, 79
+#define PPUTLIMPL_UDEC_3159u 0xC57u, 11, 56, 3, 3, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_3158u 0xC56u, 11, 56, 2, 1579
+#define PPUTLIMPL_UDEC_3157u 0xC55u, 11, 56, 7, 11, 41
+#define PPUTLIMPL_UDEC_3156u 0xC54u, 11, 56, 2, 2, 3, 263
+#define PPUTLIMPL_UDEC_3155u 0xC53u, 11, 56, 5, 631
+#define PPUTLIMPL_UDEC_3154u 0xC52u, 11, 56, 2, 19, 83
+#define PPUTLIMPL_UDEC_3153u 0xC51u, 11, 56, 3, 1051
+#define PPUTLIMPL_UDEC_3152u 0xC50u, 11, 56, 2, 2, 2, 2, 197
+#define PPUTLIMPL_UDEC_3151u 0xC4Fu, 11, 56, 23, 137
+#define PPUTLIMPL_UDEC_3150u 0xC4Eu, 11, 56, 2, 3, 3, 5, 5, 7
+#define PPUTLIMPL_UDEC_3149u 0xC4Du, 11, 56, 47, 67
+#define PPUTLIMPL_UDEC_3148u 0xC4Cu, 11, 56, 2, 2, 787
+#define PPUTLIMPL_UDEC_3147u 0xC4Bu, 11, 56, 3, 1049
+#define PPUTLIMPL_UDEC_3146u 0xC4Au, 11, 56, 2, 11, 11, 13
+#define PPUTLIMPL_UDEC_3145u 0xC49u, 11, 56, 5, 17, 37
+#define PPUTLIMPL_UDEC_3144u 0xC48u, 11, 56, 2, 2, 2, 3, 131
+#define PPUTLIMPL_UDEC_3143u 0xC47u, 11, 56, 7, 449
+#define PPUTLIMPL_UDEC_3142u 0xC46u, 11, 56, 2, 1571
+#define PPUTLIMPL_UDEC_3141u 0xC45u, 11, 56, 3, 3, 349
+#define PPUTLIMPL_UDEC_3140u 0xC44u, 11, 56, 2, 2, 5, 157
+#define PPUTLIMPL_UDEC_3139u 0xC43u, 11, 56, 43, 73
+#define PPUTLIMPL_UDEC_3138u 0xC42u, 11, 56, 2, 3, 523
+#define PPUTLIMPL_UDEC_3137u 0xC41u, 11, 56,
+#define PPUTLIMPL_UDEC_3136u 0xC40u, 11, 56, 2, 2, 2, 2, 2, 2, 7, 7
+#define PPUTLIMPL_UDEC_3135u 0xC3Fu, 11, 55, 3, 5, 11, 19
+#define PPUTLIMPL_UDEC_3134u 0xC3Eu, 11, 55, 2, 1567
+#define PPUTLIMPL_UDEC_3133u 0xC3Du, 11, 55, 13, 241
+#define PPUTLIMPL_UDEC_3132u 0xC3Cu, 11, 55, 2, 2, 3, 3, 3, 29
+#define PPUTLIMPL_UDEC_3131u 0xC3Bu, 11, 55, 31, 101
+#define PPUTLIMPL_UDEC_3130u 0xC3Au, 11, 55, 2, 5, 313
+#define PPUTLIMPL_UDEC_3129u 0xC39u, 11, 55, 3, 7, 149
+#define PPUTLIMPL_UDEC_3128u 0xC38u, 11, 55, 2, 2, 2, 17, 23
+#define PPUTLIMPL_UDEC_3127u 0xC37u, 11, 55, 53, 59
+#define PPUTLIMPL_UDEC_3126u 0xC36u, 11, 55, 2, 3, 521
+#define PPUTLIMPL_UDEC_3125u 0xC35u, 11, 55, 5, 5, 5, 5, 5
+#define PPUTLIMPL_UDEC_3124u 0xC34u, 11, 55, 2, 2, 11, 71
+#define PPUTLIMPL_UDEC_3123u 0xC33u, 11, 55, 3, 3, 347
+#define PPUTLIMPL_UDEC_3122u 0xC32u, 11, 55, 2, 7, 223
+#define PPUTLIMPL_UDEC_3121u 0xC31u, 11, 55,
+#define PPUTLIMPL_UDEC_3120u 0xC30u, 11, 55, 2, 2, 2, 2, 3, 5, 13
+#define PPUTLIMPL_UDEC_3119u 0xC2Fu, 11, 55,
+#define PPUTLIMPL_UDEC_3118u 0xC2Eu, 11, 55, 2, 1559
+#define PPUTLIMPL_UDEC_3117u 0xC2Du, 11, 55, 3, 1039
+#define PPUTLIMPL_UDEC_3116u 0xC2Cu, 11, 55, 2, 2, 19, 41
+#define PPUTLIMPL_UDEC_3115u 0xC2Bu, 11, 55, 5, 7, 89
+#define PPUTLIMPL_UDEC_3114u 0xC2Au, 11, 55, 2, 3, 3, 173
+#define PPUTLIMPL_UDEC_3113u 0xC29u, 11, 55, 11, 283
+#define PPUTLIMPL_UDEC_3112u 0xC28u, 11, 55, 2, 2, 2, 389
+#define PPUTLIMPL_UDEC_3111u 0xC27u, 11, 55, 3, 17, 61
+#define PPUTLIMPL_UDEC_3110u 0xC26u, 11, 55, 2, 5, 311
+#define PPUTLIMPL_UDEC_3109u 0xC25u, 11, 55,
+#define PPUTLIMPL_UDEC_3108u 0xC24u, 11, 55, 2, 2, 3, 7, 37
+#define PPUTLIMPL_UDEC_3107u 0xC23u, 11, 55, 13, 239
+#define PPUTLIMPL_UDEC_3106u 0xC22u, 11, 55, 2, 1553
+#define PPUTLIMPL_UDEC_3105u 0xC21u, 11, 55, 3, 3, 3, 5, 23
+#define PPUTLIMPL_UDEC_3104u 0xC20u, 11, 55, 2, 2, 2, 2, 2, 97
+#define PPUTLIMPL_UDEC_3103u 0xC1Fu, 11, 55, 29, 107
+#define PPUTLIMPL_UDEC_3102u 0xC1Eu, 11, 55, 2, 3, 11, 47
+#define PPUTLIMPL_UDEC_3101u 0xC1Du, 11, 55, 7, 443
+#define PPUTLIMPL_UDEC_3100u 0xC1Cu, 11, 55, 2, 2, 5, 5, 31
+#define PPUTLIMPL_UDEC_3099u 0xC1Bu, 11, 55, 3, 1033
+#define PPUTLIMPL_UDEC_3098u 0xC1Au, 11, 55, 2, 1549
+#define PPUTLIMPL_UDEC_3097u 0xC19u, 11, 55, 19, 163
+#define PPUTLIMPL_UDEC_3096u 0xC18u, 11, 55, 2, 2, 2, 3, 3, 43
+#define PPUTLIMPL_UDEC_3095u 0xC17u, 11, 55, 5, 619
+#define PPUTLIMPL_UDEC_3094u 0xC16u, 11, 55, 2, 7, 13, 17
+#define PPUTLIMPL_UDEC_3093u 0xC15u, 11, 55, 3, 1031
+#define PPUTLIMPL_UDEC_3092u 0xC14u, 11, 55, 2, 2, 773
+#define PPUTLIMPL_UDEC_3091u 0xC13u, 11, 55, 11, 281
+#define PPUTLIMPL_UDEC_3090u 0xC12u, 11, 55, 2, 3, 5, 103
+#define PPUTLIMPL_UDEC_3089u 0xC11u, 11, 55,
+#define PPUTLIMPL_UDEC_3088u 0xC10u, 11, 55, 2, 2, 2, 2, 193
+#define PPUTLIMPL_UDEC_3087u 0xC0Fu, 11, 55, 3, 3, 7, 7, 7
+#define PPUTLIMPL_UDEC_3086u 0xC0Eu, 11, 55, 2, 1543
+#define PPUTLIMPL_UDEC_3085u 0xC0Du, 11, 55, 5, 617
+#define PPUTLIMPL_UDEC_3084u 0xC0Cu, 11, 55, 2, 2, 3, 257
+#define PPUTLIMPL_UDEC_3083u 0xC0Bu, 11, 55,
+#define PPUTLIMPL_UDEC_3082u 0xC0Au, 11, 55, 2, 23, 67
+#define PPUTLIMPL_UDEC_3081u 0xC09u, 11, 55, 3, 13, 79
+#define PPUTLIMPL_UDEC_3080u 0xC08u, 11, 55, 2, 2, 2, 5, 7, 11
+#define PPUTLIMPL_UDEC_3079u 0xC07u, 11, 55,
+#define PPUTLIMPL_UDEC_3078u 0xC06u, 11, 55, 2, 3, 3, 3, 3, 19
+#define PPUTLIMPL_UDEC_3077u 0xC05u, 11, 55, 17, 181
+#define PPUTLIMPL_UDEC_3076u 0xC04u, 11, 55, 2, 2, 769
+#define PPUTLIMPL_UDEC_3075u 0xC03u, 11, 55, 3, 5, 5, 41
+#define PPUTLIMPL_UDEC_3074u 0xC02u, 11, 55, 2, 29, 53
+#define PPUTLIMPL_UDEC_3073u 0xC01u, 11, 55, 7, 439
+#define PPUTLIMPL_UDEC_3072u 0xC00u, 11, 55, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_3071u 0xBFFu, 11, 55, 37, 83
+#define PPUTLIMPL_UDEC_3070u 0xBFEu, 11, 55, 2, 5, 307
+#define PPUTLIMPL_UDEC_3069u 0xBFDu, 11, 55, 3, 3, 11, 31
+#define PPUTLIMPL_UDEC_3068u 0xBFCu, 11, 55, 2, 2, 13, 59
+#define PPUTLIMPL_UDEC_3067u 0xBFBu, 11, 55,
+#define PPUTLIMPL_UDEC_3066u 0xBFAu, 11, 55, 2, 3, 7, 73
+#define PPUTLIMPL_UDEC_3065u 0xBF9u, 11, 55, 5, 613
+#define PPUTLIMPL_UDEC_3064u 0xBF8u, 11, 55, 2, 2, 2, 383
+#define PPUTLIMPL_UDEC_3063u 0xBF7u, 11, 55, 3, 1021
+#define PPUTLIMPL_UDEC_3062u 0xBF6u, 11, 55, 2, 1531
+#define PPUTLIMPL_UDEC_3061u 0xBF5u, 11, 55,
+#define PPUTLIMPL_UDEC_3060u 0xBF4u, 11, 55, 2, 2, 3, 3, 5, 17
+#define PPUTLIMPL_UDEC_3059u 0xBF3u, 11, 55, 7, 19, 23
+#define PPUTLIMPL_UDEC_3058u 0xBF2u, 11, 55, 2, 11, 139
+#define PPUTLIMPL_UDEC_3057u 0xBF1u, 11, 55, 3, 1019
+#define PPUTLIMPL_UDEC_3056u 0xBF0u, 11, 55, 2, 2, 2, 2, 191
+#define PPUTLIMPL_UDEC_3055u 0xBEFu, 11, 55, 5, 13, 47
+#define PPUTLIMPL_UDEC_3054u 0xBEEu, 11, 55, 2, 3, 509
+#define PPUTLIMPL_UDEC_3053u 0xBEDu, 11, 55, 43, 71
+#define PPUTLIMPL_UDEC_3052u 0xBECu, 11, 55, 2, 2, 7, 109
+#define PPUTLIMPL_UDEC_3051u 0xBEBu, 11, 55, 3, 3, 3, 113
+#define PPUTLIMPL_UDEC_3050u 0xBEAu, 11, 55, 2, 5, 5, 61
+#define PPUTLIMPL_UDEC_3049u 0xBE9u, 11, 55,
+#define PPUTLIMPL_UDEC_3048u 0xBE8u, 11, 55, 2, 2, 2, 3, 127
+#define PPUTLIMPL_UDEC_3047u 0xBE7u, 11, 55, 11, 277
+#define PPUTLIMPL_UDEC_3046u 0xBE6u, 11, 55, 2, 1523
+#define PPUTLIMPL_UDEC_3045u 0xBE5u, 11, 55, 3, 5, 7, 29
+#define PPUTLIMPL_UDEC_3044u 0xBE4u, 11, 55, 2, 2, 761
+#define PPUTLIMPL_UDEC_3043u 0xBE3u, 11, 55, 17, 179
+#define PPUTLIMPL_UDEC_3042u 0xBE2u, 11, 55, 2, 3, 3, 13, 13
+#define PPUTLIMPL_UDEC_3041u 0xBE1u, 11, 55,
+#define PPUTLIMPL_UDEC_3040u 0xBE0u, 11, 55, 2, 2, 2, 2, 2, 5, 19
+#define PPUTLIMPL_UDEC_3039u 0xBDFu, 11, 55, 3, 1013
+#define PPUTLIMPL_UDEC_3038u 0xBDEu, 11, 55, 2, 7, 7, 31
+#define PPUTLIMPL_UDEC_3037u 0xBDDu, 11, 55,
+#define PPUTLIMPL_UDEC_3036u 0xBDCu, 11, 55, 2, 2, 3, 11, 23
+#define PPUTLIMPL_UDEC_3035u 0xBDBu, 11, 55, 5, 607
+#define PPUTLIMPL_UDEC_3034u 0xBDAu, 11, 55, 2, 37, 41
+#define PPUTLIMPL_UDEC_3033u 0xBD9u, 11, 55, 3, 3, 337
+#define PPUTLIMPL_UDEC_3032u 0xBD8u, 11, 55, 2, 2, 2, 379
+#define PPUTLIMPL_UDEC_3031u 0xBD7u, 11, 55, 7, 433
+#define PPUTLIMPL_UDEC_3030u 0xBD6u, 11, 55, 2, 3, 5, 101
+#define PPUTLIMPL_UDEC_3029u 0xBD5u, 11, 55, 13, 233
+#define PPUTLIMPL_UDEC_3028u 0xBD4u, 11, 55, 2, 2, 757
+#define PPUTLIMPL_UDEC_3027u 0xBD3u, 11, 55, 3, 1009
+#define PPUTLIMPL_UDEC_3026u 0xBD2u, 11, 55, 2, 17, 89
+#define PPUTLIMPL_UDEC_3025u 0xBD1u, 11, 55, 5, 5, 11, 11
+#define PPUTLIMPL_UDEC_3024u 0xBD0u, 11, 54, 2, 2, 2, 2, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_3023u 0xBCFu, 11, 54,
+#define PPUTLIMPL_UDEC_3022u 0xBCEu, 11, 54, 2, 1511
+#define PPUTLIMPL_UDEC_3021u 0xBCDu, 11, 54, 3, 19, 53
+#define PPUTLIMPL_UDEC_3020u 0xBCCu, 11, 54, 2, 2, 5, 151
+#define PPUTLIMPL_UDEC_3019u 0xBCBu, 11, 54,
+#define PPUTLIMPL_UDEC_3018u 0xBCAu, 11, 54, 2, 3, 503
+#define PPUTLIMPL_UDEC_3017u 0xBC9u, 11, 54, 7, 431
+#define PPUTLIMPL_UDEC_3016u 0xBC8u, 11, 54, 2, 2, 2, 13, 29
+#define PPUTLIMPL_UDEC_3015u 0xBC7u, 11, 54, 3, 3, 5, 67
+#define PPUTLIMPL_UDEC_3014u 0xBC6u, 11, 54, 2, 11, 137
+#define PPUTLIMPL_UDEC_3013u 0xBC5u, 11, 54, 23, 131
+#define PPUTLIMPL_UDEC_3012u 0xBC4u, 11, 54, 2, 2, 3, 251
+#define PPUTLIMPL_UDEC_3011u 0xBC3u, 11, 54,
+#define PPUTLIMPL_UDEC_3010u 0xBC2u, 11, 54, 2, 5, 7, 43
+#define PPUTLIMPL_UDEC_3009u 0xBC1u, 11, 54, 3, 17, 59
+#define PPUTLIMPL_UDEC_3008u 0xBC0u, 11, 54, 2, 2, 2, 2, 2, 2, 47
+#define PPUTLIMPL_UDEC_3007u 0xBBFu, 11, 54, 31, 97
+#define PPUTLIMPL_UDEC_3006u 0xBBEu, 11, 54, 2, 3, 3, 167
+#define PPUTLIMPL_UDEC_3005u 0xBBDu, 11, 54, 5, 601
+#define PPUTLIMPL_UDEC_3004u 0xBBCu, 11, 54, 2, 2, 751
+#define PPUTLIMPL_UDEC_3003u 0xBBBu, 11, 54, 3, 7, 11, 13
+#define PPUTLIMPL_UDEC_3002u 0xBBAu, 11, 54, 2, 19, 79
+#define PPUTLIMPL_UDEC_3001u 0xBB9u, 11, 54,
+#define PPUTLIMPL_UDEC_3000u 0xBB8u, 11, 54, 2, 2, 2, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_2999u 0xBB7u, 11, 54,
+#define PPUTLIMPL_UDEC_2998u 0xBB6u, 11, 54, 2, 1499
+#define PPUTLIMPL_UDEC_2997u 0xBB5u, 11, 54, 3, 3, 3, 3, 37
+#define PPUTLIMPL_UDEC_2996u 0xBB4u, 11, 54, 2, 2, 7, 107
+#define PPUTLIMPL_UDEC_2995u 0xBB3u, 11, 54, 5, 599
+#define PPUTLIMPL_UDEC_2994u 0xBB2u, 11, 54, 2, 3, 499
+#define PPUTLIMPL_UDEC_2993u 0xBB1u, 11, 54, 41, 73
+#define PPUTLIMPL_UDEC_2992u 0xBB0u, 11, 54, 2, 2, 2, 2, 11, 17
+#define PPUTLIMPL_UDEC_2991u 0xBAFu, 11, 54, 3, 997
+#define PPUTLIMPL_UDEC_2990u 0xBAEu, 11, 54, 2, 5, 13, 23
+#define PPUTLIMPL_UDEC_2989u 0xBADu, 11, 54, 7, 7, 61
+#define PPUTLIMPL_UDEC_2988u 0xBACu, 11, 54, 2, 2, 3, 3, 83
+#define PPUTLIMPL_UDEC_2987u 0xBABu, 11, 54, 29, 103
+#define PPUTLIMPL_UDEC_2986u 0xBAAu, 11, 54, 2, 1493
+#define PPUTLIMPL_UDEC_2985u 0xBA9u, 11, 54, 3, 5, 199
+#define PPUTLIMPL_UDEC_2984u 0xBA8u, 11, 54, 2, 2, 2, 373
+#define PPUTLIMPL_UDEC_2983u 0xBA7u, 11, 54, 19, 157
+#define PPUTLIMPL_UDEC_2982u 0xBA6u, 11, 54, 2, 3, 7, 71
+#define PPUTLIMPL_UDEC_2981u 0xBA5u, 11, 54, 11, 271
+#define PPUTLIMPL_UDEC_2980u 0xBA4u, 11, 54, 2, 2, 5, 149
+#define PPUTLIMPL_UDEC_2979u 0xBA3u, 11, 54, 3, 3, 331
+#define PPUTLIMPL_UDEC_2978u 0xBA2u, 11, 54, 2, 1489
+#define PPUTLIMPL_UDEC_2977u 0xBA1u, 11, 54, 13, 229
+#define PPUTLIMPL_UDEC_2976u 0xBA0u, 11, 54, 2, 2, 2, 2, 2, 3, 31
+#define PPUTLIMPL_UDEC_2975u 0xB9Fu, 11, 54, 5, 5, 7, 17
+#define PPUTLIMPL_UDEC_2974u 0xB9Eu, 11, 54, 2, 1487
+#define PPUTLIMPL_UDEC_2973u 0xB9Du, 11, 54, 3, 991
+#define PPUTLIMPL_UDEC_2972u 0xB9Cu, 11, 54, 2, 2, 743
+#define PPUTLIMPL_UDEC_2971u 0xB9Bu, 11, 54,
+#define PPUTLIMPL_UDEC_2970u 0xB9Au, 11, 54, 2, 3, 3, 3, 5, 11
+#define PPUTLIMPL_UDEC_2969u 0xB99u, 11, 54,
+#define PPUTLIMPL_UDEC_2968u 0xB98u, 11, 54, 2, 2, 2, 7, 53
+#define PPUTLIMPL_UDEC_2967u 0xB97u, 11, 54, 3, 23, 43
+#define PPUTLIMPL_UDEC_2966u 0xB96u, 11, 54, 2, 1483
+#define PPUTLIMPL_UDEC_2965u 0xB95u, 11, 54, 5, 593
+#define PPUTLIMPL_UDEC_2964u 0xB94u, 11, 54, 2, 2, 3, 13, 19
+#define PPUTLIMPL_UDEC_2963u 0xB93u, 11, 54,
+#define PPUTLIMPL_UDEC_2962u 0xB92u, 11, 54, 2, 1481
+#define PPUTLIMPL_UDEC_2961u 0xB91u, 11, 54, 3, 3, 7, 47
+#define PPUTLIMPL_UDEC_2960u 0xB90u, 11, 54, 2, 2, 2, 2, 5, 37
+#define PPUTLIMPL_UDEC_2959u 0xB8Fu, 11, 54, 11, 269
+#define PPUTLIMPL_UDEC_2958u 0xB8Eu, 11, 54, 2, 3, 17, 29
+#define PPUTLIMPL_UDEC_2957u 0xB8Du, 11, 54,
+#define PPUTLIMPL_UDEC_2956u 0xB8Cu, 11, 54, 2, 2, 739
+#define PPUTLIMPL_UDEC_2955u 0xB8Bu, 11, 54, 3, 5, 197
+#define PPUTLIMPL_UDEC_2954u 0xB8Au, 11, 54, 2, 7, 211
+#define PPUTLIMPL_UDEC_2953u 0xB89u, 11, 54,
+#define PPUTLIMPL_UDEC_2952u 0xB88u, 11, 54, 2, 2, 2, 3, 3, 41
+#define PPUTLIMPL_UDEC_2951u 0xB87u, 11, 54, 13, 227
+#define PPUTLIMPL_UDEC_2950u 0xB86u, 11, 54, 2, 5, 5, 59
+#define PPUTLIMPL_UDEC_2949u 0xB85u, 11, 54, 3, 983
+#define PPUTLIMPL_UDEC_2948u 0xB84u, 11, 54, 2, 2, 11, 67
+#define PPUTLIMPL_UDEC_2947u 0xB83u, 11, 54, 7, 421
+#define PPUTLIMPL_UDEC_2946u 0xB82u, 11, 54, 2, 3, 491
+#define PPUTLIMPL_UDEC_2945u 0xB81u, 11, 54, 5, 19, 31
+#define PPUTLIMPL_UDEC_2944u 0xB80u, 11, 54, 2, 2, 2, 2, 2, 2, 2, 23
+#define PPUTLIMPL_UDEC_2943u 0xB7Fu, 11, 54, 3, 3, 3, 109
+#define PPUTLIMPL_UDEC_2942u 0xB7Eu, 11, 54, 2, 1471
+#define PPUTLIMPL_UDEC_2941u 0xB7Du, 11, 54, 17, 173
+#define PPUTLIMPL_UDEC_2940u 0xB7Cu, 11, 54, 2, 2, 3, 5, 7, 7
+#define PPUTLIMPL_UDEC_2939u 0xB7Bu, 11, 54,
+#define PPUTLIMPL_UDEC_2938u 0xB7Au, 11, 54, 2, 13, 113
+#define PPUTLIMPL_UDEC_2937u 0xB79u, 11, 54, 3, 11, 89
+#define PPUTLIMPL_UDEC_2936u 0xB78u, 11, 54, 2, 2, 2, 367
+#define PPUTLIMPL_UDEC_2935u 0xB77u, 11, 54, 5, 587
+#define PPUTLIMPL_UDEC_2934u 0xB76u, 11, 54, 2, 3, 3, 163
+#define PPUTLIMPL_UDEC_2933u 0xB75u, 11, 54, 7, 419
+#define PPUTLIMPL_UDEC_2932u 0xB74u, 11, 54, 2, 2, 733
+#define PPUTLIMPL_UDEC_2931u 0xB73u, 11, 54, 3, 977
+#define PPUTLIMPL_UDEC_2930u 0xB72u, 11, 54, 2, 5, 293
+#define PPUTLIMPL_UDEC_2929u 0xB71u, 11, 54, 29, 101
+#define PPUTLIMPL_UDEC_2928u 0xB70u, 11, 54, 2, 2, 2, 2, 3, 61
+#define PPUTLIMPL_UDEC_2927u 0xB6Fu, 11, 54,
+#define PPUTLIMPL_UDEC_2926u 0xB6Eu, 11, 54, 2, 7, 11, 19
+#define PPUTLIMPL_UDEC_2925u 0xB6Du, 11, 54, 3, 3, 5, 5, 13
+#define PPUTLIMPL_UDEC_2924u 0xB6Cu, 11, 54, 2, 2, 17, 43
+#define PPUTLIMPL_UDEC_2923u 0xB6Bu, 11, 54, 37, 79
+#define PPUTLIMPL_UDEC_2922u 0xB6Au, 11, 54, 2, 3, 487
+#define PPUTLIMPL_UDEC_2921u 0xB69u, 11, 54, 23, 127
+#define PPUTLIMPL_UDEC_2920u 0xB68u, 11, 54, 2, 2, 2, 5, 73
+#define PPUTLIMPL_UDEC_2919u 0xB67u, 11, 54, 3, 7, 139
+#define PPUTLIMPL_UDEC_2918u 0xB66u, 11, 54, 2, 1459
+#define PPUTLIMPL_UDEC_2917u 0xB65u, 11, 54,
+#define PPUTLIMPL_UDEC_2916u 0xB64u, 11, 54, 2, 2, 3, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_2915u 0xB63u, 11, 53, 5, 11, 53
+#define PPUTLIMPL_UDEC_2914u 0xB62u, 11, 53, 2, 31, 47
+#define PPUTLIMPL_UDEC_2913u 0xB61u, 11, 53, 3, 971
+#define PPUTLIMPL_UDEC_2912u 0xB60u, 11, 53, 2, 2, 2, 2, 2, 7, 13
+#define PPUTLIMPL_UDEC_2911u 0xB5Fu, 11, 53, 41, 71
+#define PPUTLIMPL_UDEC_2910u 0xB5Eu, 11, 53, 2, 3, 5, 97
+#define PPUTLIMPL_UDEC_2909u 0xB5Du, 11, 53,
+#define PPUTLIMPL_UDEC_2908u 0xB5Cu, 11, 53, 2, 2, 727
+#define PPUTLIMPL_UDEC_2907u 0xB5Bu, 11, 53, 3, 3, 17, 19
+#define PPUTLIMPL_UDEC_2906u 0xB5Au, 11, 53, 2, 1453
+#define PPUTLIMPL_UDEC_2905u 0xB59u, 11, 53, 5, 7, 83
+#define PPUTLIMPL_UDEC_2904u 0xB58u, 11, 53, 2, 2, 2, 3, 11, 11
+#define PPUTLIMPL_UDEC_2903u 0xB57u, 11, 53,
+#define PPUTLIMPL_UDEC_2902u 0xB56u, 11, 53, 2, 1451
+#define PPUTLIMPL_UDEC_2901u 0xB55u, 11, 53, 3, 967
+#define PPUTLIMPL_UDEC_2900u 0xB54u, 11, 53, 2, 2, 5, 5, 29
+#define PPUTLIMPL_UDEC_2899u 0xB53u, 11, 53, 13, 223
+#define PPUTLIMPL_UDEC_2898u 0xB52u, 11, 53, 2, 3, 3, 7, 23
+#define PPUTLIMPL_UDEC_2897u 0xB51u, 11, 53,
+#define PPUTLIMPL_UDEC_2896u 0xB50u, 11, 53, 2, 2, 2, 2, 181
+#define PPUTLIMPL_UDEC_2895u 0xB4Fu, 11, 53, 3, 5, 193
+#define PPUTLIMPL_UDEC_2894u 0xB4Eu, 11, 53, 2, 1447
+#define PPUTLIMPL_UDEC_2893u 0xB4Du, 11, 53, 11, 263
+#define PPUTLIMPL_UDEC_2892u 0xB4Cu, 11, 53, 2, 2, 3, 241
+#define PPUTLIMPL_UDEC_2891u 0xB4Bu, 11, 53, 7, 7, 59
+#define PPUTLIMPL_UDEC_2890u 0xB4Au, 11, 53, 2, 5, 17, 17
+#define PPUTLIMPL_UDEC_2889u 0xB49u, 11, 53, 3, 3, 3, 107
+#define PPUTLIMPL_UDEC_2888u 0xB48u, 11, 53, 2, 2, 2, 19, 19
+#define PPUTLIMPL_UDEC_2887u 0xB47u, 11, 53,
+#define PPUTLIMPL_UDEC_2886u 0xB46u, 11, 53, 2, 3, 13, 37
+#define PPUTLIMPL_UDEC_2885u 0xB45u, 11, 53, 5, 577
+#define PPUTLIMPL_UDEC_2884u 0xB44u, 11, 53, 2, 2, 7, 103
+#define PPUTLIMPL_UDEC_2883u 0xB43u, 11, 53, 3, 31, 31
+#define PPUTLIMPL_UDEC_2882u 0xB42u, 11, 53, 2, 11, 131
+#define PPUTLIMPL_UDEC_2881u 0xB41u, 11, 53, 43, 67
+#define PPUTLIMPL_UDEC_2880u 0xB40u, 11, 53, 2, 2, 2, 2, 2, 2, 3, 3, 5
+#define PPUTLIMPL_UDEC_2879u 0xB3Fu, 11, 53,
+#define PPUTLIMPL_UDEC_2878u 0xB3Eu, 11, 53, 2, 1439
+#define PPUTLIMPL_UDEC_2877u 0xB3Du, 11, 53, 3, 7, 137
+#define PPUTLIMPL_UDEC_2876u 0xB3Cu, 11, 53, 2, 2, 719
+#define PPUTLIMPL_UDEC_2875u 0xB3Bu, 11, 53, 5, 5, 5, 23
+#define PPUTLIMPL_UDEC_2874u 0xB3Au, 11, 53, 2, 3, 479
+#define PPUTLIMPL_UDEC_2873u 0xB39u, 11, 53, 13, 13, 17
+#define PPUTLIMPL_UDEC_2872u 0xB38u, 11, 53, 2, 2, 2, 359
+#define PPUTLIMPL_UDEC_2871u 0xB37u, 11, 53, 3, 3, 11, 29
+#define PPUTLIMPL_UDEC_2870u 0xB36u, 11, 53, 2, 5, 7, 41
+#define PPUTLIMPL_UDEC_2869u 0xB35u, 11, 53, 19, 151
+#define PPUTLIMPL_UDEC_2868u 0xB34u, 11, 53, 2, 2, 3, 239
+#define PPUTLIMPL_UDEC_2867u 0xB33u, 11, 53, 47, 61
+#define PPUTLIMPL_UDEC_2866u 0xB32u, 11, 53, 2, 1433
+#define PPUTLIMPL_UDEC_2865u 0xB31u, 11, 53, 3, 5, 191
+#define PPUTLIMPL_UDEC_2864u 0xB30u, 11, 53, 2, 2, 2, 2, 179
+#define PPUTLIMPL_UDEC_2863u 0xB2Fu, 11, 53, 7, 409
+#define PPUTLIMPL_UDEC_2862u 0xB2Eu, 11, 53, 2, 3, 3, 3, 53
+#define PPUTLIMPL_UDEC_2861u 0xB2Du, 11, 53,
+#define PPUTLIMPL_UDEC_2860u 0xB2Cu, 11, 53, 2, 2, 5, 11, 13
+#define PPUTLIMPL_UDEC_2859u 0xB2Bu, 11, 53, 3, 953
+#define PPUTLIMPL_UDEC_2858u 0xB2Au, 11, 53, 2, 1429
+#define PPUTLIMPL_UDEC_2857u 0xB29u, 11, 53,
+#define PPUTLIMPL_UDEC_2856u 0xB28u, 11, 53, 2, 2, 2, 3, 7, 17
+#define PPUTLIMPL_UDEC_2855u 0xB27u, 11, 53, 5, 571
+#define PPUTLIMPL_UDEC_2854u 0xB26u, 11, 53, 2, 1427
+#define PPUTLIMPL_UDEC_2853u 0xB25u, 11, 53, 3, 3, 317
+#define PPUTLIMPL_UDEC_2852u 0xB24u, 11, 53, 2, 2, 23, 31
+#define PPUTLIMPL_UDEC_2851u 0xB23u, 11, 53,
+#define PPUTLIMPL_UDEC_2850u 0xB22u, 11, 53, 2, 3, 5, 5, 19
+#define PPUTLIMPL_UDEC_2849u 0xB21u, 11, 53, 7, 11, 37
+#define PPUTLIMPL_UDEC_2848u 0xB20u, 11, 53, 2, 2, 2, 2, 2, 89
+#define PPUTLIMPL_UDEC_2847u 0xB1Fu, 11, 53, 3, 13, 73
+#define PPUTLIMPL_UDEC_2846u 0xB1Eu, 11, 53, 2, 1423
+#define PPUTLIMPL_UDEC_2845u 0xB1Du, 11, 53, 5, 569
+#define PPUTLIMPL_UDEC_2844u 0xB1Cu, 11, 53, 2, 2, 3, 3, 79
+#define PPUTLIMPL_UDEC_2843u 0xB1Bu, 11, 53,
+#define PPUTLIMPL_UDEC_2842u 0xB1Au, 11, 53, 2, 7, 7, 29
+#define PPUTLIMPL_UDEC_2841u 0xB19u, 11, 53, 3, 947
+#define PPUTLIMPL_UDEC_2840u 0xB18u, 11, 53, 2, 2, 2, 5, 71
+#define PPUTLIMPL_UDEC_2839u 0xB17u, 11, 53, 17, 167
+#define PPUTLIMPL_UDEC_2838u 0xB16u, 11, 53, 2, 3, 11, 43
+#define PPUTLIMPL_UDEC_2837u 0xB15u, 11, 53,
+#define PPUTLIMPL_UDEC_2836u 0xB14u, 11, 53, 2, 2, 709
+#define PPUTLIMPL_UDEC_2835u 0xB13u, 11, 53, 3, 3, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_2834u 0xB12u, 11, 53, 2, 13, 109
+#define PPUTLIMPL_UDEC_2833u 0xB11u, 11, 53,
+#define PPUTLIMPL_UDEC_2832u 0xB10u, 11, 53, 2, 2, 2, 2, 3, 59
+#define PPUTLIMPL_UDEC_2831u 0xB0Fu, 11, 53, 19, 149
+#define PPUTLIMPL_UDEC_2830u 0xB0Eu, 11, 53, 2, 5, 283
+#define PPUTLIMPL_UDEC_2829u 0xB0Du, 11, 53, 3, 23, 41
+#define PPUTLIMPL_UDEC_2828u 0xB0Cu, 11, 53, 2, 2, 7, 101
+#define PPUTLIMPL_UDEC_2827u 0xB0Bu, 11, 53, 11, 257
+#define PPUTLIMPL_UDEC_2826u 0xB0Au, 11, 53, 2, 3, 3, 157
+#define PPUTLIMPL_UDEC_2825u 0xB09u, 11, 53, 5, 5, 113
+#define PPUTLIMPL_UDEC_2824u 0xB08u, 11, 53, 2, 2, 2, 353
+#define PPUTLIMPL_UDEC_2823u 0xB07u, 11, 53, 3, 941
+#define PPUTLIMPL_UDEC_2822u 0xB06u, 11, 53, 2, 17, 83
+#define PPUTLIMPL_UDEC_2821u 0xB05u, 11, 53, 7, 13, 31
+#define PPUTLIMPL_UDEC_2820u 0xB04u, 11, 53, 2, 2, 3, 5, 47
+#define PPUTLIMPL_UDEC_2819u 0xB03u, 11, 53,
+#define PPUTLIMPL_UDEC_2818u 0xB02u, 11, 53, 2, 1409
+#define PPUTLIMPL_UDEC_2817u 0xB01u, 11, 53, 3, 3, 313
+#define PPUTLIMPL_UDEC_2816u 0xB00u, 11, 53, 2, 2, 2, 2, 2, 2, 2, 2, 11
+#define PPUTLIMPL_UDEC_2815u 0xAFFu, 11, 53, 5, 563
+#define PPUTLIMPL_UDEC_2814u 0xAFEu, 11, 53, 2, 3, 7, 67
+#define PPUTLIMPL_UDEC_2813u 0xAFDu, 11, 53, 29, 97
+#define PPUTLIMPL_UDEC_2812u 0xAFCu, 11, 53, 2, 2, 19, 37
+#define PPUTLIMPL_UDEC_2811u 0xAFBu, 11, 53, 3, 937
+#define PPUTLIMPL_UDEC_2810u 0xAFAu, 11, 53, 2, 5, 281
+#define PPUTLIMPL_UDEC_2809u 0xAF9u, 11, 53, 53, 53
+#define PPUTLIMPL_UDEC_2808u 0xAF8u, 11, 52, 2, 2, 2, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_2807u 0xAF7u, 11, 52, 7, 401
+#define PPUTLIMPL_UDEC_2806u 0xAF6u, 11, 52, 2, 23, 61
+#define PPUTLIMPL_UDEC_2805u 0xAF5u, 11, 52, 3, 5, 11, 17
+#define PPUTLIMPL_UDEC_2804u 0xAF4u, 11, 52, 2, 2, 701
+#define PPUTLIMPL_UDEC_2803u 0xAF3u, 11, 52,
+#define PPUTLIMPL_UDEC_2802u 0xAF2u, 11, 52, 2, 3, 467
+#define PPUTLIMPL_UDEC_2801u 0xAF1u, 11, 52,
+#define PPUTLIMPL_UDEC_2800u 0xAF0u, 11, 52, 2, 2, 2, 2, 5, 5, 7
+#define PPUTLIMPL_UDEC_2799u 0xAEFu, 11, 52, 3, 3, 311
+#define PPUTLIMPL_UDEC_2798u 0xAEEu, 11, 52, 2, 1399
+#define PPUTLIMPL_UDEC_2797u 0xAEDu, 11, 52,
+#define PPUTLIMPL_UDEC_2796u 0xAECu, 11, 52, 2, 2, 3, 233
+#define PPUTLIMPL_UDEC_2795u 0xAEBu, 11, 52, 5, 13, 43
+#define PPUTLIMPL_UDEC_2794u 0xAEAu, 11, 52, 2, 11, 127
+#define PPUTLIMPL_UDEC_2793u 0xAE9u, 11, 52, 3, 7, 7, 19
+#define PPUTLIMPL_UDEC_2792u 0xAE8u, 11, 52, 2, 2, 2, 349
+#define PPUTLIMPL_UDEC_2791u 0xAE7u, 11, 52,
+#define PPUTLIMPL_UDEC_2790u 0xAE6u, 11, 52, 2, 3, 3, 5, 31
+#define PPUTLIMPL_UDEC_2789u 0xAE5u, 11, 52,
+#define PPUTLIMPL_UDEC_2788u 0xAE4u, 11, 52, 2, 2, 17, 41
+#define PPUTLIMPL_UDEC_2787u 0xAE3u, 11, 52, 3, 929
+#define PPUTLIMPL_UDEC_2786u 0xAE2u, 11, 52, 2, 7, 199
+#define PPUTLIMPL_UDEC_2785u 0xAE1u, 11, 52, 5, 557
+#define PPUTLIMPL_UDEC_2784u 0xAE0u, 11, 52, 2, 2, 2, 2, 2, 3, 29
+#define PPUTLIMPL_UDEC_2783u 0xADFu, 11, 52, 11, 11, 23
+#define PPUTLIMPL_UDEC_2782u 0xADEu, 11, 52, 2, 13, 107
+#define PPUTLIMPL_UDEC_2781u 0xADDu, 11, 52, 3, 3, 3, 103
+#define PPUTLIMPL_UDEC_2780u 0xADCu, 11, 52, 2, 2, 5, 139
+#define PPUTLIMPL_UDEC_2779u 0xADBu, 11, 52, 7, 397
+#define PPUTLIMPL_UDEC_2778u 0xADAu, 11, 52, 2, 3, 463
+#define PPUTLIMPL_UDEC_2777u 0xAD9u, 11, 52,
+#define PPUTLIMPL_UDEC_2776u 0xAD8u, 11, 52, 2, 2, 2, 347
+#define PPUTLIMPL_UDEC_2775u 0xAD7u, 11, 52, 3, 5, 5, 37
+#define PPUTLIMPL_UDEC_2774u 0xAD6u, 11, 52, 2, 19, 73
+#define PPUTLIMPL_UDEC_2773u 0xAD5u, 11, 52, 47, 59
+#define PPUTLIMPL_UDEC_2772u 0xAD4u, 11, 52, 2, 2, 3, 3, 7, 11
+#define PPUTLIMPL_UDEC_2771u 0xAD3u, 11, 52, 17, 163
+#define PPUTLIMPL_UDEC_2770u 0xAD2u, 11, 52, 2, 5, 277
+#define PPUTLIMPL_UDEC_2769u 0xAD1u, 11, 52, 3, 13, 71
+#define PPUTLIMPL_UDEC_2768u 0xAD0u, 11, 52, 2, 2, 2, 2, 173
+#define PPUTLIMPL_UDEC_2767u 0xACFu, 11, 52,
+#define PPUTLIMPL_UDEC_2766u 0xACEu, 11, 52, 2, 3, 461
+#define PPUTLIMPL_UDEC_2765u 0xACDu, 11, 52, 5, 7, 79
+#define PPUTLIMPL_UDEC_2764u 0xACCu, 11, 52, 2, 2, 691
+#define PPUTLIMPL_UDEC_2763u 0xACBu, 11, 52, 3, 3, 307
+#define PPUTLIMPL_UDEC_2762u 0xACAu, 11, 52, 2, 1381
+#define PPUTLIMPL_UDEC_2761u 0xAC9u, 11, 52, 11, 251
+#define PPUTLIMPL_UDEC_2760u 0xAC8u, 11, 52, 2, 2, 2, 3, 5, 23
+#define PPUTLIMPL_UDEC_2759u 0xAC7u, 11, 52, 31, 89
+#define PPUTLIMPL_UDEC_2758u 0xAC6u, 11, 52, 2, 7, 197
+#define PPUTLIMPL_UDEC_2757u 0xAC5u, 11, 52, 3, 919
+#define PPUTLIMPL_UDEC_2756u 0xAC4u, 11, 52, 2, 2, 13, 53
+#define PPUTLIMPL_UDEC_2755u 0xAC3u, 11, 52, 5, 19, 29
+#define PPUTLIMPL_UDEC_2754u 0xAC2u, 11, 52, 2, 3, 3, 3, 3, 17
+#define PPUTLIMPL_UDEC_2753u 0xAC1u, 11, 52,
+#define PPUTLIMPL_UDEC_2752u 0xAC0u, 11, 52, 2, 2, 2, 2, 2, 2, 43
+#define PPUTLIMPL_UDEC_2751u 0xABFu, 11, 52, 3, 7, 131
+#define PPUTLIMPL_UDEC_2750u 0xABEu, 11, 52, 2, 5, 5, 5, 11
+#define PPUTLIMPL_UDEC_2749u 0xABDu, 11, 52,
+#define PPUTLIMPL_UDEC_2748u 0xABCu, 11, 52, 2, 2, 3, 229
+#define PPUTLIMPL_UDEC_2747u 0xABBu, 11, 52, 41, 67
+#define PPUTLIMPL_UDEC_2746u 0xABAu, 11, 52, 2, 1373
+#define PPUTLIMPL_UDEC_2745u 0xAB9u, 11, 52, 3, 3, 5, 61
+#define PPUTLIMPL_UDEC_2744u 0xAB8u, 11, 52, 2, 2, 2, 7, 7, 7
+#define PPUTLIMPL_UDEC_2743u 0xAB7u, 11, 52, 13, 211
+#define PPUTLIMPL_UDEC_2742u 0xAB6u, 11, 52, 2, 3, 457
+#define PPUTLIMPL_UDEC_2741u 0xAB5u, 11, 52,
+#define PPUTLIMPL_UDEC_2740u 0xAB4u, 11, 52, 2, 2, 5, 137
+#define PPUTLIMPL_UDEC_2739u 0xAB3u, 11, 52, 3, 11, 83
+#define PPUTLIMPL_UDEC_2738u 0xAB2u, 11, 52, 2, 37, 37
+#define PPUTLIMPL_UDEC_2737u 0xAB1u, 11, 52, 7, 17, 23
+#define PPUTLIMPL_UDEC_2736u 0xAB0u, 11, 52, 2, 2, 2, 2, 3, 3, 19
+#define PPUTLIMPL_UDEC_2735u 0xAAFu, 11, 52, 5, 547
+#define PPUTLIMPL_UDEC_2734u 0xAAEu, 11, 52, 2, 1367
+#define PPUTLIMPL_UDEC_2733u 0xAADu, 11, 52, 3, 911
+#define PPUTLIMPL_UDEC_2732u 0xAACu, 11, 52, 2, 2, 683
+#define PPUTLIMPL_UDEC_2731u 0xAABu, 11, 52,
+#define PPUTLIMPL_UDEC_2730u 0xAAAu, 11, 52, 2, 3, 5, 7, 13
+#define PPUTLIMPL_UDEC_2729u 0xAA9u, 11, 52,
+#define PPUTLIMPL_UDEC_2728u 0xAA8u, 11, 52, 2, 2, 2, 11, 31
+#define PPUTLIMPL_UDEC_2727u 0xAA7u, 11, 52, 3, 3, 3, 101
+#define PPUTLIMPL_UDEC_2726u 0xAA6u, 11, 52, 2, 29, 47
+#define PPUTLIMPL_UDEC_2725u 0xAA5u, 11, 52, 5, 5, 109
+#define PPUTLIMPL_UDEC_2724u 0xAA4u, 11, 52, 2, 2, 3, 227
+#define PPUTLIMPL_UDEC_2723u 0xAA3u, 11, 52, 7, 389
+#define PPUTLIMPL_UDEC_2722u 0xAA2u, 11, 52, 2, 1361
+#define PPUTLIMPL_UDEC_2721u 0xAA1u, 11, 52, 3, 907
+#define PPUTLIMPL_UDEC_2720u 0xAA0u, 11, 52, 2, 2, 2, 2, 2, 5, 17
+#define PPUTLIMPL_UDEC_2719u 0xA9Fu, 11, 52,
+#define PPUTLIMPL_UDEC_2718u 0xA9Eu, 11, 52, 2, 3, 3, 151
+#define PPUTLIMPL_UDEC_2717u 0xA9Du, 11, 52, 11, 13, 19
+#define PPUTLIMPL_UDEC_2716u 0xA9Cu, 11, 52, 2, 2, 7, 97
+#define PPUTLIMPL_UDEC_2715u 0xA9Bu, 11, 52, 3, 5, 181
+#define PPUTLIMPL_UDEC_2714u 0xA9Au, 11, 52, 2, 23, 59
+#define PPUTLIMPL_UDEC_2713u 0xA99u, 11, 52,
+#define PPUTLIMPL_UDEC_2712u 0xA98u, 11, 52, 2, 2, 2, 3, 113
+#define PPUTLIMPL_UDEC_2711u 0xA97u, 11, 52,
+#define PPUTLIMPL_UDEC_2710u 0xA96u, 11, 52, 2, 5, 271
+#define PPUTLIMPL_UDEC_2709u 0xA95u, 11, 52, 3, 3, 7, 43
+#define PPUTLIMPL_UDEC_2708u 0xA94u, 11, 52, 2, 2, 677
+#define PPUTLIMPL_UDEC_2707u 0xA93u, 11, 52,
+#define PPUTLIMPL_UDEC_2706u 0xA92u, 11, 52, 2, 3, 11, 41
+#define PPUTLIMPL_UDEC_2705u 0xA91u, 11, 52, 5, 541
+#define PPUTLIMPL_UDEC_2704u 0xA90u, 11, 52, 2, 2, 2, 2, 13, 13
+#define PPUTLIMPL_UDEC_2703u 0xA8Fu, 11, 51, 3, 17, 53
+#define PPUTLIMPL_UDEC_2702u 0xA8Eu, 11, 51, 2, 7, 193
+#define PPUTLIMPL_UDEC_2701u 0xA8Du, 11, 51, 37, 73
+#define PPUTLIMPL_UDEC_2700u 0xA8Cu, 11, 51, 2, 2, 3, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_2699u 0xA8Bu, 11, 51,
+#define PPUTLIMPL_UDEC_2698u 0xA8Au, 11, 51, 2, 19, 71
+#define PPUTLIMPL_UDEC_2697u 0xA89u, 11, 51, 3, 29, 31
+#define PPUTLIMPL_UDEC_2696u 0xA88u, 11, 51, 2, 2, 2, 337
+#define PPUTLIMPL_UDEC_2695u 0xA87u, 11, 51, 5, 7, 7, 11
+#define PPUTLIMPL_UDEC_2694u 0xA86u, 11, 51, 2, 3, 449
+#define PPUTLIMPL_UDEC_2693u 0xA85u, 11, 51,
+#define PPUTLIMPL_UDEC_2692u 0xA84u, 11, 51, 2, 2, 673
+#define PPUTLIMPL_UDEC_2691u 0xA83u, 11, 51, 3, 3, 13, 23
+#define PPUTLIMPL_UDEC_2690u 0xA82u, 11, 51, 2, 5, 269
+#define PPUTLIMPL_UDEC_2689u 0xA81u, 11, 51,
+#define PPUTLIMPL_UDEC_2688u 0xA80u, 11, 51, 2, 2, 2, 2, 2, 2, 2, 3, 7
+#define PPUTLIMPL_UDEC_2687u 0xA7Fu, 11, 51,
+#define PPUTLIMPL_UDEC_2686u 0xA7Eu, 11, 51, 2, 17, 79
+#define PPUTLIMPL_UDEC_2685u 0xA7Du, 11, 51, 3, 5, 179
+#define PPUTLIMPL_UDEC_2684u 0xA7Cu, 11, 51, 2, 2, 11, 61
+#define PPUTLIMPL_UDEC_2683u 0xA7Bu, 11, 51,
+#define PPUTLIMPL_UDEC_2682u 0xA7Au, 11, 51, 2, 3, 3, 149
+#define PPUTLIMPL_UDEC_2681u 0xA79u, 11, 51, 7, 383
+#define PPUTLIMPL_UDEC_2680u 0xA78u, 11, 51, 2, 2, 2, 5, 67
+#define PPUTLIMPL_UDEC_2679u 0xA77u, 11, 51, 3, 19, 47
+#define PPUTLIMPL_UDEC_2678u 0xA76u, 11, 51, 2, 13, 103
+#define PPUTLIMPL_UDEC_2677u 0xA75u, 11, 51,
+#define PPUTLIMPL_UDEC_2676u 0xA74u, 11, 51, 2, 2, 3, 223
+#define PPUTLIMPL_UDEC_2675u 0xA73u, 11, 51, 5, 5, 107
+#define PPUTLIMPL_UDEC_2674u 0xA72u, 11, 51, 2, 7, 191
+#define PPUTLIMPL_UDEC_2673u 0xA71u, 11, 51, 3, 3, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_2672u 0xA70u, 11, 51, 2, 2, 2, 2, 167
+#define PPUTLIMPL_UDEC_2671u 0xA6Fu, 11, 51,
+#define PPUTLIMPL_UDEC_2670u 0xA6Eu, 11, 51, 2, 3, 5, 89
+#define PPUTLIMPL_UDEC_2669u 0xA6Du, 11, 51, 17, 157
+#define PPUTLIMPL_UDEC_2668u 0xA6Cu, 11, 51, 2, 2, 23, 29
+#define PPUTLIMPL_UDEC_2667u 0xA6Bu, 11, 51, 3, 7, 127
+#define PPUTLIMPL_UDEC_2666u 0xA6Au, 11, 51, 2, 31, 43
+#define PPUTLIMPL_UDEC_2665u 0xA69u, 11, 51, 5, 13, 41
+#define PPUTLIMPL_UDEC_2664u 0xA68u, 11, 51, 2, 2, 2, 3, 3, 37
+#define PPUTLIMPL_UDEC_2663u 0xA67u, 11, 51,
+#define PPUTLIMPL_UDEC_2662u 0xA66u, 11, 51, 2, 11, 11, 11
+#define PPUTLIMPL_UDEC_2661u 0xA65u, 11, 51, 3, 887
+#define PPUTLIMPL_UDEC_2660u 0xA64u, 11, 51, 2, 2, 5, 7, 19
+#define PPUTLIMPL_UDEC_2659u 0xA63u, 11, 51,
+#define PPUTLIMPL_UDEC_2658u 0xA62u, 11, 51, 2, 3, 443
+#define PPUTLIMPL_UDEC_2657u 0xA61u, 11, 51,
+#define PPUTLIMPL_UDEC_2656u 0xA60u, 11, 51, 2, 2, 2, 2, 2, 83
+#define PPUTLIMPL_UDEC_2655u 0xA5Fu, 11, 51, 3, 3, 5, 59
+#define PPUTLIMPL_UDEC_2654u 0xA5Eu, 11, 51, 2, 1327
+#define PPUTLIMPL_UDEC_2653u 0xA5Du, 11, 51, 7, 379
+#define PPUTLIMPL_UDEC_2652u 0xA5Cu, 11, 51, 2, 2, 3, 13, 17
+#define PPUTLIMPL_UDEC_2651u 0xA5Bu, 11, 51, 11, 241
+#define PPUTLIMPL_UDEC_2650u 0xA5Au, 11, 51, 2, 5, 5, 53
+#define PPUTLIMPL_UDEC_2649u 0xA59u, 11, 51, 3, 883
+#define PPUTLIMPL_UDEC_2648u 0xA58u, 11, 51, 2, 2, 2, 331
+#define PPUTLIMPL_UDEC_2647u 0xA57u, 11, 51,
+#define PPUTLIMPL_UDEC_2646u 0xA56u, 11, 51, 2, 3, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_2645u 0xA55u, 11, 51, 5, 23, 23
+#define PPUTLIMPL_UDEC_2644u 0xA54u, 11, 51, 2, 2, 661
+#define PPUTLIMPL_UDEC_2643u 0xA53u, 11, 51, 3, 881
+#define PPUTLIMPL_UDEC_2642u 0xA52u, 11, 51, 2, 1321
+#define PPUTLIMPL_UDEC_2641u 0xA51u, 11, 51, 19, 139
+#define PPUTLIMPL_UDEC_2640u 0xA50u, 11, 51, 2, 2, 2, 2, 3, 5, 11
+#define PPUTLIMPL_UDEC_2639u 0xA4Fu, 11, 51, 7, 13, 29
+#define PPUTLIMPL_UDEC_2638u 0xA4Eu, 11, 51, 2, 1319
+#define PPUTLIMPL_UDEC_2637u 0xA4Du, 11, 51, 3, 3, 293
+#define PPUTLIMPL_UDEC_2636u 0xA4Cu, 11, 51, 2, 2, 659
+#define PPUTLIMPL_UDEC_2635u 0xA4Bu, 11, 51, 5, 17, 31
+#define PPUTLIMPL_UDEC_2634u 0xA4Au, 11, 51, 2, 3, 439
+#define PPUTLIMPL_UDEC_2633u 0xA49u, 11, 51,
+#define PPUTLIMPL_UDEC_2632u 0xA48u, 11, 51, 2, 2, 2, 7, 47
+#define PPUTLIMPL_UDEC_2631u 0xA47u, 11, 51, 3, 877
+#define PPUTLIMPL_UDEC_2630u 0xA46u, 11, 51, 2, 5, 263
+#define PPUTLIMPL_UDEC_2629u 0xA45u, 11, 51, 11, 239
+#define PPUTLIMPL_UDEC_2628u 0xA44u, 11, 51, 2, 2, 3, 3, 73
+#define PPUTLIMPL_UDEC_2627u 0xA43u, 11, 51, 37, 71
+#define PPUTLIMPL_UDEC_2626u 0xA42u, 11, 51, 2, 13, 101
+#define PPUTLIMPL_UDEC_2625u 0xA41u, 11, 51, 3, 5, 5, 5, 7
+#define PPUTLIMPL_UDEC_2624u 0xA40u, 11, 51, 2, 2, 2, 2, 2, 2, 41
+#define PPUTLIMPL_UDEC_2623u 0xA3Fu, 11, 51, 43, 61
+#define PPUTLIMPL_UDEC_2622u 0xA3Eu, 11, 51, 2, 3, 19, 23
+#define PPUTLIMPL_UDEC_2621u 0xA3Du, 11, 51,
+#define PPUTLIMPL_UDEC_2620u 0xA3Cu, 11, 51, 2, 2, 5, 131
+#define PPUTLIMPL_UDEC_2619u 0xA3Bu, 11, 51, 3, 3, 3, 97
+#define PPUTLIMPL_UDEC_2618u 0xA3Au, 11, 51, 2, 7, 11, 17
+#define PPUTLIMPL_UDEC_2617u 0xA39u, 11, 51,
+#define PPUTLIMPL_UDEC_2616u 0xA38u, 11, 51, 2, 2, 2, 3, 109
+#define PPUTLIMPL_UDEC_2615u 0xA37u, 11, 51, 5, 523
+#define PPUTLIMPL_UDEC_2614u 0xA36u, 11, 51, 2, 1307
+#define PPUTLIMPL_UDEC_2613u 0xA35u, 11, 51, 3, 13, 67
+#define PPUTLIMPL_UDEC_2612u 0xA34u, 11, 51, 2, 2, 653
+#define PPUTLIMPL_UDEC_2611u 0xA33u, 11, 51, 7, 373
+#define PPUTLIMPL_UDEC_2610u 0xA32u, 11, 51, 2, 3, 3, 5, 29
+#define PPUTLIMPL_UDEC_2609u 0xA31u, 11, 51,
+#define PPUTLIMPL_UDEC_2608u 0xA30u, 11, 51, 2, 2, 2, 2, 163
+#define PPUTLIMPL_UDEC_2607u 0xA2Fu, 11, 51, 3, 11, 79
+#define PPUTLIMPL_UDEC_2606u 0xA2Eu, 11, 51, 2, 1303
+#define PPUTLIMPL_UDEC_2605u 0xA2Du, 11, 51, 5, 521
+#define PPUTLIMPL_UDEC_2604u 0xA2Cu, 11, 51, 2, 2, 3, 7, 31
+#define PPUTLIMPL_UDEC_2603u 0xA2Bu, 11, 51, 19, 137
+#define PPUTLIMPL_UDEC_2602u 0xA2Au, 11, 51, 2, 1301
+#define PPUTLIMPL_UDEC_2601u 0xA29u, 11, 51, 3, 3, 17, 17
+#define PPUTLIMPL_UDEC_2600u 0xA28u, 11, 50, 2, 2, 2, 5, 5, 13
+#define PPUTLIMPL_UDEC_2599u 0xA27u, 11, 50, 23, 113
+#define PPUTLIMPL_UDEC_2598u 0xA26u, 11, 50, 2, 3, 433
+#define PPUTLIMPL_UDEC_2597u 0xA25u, 11, 50, 7, 7, 53
+#define PPUTLIMPL_UDEC_2596u 0xA24u, 11, 50, 2, 2, 11, 59
+#define PPUTLIMPL_UDEC_2595u 0xA23u, 11, 50, 3, 5, 173
+#define PPUTLIMPL_UDEC_2594u 0xA22u, 11, 50, 2, 1297
+#define PPUTLIMPL_UDEC_2593u 0xA21u, 11, 50,
+#define PPUTLIMPL_UDEC_2592u 0xA20u, 11, 50, 2, 2, 2, 2, 2, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_2591u 0xA1Fu, 11, 50,
+#define PPUTLIMPL_UDEC_2590u 0xA1Eu, 11, 50, 2, 5, 7, 37
+#define PPUTLIMPL_UDEC_2589u 0xA1Du, 11, 50, 3, 863
+#define PPUTLIMPL_UDEC_2588u 0xA1Cu, 11, 50, 2, 2, 647
+#define PPUTLIMPL_UDEC_2587u 0xA1Bu, 11, 50, 13, 199
+#define PPUTLIMPL_UDEC_2586u 0xA1Au, 11, 50, 2, 3, 431
+#define PPUTLIMPL_UDEC_2585u 0xA19u, 11, 50, 5, 11, 47
+#define PPUTLIMPL_UDEC_2584u 0xA18u, 11, 50, 2, 2, 2, 17, 19
+#define PPUTLIMPL_UDEC_2583u 0xA17u, 11, 50, 3, 3, 7, 41
+#define PPUTLIMPL_UDEC_2582u 0xA16u, 11, 50, 2, 1291
+#define PPUTLIMPL_UDEC_2581u 0xA15u, 11, 50, 29, 89
+#define PPUTLIMPL_UDEC_2580u 0xA14u, 11, 50, 2, 2, 3, 5, 43
+#define PPUTLIMPL_UDEC_2579u 0xA13u, 11, 50,
+#define PPUTLIMPL_UDEC_2578u 0xA12u, 11, 50, 2, 1289
+#define PPUTLIMPL_UDEC_2577u 0xA11u, 11, 50, 3, 859
+#define PPUTLIMPL_UDEC_2576u 0xA10u, 11, 50, 2, 2, 2, 2, 7, 23
+#define PPUTLIMPL_UDEC_2575u 0xA0Fu, 11, 50, 5, 5, 103
+#define PPUTLIMPL_UDEC_2574u 0xA0Eu, 11, 50, 2, 3, 3, 11, 13
+#define PPUTLIMPL_UDEC_2573u 0xA0Du, 11, 50, 31, 83
+#define PPUTLIMPL_UDEC_2572u 0xA0Cu, 11, 50, 2, 2, 643
+#define PPUTLIMPL_UDEC_2571u 0xA0Bu, 11, 50, 3, 857
+#define PPUTLIMPL_UDEC_2570u 0xA0Au, 11, 50, 2, 5, 257
+#define PPUTLIMPL_UDEC_2569u 0xA09u, 11, 50, 7, 367
+#define PPUTLIMPL_UDEC_2568u 0xA08u, 11, 50, 2, 2, 2, 3, 107
+#define PPUTLIMPL_UDEC_2567u 0xA07u, 11, 50, 17, 151
+#define PPUTLIMPL_UDEC_2566u 0xA06u, 11, 50, 2, 1283
+#define PPUTLIMPL_UDEC_2565u 0xA05u, 11, 50, 3, 3, 3, 5, 19
+#define PPUTLIMPL_UDEC_2564u 0xA04u, 11, 50, 2, 2, 641
+#define PPUTLIMPL_UDEC_2563u 0xA03u, 11, 50, 11, 233
+#define PPUTLIMPL_UDEC_2562u 0xA02u, 11, 50, 2, 3, 7, 61
+#define PPUTLIMPL_UDEC_2561u 0xA01u, 11, 50, 13, 197
+#define PPUTLIMPL_UDEC_2560u 0xA00u, 11, 50, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_2559u 0x9FFu, 11, 50, 3, 853
+#define PPUTLIMPL_UDEC_2558u 0x9FEu, 11, 50, 2, 1279
+#define PPUTLIMPL_UDEC_2557u 0x9FDu, 11, 50,
+#define PPUTLIMPL_UDEC_2556u 0x9FCu, 11, 50, 2, 2, 3, 3, 71
+#define PPUTLIMPL_UDEC_2555u 0x9FBu, 11, 50, 5, 7, 73
+#define PPUTLIMPL_UDEC_2554u 0x9FAu, 11, 50, 2, 1277
+#define PPUTLIMPL_UDEC_2553u 0x9F9u, 11, 50, 3, 23, 37
+#define PPUTLIMPL_UDEC_2552u 0x9F8u, 11, 50, 2, 2, 2, 11, 29
+#define PPUTLIMPL_UDEC_2551u 0x9F7u, 11, 50,
+#define PPUTLIMPL_UDEC_2550u 0x9F6u, 11, 50, 2, 3, 5, 5, 17
+#define PPUTLIMPL_UDEC_2549u 0x9F5u, 11, 50,
+#define PPUTLIMPL_UDEC_2548u 0x9F4u, 11, 50, 2, 2, 7, 7, 13
+#define PPUTLIMPL_UDEC_2547u 0x9F3u, 11, 50, 3, 3, 283
+#define PPUTLIMPL_UDEC_2546u 0x9F2u, 11, 50, 2, 19, 67
+#define PPUTLIMPL_UDEC_2545u 0x9F1u, 11, 50, 5, 509
+#define PPUTLIMPL_UDEC_2544u 0x9F0u, 11, 50, 2, 2, 2, 2, 3, 53
+#define PPUTLIMPL_UDEC_2543u 0x9EFu, 11, 50,
+#define PPUTLIMPL_UDEC_2542u 0x9EEu, 11, 50, 2, 31, 41
+#define PPUTLIMPL_UDEC_2541u 0x9EDu, 11, 50, 3, 7, 11, 11
+#define PPUTLIMPL_UDEC_2540u 0x9ECu, 11, 50, 2, 2, 5, 127
+#define PPUTLIMPL_UDEC_2539u 0x9EBu, 11, 50,
+#define PPUTLIMPL_UDEC_2538u 0x9EAu, 11, 50, 2, 3, 3, 3, 47
+#define PPUTLIMPL_UDEC_2537u 0x9E9u, 11, 50, 43, 59
+#define PPUTLIMPL_UDEC_2536u 0x9E8u, 11, 50, 2, 2, 2, 317
+#define PPUTLIMPL_UDEC_2535u 0x9E7u, 11, 50, 3, 5, 13, 13
+#define PPUTLIMPL_UDEC_2534u 0x9E6u, 11, 50, 2, 7, 181
+#define PPUTLIMPL_UDEC_2533u 0x9E5u, 11, 50, 17, 149
+#define PPUTLIMPL_UDEC_2532u 0x9E4u, 11, 50, 2, 2, 3, 211
+#define PPUTLIMPL_UDEC_2531u 0x9E3u, 11, 50,
+#define PPUTLIMPL_UDEC_2530u 0x9E2u, 11, 50, 2, 5, 11, 23
+#define PPUTLIMPL_UDEC_2529u 0x9E1u, 11, 50, 3, 3, 281
+#define PPUTLIMPL_UDEC_2528u 0x9E0u, 11, 50, 2, 2, 2, 2, 2, 79
+#define PPUTLIMPL_UDEC_2527u 0x9DFu, 11, 50, 7, 19, 19
+#define PPUTLIMPL_UDEC_2526u 0x9DEu, 11, 50, 2, 3, 421
+#define PPUTLIMPL_UDEC_2525u 0x9DDu, 11, 50, 5, 5, 101
+#define PPUTLIMPL_UDEC_2524u 0x9DCu, 11, 50, 2, 2, 631
+#define PPUTLIMPL_UDEC_2523u 0x9DBu, 11, 50, 3, 29, 29
+#define PPUTLIMPL_UDEC_2522u 0x9DAu, 11, 50, 2, 13, 97
+#define PPUTLIMPL_UDEC_2521u 0x9D9u, 11, 50,
+#define PPUTLIMPL_UDEC_2520u 0x9D8u, 11, 50, 2, 2, 2, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_2519u 0x9D7u, 11, 50, 11, 229
+#define PPUTLIMPL_UDEC_2518u 0x9D6u, 11, 50, 2, 1259
+#define PPUTLIMPL_UDEC_2517u 0x9D5u, 11, 50, 3, 839
+#define PPUTLIMPL_UDEC_2516u 0x9D4u, 11, 50, 2, 2, 17, 37
+#define PPUTLIMPL_UDEC_2515u 0x9D3u, 11, 50, 5, 503
+#define PPUTLIMPL_UDEC_2514u 0x9D2u, 11, 50, 2, 3, 419
+#define PPUTLIMPL_UDEC_2513u 0x9D1u, 11, 50, 7, 359
+#define PPUTLIMPL_UDEC_2512u 0x9D0u, 11, 50, 2, 2, 2, 2, 157
+#define PPUTLIMPL_UDEC_2511u 0x9CFu, 11, 50, 3, 3, 3, 3, 31
+#define PPUTLIMPL_UDEC_2510u 0x9CEu, 11, 50, 2, 5, 251
+#define PPUTLIMPL_UDEC_2509u 0x9CDu, 11, 50, 13, 193
+#define PPUTLIMPL_UDEC_2508u 0x9CCu, 11, 50, 2, 2, 3, 11, 19
+#define PPUTLIMPL_UDEC_2507u 0x9CBu, 11, 50, 23, 109
+#define PPUTLIMPL_UDEC_2506u 0x9CAu, 11, 50, 2, 7, 179
+#define PPUTLIMPL_UDEC_2505u 0x9C9u, 11, 50, 3, 5, 167
+#define PPUTLIMPL_UDEC_2504u 0x9C8u, 11, 50, 2, 2, 2, 313
+#define PPUTLIMPL_UDEC_2503u 0x9C7u, 11, 50,
+#define PPUTLIMPL_UDEC_2502u 0x9C6u, 11, 50, 2, 3, 3, 139
+#define PPUTLIMPL_UDEC_2501u 0x9C5u, 11, 50, 41, 61
+#define PPUTLIMPL_UDEC_2500u 0x9C4u, 11, 50, 2, 2, 5, 5, 5, 5
+#define PPUTLIMPL_UDEC_2499u 0x9C3u, 11, 49, 3, 7, 7, 17
+#define PPUTLIMPL_UDEC_2498u 0x9C2u, 11, 49, 2, 1249
+#define PPUTLIMPL_UDEC_2497u 0x9C1u, 11, 49, 11, 227
+#define PPUTLIMPL_UDEC_2496u 0x9C0u, 11, 49, 2, 2, 2, 2, 2, 2, 3, 13
+#define PPUTLIMPL_UDEC_2495u 0x9BFu, 11, 49, 5, 499
+#define PPUTLIMPL_UDEC_2494u 0x9BEu, 11, 49, 2, 29, 43
+#define PPUTLIMPL_UDEC_2493u 0x9BDu, 11, 49, 3, 3, 277
+#define PPUTLIMPL_UDEC_2492u 0x9BCu, 11, 49, 2, 2, 7, 89
+#define PPUTLIMPL_UDEC_2491u 0x9BBu, 11, 49, 47, 53
+#define PPUTLIMPL_UDEC_2490u 0x9BAu, 11, 49, 2, 3, 5, 83
+#define PPUTLIMPL_UDEC_2489u 0x9B9u, 11, 49, 19, 131
+#define PPUTLIMPL_UDEC_2488u 0x9B8u, 11, 49, 2, 2, 2, 311
+#define PPUTLIMPL_UDEC_2487u 0x9B7u, 11, 49, 3, 829
+#define PPUTLIMPL_UDEC_2486u 0x9B6u, 11, 49, 2, 11, 113
+#define PPUTLIMPL_UDEC_2485u 0x9B5u, 11, 49, 5, 7, 71
+#define PPUTLIMPL_UDEC_2484u 0x9B4u, 11, 49, 2, 2, 3, 3, 3, 23
+#define PPUTLIMPL_UDEC_2483u 0x9B3u, 11, 49, 13, 191
+#define PPUTLIMPL_UDEC_2482u 0x9B2u, 11, 49, 2, 17, 73
+#define PPUTLIMPL_UDEC_2481u 0x9B1u, 11, 49, 3, 827
+#define PPUTLIMPL_UDEC_2480u 0x9B0u, 11, 49, 2, 2, 2, 2, 5, 31
+#define PPUTLIMPL_UDEC_2479u 0x9AFu, 11, 49, 37, 67
+#define PPUTLIMPL_UDEC_2478u 0x9AEu, 11, 49, 2, 3, 7, 59
+#define PPUTLIMPL_UDEC_2477u 0x9ADu, 11, 49,
+#define PPUTLIMPL_UDEC_2476u 0x9ACu, 11, 49, 2, 2, 619
+#define PPUTLIMPL_UDEC_2475u 0x9ABu, 11, 49, 3, 3, 5, 5, 11
+#define PPUTLIMPL_UDEC_2474u 0x9AAu, 11, 49, 2, 1237
+#define PPUTLIMPL_UDEC_2473u 0x9A9u, 11, 49,
+#define PPUTLIMPL_UDEC_2472u 0x9A8u, 11, 49, 2, 2, 2, 3, 103
+#define PPUTLIMPL_UDEC_2471u 0x9A7u, 11, 49, 7, 353
+#define PPUTLIMPL_UDEC_2470u 0x9A6u, 11, 49, 2, 5, 13, 19
+#define PPUTLIMPL_UDEC_2469u 0x9A5u, 11, 49, 3, 823
+#define PPUTLIMPL_UDEC_2468u 0x9A4u, 11, 49, 2, 2, 617
+#define PPUTLIMPL_UDEC_2467u 0x9A3u, 11, 49,
+#define PPUTLIMPL_UDEC_2466u 0x9A2u, 11, 49, 2, 3, 3, 137
+#define PPUTLIMPL_UDEC_2465u 0x9A1u, 11, 49, 5, 17, 29
+#define PPUTLIMPL_UDEC_2464u 0x9A0u, 11, 49, 2, 2, 2, 2, 2, 7, 11
+#define PPUTLIMPL_UDEC_2463u 0x99Fu, 11, 49, 3, 821
+#define PPUTLIMPL_UDEC_2462u 0x99Eu, 11, 49, 2, 1231
+#define PPUTLIMPL_UDEC_2461u 0x99Du, 11, 49, 23, 107
+#define PPUTLIMPL_UDEC_2460u 0x99Cu, 11, 49, 2, 2, 3, 5, 41
+#define PPUTLIMPL_UDEC_2459u 0x99Bu, 11, 49,
+#define PPUTLIMPL_UDEC_2458u 0x99Au, 11, 49, 2, 1229
+#define PPUTLIMPL_UDEC_2457u 0x999u, 11, 49, 3, 3, 3, 7, 13
+#define PPUTLIMPL_UDEC_2456u 0x998u, 11, 49, 2, 2, 2, 307
+#define PPUTLIMPL_UDEC_2455u 0x997u, 11, 49, 5, 491
+#define PPUTLIMPL_UDEC_2454u 0x996u, 11, 49, 2, 3, 409
+#define PPUTLIMPL_UDEC_2453u 0x995u, 11, 49, 11, 223
+#define PPUTLIMPL_UDEC_2452u 0x994u, 11, 49, 2, 2, 613
+#define PPUTLIMPL_UDEC_2451u 0x993u, 11, 49, 3, 19, 43
+#define PPUTLIMPL_UDEC_2450u 0x992u, 11, 49, 2, 5, 5, 7, 7
+#define PPUTLIMPL_UDEC_2449u 0x991u, 11, 49, 31, 79
+#define PPUTLIMPL_UDEC_2448u 0x990u, 11, 49, 2, 2, 2, 2, 3, 3, 17
+#define PPUTLIMPL_UDEC_2447u 0x98Fu, 11, 49,
+#define PPUTLIMPL_UDEC_2446u 0x98Eu, 11, 49, 2, 1223
+#define PPUTLIMPL_UDEC_2445u 0x98Du, 11, 49, 3, 5, 163
+#define PPUTLIMPL_UDEC_2444u 0x98Cu, 11, 49, 2, 2, 13, 47
+#define PPUTLIMPL_UDEC_2443u 0x98Bu, 11, 49, 7, 349
+#define PPUTLIMPL_UDEC_2442u 0x98Au, 11, 49, 2, 3, 11, 37
+#define PPUTLIMPL_UDEC_2441u 0x989u, 11, 49,
+#define PPUTLIMPL_UDEC_2440u 0x988u, 11, 49, 2, 2, 2, 5, 61
+#define PPUTLIMPL_UDEC_2439u 0x987u, 11, 49, 3, 3, 271
+#define PPUTLIMPL_UDEC_2438u 0x986u, 11, 49, 2, 23, 53
+#define PPUTLIMPL_UDEC_2437u 0x985u, 11, 49,
+#define PPUTLIMPL_UDEC_2436u 0x984u, 11, 49, 2, 2, 3, 7, 29
+#define PPUTLIMPL_UDEC_2435u 0x983u, 11, 49, 5, 487
+#define PPUTLIMPL_UDEC_2434u 0x982u, 11, 49, 2, 1217
+#define PPUTLIMPL_UDEC_2433u 0x981u, 11, 49, 3, 811
+#define PPUTLIMPL_UDEC_2432u 0x980u, 11, 49, 2, 2, 2, 2, 2, 2, 2, 19
+#define PPUTLIMPL_UDEC_2431u 0x97Fu, 11, 49, 11, 13, 17
+#define PPUTLIMPL_UDEC_2430u 0x97Eu, 11, 49, 2, 3, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_2429u 0x97Du, 11, 49, 7, 347
+#define PPUTLIMPL_UDEC_2428u 0x97Cu, 11, 49, 2, 2, 607
+#define PPUTLIMPL_UDEC_2427u 0x97Bu, 11, 49, 3, 809
+#define PPUTLIMPL_UDEC_2426u 0x97Au, 11, 49, 2, 1213
+#define PPUTLIMPL_UDEC_2425u 0x979u, 11, 49, 5, 5, 97
+#define PPUTLIMPL_UDEC_2424u 0x978u, 11, 49, 2, 2, 2, 3, 101
+#define PPUTLIMPL_UDEC_2423u 0x977u, 11, 49,
+#define PPUTLIMPL_UDEC_2422u 0x976u, 11, 49, 2, 7, 173
+#define PPUTLIMPL_UDEC_2421u 0x975u, 11, 49, 3, 3, 269
+#define PPUTLIMPL_UDEC_2420u 0x974u, 11, 49, 2, 2, 5, 11, 11
+#define PPUTLIMPL_UDEC_2419u 0x973u, 11, 49, 41, 59
+#define PPUTLIMPL_UDEC_2418u 0x972u, 11, 49, 2, 3, 13, 31
+#define PPUTLIMPL_UDEC_2417u 0x971u, 11, 49,
+#define PPUTLIMPL_UDEC_2416u 0x970u, 11, 49, 2, 2, 2, 2, 151
+#define PPUTLIMPL_UDEC_2415u 0x96Fu, 11, 49, 3, 5, 7, 23
+#define PPUTLIMPL_UDEC_2414u 0x96Eu, 11, 49, 2, 17, 71
+#define PPUTLIMPL_UDEC_2413u 0x96Du, 11, 49, 19, 127
+#define PPUTLIMPL_UDEC_2412u 0x96Cu, 11, 49, 2, 2, 3, 3, 67
+#define PPUTLIMPL_UDEC_2411u 0x96Bu, 11, 49,
+#define PPUTLIMPL_UDEC_2410u 0x96Au, 11, 49, 2, 5, 241
+#define PPUTLIMPL_UDEC_2409u 0x969u, 11, 49, 3, 11, 73
+#define PPUTLIMPL_UDEC_2408u 0x968u, 11, 49, 2, 2, 2, 7, 43
+#define PPUTLIMPL_UDEC_2407u 0x967u, 11, 49, 29, 83
+#define PPUTLIMPL_UDEC_2406u 0x966u, 11, 49, 2, 3, 401
+#define PPUTLIMPL_UDEC_2405u 0x965u, 11, 49, 5, 13, 37
+#define PPUTLIMPL_UDEC_2404u 0x964u, 11, 49, 2, 2, 601
+#define PPUTLIMPL_UDEC_2403u 0x963u, 11, 49, 3, 3, 3, 89
+#define PPUTLIMPL_UDEC_2402u 0x962u, 11, 49, 2, 1201
+#define PPUTLIMPL_UDEC_2401u 0x961u, 11, 49, 7, 7, 7, 7
+#define PPUTLIMPL_UDEC_2400u 0x960u, 11, 48, 2, 2, 2, 2, 2, 3, 5, 5
+#define PPUTLIMPL_UDEC_2399u 0x95Fu, 11, 48,
+#define PPUTLIMPL_UDEC_2398u 0x95Eu, 11, 48, 2, 11, 109
+#define PPUTLIMPL_UDEC_2397u 0x95Du, 11, 48, 3, 17, 47
+#define PPUTLIMPL_UDEC_2396u 0x95Cu, 11, 48, 2, 2, 599
+#define PPUTLIMPL_UDEC_2395u 0x95Bu, 11, 48, 5, 479
+#define PPUTLIMPL_UDEC_2394u 0x95Au, 11, 48, 2, 3, 3, 7, 19
+#define PPUTLIMPL_UDEC_2393u 0x959u, 11, 48,
+#define PPUTLIMPL_UDEC_2392u 0x958u, 11, 48, 2, 2, 2, 13, 23
+#define PPUTLIMPL_UDEC_2391u 0x957u, 11, 48, 3, 797
+#define PPUTLIMPL_UDEC_2390u 0x956u, 11, 48, 2, 5, 239
+#define PPUTLIMPL_UDEC_2389u 0x955u, 11, 48,
+#define PPUTLIMPL_UDEC_2388u 0x954u, 11, 48, 2, 2, 3, 199
+#define PPUTLIMPL_UDEC_2387u 0x953u, 11, 48, 7, 11, 31
+#define PPUTLIMPL_UDEC_2386u 0x952u, 11, 48, 2, 1193
+#define PPUTLIMPL_UDEC_2385u 0x951u, 11, 48, 3, 3, 5, 53
+#define PPUTLIMPL_UDEC_2384u 0x950u, 11, 48, 2, 2, 2, 2, 149
+#define PPUTLIMPL_UDEC_2383u 0x94Fu, 11, 48,
+#define PPUTLIMPL_UDEC_2382u 0x94Eu, 11, 48, 2, 3, 397
+#define PPUTLIMPL_UDEC_2381u 0x94Du, 11, 48,
+#define PPUTLIMPL_UDEC_2380u 0x94Cu, 11, 48, 2, 2, 5, 7, 17
+#define PPUTLIMPL_UDEC_2379u 0x94Bu, 11, 48, 3, 13, 61
+#define PPUTLIMPL_UDEC_2378u 0x94Au, 11, 48, 2, 29, 41
+#define PPUTLIMPL_UDEC_2377u 0x949u, 11, 48,
+#define PPUTLIMPL_UDEC_2376u 0x948u, 11, 48, 2, 2, 2, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_2375u 0x947u, 11, 48, 5, 5, 5, 19
+#define PPUTLIMPL_UDEC_2374u 0x946u, 11, 48, 2, 1187
+#define PPUTLIMPL_UDEC_2373u 0x945u, 11, 48, 3, 7, 113
+#define PPUTLIMPL_UDEC_2372u 0x944u, 11, 48, 2, 2, 593
+#define PPUTLIMPL_UDEC_2371u 0x943u, 11, 48,
+#define PPUTLIMPL_UDEC_2370u 0x942u, 11, 48, 2, 3, 5, 79
+#define PPUTLIMPL_UDEC_2369u 0x941u, 11, 48, 23, 103
+#define PPUTLIMPL_UDEC_2368u 0x940u, 11, 48, 2, 2, 2, 2, 2, 2, 37
+#define PPUTLIMPL_UDEC_2367u 0x93Fu, 11, 48, 3, 3, 263
+#define PPUTLIMPL_UDEC_2366u 0x93Eu, 11, 48, 2, 7, 13, 13
+#define PPUTLIMPL_UDEC_2365u 0x93Du, 11, 48, 5, 11, 43
+#define PPUTLIMPL_UDEC_2364u 0x93Cu, 11, 48, 2, 2, 3, 197
+#define PPUTLIMPL_UDEC_2363u 0x93Bu, 11, 48, 17, 139
+#define PPUTLIMPL_UDEC_2362u 0x93Au, 11, 48, 2, 1181
+#define PPUTLIMPL_UDEC_2361u 0x939u, 11, 48, 3, 787
+#define PPUTLIMPL_UDEC_2360u 0x938u, 11, 48, 2, 2, 2, 5, 59
+#define PPUTLIMPL_UDEC_2359u 0x937u, 11, 48, 7, 337
+#define PPUTLIMPL_UDEC_2358u 0x936u, 11, 48, 2, 3, 3, 131
+#define PPUTLIMPL_UDEC_2357u 0x935u, 11, 48,
+#define PPUTLIMPL_UDEC_2356u 0x934u, 11, 48, 2, 2, 19, 31
+#define PPUTLIMPL_UDEC_2355u 0x933u, 11, 48, 3, 5, 157
+#define PPUTLIMPL_UDEC_2354u 0x932u, 11, 48, 2, 11, 107
+#define PPUTLIMPL_UDEC_2353u 0x931u, 11, 48, 13, 181
+#define PPUTLIMPL_UDEC_2352u 0x930u, 11, 48, 2, 2, 2, 2, 3, 7, 7
+#define PPUTLIMPL_UDEC_2351u 0x92Fu, 11, 48,
+#define PPUTLIMPL_UDEC_2350u 0x92Eu, 11, 48, 2, 5, 5, 47
+#define PPUTLIMPL_UDEC_2349u 0x92Du, 11, 48, 3, 3, 3, 3, 29
+#define PPUTLIMPL_UDEC_2348u 0x92Cu, 11, 48, 2, 2, 587
+#define PPUTLIMPL_UDEC_2347u 0x92Bu, 11, 48,
+#define PPUTLIMPL_UDEC_2346u 0x92Au, 11, 48, 2, 3, 17, 23
+#define PPUTLIMPL_UDEC_2345u 0x929u, 11, 48, 5, 7, 67
+#define PPUTLIMPL_UDEC_2344u 0x928u, 11, 48, 2, 2, 2, 293
+#define PPUTLIMPL_UDEC_2343u 0x927u, 11, 48, 3, 11, 71
+#define PPUTLIMPL_UDEC_2342u 0x926u, 11, 48, 2, 1171
+#define PPUTLIMPL_UDEC_2341u 0x925u, 11, 48,
+#define PPUTLIMPL_UDEC_2340u 0x924u, 11, 48, 2, 2, 3, 3, 5, 13
+#define PPUTLIMPL_UDEC_2339u 0x923u, 11, 48,
+#define PPUTLIMPL_UDEC_2338u 0x922u, 11, 48, 2, 7, 167
+#define PPUTLIMPL_UDEC_2337u 0x921u, 11, 48, 3, 19, 41
+#define PPUTLIMPL_UDEC_2336u 0x920u, 11, 48, 2, 2, 2, 2, 2, 73
+#define PPUTLIMPL_UDEC_2335u 0x91Fu, 11, 48, 5, 467
+#define PPUTLIMPL_UDEC_2334u 0x91Eu, 11, 48, 2, 3, 389
+#define PPUTLIMPL_UDEC_2333u 0x91Du, 11, 48,
+#define PPUTLIMPL_UDEC_2332u 0x91Cu, 11, 48, 2, 2, 11, 53
+#define PPUTLIMPL_UDEC_2331u 0x91Bu, 11, 48, 3, 3, 7, 37
+#define PPUTLIMPL_UDEC_2330u 0x91Au, 11, 48, 2, 5, 233
+#define PPUTLIMPL_UDEC_2329u 0x919u, 11, 48, 17, 137
+#define PPUTLIMPL_UDEC_2328u 0x918u, 11, 48, 2, 2, 2, 3, 97
+#define PPUTLIMPL_UDEC_2327u 0x917u, 11, 48, 13, 179
+#define PPUTLIMPL_UDEC_2326u 0x916u, 11, 48, 2, 1163
+#define PPUTLIMPL_UDEC_2325u 0x915u, 11, 48, 3, 5, 5, 31
+#define PPUTLIMPL_UDEC_2324u 0x914u, 11, 48, 2, 2, 7, 83
+#define PPUTLIMPL_UDEC_2323u 0x913u, 11, 48, 23, 101
+#define PPUTLIMPL_UDEC_2322u 0x912u, 11, 48, 2, 3, 3, 3, 43
+#define PPUTLIMPL_UDEC_2321u 0x911u, 11, 48, 11, 211
+#define PPUTLIMPL_UDEC_2320u 0x910u, 11, 48, 2, 2, 2, 2, 5, 29
+#define PPUTLIMPL_UDEC_2319u 0x90Fu, 11, 48, 3, 773
+#define PPUTLIMPL_UDEC_2318u 0x90Eu, 11, 48, 2, 19, 61
+#define PPUTLIMPL_UDEC_2317u 0x90Du, 11, 48, 7, 331
+#define PPUTLIMPL_UDEC_2316u 0x90Cu, 11, 48, 2, 2, 3, 193
+#define PPUTLIMPL_UDEC_2315u 0x90Bu, 11, 48, 5, 463
+#define PPUTLIMPL_UDEC_2314u 0x90Au, 11, 48, 2, 13, 89
+#define PPUTLIMPL_UDEC_2313u 0x909u, 11, 48, 3, 3, 257
+#define PPUTLIMPL_UDEC_2312u 0x908u, 11, 48, 2, 2, 2, 17, 17
+#define PPUTLIMPL_UDEC_2311u 0x907u, 11, 48,
+#define PPUTLIMPL_UDEC_2310u 0x906u, 11, 48, 2, 3, 5, 7, 11
+#define PPUTLIMPL_UDEC_2309u 0x905u, 11, 48,
+#define PPUTLIMPL_UDEC_2308u 0x904u, 11, 48, 2, 2, 577
+#define PPUTLIMPL_UDEC_2307u 0x903u, 11, 48, 3, 769
+#define PPUTLIMPL_UDEC_2306u 0x902u, 11, 48, 2, 1153
+#define PPUTLIMPL_UDEC_2305u 0x901u, 11, 48, 5, 461
+#define PPUTLIMPL_UDEC_2304u 0x900u, 11, 48, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_2303u 0x8FFu, 11, 47, 7, 7, 47
+#define PPUTLIMPL_UDEC_2302u 0x8FEu, 11, 47, 2, 1151
+#define PPUTLIMPL_UDEC_2301u 0x8FDu, 11, 47, 3, 13, 59
+#define PPUTLIMPL_UDEC_2300u 0x8FCu, 11, 47, 2, 2, 5, 5, 23
+#define PPUTLIMPL_UDEC_2299u 0x8FBu, 11, 47, 11, 11, 19
+#define PPUTLIMPL_UDEC_2298u 0x8FAu, 11, 47, 2, 3, 383
+#define PPUTLIMPL_UDEC_2297u 0x8F9u, 11, 47,
+#define PPUTLIMPL_UDEC_2296u 0x8F8u, 11, 47, 2, 2, 2, 7, 41
+#define PPUTLIMPL_UDEC_2295u 0x8F7u, 11, 47, 3, 3, 3, 5, 17
+#define PPUTLIMPL_UDEC_2294u 0x8F6u, 11, 47, 2, 31, 37
+#define PPUTLIMPL_UDEC_2293u 0x8F5u, 11, 47,
+#define PPUTLIMPL_UDEC_2292u 0x8F4u, 11, 47, 2, 2, 3, 191
+#define PPUTLIMPL_UDEC_2291u 0x8F3u, 11, 47, 29, 79
+#define PPUTLIMPL_UDEC_2290u 0x8F2u, 11, 47, 2, 5, 229
+#define PPUTLIMPL_UDEC_2289u 0x8F1u, 11, 47, 3, 7, 109
+#define PPUTLIMPL_UDEC_2288u 0x8F0u, 11, 47, 2, 2, 2, 2, 11, 13
+#define PPUTLIMPL_UDEC_2287u 0x8EFu, 11, 47,
+#define PPUTLIMPL_UDEC_2286u 0x8EEu, 11, 47, 2, 3, 3, 127
+#define PPUTLIMPL_UDEC_2285u 0x8EDu, 11, 47, 5, 457
+#define PPUTLIMPL_UDEC_2284u 0x8ECu, 11, 47, 2, 2, 571
+#define PPUTLIMPL_UDEC_2283u 0x8EBu, 11, 47, 3, 761
+#define PPUTLIMPL_UDEC_2282u 0x8EAu, 11, 47, 2, 7, 163
+#define PPUTLIMPL_UDEC_2281u 0x8E9u, 11, 47,
+#define PPUTLIMPL_UDEC_2280u 0x8E8u, 11, 47, 2, 2, 2, 3, 5, 19
+#define PPUTLIMPL_UDEC_2279u 0x8E7u, 11, 47, 43, 53
+#define PPUTLIMPL_UDEC_2278u 0x8E6u, 11, 47, 2, 17, 67
+#define PPUTLIMPL_UDEC_2277u 0x8E5u, 11, 47, 3, 3, 11, 23
+#define PPUTLIMPL_UDEC_2276u 0x8E4u, 11, 47, 2, 2, 569
+#define PPUTLIMPL_UDEC_2275u 0x8E3u, 11, 47, 5, 5, 7, 13
+#define PPUTLIMPL_UDEC_2274u 0x8E2u, 11, 47, 2, 3, 379
+#define PPUTLIMPL_UDEC_2273u 0x8E1u, 11, 47,
+#define PPUTLIMPL_UDEC_2272u 0x8E0u, 11, 47, 2, 2, 2, 2, 2, 71
+#define PPUTLIMPL_UDEC_2271u 0x8DFu, 11, 47, 3, 757
+#define PPUTLIMPL_UDEC_2270u 0x8DEu, 11, 47, 2, 5, 227
+#define PPUTLIMPL_UDEC_2269u 0x8DDu, 11, 47,
+#define PPUTLIMPL_UDEC_2268u 0x8DCu, 11, 47, 2, 2, 3, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_2267u 0x8DBu, 11, 47,
+#define PPUTLIMPL_UDEC_2266u 0x8DAu, 11, 47, 2, 11, 103
+#define PPUTLIMPL_UDEC_2265u 0x8D9u, 11, 47, 3, 5, 151
+#define PPUTLIMPL_UDEC_2264u 0x8D8u, 11, 47, 2, 2, 2, 283
+#define PPUTLIMPL_UDEC_2263u 0x8D7u, 11, 47, 31, 73
+#define PPUTLIMPL_UDEC_2262u 0x8D6u, 11, 47, 2, 3, 13, 29
+#define PPUTLIMPL_UDEC_2261u 0x8D5u, 11, 47, 7, 17, 19
+#define PPUTLIMPL_UDEC_2260u 0x8D4u, 11, 47, 2, 2, 5, 113
+#define PPUTLIMPL_UDEC_2259u 0x8D3u, 11, 47, 3, 3, 251
+#define PPUTLIMPL_UDEC_2258u 0x8D2u, 11, 47, 2, 1129
+#define PPUTLIMPL_UDEC_2257u 0x8D1u, 11, 47, 37, 61
+#define PPUTLIMPL_UDEC_2256u 0x8D0u, 11, 47, 2, 2, 2, 2, 3, 47
+#define PPUTLIMPL_UDEC_2255u 0x8CFu, 11, 47, 5, 11, 41
+#define PPUTLIMPL_UDEC_2254u 0x8CEu, 11, 47, 2, 7, 7, 23
+#define PPUTLIMPL_UDEC_2253u 0x8CDu, 11, 47, 3, 751
+#define PPUTLIMPL_UDEC_2252u 0x8CCu, 11, 47, 2, 2, 563
+#define PPUTLIMPL_UDEC_2251u 0x8CBu, 11, 47,
+#define PPUTLIMPL_UDEC_2250u 0x8CAu, 11, 47, 2, 3, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_2249u 0x8C9u, 11, 47, 13, 173
+#define PPUTLIMPL_UDEC_2248u 0x8C8u, 11, 47, 2, 2, 2, 281
+#define PPUTLIMPL_UDEC_2247u 0x8C7u, 11, 47, 3, 7, 107
+#define PPUTLIMPL_UDEC_2246u 0x8C6u, 11, 47, 2, 1123
+#define PPUTLIMPL_UDEC_2245u 0x8C5u, 11, 47, 5, 449
+#define PPUTLIMPL_UDEC_2244u 0x8C4u, 11, 47, 2, 2, 3, 11, 17
+#define PPUTLIMPL_UDEC_2243u 0x8C3u, 11, 47,
+#define PPUTLIMPL_UDEC_2242u 0x8C2u, 11, 47, 2, 19, 59
+#define PPUTLIMPL_UDEC_2241u 0x8C1u, 11, 47, 3, 3, 3, 83
+#define PPUTLIMPL_UDEC_2240u 0x8C0u, 11, 47, 2, 2, 2, 2, 2, 2, 5, 7
+#define PPUTLIMPL_UDEC_2239u 0x8BFu, 11, 47,
+#define PPUTLIMPL_UDEC_2238u 0x8BEu, 11, 47, 2, 3, 373
+#define PPUTLIMPL_UDEC_2237u 0x8BDu, 11, 47,
+#define PPUTLIMPL_UDEC_2236u 0x8BCu, 11, 47, 2, 2, 13, 43
+#define PPUTLIMPL_UDEC_2235u 0x8BBu, 11, 47, 3, 5, 149
+#define PPUTLIMPL_UDEC_2234u 0x8BAu, 11, 47, 2, 1117
+#define PPUTLIMPL_UDEC_2233u 0x8B9u, 11, 47, 7, 11, 29
+#define PPUTLIMPL_UDEC_2232u 0x8B8u, 11, 47, 2, 2, 2, 3, 3, 31
+#define PPUTLIMPL_UDEC_2231u 0x8B7u, 11, 47, 23, 97
+#define PPUTLIMPL_UDEC_2230u 0x8B6u, 11, 47, 2, 5, 223
+#define PPUTLIMPL_UDEC_2229u 0x8B5u, 11, 47, 3, 743
+#define PPUTLIMPL_UDEC_2228u 0x8B4u, 11, 47, 2, 2, 557
+#define PPUTLIMPL_UDEC_2227u 0x8B3u, 11, 47, 17, 131
+#define PPUTLIMPL_UDEC_2226u 0x8B2u, 11, 47, 2, 3, 7, 53
+#define PPUTLIMPL_UDEC_2225u 0x8B1u, 11, 47, 5, 5, 89
+#define PPUTLIMPL_UDEC_2224u 0x8B0u, 11, 47, 2, 2, 2, 2, 139
+#define PPUTLIMPL_UDEC_2223u 0x8AFu, 11, 47, 3, 3, 13, 19
+#define PPUTLIMPL_UDEC_2222u 0x8AEu, 11, 47, 2, 11, 101
+#define PPUTLIMPL_UDEC_2221u 0x8ADu, 11, 47,
+#define PPUTLIMPL_UDEC_2220u 0x8ACu, 11, 47, 2, 2, 3, 5, 37
+#define PPUTLIMPL_UDEC_2219u 0x8ABu, 11, 47, 7, 317
+#define PPUTLIMPL_UDEC_2218u 0x8AAu, 11, 47, 2, 1109
+#define PPUTLIMPL_UDEC_2217u 0x8A9u, 11, 47, 3, 739
+#define PPUTLIMPL_UDEC_2216u 0x8A8u, 11, 47, 2, 2, 2, 277
+#define PPUTLIMPL_UDEC_2215u 0x8A7u, 11, 47, 5, 443
+#define PPUTLIMPL_UDEC_2214u 0x8A6u, 11, 47, 2, 3, 3, 3, 41
+#define PPUTLIMPL_UDEC_2213u 0x8A5u, 11, 47,
+#define PPUTLIMPL_UDEC_2212u 0x8A4u, 11, 47, 2, 2, 7, 79
+#define PPUTLIMPL_UDEC_2211u 0x8A3u, 11, 47, 3, 11, 67
+#define PPUTLIMPL_UDEC_2210u 0x8A2u, 11, 47, 2, 5, 13, 17
+#define PPUTLIMPL_UDEC_2209u 0x8A1u, 11, 47, 47, 47
+#define PPUTLIMPL_UDEC_2208u 0x8A0u, 11, 46, 2, 2, 2, 2, 2, 3, 23
+#define PPUTLIMPL_UDEC_2207u 0x89Fu, 11, 46,
+#define PPUTLIMPL_UDEC_2206u 0x89Eu, 11, 46, 2, 1103
+#define PPUTLIMPL_UDEC_2205u 0x89Du, 11, 46, 3, 3, 5, 7, 7
+#define PPUTLIMPL_UDEC_2204u 0x89Cu, 11, 46, 2, 2, 19, 29
+#define PPUTLIMPL_UDEC_2203u 0x89Bu, 11, 46,
+#define PPUTLIMPL_UDEC_2202u 0x89Au, 11, 46, 2, 3, 367
+#define PPUTLIMPL_UDEC_2201u 0x899u, 11, 46, 31, 71
+#define PPUTLIMPL_UDEC_2200u 0x898u, 11, 46, 2, 2, 2, 5, 5, 11
+#define PPUTLIMPL_UDEC_2199u 0x897u, 11, 46, 3, 733
+#define PPUTLIMPL_UDEC_2198u 0x896u, 11, 46, 2, 7, 157
+#define PPUTLIMPL_UDEC_2197u 0x895u, 11, 46, 13, 13, 13
+#define PPUTLIMPL_UDEC_2196u 0x894u, 11, 46, 2, 2, 3, 3, 61
+#define PPUTLIMPL_UDEC_2195u 0x893u, 11, 46, 5, 439
+#define PPUTLIMPL_UDEC_2194u 0x892u, 11, 46, 2, 1097
+#define PPUTLIMPL_UDEC_2193u 0x891u, 11, 46, 3, 17, 43
+#define PPUTLIMPL_UDEC_2192u 0x890u, 11, 46, 2, 2, 2, 2, 137
+#define PPUTLIMPL_UDEC_2191u 0x88Fu, 11, 46, 7, 313
+#define PPUTLIMPL_UDEC_2190u 0x88Eu, 11, 46, 2, 3, 5, 73
+#define PPUTLIMPL_UDEC_2189u 0x88Du, 11, 46, 11, 199
+#define PPUTLIMPL_UDEC_2188u 0x88Cu, 11, 46, 2, 2, 547
+#define PPUTLIMPL_UDEC_2187u 0x88Bu, 11, 46, 3, 3, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_2186u 0x88Au, 11, 46, 2, 1093
+#define PPUTLIMPL_UDEC_2185u 0x889u, 11, 46, 5, 19, 23
+#define PPUTLIMPL_UDEC_2184u 0x888u, 11, 46, 2, 2, 2, 3, 7, 13
+#define PPUTLIMPL_UDEC_2183u 0x887u, 11, 46, 37, 59
+#define PPUTLIMPL_UDEC_2182u 0x886u, 11, 46, 2, 1091
+#define PPUTLIMPL_UDEC_2181u 0x885u, 11, 46, 3, 727
+#define PPUTLIMPL_UDEC_2180u 0x884u, 11, 46, 2, 2, 5, 109
+#define PPUTLIMPL_UDEC_2179u 0x883u, 11, 46,
+#define PPUTLIMPL_UDEC_2178u 0x882u, 11, 46, 2, 3, 3, 11, 11
+#define PPUTLIMPL_UDEC_2177u 0x881u, 11, 46, 7, 311
+#define PPUTLIMPL_UDEC_2176u 0x880u, 11, 46, 2, 2, 2, 2, 2, 2, 2, 17
+#define PPUTLIMPL_UDEC_2175u 0x87Fu, 11, 46, 3, 5, 5, 29
+#define PPUTLIMPL_UDEC_2174u 0x87Eu, 11, 46, 2, 1087
+#define PPUTLIMPL_UDEC_2173u 0x87Du, 11, 46, 41, 53
+#define PPUTLIMPL_UDEC_2172u 0x87Cu, 11, 46, 2, 2, 3, 181
+#define PPUTLIMPL_UDEC_2171u 0x87Bu, 11, 46, 13, 167
+#define PPUTLIMPL_UDEC_2170u 0x87Au, 11, 46, 2, 5, 7, 31
+#define PPUTLIMPL_UDEC_2169u 0x879u, 11, 46, 3, 3, 241
+#define PPUTLIMPL_UDEC_2168u 0x878u, 11, 46, 2, 2, 2, 271
+#define PPUTLIMPL_UDEC_2167u 0x877u, 11, 46, 11, 197
+#define PPUTLIMPL_UDEC_2166u 0x876u, 11, 46, 2, 3, 19, 19
+#define PPUTLIMPL_UDEC_2165u 0x875u, 11, 46, 5, 433
+#define PPUTLIMPL_UDEC_2164u 0x874u, 11, 46, 2, 2, 541
+#define PPUTLIMPL_UDEC_2163u 0x873u, 11, 46, 3, 7, 103
+#define PPUTLIMPL_UDEC_2162u 0x872u, 11, 46, 2, 23, 47
+#define PPUTLIMPL_UDEC_2161u 0x871u, 11, 46,
+#define PPUTLIMPL_UDEC_2160u 0x870u, 11, 46, 2, 2, 2, 2, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_2159u 0x86Fu, 11, 46, 17, 127
+#define PPUTLIMPL_UDEC_2158u 0x86Eu, 11, 46, 2, 13, 83
+#define PPUTLIMPL_UDEC_2157u 0x86Du, 11, 46, 3, 719
+#define PPUTLIMPL_UDEC_2156u 0x86Cu, 11, 46, 2, 2, 7, 7, 11
+#define PPUTLIMPL_UDEC_2155u 0x86Bu, 11, 46, 5, 431
+#define PPUTLIMPL_UDEC_2154u 0x86Au, 11, 46, 2, 3, 359
+#define PPUTLIMPL_UDEC_2153u 0x869u, 11, 46,
+#define PPUTLIMPL_UDEC_2152u 0x868u, 11, 46, 2, 2, 2, 269
+#define PPUTLIMPL_UDEC_2151u 0x867u, 11, 46, 3, 3, 239
+#define PPUTLIMPL_UDEC_2150u 0x866u, 11, 46, 2, 5, 5, 43
+#define PPUTLIMPL_UDEC_2149u 0x865u, 11, 46, 7, 307
+#define PPUTLIMPL_UDEC_2148u 0x864u, 11, 46, 2, 2, 3, 179
+#define PPUTLIMPL_UDEC_2147u 0x863u, 11, 46, 19, 113
+#define PPUTLIMPL_UDEC_2146u 0x862u, 11, 46, 2, 29, 37
+#define PPUTLIMPL_UDEC_2145u 0x861u, 11, 46, 3, 5, 11, 13
+#define PPUTLIMPL_UDEC_2144u 0x860u, 11, 46, 2, 2, 2, 2, 2, 67
+#define PPUTLIMPL_UDEC_2143u 0x85Fu, 11, 46,
+#define PPUTLIMPL_UDEC_2142u 0x85Eu, 11, 46, 2, 3, 3, 7, 17
+#define PPUTLIMPL_UDEC_2141u 0x85Du, 11, 46,
+#define PPUTLIMPL_UDEC_2140u 0x85Cu, 11, 46, 2, 2, 5, 107
+#define PPUTLIMPL_UDEC_2139u 0x85Bu, 11, 46, 3, 23, 31
+#define PPUTLIMPL_UDEC_2138u 0x85Au, 11, 46, 2, 1069
+#define PPUTLIMPL_UDEC_2137u 0x859u, 11, 46,
+#define PPUTLIMPL_UDEC_2136u 0x858u, 11, 46, 2, 2, 2, 3, 89
+#define PPUTLIMPL_UDEC_2135u 0x857u, 11, 46, 5, 7, 61
+#define PPUTLIMPL_UDEC_2134u 0x856u, 11, 46, 2, 11, 97
+#define PPUTLIMPL_UDEC_2133u 0x855u, 11, 46, 3, 3, 3, 79
+#define PPUTLIMPL_UDEC_2132u 0x854u, 11, 46, 2, 2, 13, 41
+#define PPUTLIMPL_UDEC_2131u 0x853u, 11, 46,
+#define PPUTLIMPL_UDEC_2130u 0x852u, 11, 46, 2, 3, 5, 71
+#define PPUTLIMPL_UDEC_2129u 0x851u, 11, 46,
+#define PPUTLIMPL_UDEC_2128u 0x850u, 11, 46, 2, 2, 2, 2, 7, 19
+#define PPUTLIMPL_UDEC_2127u 0x84Fu, 11, 46, 3, 709
+#define PPUTLIMPL_UDEC_2126u 0x84Eu, 11, 46, 2, 1063
+#define PPUTLIMPL_UDEC_2125u 0x84Du, 11, 46, 5, 5, 5, 17
+#define PPUTLIMPL_UDEC_2124u 0x84Cu, 11, 46, 2, 2, 3, 3, 59
+#define PPUTLIMPL_UDEC_2123u 0x84Bu, 11, 46, 11, 193
+#define PPUTLIMPL_UDEC_2122u 0x84Au, 11, 46, 2, 1061
+#define PPUTLIMPL_UDEC_2121u 0x849u, 11, 46, 3, 7, 101
+#define PPUTLIMPL_UDEC_2120u 0x848u, 11, 46, 2, 2, 2, 5, 53
+#define PPUTLIMPL_UDEC_2119u 0x847u, 11, 46, 13, 163
+#define PPUTLIMPL_UDEC_2118u 0x846u, 11, 46, 2, 3, 353
+#define PPUTLIMPL_UDEC_2117u 0x845u, 11, 46, 29, 73
+#define PPUTLIMPL_UDEC_2116u 0x844u, 11, 46, 2, 2, 23, 23
+#define PPUTLIMPL_UDEC_2115u 0x843u, 11, 45, 3, 3, 5, 47
+#define PPUTLIMPL_UDEC_2114u 0x842u, 11, 45, 2, 7, 151
+#define PPUTLIMPL_UDEC_2113u 0x841u, 11, 45,
+#define PPUTLIMPL_UDEC_2112u 0x840u, 11, 45, 2, 2, 2, 2, 2, 2, 3, 11
+#define PPUTLIMPL_UDEC_2111u 0x83Fu, 11, 45,
+#define PPUTLIMPL_UDEC_2110u 0x83Eu, 11, 45, 2, 5, 211
+#define PPUTLIMPL_UDEC_2109u 0x83Du, 11, 45, 3, 19, 37
+#define PPUTLIMPL_UDEC_2108u 0x83Cu, 11, 45, 2, 2, 17, 31
+#define PPUTLIMPL_UDEC_2107u 0x83Bu, 11, 45, 7, 7, 43
+#define PPUTLIMPL_UDEC_2106u 0x83Au, 11, 45, 2, 3, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_2105u 0x839u, 11, 45, 5, 421
+#define PPUTLIMPL_UDEC_2104u 0x838u, 11, 45, 2, 2, 2, 263
+#define PPUTLIMPL_UDEC_2103u 0x837u, 11, 45, 3, 701
+#define PPUTLIMPL_UDEC_2102u 0x836u, 11, 45, 2, 1051
+#define PPUTLIMPL_UDEC_2101u 0x835u, 11, 45, 11, 191
+#define PPUTLIMPL_UDEC_2100u 0x834u, 11, 45, 2, 2, 3, 5, 5, 7
+#define PPUTLIMPL_UDEC_2099u 0x833u, 11, 45,
+#define PPUTLIMPL_UDEC_2098u 0x832u, 11, 45, 2, 1049
+#define PPUTLIMPL_UDEC_2097u 0x831u, 11, 45, 3, 3, 233
+#define PPUTLIMPL_UDEC_2096u 0x830u, 11, 45, 2, 2, 2, 2, 131
+#define PPUTLIMPL_UDEC_2095u 0x82Fu, 11, 45, 5, 419
+#define PPUTLIMPL_UDEC_2094u 0x82Eu, 11, 45, 2, 3, 349
+#define PPUTLIMPL_UDEC_2093u 0x82Du, 11, 45, 7, 13, 23
+#define PPUTLIMPL_UDEC_2092u 0x82Cu, 11, 45, 2, 2, 523
+#define PPUTLIMPL_UDEC_2091u 0x82Bu, 11, 45, 3, 17, 41
+#define PPUTLIMPL_UDEC_2090u 0x82Au, 11, 45, 2, 5, 11, 19
+#define PPUTLIMPL_UDEC_2089u 0x829u, 11, 45,
+#define PPUTLIMPL_UDEC_2088u 0x828u, 11, 45, 2, 2, 2, 3, 3, 29
+#define PPUTLIMPL_UDEC_2087u 0x827u, 11, 45,
+#define PPUTLIMPL_UDEC_2086u 0x826u, 11, 45, 2, 7, 149
+#define PPUTLIMPL_UDEC_2085u 0x825u, 11, 45, 3, 5, 139
+#define PPUTLIMPL_UDEC_2084u 0x824u, 11, 45, 2, 2, 521
+#define PPUTLIMPL_UDEC_2083u 0x823u, 11, 45,
+#define PPUTLIMPL_UDEC_2082u 0x822u, 11, 45, 2, 3, 347
+#define PPUTLIMPL_UDEC_2081u 0x821u, 11, 45,
+#define PPUTLIMPL_UDEC_2080u 0x820u, 11, 45, 2, 2, 2, 2, 2, 5, 13
+#define PPUTLIMPL_UDEC_2079u 0x81Fu, 11, 45, 3, 3, 3, 7, 11
+#define PPUTLIMPL_UDEC_2078u 0x81Eu, 11, 45, 2, 1039
+#define PPUTLIMPL_UDEC_2077u 0x81Du, 11, 45, 31, 67
+#define PPUTLIMPL_UDEC_2076u 0x81Cu, 11, 45, 2, 2, 3, 173
+#define PPUTLIMPL_UDEC_2075u 0x81Bu, 11, 45, 5, 5, 83
+#define PPUTLIMPL_UDEC_2074u 0x81Au, 11, 45, 2, 17, 61
+#define PPUTLIMPL_UDEC_2073u 0x819u, 11, 45, 3, 691
+#define PPUTLIMPL_UDEC_2072u 0x818u, 11, 45, 2, 2, 2, 7, 37
+#define PPUTLIMPL_UDEC_2071u 0x817u, 11, 45, 19, 109
+#define PPUTLIMPL_UDEC_2070u 0x816u, 11, 45, 2, 3, 3, 5, 23
+#define PPUTLIMPL_UDEC_2069u 0x815u, 11, 45,
+#define PPUTLIMPL_UDEC_2068u 0x814u, 11, 45, 2, 2, 11, 47
+#define PPUTLIMPL_UDEC_2067u 0x813u, 11, 45, 3, 13, 53
+#define PPUTLIMPL_UDEC_2066u 0x812u, 11, 45, 2, 1033
+#define PPUTLIMPL_UDEC_2065u 0x811u, 11, 45, 5, 7, 59
+#define PPUTLIMPL_UDEC_2064u 0x810u, 11, 45, 2, 2, 2, 2, 3, 43
+#define PPUTLIMPL_UDEC_2063u 0x80Fu, 11, 45,
+#define PPUTLIMPL_UDEC_2062u 0x80Eu, 11, 45, 2, 1031
+#define PPUTLIMPL_UDEC_2061u 0x80Du, 11, 45, 3, 3, 229
+#define PPUTLIMPL_UDEC_2060u 0x80Cu, 11, 45, 2, 2, 5, 103
+#define PPUTLIMPL_UDEC_2059u 0x80Bu, 11, 45, 29, 71
+#define PPUTLIMPL_UDEC_2058u 0x80Au, 11, 45, 2, 3, 7, 7, 7
+#define PPUTLIMPL_UDEC_2057u 0x809u, 11, 45, 11, 11, 17
+#define PPUTLIMPL_UDEC_2056u 0x808u, 11, 45, 2, 2, 2, 257
+#define PPUTLIMPL_UDEC_2055u 0x807u, 11, 45, 3, 5, 137
+#define PPUTLIMPL_UDEC_2054u 0x806u, 11, 45, 2, 13, 79
+#define PPUTLIMPL_UDEC_2053u 0x805u, 11, 45,
+#define PPUTLIMPL_UDEC_2052u 0x804u, 11, 45, 2, 2, 3, 3, 3, 19
+#define PPUTLIMPL_UDEC_2051u 0x803u, 11, 45, 7, 293
+#define PPUTLIMPL_UDEC_2050u 0x802u, 11, 45, 2, 5, 5, 41
+#define PPUTLIMPL_UDEC_2049u 0x801u, 11, 45, 3, 683
+#define PPUTLIMPL_UDEC_2048u 0x800u, 11, 45, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_2047u 0x7FFu, 10, 45, 23, 89
+#define PPUTLIMPL_UDEC_2046u 0x7FEu, 10, 45, 2, 3, 11, 31
+#define PPUTLIMPL_UDEC_2045u 0x7FDu, 10, 45, 5, 409
+#define PPUTLIMPL_UDEC_2044u 0x7FCu, 10, 45, 2, 2, 7, 73
+#define PPUTLIMPL_UDEC_2043u 0x7FBu, 10, 45, 3, 3, 227
+#define PPUTLIMPL_UDEC_2042u 0x7FAu, 10, 45, 2, 1021
+#define PPUTLIMPL_UDEC_2041u 0x7F9u, 10, 45, 13, 157
+#define PPUTLIMPL_UDEC_2040u 0x7F8u, 10, 45, 2, 2, 2, 3, 5, 17
+#define PPUTLIMPL_UDEC_2039u 0x7F7u, 10, 45,
+#define PPUTLIMPL_UDEC_2038u 0x7F6u, 10, 45, 2, 1019
+#define PPUTLIMPL_UDEC_2037u 0x7F5u, 10, 45, 3, 7, 97
+#define PPUTLIMPL_UDEC_2036u 0x7F4u, 10, 45, 2, 2, 509
+#define PPUTLIMPL_UDEC_2035u 0x7F3u, 10, 45, 5, 11, 37
+#define PPUTLIMPL_UDEC_2034u 0x7F2u, 10, 45, 2, 3, 3, 113
+#define PPUTLIMPL_UDEC_2033u 0x7F1u, 10, 45, 19, 107
+#define PPUTLIMPL_UDEC_2032u 0x7F0u, 10, 45, 2, 2, 2, 2, 127
+#define PPUTLIMPL_UDEC_2031u 0x7EFu, 10, 45, 3, 677
+#define PPUTLIMPL_UDEC_2030u 0x7EEu, 10, 45, 2, 5, 7, 29
+#define PPUTLIMPL_UDEC_2029u 0x7EDu, 10, 45,
+#define PPUTLIMPL_UDEC_2028u 0x7ECu, 10, 45, 2, 2, 3, 13, 13
+#define PPUTLIMPL_UDEC_2027u 0x7EBu, 10, 45,
+#define PPUTLIMPL_UDEC_2026u 0x7EAu, 10, 45, 2, 1013
+#define PPUTLIMPL_UDEC_2025u 0x7E9u, 10, 45, 3, 3, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_2024u 0x7E8u, 10, 44, 2, 2, 2, 11, 23
+#define PPUTLIMPL_UDEC_2023u 0x7E7u, 10, 44, 7, 17, 17
+#define PPUTLIMPL_UDEC_2022u 0x7E6u, 10, 44, 2, 3, 337
+#define PPUTLIMPL_UDEC_2021u 0x7E5u, 10, 44, 43, 47
+#define PPUTLIMPL_UDEC_2020u 0x7E4u, 10, 44, 2, 2, 5, 101
+#define PPUTLIMPL_UDEC_2019u 0x7E3u, 10, 44, 3, 673
+#define PPUTLIMPL_UDEC_2018u 0x7E2u, 10, 44, 2, 1009
+#define PPUTLIMPL_UDEC_2017u 0x7E1u, 10, 44,
+#define PPUTLIMPL_UDEC_2016u 0x7E0u, 10, 44, 2, 2, 2, 2, 2, 3, 3, 7
+#define PPUTLIMPL_UDEC_2015u 0x7DFu, 10, 44, 5, 13, 31
+#define PPUTLIMPL_UDEC_2014u 0x7DEu, 10, 44, 2, 19, 53
+#define PPUTLIMPL_UDEC_2013u 0x7DDu, 10, 44, 3, 11, 61
+#define PPUTLIMPL_UDEC_2012u 0x7DCu, 10, 44, 2, 2, 503
+#define PPUTLIMPL_UDEC_2011u 0x7DBu, 10, 44,
+#define PPUTLIMPL_UDEC_2010u 0x7DAu, 10, 44, 2, 3, 5, 67
+#define PPUTLIMPL_UDEC_2009u 0x7D9u, 10, 44, 7, 7, 41
+#define PPUTLIMPL_UDEC_2008u 0x7D8u, 10, 44, 2, 2, 2, 251
+#define PPUTLIMPL_UDEC_2007u 0x7D7u, 10, 44, 3, 3, 223
+#define PPUTLIMPL_UDEC_2006u 0x7D6u, 10, 44, 2, 17, 59
+#define PPUTLIMPL_UDEC_2005u 0x7D5u, 10, 44, 5, 401
+#define PPUTLIMPL_UDEC_2004u 0x7D4u, 10, 44, 2, 2, 3, 167
+#define PPUTLIMPL_UDEC_2003u 0x7D3u, 10, 44,
+#define PPUTLIMPL_UDEC_2002u 0x7D2u, 10, 44, 2, 7, 11, 13
+#define PPUTLIMPL_UDEC_2001u 0x7D1u, 10, 44, 3, 23, 29
+#define PPUTLIMPL_UDEC_2000u 0x7D0u, 10, 44, 2, 2, 2, 2, 5, 5, 5
+#define PPUTLIMPL_UDEC_1999u 0x7CFu, 10, 44,
+#define PPUTLIMPL_UDEC_1998u 0x7CEu, 10, 44, 2, 3, 3, 3, 37
+#define PPUTLIMPL_UDEC_1997u 0x7CDu, 10, 44,
+#define PPUTLIMPL_UDEC_1996u 0x7CCu, 10, 44, 2, 2, 499
+#define PPUTLIMPL_UDEC_1995u 0x7CBu, 10, 44, 3, 5, 7, 19
+#define PPUTLIMPL_UDEC_1994u 0x7CAu, 10, 44, 2, 997
+#define PPUTLIMPL_UDEC_1993u 0x7C9u, 10, 44,
+#define PPUTLIMPL_UDEC_1992u 0x7C8u, 10, 44, 2, 2, 2, 3, 83
+#define PPUTLIMPL_UDEC_1991u 0x7C7u, 10, 44, 11, 181
+#define PPUTLIMPL_UDEC_1990u 0x7C6u, 10, 44, 2, 5, 199
+#define PPUTLIMPL_UDEC_1989u 0x7C5u, 10, 44, 3, 3, 13, 17
+#define PPUTLIMPL_UDEC_1988u 0x7C4u, 10, 44, 2, 2, 7, 71
+#define PPUTLIMPL_UDEC_1987u 0x7C3u, 10, 44,
+#define PPUTLIMPL_UDEC_1986u 0x7C2u, 10, 44, 2, 3, 331
+#define PPUTLIMPL_UDEC_1985u 0x7C1u, 10, 44, 5, 397
+#define PPUTLIMPL_UDEC_1984u 0x7C0u, 10, 44, 2, 2, 2, 2, 2, 2, 31
+#define PPUTLIMPL_UDEC_1983u 0x7BFu, 10, 44, 3, 661
+#define PPUTLIMPL_UDEC_1982u 0x7BEu, 10, 44, 2, 991
+#define PPUTLIMPL_UDEC_1981u 0x7BDu, 10, 44, 7, 283
+#define PPUTLIMPL_UDEC_1980u 0x7BCu, 10, 44, 2, 2, 3, 3, 5, 11
+#define PPUTLIMPL_UDEC_1979u 0x7BBu, 10, 44,
+#define PPUTLIMPL_UDEC_1978u 0x7BAu, 10, 44, 2, 23, 43
+#define PPUTLIMPL_UDEC_1977u 0x7B9u, 10, 44, 3, 659
+#define PPUTLIMPL_UDEC_1976u 0x7B8u, 10, 44, 2, 2, 2, 13, 19
+#define PPUTLIMPL_UDEC_1975u 0x7B7u, 10, 44, 5, 5, 79
+#define PPUTLIMPL_UDEC_1974u 0x7B6u, 10, 44, 2, 3, 7, 47
+#define PPUTLIMPL_UDEC_1973u 0x7B5u, 10, 44,
+#define PPUTLIMPL_UDEC_1972u 0x7B4u, 10, 44, 2, 2, 17, 29
+#define PPUTLIMPL_UDEC_1971u 0x7B3u, 10, 44, 3, 3, 3, 73
+#define PPUTLIMPL_UDEC_1970u 0x7B2u, 10, 44, 2, 5, 197
+#define PPUTLIMPL_UDEC_1969u 0x7B1u, 10, 44, 11, 179
+#define PPUTLIMPL_UDEC_1968u 0x7B0u, 10, 44, 2, 2, 2, 2, 3, 41
+#define PPUTLIMPL_UDEC_1967u 0x7AFu, 10, 44, 7, 281
+#define PPUTLIMPL_UDEC_1966u 0x7AEu, 10, 44, 2, 983
+#define PPUTLIMPL_UDEC_1965u 0x7ADu, 10, 44, 3, 5, 131
+#define PPUTLIMPL_UDEC_1964u 0x7ACu, 10, 44, 2, 2, 491
+#define PPUTLIMPL_UDEC_1963u 0x7ABu, 10, 44, 13, 151
+#define PPUTLIMPL_UDEC_1962u 0x7AAu, 10, 44, 2, 3, 3, 109
+#define PPUTLIMPL_UDEC_1961u 0x7A9u, 10, 44, 37, 53
+#define PPUTLIMPL_UDEC_1960u 0x7A8u, 10, 44, 2, 2, 2, 5, 7, 7
+#define PPUTLIMPL_UDEC_1959u 0x7A7u, 10, 44, 3, 653
+#define PPUTLIMPL_UDEC_1958u 0x7A6u, 10, 44, 2, 11, 89
+#define PPUTLIMPL_UDEC_1957u 0x7A5u, 10, 44, 19, 103
+#define PPUTLIMPL_UDEC_1956u 0x7A4u, 10, 44, 2, 2, 3, 163
+#define PPUTLIMPL_UDEC_1955u 0x7A3u, 10, 44, 5, 17, 23
+#define PPUTLIMPL_UDEC_1954u 0x7A2u, 10, 44, 2, 977
+#define PPUTLIMPL_UDEC_1953u 0x7A1u, 10, 44, 3, 3, 7, 31
+#define PPUTLIMPL_UDEC_1952u 0x7A0u, 10, 44, 2, 2, 2, 2, 2, 61
+#define PPUTLIMPL_UDEC_1951u 0x79Fu, 10, 44,
+#define PPUTLIMPL_UDEC_1950u 0x79Eu, 10, 44, 2, 3, 5, 5, 13
+#define PPUTLIMPL_UDEC_1949u 0x79Du, 10, 44,
+#define PPUTLIMPL_UDEC_1948u 0x79Cu, 10, 44, 2, 2, 487
+#define PPUTLIMPL_UDEC_1947u 0x79Bu, 10, 44, 3, 11, 59
+#define PPUTLIMPL_UDEC_1946u 0x79Au, 10, 44, 2, 7, 139
+#define PPUTLIMPL_UDEC_1945u 0x799u, 10, 44, 5, 389
+#define PPUTLIMPL_UDEC_1944u 0x798u, 10, 44, 2, 2, 2, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_1943u 0x797u, 10, 44, 29, 67
+#define PPUTLIMPL_UDEC_1942u 0x796u, 10, 44, 2, 971
+#define PPUTLIMPL_UDEC_1941u 0x795u, 10, 44, 3, 647
+#define PPUTLIMPL_UDEC_1940u 0x794u, 10, 44, 2, 2, 5, 97
+#define PPUTLIMPL_UDEC_1939u 0x793u, 10, 44, 7, 277
+#define PPUTLIMPL_UDEC_1938u 0x792u, 10, 44, 2, 3, 17, 19
+#define PPUTLIMPL_UDEC_1937u 0x791u, 10, 44, 13, 149
+#define PPUTLIMPL_UDEC_1936u 0x790u, 10, 44, 2, 2, 2, 2, 11, 11
+#define PPUTLIMPL_UDEC_1935u 0x78Fu, 10, 43, 3, 3, 5, 43
+#define PPUTLIMPL_UDEC_1934u 0x78Eu, 10, 43, 2, 967
+#define PPUTLIMPL_UDEC_1933u 0x78Du, 10, 43,
+#define PPUTLIMPL_UDEC_1932u 0x78Cu, 10, 43, 2, 2, 3, 7, 23
+#define PPUTLIMPL_UDEC_1931u 0x78Bu, 10, 43,
+#define PPUTLIMPL_UDEC_1930u 0x78Au, 10, 43, 2, 5, 193
+#define PPUTLIMPL_UDEC_1929u 0x789u, 10, 43, 3, 643
+#define PPUTLIMPL_UDEC_1928u 0x788u, 10, 43, 2, 2, 2, 241
+#define PPUTLIMPL_UDEC_1927u 0x787u, 10, 43, 41, 47
+#define PPUTLIMPL_UDEC_1926u 0x786u, 10, 43, 2, 3, 3, 107
+#define PPUTLIMPL_UDEC_1925u 0x785u, 10, 43, 5, 5, 7, 11
+#define PPUTLIMPL_UDEC_1924u 0x784u, 10, 43, 2, 2, 13, 37
+#define PPUTLIMPL_UDEC_1923u 0x783u, 10, 43, 3, 641
+#define PPUTLIMPL_UDEC_1922u 0x782u, 10, 43, 2, 31, 31
+#define PPUTLIMPL_UDEC_1921u 0x781u, 10, 43, 17, 113
+#define PPUTLIMPL_UDEC_1920u 0x780u, 10, 43, 2, 2, 2, 2, 2, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_1919u 0x77Fu, 10, 43, 19, 101
+#define PPUTLIMPL_UDEC_1918u 0x77Eu, 10, 43, 2, 7, 137
+#define PPUTLIMPL_UDEC_1917u 0x77Du, 10, 43, 3, 3, 3, 71
+#define PPUTLIMPL_UDEC_1916u 0x77Cu, 10, 43, 2, 2, 479
+#define PPUTLIMPL_UDEC_1915u 0x77Bu, 10, 43, 5, 383
+#define PPUTLIMPL_UDEC_1914u 0x77Au, 10, 43, 2, 3, 11, 29
+#define PPUTLIMPL_UDEC_1913u 0x779u, 10, 43,
+#define PPUTLIMPL_UDEC_1912u 0x778u, 10, 43, 2, 2, 2, 239
+#define PPUTLIMPL_UDEC_1911u 0x777u, 10, 43, 3, 7, 7, 13
+#define PPUTLIMPL_UDEC_1910u 0x776u, 10, 43, 2, 5, 191
+#define PPUTLIMPL_UDEC_1909u 0x775u, 10, 43, 23, 83
+#define PPUTLIMPL_UDEC_1908u 0x774u, 10, 43, 2, 2, 3, 3, 53
+#define PPUTLIMPL_UDEC_1907u 0x773u, 10, 43,
+#define PPUTLIMPL_UDEC_1906u 0x772u, 10, 43, 2, 953
+#define PPUTLIMPL_UDEC_1905u 0x771u, 10, 43, 3, 5, 127
+#define PPUTLIMPL_UDEC_1904u 0x770u, 10, 43, 2, 2, 2, 2, 7, 17
+#define PPUTLIMPL_UDEC_1903u 0x76Fu, 10, 43, 11, 173
+#define PPUTLIMPL_UDEC_1902u 0x76Eu, 10, 43, 2, 3, 317
+#define PPUTLIMPL_UDEC_1901u 0x76Du, 10, 43,
+#define PPUTLIMPL_UDEC_1900u 0x76Cu, 10, 43, 2, 2, 5, 5, 19
+#define PPUTLIMPL_UDEC_1899u 0x76Bu, 10, 43, 3, 3, 211
+#define PPUTLIMPL_UDEC_1898u 0x76Au, 10, 43, 2, 13, 73
+#define PPUTLIMPL_UDEC_1897u 0x769u, 10, 43, 7, 271
+#define PPUTLIMPL_UDEC_1896u 0x768u, 10, 43, 2, 2, 2, 3, 79
+#define PPUTLIMPL_UDEC_1895u 0x767u, 10, 43, 5, 379
+#define PPUTLIMPL_UDEC_1894u 0x766u, 10, 43, 2, 947
+#define PPUTLIMPL_UDEC_1893u 0x765u, 10, 43, 3, 631
+#define PPUTLIMPL_UDEC_1892u 0x764u, 10, 43, 2, 2, 11, 43
+#define PPUTLIMPL_UDEC_1891u 0x763u, 10, 43, 31, 61
+#define PPUTLIMPL_UDEC_1890u 0x762u, 10, 43, 2, 3, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_1889u 0x761u, 10, 43,
+#define PPUTLIMPL_UDEC_1888u 0x760u, 10, 43, 2, 2, 2, 2, 2, 59
+#define PPUTLIMPL_UDEC_1887u 0x75Fu, 10, 43, 3, 17, 37
+#define PPUTLIMPL_UDEC_1886u 0x75Eu, 10, 43, 2, 23, 41
+#define PPUTLIMPL_UDEC_1885u 0x75Du, 10, 43, 5, 13, 29
+#define PPUTLIMPL_UDEC_1884u 0x75Cu, 10, 43, 2, 2, 3, 157
+#define PPUTLIMPL_UDEC_1883u 0x75Bu, 10, 43, 7, 269
+#define PPUTLIMPL_UDEC_1882u 0x75Au, 10, 43, 2, 941
+#define PPUTLIMPL_UDEC_1881u 0x759u, 10, 43, 3, 3, 11, 19
+#define PPUTLIMPL_UDEC_1880u 0x758u, 10, 43, 2, 2, 2, 5, 47
+#define PPUTLIMPL_UDEC_1879u 0x757u, 10, 43,
+#define PPUTLIMPL_UDEC_1878u 0x756u, 10, 43, 2, 3, 313
+#define PPUTLIMPL_UDEC_1877u 0x755u, 10, 43,
+#define PPUTLIMPL_UDEC_1876u 0x754u, 10, 43, 2, 2, 7, 67
+#define PPUTLIMPL_UDEC_1875u 0x753u, 10, 43, 3, 5, 5, 5, 5
+#define PPUTLIMPL_UDEC_1874u 0x752u, 10, 43, 2, 937
+#define PPUTLIMPL_UDEC_1873u 0x751u, 10, 43,
+#define PPUTLIMPL_UDEC_1872u 0x750u, 10, 43, 2, 2, 2, 2, 3, 3, 13
+#define PPUTLIMPL_UDEC_1871u 0x74Fu, 10, 43,
+#define PPUTLIMPL_UDEC_1870u 0x74Eu, 10, 43, 2, 5, 11, 17
+#define PPUTLIMPL_UDEC_1869u 0x74Du, 10, 43, 3, 7, 89
+#define PPUTLIMPL_UDEC_1868u 0x74Cu, 10, 43, 2, 2, 467
+#define PPUTLIMPL_UDEC_1867u 0x74Bu, 10, 43,
+#define PPUTLIMPL_UDEC_1866u 0x74Au, 10, 43, 2, 3, 311
+#define PPUTLIMPL_UDEC_1865u 0x749u, 10, 43, 5, 373
+#define PPUTLIMPL_UDEC_1864u 0x748u, 10, 43, 2, 2, 2, 233
+#define PPUTLIMPL_UDEC_1863u 0x747u, 10, 43, 3, 3, 3, 3, 23
+#define PPUTLIMPL_UDEC_1862u 0x746u, 10, 43, 2, 7, 7, 19
+#define PPUTLIMPL_UDEC_1861u 0x745u, 10, 43,
+#define PPUTLIMPL_UDEC_1860u 0x744u, 10, 43, 2, 2, 3, 5, 31
+#define PPUTLIMPL_UDEC_1859u 0x743u, 10, 43, 11, 13, 13
+#define PPUTLIMPL_UDEC_1858u 0x742u, 10, 43, 2, 929
+#define PPUTLIMPL_UDEC_1857u 0x741u, 10, 43, 3, 619
+#define PPUTLIMPL_UDEC_1856u 0x740u, 10, 43, 2, 2, 2, 2, 2, 2, 29
+#define PPUTLIMPL_UDEC_1855u 0x73Fu, 10, 43, 5, 7, 53
+#define PPUTLIMPL_UDEC_1854u 0x73Eu, 10, 43, 2, 3, 3, 103
+#define PPUTLIMPL_UDEC_1853u 0x73Du, 10, 43, 17, 109
+#define PPUTLIMPL_UDEC_1852u 0x73Cu, 10, 43, 2, 2, 463
+#define PPUTLIMPL_UDEC_1851u 0x73Bu, 10, 43, 3, 617
+#define PPUTLIMPL_UDEC_1850u 0x73Au, 10, 43, 2, 5, 5, 37
+#define PPUTLIMPL_UDEC_1849u 0x739u, 10, 43, 43, 43
+#define PPUTLIMPL_UDEC_1848u 0x738u, 10, 42, 2, 2, 2, 3, 7, 11
+#define PPUTLIMPL_UDEC_1847u 0x737u, 10, 42,
+#define PPUTLIMPL_UDEC_1846u 0x736u, 10, 42, 2, 13, 71
+#define PPUTLIMPL_UDEC_1845u 0x735u, 10, 42, 3, 3, 5, 41
+#define PPUTLIMPL_UDEC_1844u 0x734u, 10, 42, 2, 2, 461
+#define PPUTLIMPL_UDEC_1843u 0x733u, 10, 42, 19, 97
+#define PPUTLIMPL_UDEC_1842u 0x732u, 10, 42, 2, 3, 307
+#define PPUTLIMPL_UDEC_1841u 0x731u, 10, 42, 7, 263
+#define PPUTLIMPL_UDEC_1840u 0x730u, 10, 42, 2, 2, 2, 2, 5, 23
+#define PPUTLIMPL_UDEC_1839u 0x72Fu, 10, 42, 3, 613
+#define PPUTLIMPL_UDEC_1838u 0x72Eu, 10, 42, 2, 919
+#define PPUTLIMPL_UDEC_1837u 0x72Du, 10, 42, 11, 167
+#define PPUTLIMPL_UDEC_1836u 0x72Cu, 10, 42, 2, 2, 3, 3, 3, 17
+#define PPUTLIMPL_UDEC_1835u 0x72Bu, 10, 42, 5, 367
+#define PPUTLIMPL_UDEC_1834u 0x72Au, 10, 42, 2, 7, 131
+#define PPUTLIMPL_UDEC_1833u 0x729u, 10, 42, 3, 13, 47
+#define PPUTLIMPL_UDEC_1832u 0x728u, 10, 42, 2, 2, 2, 229
+#define PPUTLIMPL_UDEC_1831u 0x727u, 10, 42,
+#define PPUTLIMPL_UDEC_1830u 0x726u, 10, 42, 2, 3, 5, 61
+#define PPUTLIMPL_UDEC_1829u 0x725u, 10, 42, 31, 59
+#define PPUTLIMPL_UDEC_1828u 0x724u, 10, 42, 2, 2, 457
+#define PPUTLIMPL_UDEC_1827u 0x723u, 10, 42, 3, 3, 7, 29
+#define PPUTLIMPL_UDEC_1826u 0x722u, 10, 42, 2, 11, 83
+#define PPUTLIMPL_UDEC_1825u 0x721u, 10, 42, 5, 5, 73
+#define PPUTLIMPL_UDEC_1824u 0x720u, 10, 42, 2, 2, 2, 2, 2, 3, 19
+#define PPUTLIMPL_UDEC_1823u 0x71Fu, 10, 42,
+#define PPUTLIMPL_UDEC_1822u 0x71Eu, 10, 42, 2, 911
+#define PPUTLIMPL_UDEC_1821u 0x71Du, 10, 42, 3, 607
+#define PPUTLIMPL_UDEC_1820u 0x71Cu, 10, 42, 2, 2, 5, 7, 13
+#define PPUTLIMPL_UDEC_1819u 0x71Bu, 10, 42, 17, 107
+#define PPUTLIMPL_UDEC_1818u 0x71Au, 10, 42, 2, 3, 3, 101
+#define PPUTLIMPL_UDEC_1817u 0x719u, 10, 42, 23, 79
+#define PPUTLIMPL_UDEC_1816u 0x718u, 10, 42, 2, 2, 2, 227
+#define PPUTLIMPL_UDEC_1815u 0x717u, 10, 42, 3, 5, 11, 11
+#define PPUTLIMPL_UDEC_1814u 0x716u, 10, 42, 2, 907
+#define PPUTLIMPL_UDEC_1813u 0x715u, 10, 42, 7, 7, 37
+#define PPUTLIMPL_UDEC_1812u 0x714u, 10, 42, 2, 2, 3, 151
+#define PPUTLIMPL_UDEC_1811u 0x713u, 10, 42,
+#define PPUTLIMPL_UDEC_1810u 0x712u, 10, 42, 2, 5, 181
+#define PPUTLIMPL_UDEC_1809u 0x711u, 10, 42, 3, 3, 3, 67
+#define PPUTLIMPL_UDEC_1808u 0x710u, 10, 42, 2, 2, 2, 2, 113
+#define PPUTLIMPL_UDEC_1807u 0x70Fu, 10, 42, 13, 139
+#define PPUTLIMPL_UDEC_1806u 0x70Eu, 10, 42, 2, 3, 7, 43
+#define PPUTLIMPL_UDEC_1805u 0x70Du, 10, 42, 5, 19, 19
+#define PPUTLIMPL_UDEC_1804u 0x70Cu, 10, 42, 2, 2, 11, 41
+#define PPUTLIMPL_UDEC_1803u 0x70Bu, 10, 42, 3, 601
+#define PPUTLIMPL_UDEC_1802u 0x70Au, 10, 42, 2, 17, 53
+#define PPUTLIMPL_UDEC_1801u 0x709u, 10, 42,
+#define PPUTLIMPL_UDEC_1800u 0x708u, 10, 42, 2, 2, 2, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_1799u 0x707u, 10, 42, 7, 257
+#define PPUTLIMPL_UDEC_1798u 0x706u, 10, 42, 2, 29, 31
+#define PPUTLIMPL_UDEC_1797u 0x705u, 10, 42, 3, 599
+#define PPUTLIMPL_UDEC_1796u 0x704u, 10, 42, 2, 2, 449
+#define PPUTLIMPL_UDEC_1795u 0x703u, 10, 42, 5, 359
+#define PPUTLIMPL_UDEC_1794u 0x702u, 10, 42, 2, 3, 13, 23
+#define PPUTLIMPL_UDEC_1793u 0x701u, 10, 42, 11, 163
+#define PPUTLIMPL_UDEC_1792u 0x700u, 10, 42, 2, 2, 2, 2, 2, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_1791u 0x6FFu, 10, 42, 3, 3, 199
+#define PPUTLIMPL_UDEC_1790u 0x6FEu, 10, 42, 2, 5, 179
+#define PPUTLIMPL_UDEC_1789u 0x6FDu, 10, 42,
+#define PPUTLIMPL_UDEC_1788u 0x6FCu, 10, 42, 2, 2, 3, 149
+#define PPUTLIMPL_UDEC_1787u 0x6FBu, 10, 42,
+#define PPUTLIMPL_UDEC_1786u 0x6FAu, 10, 42, 2, 19, 47
+#define PPUTLIMPL_UDEC_1785u 0x6F9u, 10, 42, 3, 5, 7, 17
+#define PPUTLIMPL_UDEC_1784u 0x6F8u, 10, 42, 2, 2, 2, 223
+#define PPUTLIMPL_UDEC_1783u 0x6F7u, 10, 42,
+#define PPUTLIMPL_UDEC_1782u 0x6F6u, 10, 42, 2, 3, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_1781u 0x6F5u, 10, 42, 13, 137
+#define PPUTLIMPL_UDEC_1780u 0x6F4u, 10, 42, 2, 2, 5, 89
+#define PPUTLIMPL_UDEC_1779u 0x6F3u, 10, 42, 3, 593
+#define PPUTLIMPL_UDEC_1778u 0x6F2u, 10, 42, 2, 7, 127
+#define PPUTLIMPL_UDEC_1777u 0x6F1u, 10, 42,
+#define PPUTLIMPL_UDEC_1776u 0x6F0u, 10, 42, 2, 2, 2, 2, 3, 37
+#define PPUTLIMPL_UDEC_1775u 0x6EFu, 10, 42, 5, 5, 71
+#define PPUTLIMPL_UDEC_1774u 0x6EEu, 10, 42, 2, 887
+#define PPUTLIMPL_UDEC_1773u 0x6EDu, 10, 42, 3, 3, 197
+#define PPUTLIMPL_UDEC_1772u 0x6ECu, 10, 42, 2, 2, 443
+#define PPUTLIMPL_UDEC_1771u 0x6EBu, 10, 42, 7, 11, 23
+#define PPUTLIMPL_UDEC_1770u 0x6EAu, 10, 42, 2, 3, 5, 59
+#define PPUTLIMPL_UDEC_1769u 0x6E9u, 10, 42, 29, 61
+#define PPUTLIMPL_UDEC_1768u 0x6E8u, 10, 42, 2, 2, 2, 13, 17
+#define PPUTLIMPL_UDEC_1767u 0x6E7u, 10, 42, 3, 19, 31
+#define PPUTLIMPL_UDEC_1766u 0x6E6u, 10, 42, 2, 883
+#define PPUTLIMPL_UDEC_1765u 0x6E5u, 10, 42, 5, 353
+#define PPUTLIMPL_UDEC_1764u 0x6E4u, 10, 42, 2, 2, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_1763u 0x6E3u, 10, 41, 41, 43
+#define PPUTLIMPL_UDEC_1762u 0x6E2u, 10, 41, 2, 881
+#define PPUTLIMPL_UDEC_1761u 0x6E1u, 10, 41, 3, 587
+#define PPUTLIMPL_UDEC_1760u 0x6E0u, 10, 41, 2, 2, 2, 2, 2, 5, 11
+#define PPUTLIMPL_UDEC_1759u 0x6DFu, 10, 41,
+#define PPUTLIMPL_UDEC_1758u 0x6DEu, 10, 41, 2, 3, 293
+#define PPUTLIMPL_UDEC_1757u 0x6DDu, 10, 41, 7, 251
+#define PPUTLIMPL_UDEC_1756u 0x6DCu, 10, 41, 2, 2, 439
+#define PPUTLIMPL_UDEC_1755u 0x6DBu, 10, 41, 3, 3, 3, 5, 13
+#define PPUTLIMPL_UDEC_1754u 0x6DAu, 10, 41, 2, 877
+#define PPUTLIMPL_UDEC_1753u 0x6D9u, 10, 41,
+#define PPUTLIMPL_UDEC_1752u 0x6D8u, 10, 41, 2, 2, 2, 3, 73
+#define PPUTLIMPL_UDEC_1751u 0x6D7u, 10, 41, 17, 103
+#define PPUTLIMPL_UDEC_1750u 0x6D6u, 10, 41, 2, 5, 5, 5, 7
+#define PPUTLIMPL_UDEC_1749u 0x6D5u, 10, 41, 3, 11, 53
+#define PPUTLIMPL_UDEC_1748u 0x6D4u, 10, 41, 2, 2, 19, 23
+#define PPUTLIMPL_UDEC_1747u 0x6D3u, 10, 41,
+#define PPUTLIMPL_UDEC_1746u 0x6D2u, 10, 41, 2, 3, 3, 97
+#define PPUTLIMPL_UDEC_1745u 0x6D1u, 10, 41, 5, 349
+#define PPUTLIMPL_UDEC_1744u 0x6D0u, 10, 41, 2, 2, 2, 2, 109
+#define PPUTLIMPL_UDEC_1743u 0x6CFu, 10, 41, 3, 7, 83
+#define PPUTLIMPL_UDEC_1742u 0x6CEu, 10, 41, 2, 13, 67
+#define PPUTLIMPL_UDEC_1741u 0x6CDu, 10, 41,
+#define PPUTLIMPL_UDEC_1740u 0x6CCu, 10, 41, 2, 2, 3, 5, 29
+#define PPUTLIMPL_UDEC_1739u 0x6CBu, 10, 41, 37, 47
+#define PPUTLIMPL_UDEC_1738u 0x6CAu, 10, 41, 2, 11, 79
+#define PPUTLIMPL_UDEC_1737u 0x6C9u, 10, 41, 3, 3, 193
+#define PPUTLIMPL_UDEC_1736u 0x6C8u, 10, 41, 2, 2, 2, 7, 31
+#define PPUTLIMPL_UDEC_1735u 0x6C7u, 10, 41, 5, 347
+#define PPUTLIMPL_UDEC_1734u 0x6C6u, 10, 41, 2, 3, 17, 17
+#define PPUTLIMPL_UDEC_1733u 0x6C5u, 10, 41,
+#define PPUTLIMPL_UDEC_1732u 0x6C4u, 10, 41, 2, 2, 433
+#define PPUTLIMPL_UDEC_1731u 0x6C3u, 10, 41, 3, 577
+#define PPUTLIMPL_UDEC_1730u 0x6C2u, 10, 41, 2, 5, 173
+#define PPUTLIMPL_UDEC_1729u 0x6C1u, 10, 41, 7, 13, 19
+#define PPUTLIMPL_UDEC_1728u 0x6C0u, 10, 41, 2, 2, 2, 2, 2, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_1727u 0x6BFu, 10, 41, 11, 157
+#define PPUTLIMPL_UDEC_1726u 0x6BEu, 10, 41, 2, 863
+#define PPUTLIMPL_UDEC_1725u 0x6BDu, 10, 41, 3, 5, 5, 23
+#define PPUTLIMPL_UDEC_1724u 0x6BCu, 10, 41, 2, 2, 431
+#define PPUTLIMPL_UDEC_1723u 0x6BBu, 10, 41,
+#define PPUTLIMPL_UDEC_1722u 0x6BAu, 10, 41, 2, 3, 7, 41
+#define PPUTLIMPL_UDEC_1721u 0x6B9u, 10, 41,
+#define PPUTLIMPL_UDEC_1720u 0x6B8u, 10, 41, 2, 2, 2, 5, 43
+#define PPUTLIMPL_UDEC_1719u 0x6B7u, 10, 41, 3, 3, 191
+#define PPUTLIMPL_UDEC_1718u 0x6B6u, 10, 41, 2, 859
+#define PPUTLIMPL_UDEC_1717u 0x6B5u, 10, 41, 17, 101
+#define PPUTLIMPL_UDEC_1716u 0x6B4u, 10, 41, 2, 2, 3, 11, 13
+#define PPUTLIMPL_UDEC_1715u 0x6B3u, 10, 41, 5, 7, 7, 7
+#define PPUTLIMPL_UDEC_1714u 0x6B2u, 10, 41, 2, 857
+#define PPUTLIMPL_UDEC_1713u 0x6B1u, 10, 41, 3, 571
+#define PPUTLIMPL_UDEC_1712u 0x6B0u, 10, 41, 2, 2, 2, 2, 107
+#define PPUTLIMPL_UDEC_1711u 0x6AFu, 10, 41, 29, 59
+#define PPUTLIMPL_UDEC_1710u 0x6AEu, 10, 41, 2, 3, 3, 5, 19
+#define PPUTLIMPL_UDEC_1709u 0x6ADu, 10, 41,
+#define PPUTLIMPL_UDEC_1708u 0x6ACu, 10, 41, 2, 2, 7, 61
+#define PPUTLIMPL_UDEC_1707u 0x6ABu, 10, 41, 3, 569
+#define PPUTLIMPL_UDEC_1706u 0x6AAu, 10, 41, 2, 853
+#define PPUTLIMPL_UDEC_1705u 0x6A9u, 10, 41, 5, 11, 31
+#define PPUTLIMPL_UDEC_1704u 0x6A8u, 10, 41, 2, 2, 2, 3, 71
+#define PPUTLIMPL_UDEC_1703u 0x6A7u, 10, 41, 13, 131
+#define PPUTLIMPL_UDEC_1702u 0x6A6u, 10, 41, 2, 23, 37
+#define PPUTLIMPL_UDEC_1701u 0x6A5u, 10, 41, 3, 3, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_1700u 0x6A4u, 10, 41, 2, 2, 5, 5, 17
+#define PPUTLIMPL_UDEC_1699u 0x6A3u, 10, 41,
+#define PPUTLIMPL_UDEC_1698u 0x6A2u, 10, 41, 2, 3, 283
+#define PPUTLIMPL_UDEC_1697u 0x6A1u, 10, 41,
+#define PPUTLIMPL_UDEC_1696u 0x6A0u, 10, 41, 2, 2, 2, 2, 2, 53
+#define PPUTLIMPL_UDEC_1695u 0x69Fu, 10, 41, 3, 5, 113
+#define PPUTLIMPL_UDEC_1694u 0x69Eu, 10, 41, 2, 7, 11, 11
+#define PPUTLIMPL_UDEC_1693u 0x69Du, 10, 41,
+#define PPUTLIMPL_UDEC_1692u 0x69Cu, 10, 41, 2, 2, 3, 3, 47
+#define PPUTLIMPL_UDEC_1691u 0x69Bu, 10, 41, 19, 89
+#define PPUTLIMPL_UDEC_1690u 0x69Au, 10, 41, 2, 5, 13, 13
+#define PPUTLIMPL_UDEC_1689u 0x699u, 10, 41, 3, 563
+#define PPUTLIMPL_UDEC_1688u 0x698u, 10, 41, 2, 2, 2, 211
+#define PPUTLIMPL_UDEC_1687u 0x697u, 10, 41, 7, 241
+#define PPUTLIMPL_UDEC_1686u 0x696u, 10, 41, 2, 3, 281
+#define PPUTLIMPL_UDEC_1685u 0x695u, 10, 41, 5, 337
+#define PPUTLIMPL_UDEC_1684u 0x694u, 10, 41, 2, 2, 421
+#define PPUTLIMPL_UDEC_1683u 0x693u, 10, 41, 3, 3, 11, 17
+#define PPUTLIMPL_UDEC_1682u 0x692u, 10, 41, 2, 29, 29
+#define PPUTLIMPL_UDEC_1681u 0x691u, 10, 41, 41, 41
+#define PPUTLIMPL_UDEC_1680u 0x690u, 10, 40, 2, 2, 2, 2, 3, 5, 7
+#define PPUTLIMPL_UDEC_1679u 0x68Fu, 10, 40, 23, 73
+#define PPUTLIMPL_UDEC_1678u 0x68Eu, 10, 40, 2, 839
+#define PPUTLIMPL_UDEC_1677u 0x68Du, 10, 40, 3, 13, 43
+#define PPUTLIMPL_UDEC_1676u 0x68Cu, 10, 40, 2, 2, 419
+#define PPUTLIMPL_UDEC_1675u 0x68Bu, 10, 40, 5, 5, 67
+#define PPUTLIMPL_UDEC_1674u 0x68Au, 10, 40, 2, 3, 3, 3, 31
+#define PPUTLIMPL_UDEC_1673u 0x689u, 10, 40, 7, 239
+#define PPUTLIMPL_UDEC_1672u 0x688u, 10, 40, 2, 2, 2, 11, 19
+#define PPUTLIMPL_UDEC_1671u 0x687u, 10, 40, 3, 557
+#define PPUTLIMPL_UDEC_1670u 0x686u, 10, 40, 2, 5, 167
+#define PPUTLIMPL_UDEC_1669u 0x685u, 10, 40,
+#define PPUTLIMPL_UDEC_1668u 0x684u, 10, 40, 2, 2, 3, 139
+#define PPUTLIMPL_UDEC_1667u 0x683u, 10, 40,
+#define PPUTLIMPL_UDEC_1666u 0x682u, 10, 40, 2, 7, 7, 17
+#define PPUTLIMPL_UDEC_1665u 0x681u, 10, 40, 3, 3, 5, 37
+#define PPUTLIMPL_UDEC_1664u 0x680u, 10, 40, 2, 2, 2, 2, 2, 2, 2, 13
+#define PPUTLIMPL_UDEC_1663u 0x67Fu, 10, 40,
+#define PPUTLIMPL_UDEC_1662u 0x67Eu, 10, 40, 2, 3, 277
+#define PPUTLIMPL_UDEC_1661u 0x67Du, 10, 40, 11, 151
+#define PPUTLIMPL_UDEC_1660u 0x67Cu, 10, 40, 2, 2, 5, 83
+#define PPUTLIMPL_UDEC_1659u 0x67Bu, 10, 40, 3, 7, 79
+#define PPUTLIMPL_UDEC_1658u 0x67Au, 10, 40, 2, 829
+#define PPUTLIMPL_UDEC_1657u 0x679u, 10, 40,
+#define PPUTLIMPL_UDEC_1656u 0x678u, 10, 40, 2, 2, 2, 3, 3, 23
+#define PPUTLIMPL_UDEC_1655u 0x677u, 10, 40, 5, 331
+#define PPUTLIMPL_UDEC_1654u 0x676u, 10, 40, 2, 827
+#define PPUTLIMPL_UDEC_1653u 0x675u, 10, 40, 3, 19, 29
+#define PPUTLIMPL_UDEC_1652u 0x674u, 10, 40, 2, 2, 7, 59
+#define PPUTLIMPL_UDEC_1651u 0x673u, 10, 40, 13, 127
+#define PPUTLIMPL_UDEC_1650u 0x672u, 10, 40, 2, 3, 5, 5, 11
+#define PPUTLIMPL_UDEC_1649u 0x671u, 10, 40, 17, 97
+#define PPUTLIMPL_UDEC_1648u 0x670u, 10, 40, 2, 2, 2, 2, 103
+#define PPUTLIMPL_UDEC_1647u 0x66Fu, 10, 40, 3, 3, 3, 61
+#define PPUTLIMPL_UDEC_1646u 0x66Eu, 10, 40, 2, 823
+#define PPUTLIMPL_UDEC_1645u 0x66Du, 10, 40, 5, 7, 47
+#define PPUTLIMPL_UDEC_1644u 0x66Cu, 10, 40, 2, 2, 3, 137
+#define PPUTLIMPL_UDEC_1643u 0x66Bu, 10, 40, 31, 53
+#define PPUTLIMPL_UDEC_1642u 0x66Au, 10, 40, 2, 821
+#define PPUTLIMPL_UDEC_1641u 0x669u, 10, 40, 3, 547
+#define PPUTLIMPL_UDEC_1640u 0x668u, 10, 40, 2, 2, 2, 5, 41
+#define PPUTLIMPL_UDEC_1639u 0x667u, 10, 40, 11, 149
+#define PPUTLIMPL_UDEC_1638u 0x666u, 10, 40, 2, 3, 3, 7, 13
+#define PPUTLIMPL_UDEC_1637u 0x665u, 10, 40,
+#define PPUTLIMPL_UDEC_1636u 0x664u, 10, 40, 2, 2, 409
+#define PPUTLIMPL_UDEC_1635u 0x663u, 10, 40, 3, 5, 109
+#define PPUTLIMPL_UDEC_1634u 0x662u, 10, 40, 2, 19, 43
+#define PPUTLIMPL_UDEC_1633u 0x661u, 10, 40, 23, 71
+#define PPUTLIMPL_UDEC_1632u 0x660u, 10, 40, 2, 2, 2, 2, 2, 3, 17
+#define PPUTLIMPL_UDEC_1631u 0x65Fu, 10, 40, 7, 233
+#define PPUTLIMPL_UDEC_1630u 0x65Eu, 10, 40, 2, 5, 163
+#define PPUTLIMPL_UDEC_1629u 0x65Du, 10, 40, 3, 3, 181
+#define PPUTLIMPL_UDEC_1628u 0x65Cu, 10, 40, 2, 2, 11, 37
+#define PPUTLIMPL_UDEC_1627u 0x65Bu, 10, 40,
+#define PPUTLIMPL_UDEC_1626u 0x65Au, 10, 40, 2, 3, 271
+#define PPUTLIMPL_UDEC_1625u 0x659u, 10, 40, 5, 5, 5, 13
+#define PPUTLIMPL_UDEC_1624u 0x658u, 10, 40, 2, 2, 2, 7, 29
+#define PPUTLIMPL_UDEC_1623u 0x657u, 10, 40, 3, 541
+#define PPUTLIMPL_UDEC_1622u 0x656u, 10, 40, 2, 811
+#define PPUTLIMPL_UDEC_1621u 0x655u, 10, 40,
+#define PPUTLIMPL_UDEC_1620u 0x654u, 10, 40, 2, 2, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_1619u 0x653u, 10, 40,
+#define PPUTLIMPL_UDEC_1618u 0x652u, 10, 40, 2, 809
+#define PPUTLIMPL_UDEC_1617u 0x651u, 10, 40, 3, 7, 7, 11
+#define PPUTLIMPL_UDEC_1616u 0x650u, 10, 40, 2, 2, 2, 2, 101
+#define PPUTLIMPL_UDEC_1615u 0x64Fu, 10, 40, 5, 17, 19
+#define PPUTLIMPL_UDEC_1614u 0x64Eu, 10, 40, 2, 3, 269
+#define PPUTLIMPL_UDEC_1613u 0x64Du, 10, 40,
+#define PPUTLIMPL_UDEC_1612u 0x64Cu, 10, 40, 2, 2, 13, 31
+#define PPUTLIMPL_UDEC_1611u 0x64Bu, 10, 40, 3, 3, 179
+#define PPUTLIMPL_UDEC_1610u 0x64Au, 10, 40, 2, 5, 7, 23
+#define PPUTLIMPL_UDEC_1609u 0x649u, 10, 40,
+#define PPUTLIMPL_UDEC_1608u 0x648u, 10, 40, 2, 2, 2, 3, 67
+#define PPUTLIMPL_UDEC_1607u 0x647u, 10, 40,
+#define PPUTLIMPL_UDEC_1606u 0x646u, 10, 40, 2, 11, 73
+#define PPUTLIMPL_UDEC_1605u 0x645u, 10, 40, 3, 5, 107
+#define PPUTLIMPL_UDEC_1604u 0x644u, 10, 40, 2, 2, 401
+#define PPUTLIMPL_UDEC_1603u 0x643u, 10, 40, 7, 229
+#define PPUTLIMPL_UDEC_1602u 0x642u, 10, 40, 2, 3, 3, 89
+#define PPUTLIMPL_UDEC_1601u 0x641u, 10, 40,
+#define PPUTLIMPL_UDEC_1600u 0x640u, 10, 40, 2, 2, 2, 2, 2, 2, 5, 5
+#define PPUTLIMPL_UDEC_1599u 0x63Fu, 10, 39, 3, 13, 41
+#define PPUTLIMPL_UDEC_1598u 0x63Eu, 10, 39, 2, 17, 47
+#define PPUTLIMPL_UDEC_1597u 0x63Du, 10, 39,
+#define PPUTLIMPL_UDEC_1596u 0x63Cu, 10, 39, 2, 2, 3, 7, 19
+#define PPUTLIMPL_UDEC_1595u 0x63Bu, 10, 39, 5, 11, 29
+#define PPUTLIMPL_UDEC_1594u 0x63Au, 10, 39, 2, 797
+#define PPUTLIMPL_UDEC_1593u 0x639u, 10, 39, 3, 3, 3, 59
+#define PPUTLIMPL_UDEC_1592u 0x638u, 10, 39, 2, 2, 2, 199
+#define PPUTLIMPL_UDEC_1591u 0x637u, 10, 39, 37, 43
+#define PPUTLIMPL_UDEC_1590u 0x636u, 10, 39, 2, 3, 5, 53
+#define PPUTLIMPL_UDEC_1589u 0x635u, 10, 39, 7, 227
+#define PPUTLIMPL_UDEC_1588u 0x634u, 10, 39, 2, 2, 397
+#define PPUTLIMPL_UDEC_1587u 0x633u, 10, 39, 3, 23, 23
+#define PPUTLIMPL_UDEC_1586u 0x632u, 10, 39, 2, 13, 61
+#define PPUTLIMPL_UDEC_1585u 0x631u, 10, 39, 5, 317
+#define PPUTLIMPL_UDEC_1584u 0x630u, 10, 39, 2, 2, 2, 2, 3, 3, 11
+#define PPUTLIMPL_UDEC_1583u 0x62Fu, 10, 39,
+#define PPUTLIMPL_UDEC_1582u 0x62Eu, 10, 39, 2, 7, 113
+#define PPUTLIMPL_UDEC_1581u 0x62Du, 10, 39, 3, 17, 31
+#define PPUTLIMPL_UDEC_1580u 0x62Cu, 10, 39, 2, 2, 5, 79
+#define PPUTLIMPL_UDEC_1579u 0x62Bu, 10, 39,
+#define PPUTLIMPL_UDEC_1578u 0x62Au, 10, 39, 2, 3, 263
+#define PPUTLIMPL_UDEC_1577u 0x629u, 10, 39, 19, 83
+#define PPUTLIMPL_UDEC_1576u 0x628u, 10, 39, 2, 2, 2, 197
+#define PPUTLIMPL_UDEC_1575u 0x627u, 10, 39, 3, 3, 5, 5, 7
+#define PPUTLIMPL_UDEC_1574u 0x626u, 10, 39, 2, 787
+#define PPUTLIMPL_UDEC_1573u 0x625u, 10, 39, 11, 11, 13
+#define PPUTLIMPL_UDEC_1572u 0x624u, 10, 39, 2, 2, 3, 131
+#define PPUTLIMPL_UDEC_1571u 0x623u, 10, 39,
+#define PPUTLIMPL_UDEC_1570u 0x622u, 10, 39, 2, 5, 157
+#define PPUTLIMPL_UDEC_1569u 0x621u, 10, 39, 3, 523
+#define PPUTLIMPL_UDEC_1568u 0x620u, 10, 39, 2, 2, 2, 2, 2, 7, 7
+#define PPUTLIMPL_UDEC_1567u 0x61Fu, 10, 39,
+#define PPUTLIMPL_UDEC_1566u 0x61Eu, 10, 39, 2, 3, 3, 3, 29
+#define PPUTLIMPL_UDEC_1565u 0x61Du, 10, 39, 5, 313
+#define PPUTLIMPL_UDEC_1564u 0x61Cu, 10, 39, 2, 2, 17, 23
+#define PPUTLIMPL_UDEC_1563u 0x61Bu, 10, 39, 3, 521
+#define PPUTLIMPL_UDEC_1562u 0x61Au, 10, 39, 2, 11, 71
+#define PPUTLIMPL_UDEC_1561u 0x619u, 10, 39, 7, 223
+#define PPUTLIMPL_UDEC_1560u 0x618u, 10, 39, 2, 2, 2, 3, 5, 13
+#define PPUTLIMPL_UDEC_1559u 0x617u, 10, 39,
+#define PPUTLIMPL_UDEC_1558u 0x616u, 10, 39, 2, 19, 41
+#define PPUTLIMPL_UDEC_1557u 0x615u, 10, 39, 3, 3, 173
+#define PPUTLIMPL_UDEC_1556u 0x614u, 10, 39, 2, 2, 389
+#define PPUTLIMPL_UDEC_1555u 0x613u, 10, 39, 5, 311
+#define PPUTLIMPL_UDEC_1554u 0x612u, 10, 39, 2, 3, 7, 37
+#define PPUTLIMPL_UDEC_1553u 0x611u, 10, 39,
+#define PPUTLIMPL_UDEC_1552u 0x610u, 10, 39, 2, 2, 2, 2, 97
+#define PPUTLIMPL_UDEC_1551u 0x60Fu, 10, 39, 3, 11, 47
+#define PPUTLIMPL_UDEC_1550u 0x60Eu, 10, 39, 2, 5, 5, 31
+#define PPUTLIMPL_UDEC_1549u 0x60Du, 10, 39,
+#define PPUTLIMPL_UDEC_1548u 0x60Cu, 10, 39, 2, 2, 3, 3, 43
+#define PPUTLIMPL_UDEC_1547u 0x60Bu, 10, 39, 7, 13, 17
+#define PPUTLIMPL_UDEC_1546u 0x60Au, 10, 39, 2, 773
+#define PPUTLIMPL_UDEC_1545u 0x609u, 10, 39, 3, 5, 103
+#define PPUTLIMPL_UDEC_1544u 0x608u, 10, 39, 2, 2, 2, 193
+#define PPUTLIMPL_UDEC_1543u 0x607u, 10, 39,
+#define PPUTLIMPL_UDEC_1542u 0x606u, 10, 39, 2, 3, 257
+#define PPUTLIMPL_UDEC_1541u 0x605u, 10, 39, 23, 67
+#define PPUTLIMPL_UDEC_1540u 0x604u, 10, 39, 2, 2, 5, 7, 11
+#define PPUTLIMPL_UDEC_1539u 0x603u, 10, 39, 3, 3, 3, 3, 19
+#define PPUTLIMPL_UDEC_1538u 0x602u, 10, 39, 2, 769
+#define PPUTLIMPL_UDEC_1537u 0x601u, 10, 39, 29, 53
+#define PPUTLIMPL_UDEC_1536u 0x600u, 10, 39, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_1535u 0x5FFu, 10, 39, 5, 307
+#define PPUTLIMPL_UDEC_1534u 0x5FEu, 10, 39, 2, 13, 59
+#define PPUTLIMPL_UDEC_1533u 0x5FDu, 10, 39, 3, 7, 73
+#define PPUTLIMPL_UDEC_1532u 0x5FCu, 10, 39, 2, 2, 383
+#define PPUTLIMPL_UDEC_1531u 0x5FBu, 10, 39,
+#define PPUTLIMPL_UDEC_1530u 0x5FAu, 10, 39, 2, 3, 3, 5, 17
+#define PPUTLIMPL_UDEC_1529u 0x5F9u, 10, 39, 11, 139
+#define PPUTLIMPL_UDEC_1528u 0x5F8u, 10, 39, 2, 2, 2, 191
+#define PPUTLIMPL_UDEC_1527u 0x5F7u, 10, 39, 3, 509
+#define PPUTLIMPL_UDEC_1526u 0x5F6u, 10, 39, 2, 7, 109
+#define PPUTLIMPL_UDEC_1525u 0x5F5u, 10, 39, 5, 5, 61
+#define PPUTLIMPL_UDEC_1524u 0x5F4u, 10, 39, 2, 2, 3, 127
+#define PPUTLIMPL_UDEC_1523u 0x5F3u, 10, 39,
+#define PPUTLIMPL_UDEC_1522u 0x5F2u, 10, 39, 2, 761
+#define PPUTLIMPL_UDEC_1521u 0x5F1u, 10, 39, 3, 3, 13, 13
+#define PPUTLIMPL_UDEC_1520u 0x5F0u, 10, 38, 2, 2, 2, 2, 5, 19
+#define PPUTLIMPL_UDEC_1519u 0x5EFu, 10, 38, 7, 7, 31
+#define PPUTLIMPL_UDEC_1518u 0x5EEu, 10, 38, 2, 3, 11, 23
+#define PPUTLIMPL_UDEC_1517u 0x5EDu, 10, 38, 37, 41
+#define PPUTLIMPL_UDEC_1516u 0x5ECu, 10, 38, 2, 2, 379
+#define PPUTLIMPL_UDEC_1515u 0x5EBu, 10, 38, 3, 5, 101
+#define PPUTLIMPL_UDEC_1514u 0x5EAu, 10, 38, 2, 757
+#define PPUTLIMPL_UDEC_1513u 0x5E9u, 10, 38, 17, 89
+#define PPUTLIMPL_UDEC_1512u 0x5E8u, 10, 38, 2, 2, 2, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_1511u 0x5E7u, 10, 38,
+#define PPUTLIMPL_UDEC_1510u 0x5E6u, 10, 38, 2, 5, 151
+#define PPUTLIMPL_UDEC_1509u 0x5E5u, 10, 38, 3, 503
+#define PPUTLIMPL_UDEC_1508u 0x5E4u, 10, 38, 2, 2, 13, 29
+#define PPUTLIMPL_UDEC_1507u 0x5E3u, 10, 38, 11, 137
+#define PPUTLIMPL_UDEC_1506u 0x5E2u, 10, 38, 2, 3, 251
+#define PPUTLIMPL_UDEC_1505u 0x5E1u, 10, 38, 5, 7, 43
+#define PPUTLIMPL_UDEC_1504u 0x5E0u, 10, 38, 2, 2, 2, 2, 2, 47
+#define PPUTLIMPL_UDEC_1503u 0x5DFu, 10, 38, 3, 3, 167
+#define PPUTLIMPL_UDEC_1502u 0x5DEu, 10, 38, 2, 751
+#define PPUTLIMPL_UDEC_1501u 0x5DDu, 10, 38, 19, 79
+#define PPUTLIMPL_UDEC_1500u 0x5DCu, 10, 38, 2, 2, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_1499u 0x5DBu, 10, 38,
+#define PPUTLIMPL_UDEC_1498u 0x5DAu, 10, 38, 2, 7, 107
+#define PPUTLIMPL_UDEC_1497u 0x5D9u, 10, 38, 3, 499
+#define PPUTLIMPL_UDEC_1496u 0x5D8u, 10, 38, 2, 2, 2, 11, 17
+#define PPUTLIMPL_UDEC_1495u 0x5D7u, 10, 38, 5, 13, 23
+#define PPUTLIMPL_UDEC_1494u 0x5D6u, 10, 38, 2, 3, 3, 83
+#define PPUTLIMPL_UDEC_1493u 0x5D5u, 10, 38,
+#define PPUTLIMPL_UDEC_1492u 0x5D4u, 10, 38, 2, 2, 373
+#define PPUTLIMPL_UDEC_1491u 0x5D3u, 10, 38, 3, 7, 71
+#define PPUTLIMPL_UDEC_1490u 0x5D2u, 10, 38, 2, 5, 149
+#define PPUTLIMPL_UDEC_1489u 0x5D1u, 10, 38,
+#define PPUTLIMPL_UDEC_1488u 0x5D0u, 10, 38, 2, 2, 2, 2, 3, 31
+#define PPUTLIMPL_UDEC_1487u 0x5CFu, 10, 38,
+#define PPUTLIMPL_UDEC_1486u 0x5CEu, 10, 38, 2, 743
+#define PPUTLIMPL_UDEC_1485u 0x5CDu, 10, 38, 3, 3, 3, 5, 11
+#define PPUTLIMPL_UDEC_1484u 0x5CCu, 10, 38, 2, 2, 7, 53
+#define PPUTLIMPL_UDEC_1483u 0x5CBu, 10, 38,
+#define PPUTLIMPL_UDEC_1482u 0x5CAu, 10, 38, 2, 3, 13, 19
+#define PPUTLIMPL_UDEC_1481u 0x5C9u, 10, 38,
+#define PPUTLIMPL_UDEC_1480u 0x5C8u, 10, 38, 2, 2, 2, 5, 37
+#define PPUTLIMPL_UDEC_1479u 0x5C7u, 10, 38, 3, 17, 29
+#define PPUTLIMPL_UDEC_1478u 0x5C6u, 10, 38, 2, 739
+#define PPUTLIMPL_UDEC_1477u 0x5C5u, 10, 38, 7, 211
+#define PPUTLIMPL_UDEC_1476u 0x5C4u, 10, 38, 2, 2, 3, 3, 41
+#define PPUTLIMPL_UDEC_1475u 0x5C3u, 10, 38, 5, 5, 59
+#define PPUTLIMPL_UDEC_1474u 0x5C2u, 10, 38, 2, 11, 67
+#define PPUTLIMPL_UDEC_1473u 0x5C1u, 10, 38, 3, 491
+#define PPUTLIMPL_UDEC_1472u 0x5C0u, 10, 38, 2, 2, 2, 2, 2, 2, 23
+#define PPUTLIMPL_UDEC_1471u 0x5BFu, 10, 38,
+#define PPUTLIMPL_UDEC_1470u 0x5BEu, 10, 38, 2, 3, 5, 7, 7
+#define PPUTLIMPL_UDEC_1469u 0x5BDu, 10, 38, 13, 113
+#define PPUTLIMPL_UDEC_1468u 0x5BCu, 10, 38, 2, 2, 367
+#define PPUTLIMPL_UDEC_1467u 0x5BBu, 10, 38, 3, 3, 163
+#define PPUTLIMPL_UDEC_1466u 0x5BAu, 10, 38, 2, 733
+#define PPUTLIMPL_UDEC_1465u 0x5B9u, 10, 38, 5, 293
+#define PPUTLIMPL_UDEC_1464u 0x5B8u, 10, 38, 2, 2, 2, 3, 61
+#define PPUTLIMPL_UDEC_1463u 0x5B7u, 10, 38, 7, 11, 19
+#define PPUTLIMPL_UDEC_1462u 0x5B6u, 10, 38, 2, 17, 43
+#define PPUTLIMPL_UDEC_1461u 0x5B5u, 10, 38, 3, 487
+#define PPUTLIMPL_UDEC_1460u 0x5B4u, 10, 38, 2, 2, 5, 73
+#define PPUTLIMPL_UDEC_1459u 0x5B3u, 10, 38,
+#define PPUTLIMPL_UDEC_1458u 0x5B2u, 10, 38, 2, 3, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_1457u 0x5B1u, 10, 38, 31, 47
+#define PPUTLIMPL_UDEC_1456u 0x5B0u, 10, 38, 2, 2, 2, 2, 7, 13
+#define PPUTLIMPL_UDEC_1455u 0x5AFu, 10, 38, 3, 5, 97
+#define PPUTLIMPL_UDEC_1454u 0x5AEu, 10, 38, 2, 727
+#define PPUTLIMPL_UDEC_1453u 0x5ADu, 10, 38,
+#define PPUTLIMPL_UDEC_1452u 0x5ACu, 10, 38, 2, 2, 3, 11, 11
+#define PPUTLIMPL_UDEC_1451u 0x5ABu, 10, 38,
+#define PPUTLIMPL_UDEC_1450u 0x5AAu, 10, 38, 2, 5, 5, 29
+#define PPUTLIMPL_UDEC_1449u 0x5A9u, 10, 38, 3, 3, 7, 23
+#define PPUTLIMPL_UDEC_1448u 0x5A8u, 10, 38, 2, 2, 2, 181
+#define PPUTLIMPL_UDEC_1447u 0x5A7u, 10, 38,
+#define PPUTLIMPL_UDEC_1446u 0x5A6u, 10, 38, 2, 3, 241
+#define PPUTLIMPL_UDEC_1445u 0x5A5u, 10, 38, 5, 17, 17
+#define PPUTLIMPL_UDEC_1444u 0x5A4u, 10, 38, 2, 2, 19, 19
+#define PPUTLIMPL_UDEC_1443u 0x5A3u, 10, 37, 3, 13, 37
+#define PPUTLIMPL_UDEC_1442u 0x5A2u, 10, 37, 2, 7, 103
+#define PPUTLIMPL_UDEC_1441u 0x5A1u, 10, 37, 11, 131
+#define PPUTLIMPL_UDEC_1440u 0x5A0u, 10, 37, 2, 2, 2, 2, 2, 3, 3, 5
+#define PPUTLIMPL_UDEC_1439u 0x59Fu, 10, 37,
+#define PPUTLIMPL_UDEC_1438u 0x59Eu, 10, 37, 2, 719
+#define PPUTLIMPL_UDEC_1437u 0x59Du, 10, 37, 3, 479
+#define PPUTLIMPL_UDEC_1436u 0x59Cu, 10, 37, 2, 2, 359
+#define PPUTLIMPL_UDEC_1435u 0x59Bu, 10, 37, 5, 7, 41
+#define PPUTLIMPL_UDEC_1434u 0x59Au, 10, 37, 2, 3, 239
+#define PPUTLIMPL_UDEC_1433u 0x599u, 10, 37,
+#define PPUTLIMPL_UDEC_1432u 0x598u, 10, 37, 2, 2, 2, 179
+#define PPUTLIMPL_UDEC_1431u 0x597u, 10, 37, 3, 3, 3, 53
+#define PPUTLIMPL_UDEC_1430u 0x596u, 10, 37, 2, 5, 11, 13
+#define PPUTLIMPL_UDEC_1429u 0x595u, 10, 37,
+#define PPUTLIMPL_UDEC_1428u 0x594u, 10, 37, 2, 2, 3, 7, 17
+#define PPUTLIMPL_UDEC_1427u 0x593u, 10, 37,
+#define PPUTLIMPL_UDEC_1426u 0x592u, 10, 37, 2, 23, 31
+#define PPUTLIMPL_UDEC_1425u 0x591u, 10, 37, 3, 5, 5, 19
+#define PPUTLIMPL_UDEC_1424u 0x590u, 10, 37, 2, 2, 2, 2, 89
+#define PPUTLIMPL_UDEC_1423u 0x58Fu, 10, 37,
+#define PPUTLIMPL_UDEC_1422u 0x58Eu, 10, 37, 2, 3, 3, 79
+#define PPUTLIMPL_UDEC_1421u 0x58Du, 10, 37, 7, 7, 29
+#define PPUTLIMPL_UDEC_1420u 0x58Cu, 10, 37, 2, 2, 5, 71
+#define PPUTLIMPL_UDEC_1419u 0x58Bu, 10, 37, 3, 11, 43
+#define PPUTLIMPL_UDEC_1418u 0x58Au, 10, 37, 2, 709
+#define PPUTLIMPL_UDEC_1417u 0x589u, 10, 37, 13, 109
+#define PPUTLIMPL_UDEC_1416u 0x588u, 10, 37, 2, 2, 2, 3, 59
+#define PPUTLIMPL_UDEC_1415u 0x587u, 10, 37, 5, 283
+#define PPUTLIMPL_UDEC_1414u 0x586u, 10, 37, 2, 7, 101
+#define PPUTLIMPL_UDEC_1413u 0x585u, 10, 37, 3, 3, 157
+#define PPUTLIMPL_UDEC_1412u 0x584u, 10, 37, 2, 2, 353
+#define PPUTLIMPL_UDEC_1411u 0x583u, 10, 37, 17, 83
+#define PPUTLIMPL_UDEC_1410u 0x582u, 10, 37, 2, 3, 5, 47
+#define PPUTLIMPL_UDEC_1409u 0x581u, 10, 37,
+#define PPUTLIMPL_UDEC_1408u 0x580u, 10, 37, 2, 2, 2, 2, 2, 2, 2, 11
+#define PPUTLIMPL_UDEC_1407u 0x57Fu, 10, 37, 3, 7, 67
+#define PPUTLIMPL_UDEC_1406u 0x57Eu, 10, 37, 2, 19, 37
+#define PPUTLIMPL_UDEC_1405u 0x57Du, 10, 37, 5, 281
+#define PPUTLIMPL_UDEC_1404u 0x57Cu, 10, 37, 2, 2, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_1403u 0x57Bu, 10, 37, 23, 61
+#define PPUTLIMPL_UDEC_1402u 0x57Au, 10, 37, 2, 701
+#define PPUTLIMPL_UDEC_1401u 0x579u, 10, 37, 3, 467
+#define PPUTLIMPL_UDEC_1400u 0x578u, 10, 37, 2, 2, 2, 5, 5, 7
+#define PPUTLIMPL_UDEC_1399u 0x577u, 10, 37,
+#define PPUTLIMPL_UDEC_1398u 0x576u, 10, 37, 2, 3, 233
+#define PPUTLIMPL_UDEC_1397u 0x575u, 10, 37, 11, 127
+#define PPUTLIMPL_UDEC_1396u 0x574u, 10, 37, 2, 2, 349
+#define PPUTLIMPL_UDEC_1395u 0x573u, 10, 37, 3, 3, 5, 31
+#define PPUTLIMPL_UDEC_1394u 0x572u, 10, 37, 2, 17, 41
+#define PPUTLIMPL_UDEC_1393u 0x571u, 10, 37, 7, 199
+#define PPUTLIMPL_UDEC_1392u 0x570u, 10, 37, 2, 2, 2, 2, 3, 29
+#define PPUTLIMPL_UDEC_1391u 0x56Fu, 10, 37, 13, 107
+#define PPUTLIMPL_UDEC_1390u 0x56Eu, 10, 37, 2, 5, 139
+#define PPUTLIMPL_UDEC_1389u 0x56Du, 10, 37, 3, 463
+#define PPUTLIMPL_UDEC_1388u 0x56Cu, 10, 37, 2, 2, 347
+#define PPUTLIMPL_UDEC_1387u 0x56Bu, 10, 37, 19, 73
+#define PPUTLIMPL_UDEC_1386u 0x56Au, 10, 37, 2, 3, 3, 7, 11
+#define PPUTLIMPL_UDEC_1385u 0x569u, 10, 37, 5, 277
+#define PPUTLIMPL_UDEC_1384u 0x568u, 10, 37, 2, 2, 2, 173
+#define PPUTLIMPL_UDEC_1383u 0x567u, 10, 37, 3, 461
+#define PPUTLIMPL_UDEC_1382u 0x566u, 10, 37, 2, 691
+#define PPUTLIMPL_UDEC_1381u 0x565u, 10, 37,
+#define PPUTLIMPL_UDEC_1380u 0x564u, 10, 37, 2, 2, 3, 5, 23
+#define PPUTLIMPL_UDEC_1379u 0x563u, 10, 37, 7, 197
+#define PPUTLIMPL_UDEC_1378u 0x562u, 10, 37, 2, 13, 53
+#define PPUTLIMPL_UDEC_1377u 0x561u, 10, 37, 3, 3, 3, 3, 17
+#define PPUTLIMPL_UDEC_1376u 0x560u, 10, 37, 2, 2, 2, 2, 2, 43
+#define PPUTLIMPL_UDEC_1375u 0x55Fu, 10, 37, 5, 5, 5, 11
+#define PPUTLIMPL_UDEC_1374u 0x55Eu, 10, 37, 2, 3, 229
+#define PPUTLIMPL_UDEC_1373u 0x55Du, 10, 37,
+#define PPUTLIMPL_UDEC_1372u 0x55Cu, 10, 37, 2, 2, 7, 7, 7
+#define PPUTLIMPL_UDEC_1371u 0x55Bu, 10, 37, 3, 457
+#define PPUTLIMPL_UDEC_1370u 0x55Au, 10, 37, 2, 5, 137
+#define PPUTLIMPL_UDEC_1369u 0x559u, 10, 37, 37, 37
+#define PPUTLIMPL_UDEC_1368u 0x558u, 10, 36, 2, 2, 2, 3, 3, 19
+#define PPUTLIMPL_UDEC_1367u 0x557u, 10, 36,
+#define PPUTLIMPL_UDEC_1366u 0x556u, 10, 36, 2, 683
+#define PPUTLIMPL_UDEC_1365u 0x555u, 10, 36, 3, 5, 7, 13
+#define PPUTLIMPL_UDEC_1364u 0x554u, 10, 36, 2, 2, 11, 31
+#define PPUTLIMPL_UDEC_1363u 0x553u, 10, 36, 29, 47
+#define PPUTLIMPL_UDEC_1362u 0x552u, 10, 36, 2, 3, 227
+#define PPUTLIMPL_UDEC_1361u 0x551u, 10, 36,
+#define PPUTLIMPL_UDEC_1360u 0x550u, 10, 36, 2, 2, 2, 2, 5, 17
+#define PPUTLIMPL_UDEC_1359u 0x54Fu, 10, 36, 3, 3, 151
+#define PPUTLIMPL_UDEC_1358u 0x54Eu, 10, 36, 2, 7, 97
+#define PPUTLIMPL_UDEC_1357u 0x54Du, 10, 36, 23, 59
+#define PPUTLIMPL_UDEC_1356u 0x54Cu, 10, 36, 2, 2, 3, 113
+#define PPUTLIMPL_UDEC_1355u 0x54Bu, 10, 36, 5, 271
+#define PPUTLIMPL_UDEC_1354u 0x54Au, 10, 36, 2, 677
+#define PPUTLIMPL_UDEC_1353u 0x549u, 10, 36, 3, 11, 41
+#define PPUTLIMPL_UDEC_1352u 0x548u, 10, 36, 2, 2, 2, 13, 13
+#define PPUTLIMPL_UDEC_1351u 0x547u, 10, 36, 7, 193
+#define PPUTLIMPL_UDEC_1350u 0x546u, 10, 36, 2, 3, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_1349u 0x545u, 10, 36, 19, 71
+#define PPUTLIMPL_UDEC_1348u 0x544u, 10, 36, 2, 2, 337
+#define PPUTLIMPL_UDEC_1347u 0x543u, 10, 36, 3, 449
+#define PPUTLIMPL_UDEC_1346u 0x542u, 10, 36, 2, 673
+#define PPUTLIMPL_UDEC_1345u 0x541u, 10, 36, 5, 269
+#define PPUTLIMPL_UDEC_1344u 0x540u, 10, 36, 2, 2, 2, 2, 2, 2, 3, 7
+#define PPUTLIMPL_UDEC_1343u 0x53Fu, 10, 36, 17, 79
+#define PPUTLIMPL_UDEC_1342u 0x53Eu, 10, 36, 2, 11, 61
+#define PPUTLIMPL_UDEC_1341u 0x53Du, 10, 36, 3, 3, 149
+#define PPUTLIMPL_UDEC_1340u 0x53Cu, 10, 36, 2, 2, 5, 67
+#define PPUTLIMPL_UDEC_1339u 0x53Bu, 10, 36, 13, 103
+#define PPUTLIMPL_UDEC_1338u 0x53Au, 10, 36, 2, 3, 223
+#define PPUTLIMPL_UDEC_1337u 0x539u, 10, 36, 7, 191
+#define PPUTLIMPL_UDEC_1336u 0x538u, 10, 36, 2, 2, 2, 167
+#define PPUTLIMPL_UDEC_1335u 0x537u, 10, 36, 3, 5, 89
+#define PPUTLIMPL_UDEC_1334u 0x536u, 10, 36, 2, 23, 29
+#define PPUTLIMPL_UDEC_1333u 0x535u, 10, 36, 31, 43
+#define PPUTLIMPL_UDEC_1332u 0x534u, 10, 36, 2, 2, 3, 3, 37
+#define PPUTLIMPL_UDEC_1331u 0x533u, 10, 36, 11, 11, 11
+#define PPUTLIMPL_UDEC_1330u 0x532u, 10, 36, 2, 5, 7, 19
+#define PPUTLIMPL_UDEC_1329u 0x531u, 10, 36, 3, 443
+#define PPUTLIMPL_UDEC_1328u 0x530u, 10, 36, 2, 2, 2, 2, 83
+#define PPUTLIMPL_UDEC_1327u 0x52Fu, 10, 36,
+#define PPUTLIMPL_UDEC_1326u 0x52Eu, 10, 36, 2, 3, 13, 17
+#define PPUTLIMPL_UDEC_1325u 0x52Du, 10, 36, 5, 5, 53
+#define PPUTLIMPL_UDEC_1324u 0x52Cu, 10, 36, 2, 2, 331
+#define PPUTLIMPL_UDEC_1323u 0x52Bu, 10, 36, 3, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_1322u 0x52Au, 10, 36, 2, 661
+#define PPUTLIMPL_UDEC_1321u 0x529u, 10, 36,
+#define PPUTLIMPL_UDEC_1320u 0x528u, 10, 36, 2, 2, 2, 3, 5, 11
+#define PPUTLIMPL_UDEC_1319u 0x527u, 10, 36,
+#define PPUTLIMPL_UDEC_1318u 0x526u, 10, 36, 2, 659
+#define PPUTLIMPL_UDEC_1317u 0x525u, 10, 36, 3, 439
+#define PPUTLIMPL_UDEC_1316u 0x524u, 10, 36, 2, 2, 7, 47
+#define PPUTLIMPL_UDEC_1315u 0x523u, 10, 36, 5, 263
+#define PPUTLIMPL_UDEC_1314u 0x522u, 10, 36, 2, 3, 3, 73
+#define PPUTLIMPL_UDEC_1313u 0x521u, 10, 36, 13, 101
+#define PPUTLIMPL_UDEC_1312u 0x520u, 10, 36, 2, 2, 2, 2, 2, 41
+#define PPUTLIMPL_UDEC_1311u 0x51Fu, 10, 36, 3, 19, 23
+#define PPUTLIMPL_UDEC_1310u 0x51Eu, 10, 36, 2, 5, 131
+#define PPUTLIMPL_UDEC_1309u 0x51Du, 10, 36, 7, 11, 17
+#define PPUTLIMPL_UDEC_1308u 0x51Cu, 10, 36, 2, 2, 3, 109
+#define PPUTLIMPL_UDEC_1307u 0x51Bu, 10, 36,
+#define PPUTLIMPL_UDEC_1306u 0x51Au, 10, 36, 2, 653
+#define PPUTLIMPL_UDEC_1305u 0x519u, 10, 36, 3, 3, 5, 29
+#define PPUTLIMPL_UDEC_1304u 0x518u, 10, 36, 2, 2, 2, 163
+#define PPUTLIMPL_UDEC_1303u 0x517u, 10, 36,
+#define PPUTLIMPL_UDEC_1302u 0x516u, 10, 36, 2, 3, 7, 31
+#define PPUTLIMPL_UDEC_1301u 0x515u, 10, 36,
+#define PPUTLIMPL_UDEC_1300u 0x514u, 10, 36, 2, 2, 5, 5, 13
+#define PPUTLIMPL_UDEC_1299u 0x513u, 10, 36, 3, 433
+#define PPUTLIMPL_UDEC_1298u 0x512u, 10, 36, 2, 11, 59
+#define PPUTLIMPL_UDEC_1297u 0x511u, 10, 36,
+#define PPUTLIMPL_UDEC_1296u 0x510u, 10, 36, 2, 2, 2, 2, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_1295u 0x50Fu, 10, 35, 5, 7, 37
+#define PPUTLIMPL_UDEC_1294u 0x50Eu, 10, 35, 2, 647
+#define PPUTLIMPL_UDEC_1293u 0x50Du, 10, 35, 3, 431
+#define PPUTLIMPL_UDEC_1292u 0x50Cu, 10, 35, 2, 2, 17, 19
+#define PPUTLIMPL_UDEC_1291u 0x50Bu, 10, 35,
+#define PPUTLIMPL_UDEC_1290u 0x50Au, 10, 35, 2, 3, 5, 43
+#define PPUTLIMPL_UDEC_1289u 0x509u, 10, 35,
+#define PPUTLIMPL_UDEC_1288u 0x508u, 10, 35, 2, 2, 2, 7, 23
+#define PPUTLIMPL_UDEC_1287u 0x507u, 10, 35, 3, 3, 11, 13
+#define PPUTLIMPL_UDEC_1286u 0x506u, 10, 35, 2, 643
+#define PPUTLIMPL_UDEC_1285u 0x505u, 10, 35, 5, 257
+#define PPUTLIMPL_UDEC_1284u 0x504u, 10, 35, 2, 2, 3, 107
+#define PPUTLIMPL_UDEC_1283u 0x503u, 10, 35,
+#define PPUTLIMPL_UDEC_1282u 0x502u, 10, 35, 2, 641
+#define PPUTLIMPL_UDEC_1281u 0x501u, 10, 35, 3, 7, 61
+#define PPUTLIMPL_UDEC_1280u 0x500u, 10, 35, 2, 2, 2, 2, 2, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_1279u 0x4FFu, 10, 35,
+#define PPUTLIMPL_UDEC_1278u 0x4FEu, 10, 35, 2, 3, 3, 71
+#define PPUTLIMPL_UDEC_1277u 0x4FDu, 10, 35,
+#define PPUTLIMPL_UDEC_1276u 0x4FCu, 10, 35, 2, 2, 11, 29
+#define PPUTLIMPL_UDEC_1275u 0x4FBu, 10, 35, 3, 5, 5, 17
+#define PPUTLIMPL_UDEC_1274u 0x4FAu, 10, 35, 2, 7, 7, 13
+#define PPUTLIMPL_UDEC_1273u 0x4F9u, 10, 35, 19, 67
+#define PPUTLIMPL_UDEC_1272u 0x4F8u, 10, 35, 2, 2, 2, 3, 53
+#define PPUTLIMPL_UDEC_1271u 0x4F7u, 10, 35, 31, 41
+#define PPUTLIMPL_UDEC_1270u 0x4F6u, 10, 35, 2, 5, 127
+#define PPUTLIMPL_UDEC_1269u 0x4F5u, 10, 35, 3, 3, 3, 47
+#define PPUTLIMPL_UDEC_1268u 0x4F4u, 10, 35, 2, 2, 317
+#define PPUTLIMPL_UDEC_1267u 0x4F3u, 10, 35, 7, 181
+#define PPUTLIMPL_UDEC_1266u 0x4F2u, 10, 35, 2, 3, 211
+#define PPUTLIMPL_UDEC_1265u 0x4F1u, 10, 35, 5, 11, 23
+#define PPUTLIMPL_UDEC_1264u 0x4F0u, 10, 35, 2, 2, 2, 2, 79
+#define PPUTLIMPL_UDEC_1263u 0x4EFu, 10, 35, 3, 421
+#define PPUTLIMPL_UDEC_1262u 0x4EEu, 10, 35, 2, 631
+#define PPUTLIMPL_UDEC_1261u 0x4EDu, 10, 35, 13, 97
+#define PPUTLIMPL_UDEC_1260u 0x4ECu, 10, 35, 2, 2, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_1259u 0x4EBu, 10, 35,
+#define PPUTLIMPL_UDEC_1258u 0x4EAu, 10, 35, 2, 17, 37
+#define PPUTLIMPL_UDEC_1257u 0x4E9u, 10, 35, 3, 419
+#define PPUTLIMPL_UDEC_1256u 0x4E8u, 10, 35, 2, 2, 2, 157
+#define PPUTLIMPL_UDEC_1255u 0x4E7u, 10, 35, 5, 251
+#define PPUTLIMPL_UDEC_1254u 0x4E6u, 10, 35, 2, 3, 11, 19
+#define PPUTLIMPL_UDEC_1253u 0x4E5u, 10, 35, 7, 179
+#define PPUTLIMPL_UDEC_1252u 0x4E4u, 10, 35, 2, 2, 313
+#define PPUTLIMPL_UDEC_1251u 0x4E3u, 10, 35, 3, 3, 139
+#define PPUTLIMPL_UDEC_1250u 0x4E2u, 10, 35, 2, 5, 5, 5, 5
+#define PPUTLIMPL_UDEC_1249u 0x4E1u, 10, 35,
+#define PPUTLIMPL_UDEC_1248u 0x4E0u, 10, 35, 2, 2, 2, 2, 2, 3, 13
+#define PPUTLIMPL_UDEC_1247u 0x4DFu, 10, 35, 29, 43
+#define PPUTLIMPL_UDEC_1246u 0x4DEu, 10, 35, 2, 7, 89
+#define PPUTLIMPL_UDEC_1245u 0x4DDu, 10, 35, 3, 5, 83
+#define PPUTLIMPL_UDEC_1244u 0x4DCu, 10, 35, 2, 2, 311
+#define PPUTLIMPL_UDEC_1243u 0x4DBu, 10, 35, 11, 113
+#define PPUTLIMPL_UDEC_1242u 0x4DAu, 10, 35, 2, 3, 3, 3, 23
+#define PPUTLIMPL_UDEC_1241u 0x4D9u, 10, 35, 17, 73
+#define PPUTLIMPL_UDEC_1240u 0x4D8u, 10, 35, 2, 2, 2, 5, 31
+#define PPUTLIMPL_UDEC_1239u 0x4D7u, 10, 35, 3, 7, 59
+#define PPUTLIMPL_UDEC_1238u 0x4D6u, 10, 35, 2, 619
+#define PPUTLIMPL_UDEC_1237u 0x4D5u, 10, 35,
+#define PPUTLIMPL_UDEC_1236u 0x4D4u, 10, 35, 2, 2, 3, 103
+#define PPUTLIMPL_UDEC_1235u 0x4D3u, 10, 35, 5, 13, 19
+#define PPUTLIMPL_UDEC_1234u 0x4D2u, 10, 35, 2, 617
+#define PPUTLIMPL_UDEC_1233u 0x4D1u, 10, 35, 3, 3, 137
+#define PPUTLIMPL_UDEC_1232u 0x4D0u, 10, 35, 2, 2, 2, 2, 7, 11
+#define PPUTLIMPL_UDEC_1231u 0x4CFu, 10, 35,
+#define PPUTLIMPL_UDEC_1230u 0x4CEu, 10, 35, 2, 3, 5, 41
+#define PPUTLIMPL_UDEC_1229u 0x4CDu, 10, 35,
+#define PPUTLIMPL_UDEC_1228u 0x4CCu, 10, 35, 2, 2, 307
+#define PPUTLIMPL_UDEC_1227u 0x4CBu, 10, 35, 3, 409
+#define PPUTLIMPL_UDEC_1226u 0x4CAu, 10, 35, 2, 613
+#define PPUTLIMPL_UDEC_1225u 0x4C9u, 10, 35, 5, 5, 7, 7
+#define PPUTLIMPL_UDEC_1224u 0x4C8u, 10, 34, 2, 2, 2, 3, 3, 17
+#define PPUTLIMPL_UDEC_1223u 0x4C7u, 10, 34,
+#define PPUTLIMPL_UDEC_1222u 0x4C6u, 10, 34, 2, 13, 47
+#define PPUTLIMPL_UDEC_1221u 0x4C5u, 10, 34, 3, 11, 37
+#define PPUTLIMPL_UDEC_1220u 0x4C4u, 10, 34, 2, 2, 5, 61
+#define PPUTLIMPL_UDEC_1219u 0x4C3u, 10, 34, 23, 53
+#define PPUTLIMPL_UDEC_1218u 0x4C2u, 10, 34, 2, 3, 7, 29
+#define PPUTLIMPL_UDEC_1217u 0x4C1u, 10, 34,
+#define PPUTLIMPL_UDEC_1216u 0x4C0u, 10, 34, 2, 2, 2, 2, 2, 2, 19
+#define PPUTLIMPL_UDEC_1215u 0x4BFu, 10, 34, 3, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_1214u 0x4BEu, 10, 34, 2, 607
+#define PPUTLIMPL_UDEC_1213u 0x4BDu, 10, 34,
+#define PPUTLIMPL_UDEC_1212u 0x4BCu, 10, 34, 2, 2, 3, 101
+#define PPUTLIMPL_UDEC_1211u 0x4BBu, 10, 34, 7, 173
+#define PPUTLIMPL_UDEC_1210u 0x4BAu, 10, 34, 2, 5, 11, 11
+#define PPUTLIMPL_UDEC_1209u 0x4B9u, 10, 34, 3, 13, 31
+#define PPUTLIMPL_UDEC_1208u 0x4B8u, 10, 34, 2, 2, 2, 151
+#define PPUTLIMPL_UDEC_1207u 0x4B7u, 10, 34, 17, 71
+#define PPUTLIMPL_UDEC_1206u 0x4B6u, 10, 34, 2, 3, 3, 67
+#define PPUTLIMPL_UDEC_1205u 0x4B5u, 10, 34, 5, 241
+#define PPUTLIMPL_UDEC_1204u 0x4B4u, 10, 34, 2, 2, 7, 43
+#define PPUTLIMPL_UDEC_1203u 0x4B3u, 10, 34, 3, 401
+#define PPUTLIMPL_UDEC_1202u 0x4B2u, 10, 34, 2, 601
+#define PPUTLIMPL_UDEC_1201u 0x4B1u, 10, 34,
+#define PPUTLIMPL_UDEC_1200u 0x4B0u, 10, 34, 2, 2, 2, 2, 3, 5, 5
+#define PPUTLIMPL_UDEC_1199u 0x4AFu, 10, 34, 11, 109
+#define PPUTLIMPL_UDEC_1198u 0x4AEu, 10, 34, 2, 599
+#define PPUTLIMPL_UDEC_1197u 0x4ADu, 10, 34, 3, 3, 7, 19
+#define PPUTLIMPL_UDEC_1196u 0x4ACu, 10, 34, 2, 2, 13, 23
+#define PPUTLIMPL_UDEC_1195u 0x4ABu, 10, 34, 5, 239
+#define PPUTLIMPL_UDEC_1194u 0x4AAu, 10, 34, 2, 3, 199
+#define PPUTLIMPL_UDEC_1193u 0x4A9u, 10, 34,
+#define PPUTLIMPL_UDEC_1192u 0x4A8u, 10, 34, 2, 2, 2, 149
+#define PPUTLIMPL_UDEC_1191u 0x4A7u, 10, 34, 3, 397
+#define PPUTLIMPL_UDEC_1190u 0x4A6u, 10, 34, 2, 5, 7, 17
+#define PPUTLIMPL_UDEC_1189u 0x4A5u, 10, 34, 29, 41
+#define PPUTLIMPL_UDEC_1188u 0x4A4u, 10, 34, 2, 2, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_1187u 0x4A3u, 10, 34,
+#define PPUTLIMPL_UDEC_1186u 0x4A2u, 10, 34, 2, 593
+#define PPUTLIMPL_UDEC_1185u 0x4A1u, 10, 34, 3, 5, 79
+#define PPUTLIMPL_UDEC_1184u 0x4A0u, 10, 34, 2, 2, 2, 2, 2, 37
+#define PPUTLIMPL_UDEC_1183u 0x49Fu, 10, 34, 7, 13, 13
+#define PPUTLIMPL_UDEC_1182u 0x49Eu, 10, 34, 2, 3, 197
+#define PPUTLIMPL_UDEC_1181u 0x49Du, 10, 34,
+#define PPUTLIMPL_UDEC_1180u 0x49Cu, 10, 34, 2, 2, 5, 59
+#define PPUTLIMPL_UDEC_1179u 0x49Bu, 10, 34, 3, 3, 131
+#define PPUTLIMPL_UDEC_1178u 0x49Au, 10, 34, 2, 19, 31
+#define PPUTLIMPL_UDEC_1177u 0x499u, 10, 34, 11, 107
+#define PPUTLIMPL_UDEC_1176u 0x498u, 10, 34, 2, 2, 2, 3, 7, 7
+#define PPUTLIMPL_UDEC_1175u 0x497u, 10, 34, 5, 5, 47
+#define PPUTLIMPL_UDEC_1174u 0x496u, 10, 34, 2, 587
+#define PPUTLIMPL_UDEC_1173u 0x495u, 10, 34, 3, 17, 23
+#define PPUTLIMPL_UDEC_1172u 0x494u, 10, 34, 2, 2, 293
+#define PPUTLIMPL_UDEC_1171u 0x493u, 10, 34,
+#define PPUTLIMPL_UDEC_1170u 0x492u, 10, 34, 2, 3, 3, 5, 13
+#define PPUTLIMPL_UDEC_1169u 0x491u, 10, 34, 7, 167
+#define PPUTLIMPL_UDEC_1168u 0x490u, 10, 34, 2, 2, 2, 2, 73
+#define PPUTLIMPL_UDEC_1167u 0x48Fu, 10, 34, 3, 389
+#define PPUTLIMPL_UDEC_1166u 0x48Eu, 10, 34, 2, 11, 53
+#define PPUTLIMPL_UDEC_1165u 0x48Du, 10, 34, 5, 233
+#define PPUTLIMPL_UDEC_1164u 0x48Cu, 10, 34, 2, 2, 3, 97
+#define PPUTLIMPL_UDEC_1163u 0x48Bu, 10, 34,
+#define PPUTLIMPL_UDEC_1162u 0x48Au, 10, 34, 2, 7, 83
+#define PPUTLIMPL_UDEC_1161u 0x489u, 10, 34, 3, 3, 3, 43
+#define PPUTLIMPL_UDEC_1160u 0x488u, 10, 34, 2, 2, 2, 5, 29
+#define PPUTLIMPL_UDEC_1159u 0x487u, 10, 34, 19, 61
+#define PPUTLIMPL_UDEC_1158u 0x486u, 10, 34, 2, 3, 193
+#define PPUTLIMPL_UDEC_1157u 0x485u, 10, 34, 13, 89
+#define PPUTLIMPL_UDEC_1156u 0x484u, 10, 34, 2, 2, 17, 17
+#define PPUTLIMPL_UDEC_1155u 0x483u, 10, 33, 3, 5, 7, 11
+#define PPUTLIMPL_UDEC_1154u 0x482u, 10, 33, 2, 577
+#define PPUTLIMPL_UDEC_1153u 0x481u, 10, 33,
+#define PPUTLIMPL_UDEC_1152u 0x480u, 10, 33, 2, 2, 2, 2, 2, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_1151u 0x47Fu, 10, 33,
+#define PPUTLIMPL_UDEC_1150u 0x47Eu, 10, 33, 2, 5, 5, 23
+#define PPUTLIMPL_UDEC_1149u 0x47Du, 10, 33, 3, 383
+#define PPUTLIMPL_UDEC_1148u 0x47Cu, 10, 33, 2, 2, 7, 41
+#define PPUTLIMPL_UDEC_1147u 0x47Bu, 10, 33, 31, 37
+#define PPUTLIMPL_UDEC_1146u 0x47Au, 10, 33, 2, 3, 191
+#define PPUTLIMPL_UDEC_1145u 0x479u, 10, 33, 5, 229
+#define PPUTLIMPL_UDEC_1144u 0x478u, 10, 33, 2, 2, 2, 11, 13
+#define PPUTLIMPL_UDEC_1143u 0x477u, 10, 33, 3, 3, 127
+#define PPUTLIMPL_UDEC_1142u 0x476u, 10, 33, 2, 571
+#define PPUTLIMPL_UDEC_1141u 0x475u, 10, 33, 7, 163
+#define PPUTLIMPL_UDEC_1140u 0x474u, 10, 33, 2, 2, 3, 5, 19
+#define PPUTLIMPL_UDEC_1139u 0x473u, 10, 33, 17, 67
+#define PPUTLIMPL_UDEC_1138u 0x472u, 10, 33, 2, 569
+#define PPUTLIMPL_UDEC_1137u 0x471u, 10, 33, 3, 379
+#define PPUTLIMPL_UDEC_1136u 0x470u, 10, 33, 2, 2, 2, 2, 71
+#define PPUTLIMPL_UDEC_1135u 0x46Fu, 10, 33, 5, 227
+#define PPUTLIMPL_UDEC_1134u 0x46Eu, 10, 33, 2, 3, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_1133u 0x46Du, 10, 33, 11, 103
+#define PPUTLIMPL_UDEC_1132u 0x46Cu, 10, 33, 2, 2, 283
+#define PPUTLIMPL_UDEC_1131u 0x46Bu, 10, 33, 3, 13, 29
+#define PPUTLIMPL_UDEC_1130u 0x46Au, 10, 33, 2, 5, 113
+#define PPUTLIMPL_UDEC_1129u 0x469u, 10, 33,
+#define PPUTLIMPL_UDEC_1128u 0x468u, 10, 33, 2, 2, 2, 3, 47
+#define PPUTLIMPL_UDEC_1127u 0x467u, 10, 33, 7, 7, 23
+#define PPUTLIMPL_UDEC_1126u 0x466u, 10, 33, 2, 563
+#define PPUTLIMPL_UDEC_1125u 0x465u, 10, 33, 3, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_1124u 0x464u, 10, 33, 2, 2, 281
+#define PPUTLIMPL_UDEC_1123u 0x463u, 10, 33,
+#define PPUTLIMPL_UDEC_1122u 0x462u, 10, 33, 2, 3, 11, 17
+#define PPUTLIMPL_UDEC_1121u 0x461u, 10, 33, 19, 59
+#define PPUTLIMPL_UDEC_1120u 0x460u, 10, 33, 2, 2, 2, 2, 2, 5, 7
+#define PPUTLIMPL_UDEC_1119u 0x45Fu, 10, 33, 3, 373
+#define PPUTLIMPL_UDEC_1118u 0x45Eu, 10, 33, 2, 13, 43
+#define PPUTLIMPL_UDEC_1117u 0x45Du, 10, 33,
+#define PPUTLIMPL_UDEC_1116u 0x45Cu, 10, 33, 2, 2, 3, 3, 31
+#define PPUTLIMPL_UDEC_1115u 0x45Bu, 10, 33, 5, 223
+#define PPUTLIMPL_UDEC_1114u 0x45Au, 10, 33, 2, 557
+#define PPUTLIMPL_UDEC_1113u 0x459u, 10, 33, 3, 7, 53
+#define PPUTLIMPL_UDEC_1112u 0x458u, 10, 33, 2, 2, 2, 139
+#define PPUTLIMPL_UDEC_1111u 0x457u, 10, 33, 11, 101
+#define PPUTLIMPL_UDEC_1110u 0x456u, 10, 33, 2, 3, 5, 37
+#define PPUTLIMPL_UDEC_1109u 0x455u, 10, 33,
+#define PPUTLIMPL_UDEC_1108u 0x454u, 10, 33, 2, 2, 277
+#define PPUTLIMPL_UDEC_1107u 0x453u, 10, 33, 3, 3, 3, 41
+#define PPUTLIMPL_UDEC_1106u 0x452u, 10, 33, 2, 7, 79
+#define PPUTLIMPL_UDEC_1105u 0x451u, 10, 33, 5, 13, 17
+#define PPUTLIMPL_UDEC_1104u 0x450u, 10, 33, 2, 2, 2, 2, 3, 23
+#define PPUTLIMPL_UDEC_1103u 0x44Fu, 10, 33,
+#define PPUTLIMPL_UDEC_1102u 0x44Eu, 10, 33, 2, 19, 29
+#define PPUTLIMPL_UDEC_1101u 0x44Du, 10, 33, 3, 367
+#define PPUTLIMPL_UDEC_1100u 0x44Cu, 10, 33, 2, 2, 5, 5, 11
+#define PPUTLIMPL_UDEC_1099u 0x44Bu, 10, 33, 7, 157
+#define PPUTLIMPL_UDEC_1098u 0x44Au, 10, 33, 2, 3, 3, 61
+#define PPUTLIMPL_UDEC_1097u 0x449u, 10, 33,
+#define PPUTLIMPL_UDEC_1096u 0x448u, 10, 33, 2, 2, 2, 137
+#define PPUTLIMPL_UDEC_1095u 0x447u, 10, 33, 3, 5, 73
+#define PPUTLIMPL_UDEC_1094u 0x446u, 10, 33, 2, 547
+#define PPUTLIMPL_UDEC_1093u 0x445u, 10, 33,
+#define PPUTLIMPL_UDEC_1092u 0x444u, 10, 33, 2, 2, 3, 7, 13
+#define PPUTLIMPL_UDEC_1091u 0x443u, 10, 33,
+#define PPUTLIMPL_UDEC_1090u 0x442u, 10, 33, 2, 5, 109
+#define PPUTLIMPL_UDEC_1089u 0x441u, 10, 33, 3, 3, 11, 11
+#define PPUTLIMPL_UDEC_1088u 0x440u, 10, 32, 2, 2, 2, 2, 2, 2, 17
+#define PPUTLIMPL_UDEC_1087u 0x43Fu, 10, 32,
+#define PPUTLIMPL_UDEC_1086u 0x43Eu, 10, 32, 2, 3, 181
+#define PPUTLIMPL_UDEC_1085u 0x43Du, 10, 32, 5, 7, 31
+#define PPUTLIMPL_UDEC_1084u 0x43Cu, 10, 32, 2, 2, 271
+#define PPUTLIMPL_UDEC_1083u 0x43Bu, 10, 32, 3, 19, 19
+#define PPUTLIMPL_UDEC_1082u 0x43Au, 10, 32, 2, 541
+#define PPUTLIMPL_UDEC_1081u 0x439u, 10, 32, 23, 47
+#define PPUTLIMPL_UDEC_1080u 0x438u, 10, 32, 2, 2, 2, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_1079u 0x437u, 10, 32, 13, 83
+#define PPUTLIMPL_UDEC_1078u 0x436u, 10, 32, 2, 7, 7, 11
+#define PPUTLIMPL_UDEC_1077u 0x435u, 10, 32, 3, 359
+#define PPUTLIMPL_UDEC_1076u 0x434u, 10, 32, 2, 2, 269
+#define PPUTLIMPL_UDEC_1075u 0x433u, 10, 32, 5, 5, 43
+#define PPUTLIMPL_UDEC_1074u 0x432u, 10, 32, 2, 3, 179
+#define PPUTLIMPL_UDEC_1073u 0x431u, 10, 32, 29, 37
+#define PPUTLIMPL_UDEC_1072u 0x430u, 10, 32, 2, 2, 2, 2, 67
+#define PPUTLIMPL_UDEC_1071u 0x42Fu, 10, 32, 3, 3, 7, 17
+#define PPUTLIMPL_UDEC_1070u 0x42Eu, 10, 32, 2, 5, 107
+#define PPUTLIMPL_UDEC_1069u 0x42Du, 10, 32,
+#define PPUTLIMPL_UDEC_1068u 0x42Cu, 10, 32, 2, 2, 3, 89
+#define PPUTLIMPL_UDEC_1067u 0x42Bu, 10, 32, 11, 97
+#define PPUTLIMPL_UDEC_1066u 0x42Au, 10, 32, 2, 13, 41
+#define PPUTLIMPL_UDEC_1065u 0x429u, 10, 32, 3, 5, 71
+#define PPUTLIMPL_UDEC_1064u 0x428u, 10, 32, 2, 2, 2, 7, 19
+#define PPUTLIMPL_UDEC_1063u 0x427u, 10, 32,
+#define PPUTLIMPL_UDEC_1062u 0x426u, 10, 32, 2, 3, 3, 59
+#define PPUTLIMPL_UDEC_1061u 0x425u, 10, 32,
+#define PPUTLIMPL_UDEC_1060u 0x424u, 10, 32, 2, 2, 5, 53
+#define PPUTLIMPL_UDEC_1059u 0x423u, 10, 32, 3, 353
+#define PPUTLIMPL_UDEC_1058u 0x422u, 10, 32, 2, 23, 23
+#define PPUTLIMPL_UDEC_1057u 0x421u, 10, 32, 7, 151
+#define PPUTLIMPL_UDEC_1056u 0x420u, 10, 32, 2, 2, 2, 2, 2, 3, 11
+#define PPUTLIMPL_UDEC_1055u 0x41Fu, 10, 32, 5, 211
+#define PPUTLIMPL_UDEC_1054u 0x41Eu, 10, 32, 2, 17, 31
+#define PPUTLIMPL_UDEC_1053u 0x41Du, 10, 32, 3, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_1052u 0x41Cu, 10, 32, 2, 2, 263
+#define PPUTLIMPL_UDEC_1051u 0x41Bu, 10, 32,
+#define PPUTLIMPL_UDEC_1050u 0x41Au, 10, 32, 2, 3, 5, 5, 7
+#define PPUTLIMPL_UDEC_1049u 0x419u, 10, 32,
+#define PPUTLIMPL_UDEC_1048u 0x418u, 10, 32, 2, 2, 2, 131
+#define PPUTLIMPL_UDEC_1047u 0x417u, 10, 32, 3, 349
+#define PPUTLIMPL_UDEC_1046u 0x416u, 10, 32, 2, 523
+#define PPUTLIMPL_UDEC_1045u 0x415u, 10, 32, 5, 11, 19
+#define PPUTLIMPL_UDEC_1044u 0x414u, 10, 32, 2, 2, 3, 3, 29
+#define PPUTLIMPL_UDEC_1043u 0x413u, 10, 32, 7, 149
+#define PPUTLIMPL_UDEC_1042u 0x412u, 10, 32, 2, 521
+#define PPUTLIMPL_UDEC_1041u 0x411u, 10, 32, 3, 347
+#define PPUTLIMPL_UDEC_1040u 0x410u, 10, 32, 2, 2, 2, 2, 5, 13
+#define PPUTLIMPL_UDEC_1039u 0x40Fu, 10, 32,
+#define PPUTLIMPL_UDEC_1038u 0x40Eu, 10, 32, 2, 3, 173
+#define PPUTLIMPL_UDEC_1037u 0x40Du, 10, 32, 17, 61
+#define PPUTLIMPL_UDEC_1036u 0x40Cu, 10, 32, 2, 2, 7, 37
+#define PPUTLIMPL_UDEC_1035u 0x40Bu, 10, 32, 3, 3, 5, 23
+#define PPUTLIMPL_UDEC_1034u 0x40Au, 10, 32, 2, 11, 47
+#define PPUTLIMPL_UDEC_1033u 0x409u, 10, 32,
+#define PPUTLIMPL_UDEC_1032u 0x408u, 10, 32, 2, 2, 2, 3, 43
+#define PPUTLIMPL_UDEC_1031u 0x407u, 10, 32,
+#define PPUTLIMPL_UDEC_1030u 0x406u, 10, 32, 2, 5, 103
+#define PPUTLIMPL_UDEC_1029u 0x405u, 10, 32, 3, 7, 7, 7
+#define PPUTLIMPL_UDEC_1028u 0x404u, 10, 32, 2, 2, 257
+#define PPUTLIMPL_UDEC_1027u 0x403u, 10, 32, 13, 79
+#define PPUTLIMPL_UDEC_1026u 0x402u, 10, 32, 2, 3, 3, 3, 19
+#define PPUTLIMPL_UDEC_1025u 0x401u, 10, 32, 5, 5, 41
+#define PPUTLIMPL_UDEC_1024u 0x400u, 10, 32, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_1023u 0x3FFu, 9, 31, 3, 11, 31
+#define PPUTLIMPL_UDEC_1022u 0x3FEu, 9, 31, 2, 7, 73
+#define PPUTLIMPL_UDEC_1021u 0x3FDu, 9, 31,
+#define PPUTLIMPL_UDEC_1020u 0x3FCu, 9, 31, 2, 2, 3, 5, 17
+#define PPUTLIMPL_UDEC_1019u 0x3FBu, 9, 31,
+#define PPUTLIMPL_UDEC_1018u 0x3FAu, 9, 31, 2, 509
+#define PPUTLIMPL_UDEC_1017u 0x3F9u, 9, 31, 3, 3, 113
+#define PPUTLIMPL_UDEC_1016u 0x3F8u, 9, 31, 2, 2, 2, 127
+#define PPUTLIMPL_UDEC_1015u 0x3F7u, 9, 31, 5, 7, 29
+#define PPUTLIMPL_UDEC_1014u 0x3F6u, 9, 31, 2, 3, 13, 13
+#define PPUTLIMPL_UDEC_1013u 0x3F5u, 9, 31,
+#define PPUTLIMPL_UDEC_1012u 0x3F4u, 9, 31, 2, 2, 11, 23
+#define PPUTLIMPL_UDEC_1011u 0x3F3u, 9, 31, 3, 337
+#define PPUTLIMPL_UDEC_1010u 0x3F2u, 9, 31, 2, 5, 101
+#define PPUTLIMPL_UDEC_1009u 0x3F1u, 9, 31,
+#define PPUTLIMPL_UDEC_1008u 0x3F0u, 9, 31, 2, 2, 2, 2, 3, 3, 7
+#define PPUTLIMPL_UDEC_1007u 0x3EFu, 9, 31, 19, 53
+#define PPUTLIMPL_UDEC_1006u 0x3EEu, 9, 31, 2, 503
+#define PPUTLIMPL_UDEC_1005u 0x3EDu, 9, 31, 3, 5, 67
+#define PPUTLIMPL_UDEC_1004u 0x3ECu, 9, 31, 2, 2, 251
+#define PPUTLIMPL_UDEC_1003u 0x3EBu, 9, 31, 17, 59
+#define PPUTLIMPL_UDEC_1002u 0x3EAu, 9, 31, 2, 3, 167
+#define PPUTLIMPL_UDEC_1001u 0x3E9u, 9, 31, 7, 11, 13
+#define PPUTLIMPL_UDEC_1000u 0x3E8u, 9, 31, 2, 2, 2, 5, 5, 5
+#define PPUTLIMPL_UDEC_999u  0x3E7u, 9, 31, 3, 3, 3, 37
+#define PPUTLIMPL_UDEC_998u  0x3E6u, 9, 31, 2, 499
+#define PPUTLIMPL_UDEC_997u  0x3E5u, 9, 31,
+#define PPUTLIMPL_UDEC_996u  0x3E4u, 9, 31, 2, 2, 3, 83
+#define PPUTLIMPL_UDEC_995u  0x3E3u, 9, 31, 5, 199
+#define PPUTLIMPL_UDEC_994u  0x3E2u, 9, 31, 2, 7, 71
+#define PPUTLIMPL_UDEC_993u  0x3E1u, 9, 31, 3, 331
+#define PPUTLIMPL_UDEC_992u  0x3E0u, 9, 31, 2, 2, 2, 2, 2, 31
+#define PPUTLIMPL_UDEC_991u  0x3DFu, 9, 31,
+#define PPUTLIMPL_UDEC_990u  0x3DEu, 9, 31, 2, 3, 3, 5, 11
+#define PPUTLIMPL_UDEC_989u  0x3DDu, 9, 31, 23, 43
+#define PPUTLIMPL_UDEC_988u  0x3DCu, 9, 31, 2, 2, 13, 19
+#define PPUTLIMPL_UDEC_987u  0x3DBu, 9, 31, 3, 7, 47
+#define PPUTLIMPL_UDEC_986u  0x3DAu, 9, 31, 2, 17, 29
+#define PPUTLIMPL_UDEC_985u  0x3D9u, 9, 31, 5, 197
+#define PPUTLIMPL_UDEC_984u  0x3D8u, 9, 31, 2, 2, 2, 3, 41
+#define PPUTLIMPL_UDEC_983u  0x3D7u, 9, 31,
+#define PPUTLIMPL_UDEC_982u  0x3D6u, 9, 31, 2, 491
+#define PPUTLIMPL_UDEC_981u  0x3D5u, 9, 31, 3, 3, 109
+#define PPUTLIMPL_UDEC_980u  0x3D4u, 9, 31, 2, 2, 5, 7, 7
+#define PPUTLIMPL_UDEC_979u  0x3D3u, 9, 31, 11, 89
+#define PPUTLIMPL_UDEC_978u  0x3D2u, 9, 31, 2, 3, 163
+#define PPUTLIMPL_UDEC_977u  0x3D1u, 9, 31,
+#define PPUTLIMPL_UDEC_976u  0x3D0u, 9, 31, 2, 2, 2, 2, 61
+#define PPUTLIMPL_UDEC_975u  0x3CFu, 9, 31, 3, 5, 5, 13
+#define PPUTLIMPL_UDEC_974u  0x3CEu, 9, 31, 2, 487
+#define PPUTLIMPL_UDEC_973u  0x3CDu, 9, 31, 7, 139
+#define PPUTLIMPL_UDEC_972u  0x3CCu, 9, 31, 2, 2, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_971u  0x3CBu, 9, 31,
+#define PPUTLIMPL_UDEC_970u  0x3CAu, 9, 31, 2, 5, 97
+#define PPUTLIMPL_UDEC_969u  0x3C9u, 9, 31, 3, 17, 19
+#define PPUTLIMPL_UDEC_968u  0x3C8u, 9, 31, 2, 2, 2, 11, 11
+#define PPUTLIMPL_UDEC_967u  0x3C7u, 9, 31,
+#define PPUTLIMPL_UDEC_966u  0x3C6u, 9, 31, 2, 3, 7, 23
+#define PPUTLIMPL_UDEC_965u  0x3C5u, 9, 31, 5, 193
+#define PPUTLIMPL_UDEC_964u  0x3C4u, 9, 31, 2, 2, 241
+#define PPUTLIMPL_UDEC_963u  0x3C3u, 9, 31, 3, 3, 107
+#define PPUTLIMPL_UDEC_962u  0x3C2u, 9, 31, 2, 13, 37
+#define PPUTLIMPL_UDEC_961u  0x3C1u, 9, 31, 31, 31
+#define PPUTLIMPL_UDEC_960u  0x3C0u, 9, 30, 2, 2, 2, 2, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_959u  0x3BFu, 9, 30, 7, 137
+#define PPUTLIMPL_UDEC_958u  0x3BEu, 9, 30, 2, 479
+#define PPUTLIMPL_UDEC_957u  0x3BDu, 9, 30, 3, 11, 29
+#define PPUTLIMPL_UDEC_956u  0x3BCu, 9, 30, 2, 2, 239
+#define PPUTLIMPL_UDEC_955u  0x3BBu, 9, 30, 5, 191
+#define PPUTLIMPL_UDEC_954u  0x3BAu, 9, 30, 2, 3, 3, 53
+#define PPUTLIMPL_UDEC_953u  0x3B9u, 9, 30,
+#define PPUTLIMPL_UDEC_952u  0x3B8u, 9, 30, 2, 2, 2, 7, 17
+#define PPUTLIMPL_UDEC_951u  0x3B7u, 9, 30, 3, 317
+#define PPUTLIMPL_UDEC_950u  0x3B6u, 9, 30, 2, 5, 5, 19
+#define PPUTLIMPL_UDEC_949u  0x3B5u, 9, 30, 13, 73
+#define PPUTLIMPL_UDEC_948u  0x3B4u, 9, 30, 2, 2, 3, 79
+#define PPUTLIMPL_UDEC_947u  0x3B3u, 9, 30,
+#define PPUTLIMPL_UDEC_946u  0x3B2u, 9, 30, 2, 11, 43
+#define PPUTLIMPL_UDEC_945u  0x3B1u, 9, 30, 3, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_944u  0x3B0u, 9, 30, 2, 2, 2, 2, 59
+#define PPUTLIMPL_UDEC_943u  0x3AFu, 9, 30, 23, 41
+#define PPUTLIMPL_UDEC_942u  0x3AEu, 9, 30, 2, 3, 157
+#define PPUTLIMPL_UDEC_941u  0x3ADu, 9, 30,
+#define PPUTLIMPL_UDEC_940u  0x3ACu, 9, 30, 2, 2, 5, 47
+#define PPUTLIMPL_UDEC_939u  0x3ABu, 9, 30, 3, 313
+#define PPUTLIMPL_UDEC_938u  0x3AAu, 9, 30, 2, 7, 67
+#define PPUTLIMPL_UDEC_937u  0x3A9u, 9, 30,
+#define PPUTLIMPL_UDEC_936u  0x3A8u, 9, 30, 2, 2, 2, 3, 3, 13
+#define PPUTLIMPL_UDEC_935u  0x3A7u, 9, 30, 5, 11, 17
+#define PPUTLIMPL_UDEC_934u  0x3A6u, 9, 30, 2, 467
+#define PPUTLIMPL_UDEC_933u  0x3A5u, 9, 30, 3, 311
+#define PPUTLIMPL_UDEC_932u  0x3A4u, 9, 30, 2, 2, 233
+#define PPUTLIMPL_UDEC_931u  0x3A3u, 9, 30, 7, 7, 19
+#define PPUTLIMPL_UDEC_930u  0x3A2u, 9, 30, 2, 3, 5, 31
+#define PPUTLIMPL_UDEC_929u  0x3A1u, 9, 30,
+#define PPUTLIMPL_UDEC_928u  0x3A0u, 9, 30, 2, 2, 2, 2, 2, 29
+#define PPUTLIMPL_UDEC_927u  0x39Fu, 9, 30, 3, 3, 103
+#define PPUTLIMPL_UDEC_926u  0x39Eu, 9, 30, 2, 463
+#define PPUTLIMPL_UDEC_925u  0x39Du, 9, 30, 5, 5, 37
+#define PPUTLIMPL_UDEC_924u  0x39Cu, 9, 30, 2, 2, 3, 7, 11
+#define PPUTLIMPL_UDEC_923u  0x39Bu, 9, 30, 13, 71
+#define PPUTLIMPL_UDEC_922u  0x39Au, 9, 30, 2, 461
+#define PPUTLIMPL_UDEC_921u  0x399u, 9, 30, 3, 307
+#define PPUTLIMPL_UDEC_920u  0x398u, 9, 30, 2, 2, 2, 5, 23
+#define PPUTLIMPL_UDEC_919u  0x397u, 9, 30,
+#define PPUTLIMPL_UDEC_918u  0x396u, 9, 30, 2, 3, 3, 3, 17
+#define PPUTLIMPL_UDEC_917u  0x395u, 9, 30, 7, 131
+#define PPUTLIMPL_UDEC_916u  0x394u, 9, 30, 2, 2, 229
+#define PPUTLIMPL_UDEC_915u  0x393u, 9, 30, 3, 5, 61
+#define PPUTLIMPL_UDEC_914u  0x392u, 9, 30, 2, 457
+#define PPUTLIMPL_UDEC_913u  0x391u, 9, 30, 11, 83
+#define PPUTLIMPL_UDEC_912u  0x390u, 9, 30, 2, 2, 2, 2, 3, 19
+#define PPUTLIMPL_UDEC_911u  0x38Fu, 9, 30,
+#define PPUTLIMPL_UDEC_910u  0x38Eu, 9, 30, 2, 5, 7, 13
+#define PPUTLIMPL_UDEC_909u  0x38Du, 9, 30, 3, 3, 101
+#define PPUTLIMPL_UDEC_908u  0x38Cu, 9, 30, 2, 2, 227
+#define PPUTLIMPL_UDEC_907u  0x38Bu, 9, 30,
+#define PPUTLIMPL_UDEC_906u  0x38Au, 9, 30, 2, 3, 151
+#define PPUTLIMPL_UDEC_905u  0x389u, 9, 30, 5, 181
+#define PPUTLIMPL_UDEC_904u  0x388u, 9, 30, 2, 2, 2, 113
+#define PPUTLIMPL_UDEC_903u  0x387u, 9, 30, 3, 7, 43
+#define PPUTLIMPL_UDEC_902u  0x386u, 9, 30, 2, 11, 41
+#define PPUTLIMPL_UDEC_901u  0x385u, 9, 30, 17, 53
+#define PPUTLIMPL_UDEC_900u  0x384u, 9, 30, 2, 2, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_899u  0x383u, 9, 29, 29, 31
+#define PPUTLIMPL_UDEC_898u  0x382u, 9, 29, 2, 449
+#define PPUTLIMPL_UDEC_897u  0x381u, 9, 29, 3, 13, 23
+#define PPUTLIMPL_UDEC_896u  0x380u, 9, 29, 2, 2, 2, 2, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_895u  0x37Fu, 9, 29, 5, 179
+#define PPUTLIMPL_UDEC_894u  0x37Eu, 9, 29, 2, 3, 149
+#define PPUTLIMPL_UDEC_893u  0x37Du, 9, 29, 19, 47
+#define PPUTLIMPL_UDEC_892u  0x37Cu, 9, 29, 2, 2, 223
+#define PPUTLIMPL_UDEC_891u  0x37Bu, 9, 29, 3, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_890u  0x37Au, 9, 29, 2, 5, 89
+#define PPUTLIMPL_UDEC_889u  0x379u, 9, 29, 7, 127
+#define PPUTLIMPL_UDEC_888u  0x378u, 9, 29, 2, 2, 2, 3, 37
+#define PPUTLIMPL_UDEC_887u  0x377u, 9, 29,
+#define PPUTLIMPL_UDEC_886u  0x376u, 9, 29, 2, 443
+#define PPUTLIMPL_UDEC_885u  0x375u, 9, 29, 3, 5, 59
+#define PPUTLIMPL_UDEC_884u  0x374u, 9, 29, 2, 2, 13, 17
+#define PPUTLIMPL_UDEC_883u  0x373u, 9, 29,
+#define PPUTLIMPL_UDEC_882u  0x372u, 9, 29, 2, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_881u  0x371u, 9, 29,
+#define PPUTLIMPL_UDEC_880u  0x370u, 9, 29, 2, 2, 2, 2, 5, 11
+#define PPUTLIMPL_UDEC_879u  0x36Fu, 9, 29, 3, 293
+#define PPUTLIMPL_UDEC_878u  0x36Eu, 9, 29, 2, 439
+#define PPUTLIMPL_UDEC_877u  0x36Du, 9, 29,
+#define PPUTLIMPL_UDEC_876u  0x36Cu, 9, 29, 2, 2, 3, 73
+#define PPUTLIMPL_UDEC_875u  0x36Bu, 9, 29, 5, 5, 5, 7
+#define PPUTLIMPL_UDEC_874u  0x36Au, 9, 29, 2, 19, 23
+#define PPUTLIMPL_UDEC_873u  0x369u, 9, 29, 3, 3, 97
+#define PPUTLIMPL_UDEC_872u  0x368u, 9, 29, 2, 2, 2, 109
+#define PPUTLIMPL_UDEC_871u  0x367u, 9, 29, 13, 67
+#define PPUTLIMPL_UDEC_870u  0x366u, 9, 29, 2, 3, 5, 29
+#define PPUTLIMPL_UDEC_869u  0x365u, 9, 29, 11, 79
+#define PPUTLIMPL_UDEC_868u  0x364u, 9, 29, 2, 2, 7, 31
+#define PPUTLIMPL_UDEC_867u  0x363u, 9, 29, 3, 17, 17
+#define PPUTLIMPL_UDEC_866u  0x362u, 9, 29, 2, 433
+#define PPUTLIMPL_UDEC_865u  0x361u, 9, 29, 5, 173
+#define PPUTLIMPL_UDEC_864u  0x360u, 9, 29, 2, 2, 2, 2, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_863u  0x35Fu, 9, 29,
+#define PPUTLIMPL_UDEC_862u  0x35Eu, 9, 29, 2, 431
+#define PPUTLIMPL_UDEC_861u  0x35Du, 9, 29, 3, 7, 41
+#define PPUTLIMPL_UDEC_860u  0x35Cu, 9, 29, 2, 2, 5, 43
+#define PPUTLIMPL_UDEC_859u  0x35Bu, 9, 29,
+#define PPUTLIMPL_UDEC_858u  0x35Au, 9, 29, 2, 3, 11, 13
+#define PPUTLIMPL_UDEC_857u  0x359u, 9, 29,
+#define PPUTLIMPL_UDEC_856u  0x358u, 9, 29, 2, 2, 2, 107
+#define PPUTLIMPL_UDEC_855u  0x357u, 9, 29, 3, 3, 5, 19
+#define PPUTLIMPL_UDEC_854u  0x356u, 9, 29, 2, 7, 61
+#define PPUTLIMPL_UDEC_853u  0x355u, 9, 29,
+#define PPUTLIMPL_UDEC_852u  0x354u, 9, 29, 2, 2, 3, 71
+#define PPUTLIMPL_UDEC_851u  0x353u, 9, 29, 23, 37
+#define PPUTLIMPL_UDEC_850u  0x352u, 9, 29, 2, 5, 5, 17
+#define PPUTLIMPL_UDEC_849u  0x351u, 9, 29, 3, 283
+#define PPUTLIMPL_UDEC_848u  0x350u, 9, 29, 2, 2, 2, 2, 53
+#define PPUTLIMPL_UDEC_847u  0x34Fu, 9, 29, 7, 11, 11
+#define PPUTLIMPL_UDEC_846u  0x34Eu, 9, 29, 2, 3, 3, 47
+#define PPUTLIMPL_UDEC_845u  0x34Du, 9, 29, 5, 13, 13
+#define PPUTLIMPL_UDEC_844u  0x34Cu, 9, 29, 2, 2, 211
+#define PPUTLIMPL_UDEC_843u  0x34Bu, 9, 29, 3, 281
+#define PPUTLIMPL_UDEC_842u  0x34Au, 9, 29, 2, 421
+#define PPUTLIMPL_UDEC_841u  0x349u, 9, 29, 29, 29
+#define PPUTLIMPL_UDEC_840u  0x348u, 9, 28, 2, 2, 2, 3, 5, 7
+#define PPUTLIMPL_UDEC_839u  0x347u, 9, 28,
+#define PPUTLIMPL_UDEC_838u  0x346u, 9, 28, 2, 419
+#define PPUTLIMPL_UDEC_837u  0x345u, 9, 28, 3, 3, 3, 31
+#define PPUTLIMPL_UDEC_836u  0x344u, 9, 28, 2, 2, 11, 19
+#define PPUTLIMPL_UDEC_835u  0x343u, 9, 28, 5, 167
+#define PPUTLIMPL_UDEC_834u  0x342u, 9, 28, 2, 3, 139
+#define PPUTLIMPL_UDEC_833u  0x341u, 9, 28, 7, 7, 17
+#define PPUTLIMPL_UDEC_832u  0x340u, 9, 28, 2, 2, 2, 2, 2, 2, 13
+#define PPUTLIMPL_UDEC_831u  0x33Fu, 9, 28, 3, 277
+#define PPUTLIMPL_UDEC_830u  0x33Eu, 9, 28, 2, 5, 83
+#define PPUTLIMPL_UDEC_829u  0x33Du, 9, 28,
+#define PPUTLIMPL_UDEC_828u  0x33Cu, 9, 28, 2, 2, 3, 3, 23
+#define PPUTLIMPL_UDEC_827u  0x33Bu, 9, 28,
+#define PPUTLIMPL_UDEC_826u  0x33Au, 9, 28, 2, 7, 59
+#define PPUTLIMPL_UDEC_825u  0x339u, 9, 28, 3, 5, 5, 11
+#define PPUTLIMPL_UDEC_824u  0x338u, 9, 28, 2, 2, 2, 103
+#define PPUTLIMPL_UDEC_823u  0x337u, 9, 28,
+#define PPUTLIMPL_UDEC_822u  0x336u, 9, 28, 2, 3, 137
+#define PPUTLIMPL_UDEC_821u  0x335u, 9, 28,
+#define PPUTLIMPL_UDEC_820u  0x334u, 9, 28, 2, 2, 5, 41
+#define PPUTLIMPL_UDEC_819u  0x333u, 9, 28, 3, 3, 7, 13
+#define PPUTLIMPL_UDEC_818u  0x332u, 9, 28, 2, 409
+#define PPUTLIMPL_UDEC_817u  0x331u, 9, 28, 19, 43
+#define PPUTLIMPL_UDEC_816u  0x330u, 9, 28, 2, 2, 2, 2, 3, 17
+#define PPUTLIMPL_UDEC_815u  0x32Fu, 9, 28, 5, 163
+#define PPUTLIMPL_UDEC_814u  0x32Eu, 9, 28, 2, 11, 37
+#define PPUTLIMPL_UDEC_813u  0x32Du, 9, 28, 3, 271
+#define PPUTLIMPL_UDEC_812u  0x32Cu, 9, 28, 2, 2, 7, 29
+#define PPUTLIMPL_UDEC_811u  0x32Bu, 9, 28,
+#define PPUTLIMPL_UDEC_810u  0x32Au, 9, 28, 2, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_809u  0x329u, 9, 28,
+#define PPUTLIMPL_UDEC_808u  0x328u, 9, 28, 2, 2, 2, 101
+#define PPUTLIMPL_UDEC_807u  0x327u, 9, 28, 3, 269
+#define PPUTLIMPL_UDEC_806u  0x326u, 9, 28, 2, 13, 31
+#define PPUTLIMPL_UDEC_805u  0x325u, 9, 28, 5, 7, 23
+#define PPUTLIMPL_UDEC_804u  0x324u, 9, 28, 2, 2, 3, 67
+#define PPUTLIMPL_UDEC_803u  0x323u, 9, 28, 11, 73
+#define PPUTLIMPL_UDEC_802u  0x322u, 9, 28, 2, 401
+#define PPUTLIMPL_UDEC_801u  0x321u, 9, 28, 3, 3, 89
+#define PPUTLIMPL_UDEC_800u  0x320u, 9, 28, 2, 2, 2, 2, 2, 5, 5
+#define PPUTLIMPL_UDEC_799u  0x31Fu, 9, 28, 17, 47
+#define PPUTLIMPL_UDEC_798u  0x31Eu, 9, 28, 2, 3, 7, 19
+#define PPUTLIMPL_UDEC_797u  0x31Du, 9, 28,
+#define PPUTLIMPL_UDEC_796u  0x31Cu, 9, 28, 2, 2, 199
+#define PPUTLIMPL_UDEC_795u  0x31Bu, 9, 28, 3, 5, 53
+#define PPUTLIMPL_UDEC_794u  0x31Au, 9, 28, 2, 397
+#define PPUTLIMPL_UDEC_793u  0x319u, 9, 28, 13, 61
+#define PPUTLIMPL_UDEC_792u  0x318u, 9, 28, 2, 2, 2, 3, 3, 11
+#define PPUTLIMPL_UDEC_791u  0x317u, 9, 28, 7, 113
+#define PPUTLIMPL_UDEC_790u  0x316u, 9, 28, 2, 5, 79
+#define PPUTLIMPL_UDEC_789u  0x315u, 9, 28, 3, 263
+#define PPUTLIMPL_UDEC_788u  0x314u, 9, 28, 2, 2, 197
+#define PPUTLIMPL_UDEC_787u  0x313u, 9, 28,
+#define PPUTLIMPL_UDEC_786u  0x312u, 9, 28, 2, 3, 131
+#define PPUTLIMPL_UDEC_785u  0x311u, 9, 28, 5, 157
+#define PPUTLIMPL_UDEC_784u  0x310u, 9, 28, 2, 2, 2, 2, 7, 7
+#define PPUTLIMPL_UDEC_783u  0x30Fu, 9, 27, 3, 3, 3, 29
+#define PPUTLIMPL_UDEC_782u  0x30Eu, 9, 27, 2, 17, 23
+#define PPUTLIMPL_UDEC_781u  0x30Du, 9, 27, 11, 71
+#define PPUTLIMPL_UDEC_780u  0x30Cu, 9, 27, 2, 2, 3, 5, 13
+#define PPUTLIMPL_UDEC_779u  0x30Bu, 9, 27, 19, 41
+#define PPUTLIMPL_UDEC_778u  0x30Au, 9, 27, 2, 389
+#define PPUTLIMPL_UDEC_777u  0x309u, 9, 27, 3, 7, 37
+#define PPUTLIMPL_UDEC_776u  0x308u, 9, 27, 2, 2, 2, 97
+#define PPUTLIMPL_UDEC_775u  0x307u, 9, 27, 5, 5, 31
+#define PPUTLIMPL_UDEC_774u  0x306u, 9, 27, 2, 3, 3, 43
+#define PPUTLIMPL_UDEC_773u  0x305u, 9, 27,
+#define PPUTLIMPL_UDEC_772u  0x304u, 9, 27, 2, 2, 193
+#define PPUTLIMPL_UDEC_771u  0x303u, 9, 27, 3, 257
+#define PPUTLIMPL_UDEC_770u  0x302u, 9, 27, 2, 5, 7, 11
+#define PPUTLIMPL_UDEC_769u  0x301u, 9, 27,
+#define PPUTLIMPL_UDEC_768u  0x300u, 9, 27, 2, 2, 2, 2, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_767u  0x2FFu, 9, 27, 13, 59
+#define PPUTLIMPL_UDEC_766u  0x2FEu, 9, 27, 2, 383
+#define PPUTLIMPL_UDEC_765u  0x2FDu, 9, 27, 3, 3, 5, 17
+#define PPUTLIMPL_UDEC_764u  0x2FCu, 9, 27, 2, 2, 191
+#define PPUTLIMPL_UDEC_763u  0x2FBu, 9, 27, 7, 109
+#define PPUTLIMPL_UDEC_762u  0x2FAu, 9, 27, 2, 3, 127
+#define PPUTLIMPL_UDEC_761u  0x2F9u, 9, 27,
+#define PPUTLIMPL_UDEC_760u  0x2F8u, 9, 27, 2, 2, 2, 5, 19
+#define PPUTLIMPL_UDEC_759u  0x2F7u, 9, 27, 3, 11, 23
+#define PPUTLIMPL_UDEC_758u  0x2F6u, 9, 27, 2, 379
+#define PPUTLIMPL_UDEC_757u  0x2F5u, 9, 27,
+#define PPUTLIMPL_UDEC_756u  0x2F4u, 9, 27, 2, 2, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_755u  0x2F3u, 9, 27, 5, 151
+#define PPUTLIMPL_UDEC_754u  0x2F2u, 9, 27, 2, 13, 29
+#define PPUTLIMPL_UDEC_753u  0x2F1u, 9, 27, 3, 251
+#define PPUTLIMPL_UDEC_752u  0x2F0u, 9, 27, 2, 2, 2, 2, 47
+#define PPUTLIMPL_UDEC_751u  0x2EFu, 9, 27,
+#define PPUTLIMPL_UDEC_750u  0x2EEu, 9, 27, 2, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_749u  0x2EDu, 9, 27, 7, 107
+#define PPUTLIMPL_UDEC_748u  0x2ECu, 9, 27, 2, 2, 11, 17
+#define PPUTLIMPL_UDEC_747u  0x2EBu, 9, 27, 3, 3, 83
+#define PPUTLIMPL_UDEC_746u  0x2EAu, 9, 27, 2, 373
+#define PPUTLIMPL_UDEC_745u  0x2E9u, 9, 27, 5, 149
+#define PPUTLIMPL_UDEC_744u  0x2E8u, 9, 27, 2, 2, 2, 3, 31
+#define PPUTLIMPL_UDEC_743u  0x2E7u, 9, 27,
+#define PPUTLIMPL_UDEC_742u  0x2E6u, 9, 27, 2, 7, 53
+#define PPUTLIMPL_UDEC_741u  0x2E5u, 9, 27, 3, 13, 19
+#define PPUTLIMPL_UDEC_740u  0x2E4u, 9, 27, 2, 2, 5, 37
+#define PPUTLIMPL_UDEC_739u  0x2E3u, 9, 27,
+#define PPUTLIMPL_UDEC_738u  0x2E2u, 9, 27, 2, 3, 3, 41
+#define PPUTLIMPL_UDEC_737u  0x2E1u, 9, 27, 11, 67
+#define PPUTLIMPL_UDEC_736u  0x2E0u, 9, 27, 2, 2, 2, 2, 2, 23
+#define PPUTLIMPL_UDEC_735u  0x2DFu, 9, 27, 3, 5, 7, 7
+#define PPUTLIMPL_UDEC_734u  0x2DEu, 9, 27, 2, 367
+#define PPUTLIMPL_UDEC_733u  0x2DDu, 9, 27,
+#define PPUTLIMPL_UDEC_732u  0x2DCu, 9, 27, 2, 2, 3, 61
+#define PPUTLIMPL_UDEC_731u  0x2DBu, 9, 27, 17, 43
+#define PPUTLIMPL_UDEC_730u  0x2DAu, 9, 27, 2, 5, 73
+#define PPUTLIMPL_UDEC_729u  0x2D9u, 9, 27, 3, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_728u  0x2D8u, 9, 26, 2, 2, 2, 7, 13
+#define PPUTLIMPL_UDEC_727u  0x2D7u, 9, 26,
+#define PPUTLIMPL_UDEC_726u  0x2D6u, 9, 26, 2, 3, 11, 11
+#define PPUTLIMPL_UDEC_725u  0x2D5u, 9, 26, 5, 5, 29
+#define PPUTLIMPL_UDEC_724u  0x2D4u, 9, 26, 2, 2, 181
+#define PPUTLIMPL_UDEC_723u  0x2D3u, 9, 26, 3, 241
+#define PPUTLIMPL_UDEC_722u  0x2D2u, 9, 26, 2, 19, 19
+#define PPUTLIMPL_UDEC_721u  0x2D1u, 9, 26, 7, 103
+#define PPUTLIMPL_UDEC_720u  0x2D0u, 9, 26, 2, 2, 2, 2, 3, 3, 5
+#define PPUTLIMPL_UDEC_719u  0x2CFu, 9, 26,
+#define PPUTLIMPL_UDEC_718u  0x2CEu, 9, 26, 2, 359
+#define PPUTLIMPL_UDEC_717u  0x2CDu, 9, 26, 3, 239
+#define PPUTLIMPL_UDEC_716u  0x2CCu, 9, 26, 2, 2, 179
+#define PPUTLIMPL_UDEC_715u  0x2CBu, 9, 26, 5, 11, 13
+#define PPUTLIMPL_UDEC_714u  0x2CAu, 9, 26, 2, 3, 7, 17
+#define PPUTLIMPL_UDEC_713u  0x2C9u, 9, 26, 23, 31
+#define PPUTLIMPL_UDEC_712u  0x2C8u, 9, 26, 2, 2, 2, 89
+#define PPUTLIMPL_UDEC_711u  0x2C7u, 9, 26, 3, 3, 79
+#define PPUTLIMPL_UDEC_710u  0x2C6u, 9, 26, 2, 5, 71
+#define PPUTLIMPL_UDEC_709u  0x2C5u, 9, 26,
+#define PPUTLIMPL_UDEC_708u  0x2C4u, 9, 26, 2, 2, 3, 59
+#define PPUTLIMPL_UDEC_707u  0x2C3u, 9, 26, 7, 101
+#define PPUTLIMPL_UDEC_706u  0x2C2u, 9, 26, 2, 353
+#define PPUTLIMPL_UDEC_705u  0x2C1u, 9, 26, 3, 5, 47
+#define PPUTLIMPL_UDEC_704u  0x2C0u, 9, 26, 2, 2, 2, 2, 2, 2, 11
+#define PPUTLIMPL_UDEC_703u  0x2BFu, 9, 26, 19, 37
+#define PPUTLIMPL_UDEC_702u  0x2BEu, 9, 26, 2, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_701u  0x2BDu, 9, 26,
+#define PPUTLIMPL_UDEC_700u  0x2BCu, 9, 26, 2, 2, 5, 5, 7
+#define PPUTLIMPL_UDEC_699u  0x2BBu, 9, 26, 3, 233
+#define PPUTLIMPL_UDEC_698u  0x2BAu, 9, 26, 2, 349
+#define PPUTLIMPL_UDEC_697u  0x2B9u, 9, 26, 17, 41
+#define PPUTLIMPL_UDEC_696u  0x2B8u, 9, 26, 2, 2, 2, 3, 29
+#define PPUTLIMPL_UDEC_695u  0x2B7u, 9, 26, 5, 139
+#define PPUTLIMPL_UDEC_694u  0x2B6u, 9, 26, 2, 347
+#define PPUTLIMPL_UDEC_693u  0x2B5u, 9, 26, 3, 3, 7, 11
+#define PPUTLIMPL_UDEC_692u  0x2B4u, 9, 26, 2, 2, 173
+#define PPUTLIMPL_UDEC_691u  0x2B3u, 9, 26,
+#define PPUTLIMPL_UDEC_690u  0x2B2u, 9, 26, 2, 3, 5, 23
+#define PPUTLIMPL_UDEC_689u  0x2B1u, 9, 26, 13, 53
+#define PPUTLIMPL_UDEC_688u  0x2B0u, 9, 26, 2, 2, 2, 2, 43
+#define PPUTLIMPL_UDEC_687u  0x2AFu, 9, 26, 3, 229
+#define PPUTLIMPL_UDEC_686u  0x2AEu, 9, 26, 2, 7, 7, 7
+#define PPUTLIMPL_UDEC_685u  0x2ADu, 9, 26, 5, 137
+#define PPUTLIMPL_UDEC_684u  0x2ACu, 9, 26, 2, 2, 3, 3, 19
+#define PPUTLIMPL_UDEC_683u  0x2ABu, 9, 26,
+#define PPUTLIMPL_UDEC_682u  0x2AAu, 9, 26, 2, 11, 31
+#define PPUTLIMPL_UDEC_681u  0x2A9u, 9, 26, 3, 227
+#define PPUTLIMPL_UDEC_680u  0x2A8u, 9, 26, 2, 2, 2, 5, 17
+#define PPUTLIMPL_UDEC_679u  0x2A7u, 9, 26, 7, 97
+#define PPUTLIMPL_UDEC_678u  0x2A6u, 9, 26, 2, 3, 113
+#define PPUTLIMPL_UDEC_677u  0x2A5u, 9, 26,
+#define PPUTLIMPL_UDEC_676u  0x2A4u, 9, 26, 2, 2, 13, 13
+#define PPUTLIMPL_UDEC_675u  0x2A3u, 9, 25, 3, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_674u  0x2A2u, 9, 25, 2, 337
+#define PPUTLIMPL_UDEC_673u  0x2A1u, 9, 25,
+#define PPUTLIMPL_UDEC_672u  0x2A0u, 9, 25, 2, 2, 2, 2, 2, 3, 7
+#define PPUTLIMPL_UDEC_671u  0x29Fu, 9, 25, 11, 61
+#define PPUTLIMPL_UDEC_670u  0x29Eu, 9, 25, 2, 5, 67
+#define PPUTLIMPL_UDEC_669u  0x29Du, 9, 25, 3, 223
+#define PPUTLIMPL_UDEC_668u  0x29Cu, 9, 25, 2, 2, 167
+#define PPUTLIMPL_UDEC_667u  0x29Bu, 9, 25, 23, 29
+#define PPUTLIMPL_UDEC_666u  0x29Au, 9, 25, 2, 3, 3, 37
+#define PPUTLIMPL_UDEC_665u  0x299u, 9, 25, 5, 7, 19
+#define PPUTLIMPL_UDEC_664u  0x298u, 9, 25, 2, 2, 2, 83
+#define PPUTLIMPL_UDEC_663u  0x297u, 9, 25, 3, 13, 17
+#define PPUTLIMPL_UDEC_662u  0x296u, 9, 25, 2, 331
+#define PPUTLIMPL_UDEC_661u  0x295u, 9, 25,
+#define PPUTLIMPL_UDEC_660u  0x294u, 9, 25, 2, 2, 3, 5, 11
+#define PPUTLIMPL_UDEC_659u  0x293u, 9, 25,
+#define PPUTLIMPL_UDEC_658u  0x292u, 9, 25, 2, 7, 47
+#define PPUTLIMPL_UDEC_657u  0x291u, 9, 25, 3, 3, 73
+#define PPUTLIMPL_UDEC_656u  0x290u, 9, 25, 2, 2, 2, 2, 41
+#define PPUTLIMPL_UDEC_655u  0x28Fu, 9, 25, 5, 131
+#define PPUTLIMPL_UDEC_654u  0x28Eu, 9, 25, 2, 3, 109
+#define PPUTLIMPL_UDEC_653u  0x28Du, 9, 25,
+#define PPUTLIMPL_UDEC_652u  0x28Cu, 9, 25, 2, 2, 163
+#define PPUTLIMPL_UDEC_651u  0x28Bu, 9, 25, 3, 7, 31
+#define PPUTLIMPL_UDEC_650u  0x28Au, 9, 25, 2, 5, 5, 13
+#define PPUTLIMPL_UDEC_649u  0x289u, 9, 25, 11, 59
+#define PPUTLIMPL_UDEC_648u  0x288u, 9, 25, 2, 2, 2, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_647u  0x287u, 9, 25,
+#define PPUTLIMPL_UDEC_646u  0x286u, 9, 25, 2, 17, 19
+#define PPUTLIMPL_UDEC_645u  0x285u, 9, 25, 3, 5, 43
+#define PPUTLIMPL_UDEC_644u  0x284u, 9, 25, 2, 2, 7, 23
+#define PPUTLIMPL_UDEC_643u  0x283u, 9, 25,
+#define PPUTLIMPL_UDEC_642u  0x282u, 9, 25, 2, 3, 107
+#define PPUTLIMPL_UDEC_641u  0x281u, 9, 25,
+#define PPUTLIMPL_UDEC_640u  0x280u, 9, 25, 2, 2, 2, 2, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_639u  0x27Fu, 9, 25, 3, 3, 71
+#define PPUTLIMPL_UDEC_638u  0x27Eu, 9, 25, 2, 11, 29
+#define PPUTLIMPL_UDEC_637u  0x27Du, 9, 25, 7, 7, 13
+#define PPUTLIMPL_UDEC_636u  0x27Cu, 9, 25, 2, 2, 3, 53
+#define PPUTLIMPL_UDEC_635u  0x27Bu, 9, 25, 5, 127
+#define PPUTLIMPL_UDEC_634u  0x27Au, 9, 25, 2, 317
+#define PPUTLIMPL_UDEC_633u  0x279u, 9, 25, 3, 211
+#define PPUTLIMPL_UDEC_632u  0x278u, 9, 25, 2, 2, 2, 79
+#define PPUTLIMPL_UDEC_631u  0x277u, 9, 25,
+#define PPUTLIMPL_UDEC_630u  0x276u, 9, 25, 2, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_629u  0x275u, 9, 25, 17, 37
+#define PPUTLIMPL_UDEC_628u  0x274u, 9, 25, 2, 2, 157
+#define PPUTLIMPL_UDEC_627u  0x273u, 9, 25, 3, 11, 19
+#define PPUTLIMPL_UDEC_626u  0x272u, 9, 25, 2, 313
+#define PPUTLIMPL_UDEC_625u  0x271u, 9, 25, 5, 5, 5, 5
+#define PPUTLIMPL_UDEC_624u  0x270u, 9, 24, 2, 2, 2, 2, 3, 13
+#define PPUTLIMPL_UDEC_623u  0x26Fu, 9, 24, 7, 89
+#define PPUTLIMPL_UDEC_622u  0x26Eu, 9, 24, 2, 311
+#define PPUTLIMPL_UDEC_621u  0x26Du, 9, 24, 3, 3, 3, 23
+#define PPUTLIMPL_UDEC_620u  0x26Cu, 9, 24, 2, 2, 5, 31
+#define PPUTLIMPL_UDEC_619u  0x26Bu, 9, 24,
+#define PPUTLIMPL_UDEC_618u  0x26Au, 9, 24, 2, 3, 103
+#define PPUTLIMPL_UDEC_617u  0x269u, 9, 24,
+#define PPUTLIMPL_UDEC_616u  0x268u, 9, 24, 2, 2, 2, 7, 11
+#define PPUTLIMPL_UDEC_615u  0x267u, 9, 24, 3, 5, 41
+#define PPUTLIMPL_UDEC_614u  0x266u, 9, 24, 2, 307
+#define PPUTLIMPL_UDEC_613u  0x265u, 9, 24,
+#define PPUTLIMPL_UDEC_612u  0x264u, 9, 24, 2, 2, 3, 3, 17
+#define PPUTLIMPL_UDEC_611u  0x263u, 9, 24, 13, 47
+#define PPUTLIMPL_UDEC_610u  0x262u, 9, 24, 2, 5, 61
+#define PPUTLIMPL_UDEC_609u  0x261u, 9, 24, 3, 7, 29
+#define PPUTLIMPL_UDEC_608u  0x260u, 9, 24, 2, 2, 2, 2, 2, 19
+#define PPUTLIMPL_UDEC_607u  0x25Fu, 9, 24,
+#define PPUTLIMPL_UDEC_606u  0x25Eu, 9, 24, 2, 3, 101
+#define PPUTLIMPL_UDEC_605u  0x25Du, 9, 24, 5, 11, 11
+#define PPUTLIMPL_UDEC_604u  0x25Cu, 9, 24, 2, 2, 151
+#define PPUTLIMPL_UDEC_603u  0x25Bu, 9, 24, 3, 3, 67
+#define PPUTLIMPL_UDEC_602u  0x25Au, 9, 24, 2, 7, 43
+#define PPUTLIMPL_UDEC_601u  0x259u, 9, 24,
+#define PPUTLIMPL_UDEC_600u  0x258u, 9, 24, 2, 2, 2, 3, 5, 5
+#define PPUTLIMPL_UDEC_599u  0x257u, 9, 24,
+#define PPUTLIMPL_UDEC_598u  0x256u, 9, 24, 2, 13, 23
+#define PPUTLIMPL_UDEC_597u  0x255u, 9, 24, 3, 199
+#define PPUTLIMPL_UDEC_596u  0x254u, 9, 24, 2, 2, 149
+#define PPUTLIMPL_UDEC_595u  0x253u, 9, 24, 5, 7, 17
+#define PPUTLIMPL_UDEC_594u  0x252u, 9, 24, 2, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_593u  0x251u, 9, 24,
+#define PPUTLIMPL_UDEC_592u  0x250u, 9, 24, 2, 2, 2, 2, 37
+#define PPUTLIMPL_UDEC_591u  0x24Fu, 9, 24, 3, 197
+#define PPUTLIMPL_UDEC_590u  0x24Eu, 9, 24, 2, 5, 59
+#define PPUTLIMPL_UDEC_589u  0x24Du, 9, 24, 19, 31
+#define PPUTLIMPL_UDEC_588u  0x24Cu, 9, 24, 2, 2, 3, 7, 7
+#define PPUTLIMPL_UDEC_587u  0x24Bu, 9, 24,
+#define PPUTLIMPL_UDEC_586u  0x24Au, 9, 24, 2, 293
+#define PPUTLIMPL_UDEC_585u  0x249u, 9, 24, 3, 3, 5, 13
+#define PPUTLIMPL_UDEC_584u  0x248u, 9, 24, 2, 2, 2, 73
+#define PPUTLIMPL_UDEC_583u  0x247u, 9, 24, 11, 53
+#define PPUTLIMPL_UDEC_582u  0x246u, 9, 24, 2, 3, 97
+#define PPUTLIMPL_UDEC_581u  0x245u, 9, 24, 7, 83
+#define PPUTLIMPL_UDEC_580u  0x244u, 9, 24, 2, 2, 5, 29
+#define PPUTLIMPL_UDEC_579u  0x243u, 9, 24, 3, 193
+#define PPUTLIMPL_UDEC_578u  0x242u, 9, 24, 2, 17, 17
+#define PPUTLIMPL_UDEC_577u  0x241u, 9, 24,
+#define PPUTLIMPL_UDEC_576u  0x240u, 9, 24, 2, 2, 2, 2, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_575u  0x23Fu, 9, 23, 5, 5, 23
+#define PPUTLIMPL_UDEC_574u  0x23Eu, 9, 23, 2, 7, 41
+#define PPUTLIMPL_UDEC_573u  0x23Du, 9, 23, 3, 191
+#define PPUTLIMPL_UDEC_572u  0x23Cu, 9, 23, 2, 2, 11, 13
+#define PPUTLIMPL_UDEC_571u  0x23Bu, 9, 23,
+#define PPUTLIMPL_UDEC_570u  0x23Au, 9, 23, 2, 3, 5, 19
+#define PPUTLIMPL_UDEC_569u  0x239u, 9, 23,
+#define PPUTLIMPL_UDEC_568u  0x238u, 9, 23, 2, 2, 2, 71
+#define PPUTLIMPL_UDEC_567u  0x237u, 9, 23, 3, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_566u  0x236u, 9, 23, 2, 283
+#define PPUTLIMPL_UDEC_565u  0x235u, 9, 23, 5, 113
+#define PPUTLIMPL_UDEC_564u  0x234u, 9, 23, 2, 2, 3, 47
+#define PPUTLIMPL_UDEC_563u  0x233u, 9, 23,
+#define PPUTLIMPL_UDEC_562u  0x232u, 9, 23, 2, 281
+#define PPUTLIMPL_UDEC_561u  0x231u, 9, 23, 3, 11, 17
+#define PPUTLIMPL_UDEC_560u  0x230u, 9, 23, 2, 2, 2, 2, 5, 7
+#define PPUTLIMPL_UDEC_559u  0x22Fu, 9, 23, 13, 43
+#define PPUTLIMPL_UDEC_558u  0x22Eu, 9, 23, 2, 3, 3, 31
+#define PPUTLIMPL_UDEC_557u  0x22Du, 9, 23,
+#define PPUTLIMPL_UDEC_556u  0x22Cu, 9, 23, 2, 2, 139
+#define PPUTLIMPL_UDEC_555u  0x22Bu, 9, 23, 3, 5, 37
+#define PPUTLIMPL_UDEC_554u  0x22Au, 9, 23, 2, 277
+#define PPUTLIMPL_UDEC_553u  0x229u, 9, 23, 7, 79
+#define PPUTLIMPL_UDEC_552u  0x228u, 9, 23, 2, 2, 2, 3, 23
+#define PPUTLIMPL_UDEC_551u  0x227u, 9, 23, 19, 29
+#define PPUTLIMPL_UDEC_550u  0x226u, 9, 23, 2, 5, 5, 11
+#define PPUTLIMPL_UDEC_549u  0x225u, 9, 23, 3, 3, 61
+#define PPUTLIMPL_UDEC_548u  0x224u, 9, 23, 2, 2, 137
+#define PPUTLIMPL_UDEC_547u  0x223u, 9, 23,
+#define PPUTLIMPL_UDEC_546u  0x222u, 9, 23, 2, 3, 7, 13
+#define PPUTLIMPL_UDEC_545u  0x221u, 9, 23, 5, 109
+#define PPUTLIMPL_UDEC_544u  0x220u, 9, 23, 2, 2, 2, 2, 2, 17
+#define PPUTLIMPL_UDEC_543u  0x21Fu, 9, 23, 3, 181
+#define PPUTLIMPL_UDEC_542u  0x21Eu, 9, 23, 2, 271
+#define PPUTLIMPL_UDEC_541u  0x21Du, 9, 23,
+#define PPUTLIMPL_UDEC_540u  0x21Cu, 9, 23, 2, 2, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_539u  0x21Bu, 9, 23, 7, 7, 11
+#define PPUTLIMPL_UDEC_538u  0x21Au, 9, 23, 2, 269
+#define PPUTLIMPL_UDEC_537u  0x219u, 9, 23, 3, 179
+#define PPUTLIMPL_UDEC_536u  0x218u, 9, 23, 2, 2, 2, 67
+#define PPUTLIMPL_UDEC_535u  0x217u, 9, 23, 5, 107
+#define PPUTLIMPL_UDEC_534u  0x216u, 9, 23, 2, 3, 89
+#define PPUTLIMPL_UDEC_533u  0x215u, 9, 23, 13, 41
+#define PPUTLIMPL_UDEC_532u  0x214u, 9, 23, 2, 2, 7, 19
+#define PPUTLIMPL_UDEC_531u  0x213u, 9, 23, 3, 3, 59
+#define PPUTLIMPL_UDEC_530u  0x212u, 9, 23, 2, 5, 53
+#define PPUTLIMPL_UDEC_529u  0x211u, 9, 23, 23, 23
+#define PPUTLIMPL_UDEC_528u  0x210u, 9, 22, 2, 2, 2, 2, 3, 11
+#define PPUTLIMPL_UDEC_527u  0x20Fu, 9, 22, 17, 31
+#define PPUTLIMPL_UDEC_526u  0x20Eu, 9, 22, 2, 263
+#define PPUTLIMPL_UDEC_525u  0x20Du, 9, 22, 3, 5, 5, 7
+#define PPUTLIMPL_UDEC_524u  0x20Cu, 9, 22, 2, 2, 131
+#define PPUTLIMPL_UDEC_523u  0x20Bu, 9, 22,
+#define PPUTLIMPL_UDEC_522u  0x20Au, 9, 22, 2, 3, 3, 29
+#define PPUTLIMPL_UDEC_521u  0x209u, 9, 22,
+#define PPUTLIMPL_UDEC_520u  0x208u, 9, 22, 2, 2, 2, 5, 13
+#define PPUTLIMPL_UDEC_519u  0x207u, 9, 22, 3, 173
+#define PPUTLIMPL_UDEC_518u  0x206u, 9, 22, 2, 7, 37
+#define PPUTLIMPL_UDEC_517u  0x205u, 9, 22, 11, 47
+#define PPUTLIMPL_UDEC_516u  0x204u, 9, 22, 2, 2, 3, 43
+#define PPUTLIMPL_UDEC_515u  0x203u, 9, 22, 5, 103
+#define PPUTLIMPL_UDEC_514u  0x202u, 9, 22, 2, 257
+#define PPUTLIMPL_UDEC_513u  0x201u, 9, 22, 3, 3, 3, 19
+#define PPUTLIMPL_UDEC_512u  0x200u, 9, 22, 2, 2, 2, 2, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_511u  0x1FFu, 8, 22, 7, 73
+#define PPUTLIMPL_UDEC_510u  0x1FEu, 8, 22, 2, 3, 5, 17
+#define PPUTLIMPL_UDEC_509u  0x1FDu, 8, 22,
+#define PPUTLIMPL_UDEC_508u  0x1FCu, 8, 22, 2, 2, 127
+#define PPUTLIMPL_UDEC_507u  0x1FBu, 8, 22, 3, 13, 13
+#define PPUTLIMPL_UDEC_506u  0x1FAu, 8, 22, 2, 11, 23
+#define PPUTLIMPL_UDEC_505u  0x1F9u, 8, 22, 5, 101
+#define PPUTLIMPL_UDEC_504u  0x1F8u, 8, 22, 2, 2, 2, 3, 3, 7
+#define PPUTLIMPL_UDEC_503u  0x1F7u, 8, 22,
+#define PPUTLIMPL_UDEC_502u  0x1F6u, 8, 22, 2, 251
+#define PPUTLIMPL_UDEC_501u  0x1F5u, 8, 22, 3, 167
+#define PPUTLIMPL_UDEC_500u  0x1F4u, 8, 22, 2, 2, 5, 5, 5
+#define PPUTLIMPL_UDEC_499u  0x1F3u, 8, 22,
+#define PPUTLIMPL_UDEC_498u  0x1F2u, 8, 22, 2, 3, 83
+#define PPUTLIMPL_UDEC_497u  0x1F1u, 8, 22, 7, 71
+#define PPUTLIMPL_UDEC_496u  0x1F0u, 8, 22, 2, 2, 2, 2, 31
+#define PPUTLIMPL_UDEC_495u  0x1EFu, 8, 22, 3, 3, 5, 11
+#define PPUTLIMPL_UDEC_494u  0x1EEu, 8, 22, 2, 13, 19
+#define PPUTLIMPL_UDEC_493u  0x1EDu, 8, 22, 17, 29
+#define PPUTLIMPL_UDEC_492u  0x1ECu, 8, 22, 2, 2, 3, 41
+#define PPUTLIMPL_UDEC_491u  0x1EBu, 8, 22,
+#define PPUTLIMPL_UDEC_490u  0x1EAu, 8, 22, 2, 5, 7, 7
+#define PPUTLIMPL_UDEC_489u  0x1E9u, 8, 22, 3, 163
+#define PPUTLIMPL_UDEC_488u  0x1E8u, 8, 22, 2, 2, 2, 61
+#define PPUTLIMPL_UDEC_487u  0x1E7u, 8, 22,
+#define PPUTLIMPL_UDEC_486u  0x1E6u, 8, 22, 2, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_485u  0x1E5u, 8, 22, 5, 97
+#define PPUTLIMPL_UDEC_484u  0x1E4u, 8, 22, 2, 2, 11, 11
+#define PPUTLIMPL_UDEC_483u  0x1E3u, 8, 21, 3, 7, 23
+#define PPUTLIMPL_UDEC_482u  0x1E2u, 8, 21, 2, 241
+#define PPUTLIMPL_UDEC_481u  0x1E1u, 8, 21, 13, 37
+#define PPUTLIMPL_UDEC_480u  0x1E0u, 8, 21, 2, 2, 2, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_479u  0x1DFu, 8, 21,
+#define PPUTLIMPL_UDEC_478u  0x1DEu, 8, 21, 2, 239
+#define PPUTLIMPL_UDEC_477u  0x1DDu, 8, 21, 3, 3, 53
+#define PPUTLIMPL_UDEC_476u  0x1DCu, 8, 21, 2, 2, 7, 17
+#define PPUTLIMPL_UDEC_475u  0x1DBu, 8, 21, 5, 5, 19
+#define PPUTLIMPL_UDEC_474u  0x1DAu, 8, 21, 2, 3, 79
+#define PPUTLIMPL_UDEC_473u  0x1D9u, 8, 21, 11, 43
+#define PPUTLIMPL_UDEC_472u  0x1D8u, 8, 21, 2, 2, 2, 59
+#define PPUTLIMPL_UDEC_471u  0x1D7u, 8, 21, 3, 157
+#define PPUTLIMPL_UDEC_470u  0x1D6u, 8, 21, 2, 5, 47
+#define PPUTLIMPL_UDEC_469u  0x1D5u, 8, 21, 7, 67
+#define PPUTLIMPL_UDEC_468u  0x1D4u, 8, 21, 2, 2, 3, 3, 13
+#define PPUTLIMPL_UDEC_467u  0x1D3u, 8, 21,
+#define PPUTLIMPL_UDEC_466u  0x1D2u, 8, 21, 2, 233
+#define PPUTLIMPL_UDEC_465u  0x1D1u, 8, 21, 3, 5, 31
+#define PPUTLIMPL_UDEC_464u  0x1D0u, 8, 21, 2, 2, 2, 2, 29
+#define PPUTLIMPL_UDEC_463u  0x1CFu, 8, 21,
+#define PPUTLIMPL_UDEC_462u  0x1CEu, 8, 21, 2, 3, 7, 11
+#define PPUTLIMPL_UDEC_461u  0x1CDu, 8, 21,
+#define PPUTLIMPL_UDEC_460u  0x1CCu, 8, 21, 2, 2, 5, 23
+#define PPUTLIMPL_UDEC_459u  0x1CBu, 8, 21, 3, 3, 3, 17
+#define PPUTLIMPL_UDEC_458u  0x1CAu, 8, 21, 2, 229
+#define PPUTLIMPL_UDEC_457u  0x1C9u, 8, 21,
+#define PPUTLIMPL_UDEC_456u  0x1C8u, 8, 21, 2, 2, 2, 3, 19
+#define PPUTLIMPL_UDEC_455u  0x1C7u, 8, 21, 5, 7, 13
+#define PPUTLIMPL_UDEC_454u  0x1C6u, 8, 21, 2, 227
+#define PPUTLIMPL_UDEC_453u  0x1C5u, 8, 21, 3, 151
+#define PPUTLIMPL_UDEC_452u  0x1C4u, 8, 21, 2, 2, 113
+#define PPUTLIMPL_UDEC_451u  0x1C3u, 8, 21, 11, 41
+#define PPUTLIMPL_UDEC_450u  0x1C2u, 8, 21, 2, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_449u  0x1C1u, 8, 21,
+#define PPUTLIMPL_UDEC_448u  0x1C0u, 8, 21, 2, 2, 2, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_447u  0x1BFu, 8, 21, 3, 149
+#define PPUTLIMPL_UDEC_446u  0x1BEu, 8, 21, 2, 223
+#define PPUTLIMPL_UDEC_445u  0x1BDu, 8, 21, 5, 89
+#define PPUTLIMPL_UDEC_444u  0x1BCu, 8, 21, 2, 2, 3, 37
+#define PPUTLIMPL_UDEC_443u  0x1BBu, 8, 21,
+#define PPUTLIMPL_UDEC_442u  0x1BAu, 8, 21, 2, 13, 17
+#define PPUTLIMPL_UDEC_441u  0x1B9u, 8, 21, 3, 3, 7, 7
+#define PPUTLIMPL_UDEC_440u  0x1B8u, 8, 20, 2, 2, 2, 5, 11
+#define PPUTLIMPL_UDEC_439u  0x1B7u, 8, 20,
+#define PPUTLIMPL_UDEC_438u  0x1B6u, 8, 20, 2, 3, 73
+#define PPUTLIMPL_UDEC_437u  0x1B5u, 8, 20, 19, 23
+#define PPUTLIMPL_UDEC_436u  0x1B4u, 8, 20, 2, 2, 109
+#define PPUTLIMPL_UDEC_435u  0x1B3u, 8, 20, 3, 5, 29
+#define PPUTLIMPL_UDEC_434u  0x1B2u, 8, 20, 2, 7, 31
+#define PPUTLIMPL_UDEC_433u  0x1B1u, 8, 20,
+#define PPUTLIMPL_UDEC_432u  0x1B0u, 8, 20, 2, 2, 2, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_431u  0x1AFu, 8, 20,
+#define PPUTLIMPL_UDEC_430u  0x1AEu, 8, 20, 2, 5, 43
+#define PPUTLIMPL_UDEC_429u  0x1ADu, 8, 20, 3, 11, 13
+#define PPUTLIMPL_UDEC_428u  0x1ACu, 8, 20, 2, 2, 107
+#define PPUTLIMPL_UDEC_427u  0x1ABu, 8, 20, 7, 61
+#define PPUTLIMPL_UDEC_426u  0x1AAu, 8, 20, 2, 3, 71
+#define PPUTLIMPL_UDEC_425u  0x1A9u, 8, 20, 5, 5, 17
+#define PPUTLIMPL_UDEC_424u  0x1A8u, 8, 20, 2, 2, 2, 53
+#define PPUTLIMPL_UDEC_423u  0x1A7u, 8, 20, 3, 3, 47
+#define PPUTLIMPL_UDEC_422u  0x1A6u, 8, 20, 2, 211
+#define PPUTLIMPL_UDEC_421u  0x1A5u, 8, 20,
+#define PPUTLIMPL_UDEC_420u  0x1A4u, 8, 20, 2, 2, 3, 5, 7
+#define PPUTLIMPL_UDEC_419u  0x1A3u, 8, 20,
+#define PPUTLIMPL_UDEC_418u  0x1A2u, 8, 20, 2, 11, 19
+#define PPUTLIMPL_UDEC_417u  0x1A1u, 8, 20, 3, 139
+#define PPUTLIMPL_UDEC_416u  0x1A0u, 8, 20, 2, 2, 2, 2, 2, 13
+#define PPUTLIMPL_UDEC_415u  0x19Fu, 8, 20, 5, 83
+#define PPUTLIMPL_UDEC_414u  0x19Eu, 8, 20, 2, 3, 3, 23
+#define PPUTLIMPL_UDEC_413u  0x19Du, 8, 20, 7, 59
+#define PPUTLIMPL_UDEC_412u  0x19Cu, 8, 20, 2, 2, 103
+#define PPUTLIMPL_UDEC_411u  0x19Bu, 8, 20, 3, 137
+#define PPUTLIMPL_UDEC_410u  0x19Au, 8, 20, 2, 5, 41
+#define PPUTLIMPL_UDEC_409u  0x199u, 8, 20,
+#define PPUTLIMPL_UDEC_408u  0x198u, 8, 20, 2, 2, 2, 3, 17
+#define PPUTLIMPL_UDEC_407u  0x197u, 8, 20, 11, 37
+#define PPUTLIMPL_UDEC_406u  0x196u, 8, 20, 2, 7, 29
+#define PPUTLIMPL_UDEC_405u  0x195u, 8, 20, 3, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_404u  0x194u, 8, 20, 2, 2, 101
+#define PPUTLIMPL_UDEC_403u  0x193u, 8, 20, 13, 31
+#define PPUTLIMPL_UDEC_402u  0x192u, 8, 20, 2, 3, 67
+#define PPUTLIMPL_UDEC_401u  0x191u, 8, 20,
+#define PPUTLIMPL_UDEC_400u  0x190u, 8, 20, 2, 2, 2, 2, 5, 5
+#define PPUTLIMPL_UDEC_399u  0x18Fu, 8, 19, 3, 7, 19
+#define PPUTLIMPL_UDEC_398u  0x18Eu, 8, 19, 2, 199
+#define PPUTLIMPL_UDEC_397u  0x18Du, 8, 19,
+#define PPUTLIMPL_UDEC_396u  0x18Cu, 8, 19, 2, 2, 3, 3, 11
+#define PPUTLIMPL_UDEC_395u  0x18Bu, 8, 19, 5, 79
+#define PPUTLIMPL_UDEC_394u  0x18Au, 8, 19, 2, 197
+#define PPUTLIMPL_UDEC_393u  0x189u, 8, 19, 3, 131
+#define PPUTLIMPL_UDEC_392u  0x188u, 8, 19, 2, 2, 2, 7, 7
+#define PPUTLIMPL_UDEC_391u  0x187u, 8, 19, 17, 23
+#define PPUTLIMPL_UDEC_390u  0x186u, 8, 19, 2, 3, 5, 13
+#define PPUTLIMPL_UDEC_389u  0x185u, 8, 19,
+#define PPUTLIMPL_UDEC_388u  0x184u, 8, 19, 2, 2, 97
+#define PPUTLIMPL_UDEC_387u  0x183u, 8, 19, 3, 3, 43
+#define PPUTLIMPL_UDEC_386u  0x182u, 8, 19, 2, 193
+#define PPUTLIMPL_UDEC_385u  0x181u, 8, 19, 5, 7, 11
+#define PPUTLIMPL_UDEC_384u  0x180u, 8, 19, 2, 2, 2, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_383u  0x17Fu, 8, 19,
+#define PPUTLIMPL_UDEC_382u  0x17Eu, 8, 19, 2, 191
+#define PPUTLIMPL_UDEC_381u  0x17Du, 8, 19, 3, 127
+#define PPUTLIMPL_UDEC_380u  0x17Cu, 8, 19, 2, 2, 5, 19
+#define PPUTLIMPL_UDEC_379u  0x17Bu, 8, 19,
+#define PPUTLIMPL_UDEC_378u  0x17Au, 8, 19, 2, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_377u  0x179u, 8, 19, 13, 29
+#define PPUTLIMPL_UDEC_376u  0x178u, 8, 19, 2, 2, 2, 47
+#define PPUTLIMPL_UDEC_375u  0x177u, 8, 19, 3, 5, 5, 5
+#define PPUTLIMPL_UDEC_374u  0x176u, 8, 19, 2, 11, 17
+#define PPUTLIMPL_UDEC_373u  0x175u, 8, 19,
+#define PPUTLIMPL_UDEC_372u  0x174u, 8, 19, 2, 2, 3, 31
+#define PPUTLIMPL_UDEC_371u  0x173u, 8, 19, 7, 53
+#define PPUTLIMPL_UDEC_370u  0x172u, 8, 19, 2, 5, 37
+#define PPUTLIMPL_UDEC_369u  0x171u, 8, 19, 3, 3, 41
+#define PPUTLIMPL_UDEC_368u  0x170u, 8, 19, 2, 2, 2, 2, 23
+#define PPUTLIMPL_UDEC_367u  0x16Fu, 8, 19,
+#define PPUTLIMPL_UDEC_366u  0x16Eu, 8, 19, 2, 3, 61
+#define PPUTLIMPL_UDEC_365u  0x16Du, 8, 19, 5, 73
+#define PPUTLIMPL_UDEC_364u  0x16Cu, 8, 19, 2, 2, 7, 13
+#define PPUTLIMPL_UDEC_363u  0x16Bu, 8, 19, 3, 11, 11
+#define PPUTLIMPL_UDEC_362u  0x16Au, 8, 19, 2, 181
+#define PPUTLIMPL_UDEC_361u  0x169u, 8, 19, 19, 19
+#define PPUTLIMPL_UDEC_360u  0x168u, 8, 18, 2, 2, 2, 3, 3, 5
+#define PPUTLIMPL_UDEC_359u  0x167u, 8, 18,
+#define PPUTLIMPL_UDEC_358u  0x166u, 8, 18, 2, 179
+#define PPUTLIMPL_UDEC_357u  0x165u, 8, 18, 3, 7, 17
+#define PPUTLIMPL_UDEC_356u  0x164u, 8, 18, 2, 2, 89
+#define PPUTLIMPL_UDEC_355u  0x163u, 8, 18, 5, 71
+#define PPUTLIMPL_UDEC_354u  0x162u, 8, 18, 2, 3, 59
+#define PPUTLIMPL_UDEC_353u  0x161u, 8, 18,
+#define PPUTLIMPL_UDEC_352u  0x160u, 8, 18, 2, 2, 2, 2, 2, 11
+#define PPUTLIMPL_UDEC_351u  0x15Fu, 8, 18, 3, 3, 3, 13
+#define PPUTLIMPL_UDEC_350u  0x15Eu, 8, 18, 2, 5, 5, 7
+#define PPUTLIMPL_UDEC_349u  0x15Du, 8, 18,
+#define PPUTLIMPL_UDEC_348u  0x15Cu, 8, 18, 2, 2, 3, 29
+#define PPUTLIMPL_UDEC_347u  0x15Bu, 8, 18,
+#define PPUTLIMPL_UDEC_346u  0x15Au, 8, 18, 2, 173
+#define PPUTLIMPL_UDEC_345u  0x159u, 8, 18, 3, 5, 23
+#define PPUTLIMPL_UDEC_344u  0x158u, 8, 18, 2, 2, 2, 43
+#define PPUTLIMPL_UDEC_343u  0x157u, 8, 18, 7, 7, 7
+#define PPUTLIMPL_UDEC_342u  0x156u, 8, 18, 2, 3, 3, 19
+#define PPUTLIMPL_UDEC_341u  0x155u, 8, 18, 11, 31
+#define PPUTLIMPL_UDEC_340u  0x154u, 8, 18, 2, 2, 5, 17
+#define PPUTLIMPL_UDEC_339u  0x153u, 8, 18, 3, 113
+#define PPUTLIMPL_UDEC_338u  0x152u, 8, 18, 2, 13, 13
+#define PPUTLIMPL_UDEC_337u  0x151u, 8, 18,
+#define PPUTLIMPL_UDEC_336u  0x150u, 8, 18, 2, 2, 2, 2, 3, 7
+#define PPUTLIMPL_UDEC_335u  0x14Fu, 8, 18, 5, 67
+#define PPUTLIMPL_UDEC_334u  0x14Eu, 8, 18, 2, 167
+#define PPUTLIMPL_UDEC_333u  0x14Du, 8, 18, 3, 3, 37
+#define PPUTLIMPL_UDEC_332u  0x14Cu, 8, 18, 2, 2, 83
+#define PPUTLIMPL_UDEC_331u  0x14Bu, 8, 18,
+#define PPUTLIMPL_UDEC_330u  0x14Au, 8, 18, 2, 3, 5, 11
+#define PPUTLIMPL_UDEC_329u  0x149u, 8, 18, 7, 47
+#define PPUTLIMPL_UDEC_328u  0x148u, 8, 18, 2, 2, 2, 41
+#define PPUTLIMPL_UDEC_327u  0x147u, 8, 18, 3, 109
+#define PPUTLIMPL_UDEC_326u  0x146u, 8, 18, 2, 163
+#define PPUTLIMPL_UDEC_325u  0x145u, 8, 18, 5, 5, 13
+#define PPUTLIMPL_UDEC_324u  0x144u, 8, 18, 2, 2, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_323u  0x143u, 8, 17, 17, 19
+#define PPUTLIMPL_UDEC_322u  0x142u, 8, 17, 2, 7, 23
+#define PPUTLIMPL_UDEC_321u  0x141u, 8, 17, 3, 107
+#define PPUTLIMPL_UDEC_320u  0x140u, 8, 17, 2, 2, 2, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_319u  0x13Fu, 8, 17, 11, 29
+#define PPUTLIMPL_UDEC_318u  0x13Eu, 8, 17, 2, 3, 53
+#define PPUTLIMPL_UDEC_317u  0x13Du, 8, 17,
+#define PPUTLIMPL_UDEC_316u  0x13Cu, 8, 17, 2, 2, 79
+#define PPUTLIMPL_UDEC_315u  0x13Bu, 8, 17, 3, 3, 5, 7
+#define PPUTLIMPL_UDEC_314u  0x13Au, 8, 17, 2, 157
+#define PPUTLIMPL_UDEC_313u  0x139u, 8, 17,
+#define PPUTLIMPL_UDEC_312u  0x138u, 8, 17, 2, 2, 2, 3, 13
+#define PPUTLIMPL_UDEC_311u  0x137u, 8, 17,
+#define PPUTLIMPL_UDEC_310u  0x136u, 8, 17, 2, 5, 31
+#define PPUTLIMPL_UDEC_309u  0x135u, 8, 17, 3, 103
+#define PPUTLIMPL_UDEC_308u  0x134u, 8, 17, 2, 2, 7, 11
+#define PPUTLIMPL_UDEC_307u  0x133u, 8, 17,
+#define PPUTLIMPL_UDEC_306u  0x132u, 8, 17, 2, 3, 3, 17
+#define PPUTLIMPL_UDEC_305u  0x131u, 8, 17, 5, 61
+#define PPUTLIMPL_UDEC_304u  0x130u, 8, 17, 2, 2, 2, 2, 19
+#define PPUTLIMPL_UDEC_303u  0x12Fu, 8, 17, 3, 101
+#define PPUTLIMPL_UDEC_302u  0x12Eu, 8, 17, 2, 151
+#define PPUTLIMPL_UDEC_301u  0x12Du, 8, 17, 7, 43
+#define PPUTLIMPL_UDEC_300u  0x12Cu, 8, 17, 2, 2, 3, 5, 5
+#define PPUTLIMPL_UDEC_299u  0x12Bu, 8, 17, 13, 23
+#define PPUTLIMPL_UDEC_298u  0x12Au, 8, 17, 2, 149
+#define PPUTLIMPL_UDEC_297u  0x129u, 8, 17, 3, 3, 3, 11
+#define PPUTLIMPL_UDEC_296u  0x128u, 8, 17, 2, 2, 2, 37
+#define PPUTLIMPL_UDEC_295u  0x127u, 8, 17, 5, 59
+#define PPUTLIMPL_UDEC_294u  0x126u, 8, 17, 2, 3, 7, 7
+#define PPUTLIMPL_UDEC_293u  0x125u, 8, 17,
+#define PPUTLIMPL_UDEC_292u  0x124u, 8, 17, 2, 2, 73
+#define PPUTLIMPL_UDEC_291u  0x123u, 8, 17, 3, 97
+#define PPUTLIMPL_UDEC_290u  0x122u, 8, 17, 2, 5, 29
+#define PPUTLIMPL_UDEC_289u  0x121u, 8, 17, 17, 17
+#define PPUTLIMPL_UDEC_288u  0x120u, 8, 16, 2, 2, 2, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_287u  0x11Fu, 8, 16, 7, 41
+#define PPUTLIMPL_UDEC_286u  0x11Eu, 8, 16, 2, 11, 13
+#define PPUTLIMPL_UDEC_285u  0x11Du, 8, 16, 3, 5, 19
+#define PPUTLIMPL_UDEC_284u  0x11Cu, 8, 16, 2, 2, 71
+#define PPUTLIMPL_UDEC_283u  0x11Bu, 8, 16,
+#define PPUTLIMPL_UDEC_282u  0x11Au, 8, 16, 2, 3, 47
+#define PPUTLIMPL_UDEC_281u  0x119u, 8, 16,
+#define PPUTLIMPL_UDEC_280u  0x118u, 8, 16, 2, 2, 2, 5, 7
+#define PPUTLIMPL_UDEC_279u  0x117u, 8, 16, 3, 3, 31
+#define PPUTLIMPL_UDEC_278u  0x116u, 8, 16, 2, 139
+#define PPUTLIMPL_UDEC_277u  0x115u, 8, 16,
+#define PPUTLIMPL_UDEC_276u  0x114u, 8, 16, 2, 2, 3, 23
+#define PPUTLIMPL_UDEC_275u  0x113u, 8, 16, 5, 5, 11
+#define PPUTLIMPL_UDEC_274u  0x112u, 8, 16, 2, 137
+#define PPUTLIMPL_UDEC_273u  0x111u, 8, 16, 3, 7, 13
+#define PPUTLIMPL_UDEC_272u  0x110u, 8, 16, 2, 2, 2, 2, 17
+#define PPUTLIMPL_UDEC_271u  0x10Fu, 8, 16,
+#define PPUTLIMPL_UDEC_270u  0x10Eu, 8, 16, 2, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_269u  0x10Du, 8, 16,
+#define PPUTLIMPL_UDEC_268u  0x10Cu, 8, 16, 2, 2, 67
+#define PPUTLIMPL_UDEC_267u  0x10Bu, 8, 16, 3, 89
+#define PPUTLIMPL_UDEC_266u  0x10Au, 8, 16, 2, 7, 19
+#define PPUTLIMPL_UDEC_265u  0x109u, 8, 16, 5, 53
+#define PPUTLIMPL_UDEC_264u  0x108u, 8, 16, 2, 2, 2, 3, 11
+#define PPUTLIMPL_UDEC_263u  0x107u, 8, 16,
+#define PPUTLIMPL_UDEC_262u  0x106u, 8, 16, 2, 131
+#define PPUTLIMPL_UDEC_261u  0x105u, 8, 16, 3, 3, 29
+#define PPUTLIMPL_UDEC_260u  0x104u, 8, 16, 2, 2, 5, 13
+#define PPUTLIMPL_UDEC_259u  0x103u, 8, 16, 7, 37
+#define PPUTLIMPL_UDEC_258u  0x102u, 8, 16, 2, 3, 43
+#define PPUTLIMPL_UDEC_257u  0x101u, 8, 16,
+#define PPUTLIMPL_UDEC_256u  0x100u, 8, 16, 2, 2, 2, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_255u  0x0FFu, 7, 15, 3, 5, 17
+#define PPUTLIMPL_UDEC_254u  0x0FEu, 7, 15, 2, 127
+#define PPUTLIMPL_UDEC_253u  0x0FDu, 7, 15, 11, 23
+#define PPUTLIMPL_UDEC_252u  0x0FCu, 7, 15, 2, 2, 3, 3, 7
+#define PPUTLIMPL_UDEC_251u  0x0FBu, 7, 15,
+#define PPUTLIMPL_UDEC_250u  0x0FAu, 7, 15, 2, 5, 5, 5
+#define PPUTLIMPL_UDEC_249u  0x0F9u, 7, 15, 3, 83
+#define PPUTLIMPL_UDEC_248u  0x0F8u, 7, 15, 2, 2, 2, 31
+#define PPUTLIMPL_UDEC_247u  0x0F7u, 7, 15, 13, 19
+#define PPUTLIMPL_UDEC_246u  0x0F6u, 7, 15, 2, 3, 41
+#define PPUTLIMPL_UDEC_245u  0x0F5u, 7, 15, 5, 7, 7
+#define PPUTLIMPL_UDEC_244u  0x0F4u, 7, 15, 2, 2, 61
+#define PPUTLIMPL_UDEC_243u  0x0F3u, 7, 15, 3, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_242u  0x0F2u, 7, 15, 2, 11, 11
+#define PPUTLIMPL_UDEC_241u  0x0F1u, 7, 15,
+#define PPUTLIMPL_UDEC_240u  0x0F0u, 7, 15, 2, 2, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_239u  0x0EFu, 7, 15,
+#define PPUTLIMPL_UDEC_238u  0x0EEu, 7, 15, 2, 7, 17
+#define PPUTLIMPL_UDEC_237u  0x0EDu, 7, 15, 3, 79
+#define PPUTLIMPL_UDEC_236u  0x0ECu, 7, 15, 2, 2, 59
+#define PPUTLIMPL_UDEC_235u  0x0EBu, 7, 15, 5, 47
+#define PPUTLIMPL_UDEC_234u  0x0EAu, 7, 15, 2, 3, 3, 13
+#define PPUTLIMPL_UDEC_233u  0x0E9u, 7, 15,
+#define PPUTLIMPL_UDEC_232u  0x0E8u, 7, 15, 2, 2, 2, 29
+#define PPUTLIMPL_UDEC_231u  0x0E7u, 7, 15, 3, 7, 11
+#define PPUTLIMPL_UDEC_230u  0x0E6u, 7, 15, 2, 5, 23
+#define PPUTLIMPL_UDEC_229u  0x0E5u, 7, 15,
+#define PPUTLIMPL_UDEC_228u  0x0E4u, 7, 15, 2, 2, 3, 19
+#define PPUTLIMPL_UDEC_227u  0x0E3u, 7, 15,
+#define PPUTLIMPL_UDEC_226u  0x0E2u, 7, 15, 2, 113
+#define PPUTLIMPL_UDEC_225u  0x0E1u, 7, 15, 3, 3, 5, 5
+#define PPUTLIMPL_UDEC_224u  0x0E0u, 7, 14, 2, 2, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_223u  0x0DFu, 7, 14,
+#define PPUTLIMPL_UDEC_222u  0x0DEu, 7, 14, 2, 3, 37
+#define PPUTLIMPL_UDEC_221u  0x0DDu, 7, 14, 13, 17
+#define PPUTLIMPL_UDEC_220u  0x0DCu, 7, 14, 2, 2, 5, 11
+#define PPUTLIMPL_UDEC_219u  0x0DBu, 7, 14, 3, 73
+#define PPUTLIMPL_UDEC_218u  0x0DAu, 7, 14, 2, 109
+#define PPUTLIMPL_UDEC_217u  0x0D9u, 7, 14, 7, 31
+#define PPUTLIMPL_UDEC_216u  0x0D8u, 7, 14, 2, 2, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_215u  0x0D7u, 7, 14, 5, 43
+#define PPUTLIMPL_UDEC_214u  0x0D6u, 7, 14, 2, 107
+#define PPUTLIMPL_UDEC_213u  0x0D5u, 7, 14, 3, 71
+#define PPUTLIMPL_UDEC_212u  0x0D4u, 7, 14, 2, 2, 53
+#define PPUTLIMPL_UDEC_211u  0x0D3u, 7, 14,
+#define PPUTLIMPL_UDEC_210u  0x0D2u, 7, 14, 2, 3, 5, 7
+#define PPUTLIMPL_UDEC_209u  0x0D1u, 7, 14, 11, 19
+#define PPUTLIMPL_UDEC_208u  0x0D0u, 7, 14, 2, 2, 2, 2, 13
+#define PPUTLIMPL_UDEC_207u  0x0CFu, 7, 14, 3, 3, 23
+#define PPUTLIMPL_UDEC_206u  0x0CEu, 7, 14, 2, 103
+#define PPUTLIMPL_UDEC_205u  0x0CDu, 7, 14, 5, 41
+#define PPUTLIMPL_UDEC_204u  0x0CCu, 7, 14, 2, 2, 3, 17
+#define PPUTLIMPL_UDEC_203u  0x0CBu, 7, 14, 7, 29
+#define PPUTLIMPL_UDEC_202u  0x0CAu, 7, 14, 2, 101
+#define PPUTLIMPL_UDEC_201u  0x0C9u, 7, 14, 3, 67
+#define PPUTLIMPL_UDEC_200u  0x0C8u, 7, 14, 2, 2, 2, 5, 5
+#define PPUTLIMPL_UDEC_199u  0x0C7u, 7, 14,
+#define PPUTLIMPL_UDEC_198u  0x0C6u, 7, 14, 2, 3, 3, 11
+#define PPUTLIMPL_UDEC_197u  0x0C5u, 7, 14,
+#define PPUTLIMPL_UDEC_196u  0x0C4u, 7, 14, 2, 2, 7, 7
+#define PPUTLIMPL_UDEC_195u  0x0C3u, 7, 13, 3, 5, 13
+#define PPUTLIMPL_UDEC_194u  0x0C2u, 7, 13, 2, 97
+#define PPUTLIMPL_UDEC_193u  0x0C1u, 7, 13,
+#define PPUTLIMPL_UDEC_192u  0x0C0u, 7, 13, 2, 2, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_191u  0x0BFu, 7, 13,
+#define PPUTLIMPL_UDEC_190u  0x0BEu, 7, 13, 2, 5, 19
+#define PPUTLIMPL_UDEC_189u  0x0BDu, 7, 13, 3, 3, 3, 7
+#define PPUTLIMPL_UDEC_188u  0x0BCu, 7, 13, 2, 2, 47
+#define PPUTLIMPL_UDEC_187u  0x0BBu, 7, 13, 11, 17
+#define PPUTLIMPL_UDEC_186u  0x0BAu, 7, 13, 2, 3, 31
+#define PPUTLIMPL_UDEC_185u  0x0B9u, 7, 13, 5, 37
+#define PPUTLIMPL_UDEC_184u  0x0B8u, 7, 13, 2, 2, 2, 23
+#define PPUTLIMPL_UDEC_183u  0x0B7u, 7, 13, 3, 61
+#define PPUTLIMPL_UDEC_182u  0x0B6u, 7, 13, 2, 7, 13
+#define PPUTLIMPL_UDEC_181u  0x0B5u, 7, 13,
+#define PPUTLIMPL_UDEC_180u  0x0B4u, 7, 13, 2, 2, 3, 3, 5
+#define PPUTLIMPL_UDEC_179u  0x0B3u, 7, 13,
+#define PPUTLIMPL_UDEC_178u  0x0B2u, 7, 13, 2, 89
+#define PPUTLIMPL_UDEC_177u  0x0B1u, 7, 13, 3, 59
+#define PPUTLIMPL_UDEC_176u  0x0B0u, 7, 13, 2, 2, 2, 2, 11
+#define PPUTLIMPL_UDEC_175u  0x0AFu, 7, 13, 5, 5, 7
+#define PPUTLIMPL_UDEC_174u  0x0AEu, 7, 13, 2, 3, 29
+#define PPUTLIMPL_UDEC_173u  0x0ADu, 7, 13,
+#define PPUTLIMPL_UDEC_172u  0x0ACu, 7, 13, 2, 2, 43
+#define PPUTLIMPL_UDEC_171u  0x0ABu, 7, 13, 3, 3, 19
+#define PPUTLIMPL_UDEC_170u  0x0AAu, 7, 13, 2, 5, 17
+#define PPUTLIMPL_UDEC_169u  0x0A9u, 7, 13, 13, 13
+#define PPUTLIMPL_UDEC_168u  0x0A8u, 7, 12, 2, 2, 2, 3, 7
+#define PPUTLIMPL_UDEC_167u  0x0A7u, 7, 12,
+#define PPUTLIMPL_UDEC_166u  0x0A6u, 7, 12, 2, 83
+#define PPUTLIMPL_UDEC_165u  0x0A5u, 7, 12, 3, 5, 11
+#define PPUTLIMPL_UDEC_164u  0x0A4u, 7, 12, 2, 2, 41
+#define PPUTLIMPL_UDEC_163u  0x0A3u, 7, 12,
+#define PPUTLIMPL_UDEC_162u  0x0A2u, 7, 12, 2, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_161u  0x0A1u, 7, 12, 7, 23
+#define PPUTLIMPL_UDEC_160u  0x0A0u, 7, 12, 2, 2, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_159u  0x09Fu, 7, 12, 3, 53
+#define PPUTLIMPL_UDEC_158u  0x09Eu, 7, 12, 2, 79
+#define PPUTLIMPL_UDEC_157u  0x09Du, 7, 12,
+#define PPUTLIMPL_UDEC_156u  0x09Cu, 7, 12, 2, 2, 3, 13
+#define PPUTLIMPL_UDEC_155u  0x09Bu, 7, 12, 5, 31
+#define PPUTLIMPL_UDEC_154u  0x09Au, 7, 12, 2, 7, 11
+#define PPUTLIMPL_UDEC_153u  0x099u, 7, 12, 3, 3, 17
+#define PPUTLIMPL_UDEC_152u  0x098u, 7, 12, 2, 2, 2, 19
+#define PPUTLIMPL_UDEC_151u  0x097u, 7, 12,
+#define PPUTLIMPL_UDEC_150u  0x096u, 7, 12, 2, 3, 5, 5
+#define PPUTLIMPL_UDEC_149u  0x095u, 7, 12,
+#define PPUTLIMPL_UDEC_148u  0x094u, 7, 12, 2, 2, 37
+#define PPUTLIMPL_UDEC_147u  0x093u, 7, 12, 3, 7, 7
+#define PPUTLIMPL_UDEC_146u  0x092u, 7, 12, 2, 73
+#define PPUTLIMPL_UDEC_145u  0x091u, 7, 12, 5, 29
+#define PPUTLIMPL_UDEC_144u  0x090u, 7, 12, 2, 2, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_143u  0x08Fu, 7, 11, 11, 13
+#define PPUTLIMPL_UDEC_142u  0x08Eu, 7, 11, 2, 71
+#define PPUTLIMPL_UDEC_141u  0x08Du, 7, 11, 3, 47
+#define PPUTLIMPL_UDEC_140u  0x08Cu, 7, 11, 2, 2, 5, 7
+#define PPUTLIMPL_UDEC_139u  0x08Bu, 7, 11,
+#define PPUTLIMPL_UDEC_138u  0x08Au, 7, 11, 2, 3, 23
+#define PPUTLIMPL_UDEC_137u  0x089u, 7, 11,
+#define PPUTLIMPL_UDEC_136u  0x088u, 7, 11, 2, 2, 2, 17
+#define PPUTLIMPL_UDEC_135u  0x087u, 7, 11, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_134u  0x086u, 7, 11, 2, 67
+#define PPUTLIMPL_UDEC_133u  0x085u, 7, 11, 7, 19
+#define PPUTLIMPL_UDEC_132u  0x084u, 7, 11, 2, 2, 3, 11
+#define PPUTLIMPL_UDEC_131u  0x083u, 7, 11,
+#define PPUTLIMPL_UDEC_130u  0x082u, 7, 11, 2, 5, 13
+#define PPUTLIMPL_UDEC_129u  0x081u, 7, 11, 3, 43
+#define PPUTLIMPL_UDEC_128u  0x080u, 7, 11, 2, 2, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_127u  0x07Fu, 6, 11,
+#define PPUTLIMPL_UDEC_126u  0x07Eu, 6, 11, 2, 3, 3, 7
+#define PPUTLIMPL_UDEC_125u  0x07Du, 6, 11, 5, 5, 5
+#define PPUTLIMPL_UDEC_124u  0x07Cu, 6, 11, 2, 2, 31
+#define PPUTLIMPL_UDEC_123u  0x07Bu, 6, 11, 3, 41
+#define PPUTLIMPL_UDEC_122u  0x07Au, 6, 11, 2, 61
+#define PPUTLIMPL_UDEC_121u  0x079u, 6, 11, 11, 11
+#define PPUTLIMPL_UDEC_120u  0x078u, 6, 10, 2, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_119u  0x077u, 6, 10, 7, 17
+#define PPUTLIMPL_UDEC_118u  0x076u, 6, 10, 2, 59
+#define PPUTLIMPL_UDEC_117u  0x075u, 6, 10, 3, 3, 13
+#define PPUTLIMPL_UDEC_116u  0x074u, 6, 10, 2, 2, 29
+#define PPUTLIMPL_UDEC_115u  0x073u, 6, 10, 5, 23
+#define PPUTLIMPL_UDEC_114u  0x072u, 6, 10, 2, 3, 19
+#define PPUTLIMPL_UDEC_113u  0x071u, 6, 10,
+#define PPUTLIMPL_UDEC_112u  0x070u, 6, 10, 2, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_111u  0x06Fu, 6, 10, 3, 37
+#define PPUTLIMPL_UDEC_110u  0x06Eu, 6, 10, 2, 5, 11
+#define PPUTLIMPL_UDEC_109u  0x06Du, 6, 10,
+#define PPUTLIMPL_UDEC_108u  0x06Cu, 6, 10, 2, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_107u  0x06Bu, 6, 10,
+#define PPUTLIMPL_UDEC_106u  0x06Au, 6, 10, 2, 53
+#define PPUTLIMPL_UDEC_105u  0x069u, 6, 10, 3, 5, 7
+#define PPUTLIMPL_UDEC_104u  0x068u, 6, 10, 2, 2, 2, 13
+#define PPUTLIMPL_UDEC_103u  0x067u, 6, 10,
+#define PPUTLIMPL_UDEC_102u  0x066u, 6, 10, 2, 3, 17
+#define PPUTLIMPL_UDEC_101u  0x065u, 6, 10,
+#define PPUTLIMPL_UDEC_100u  0x064u, 6, 10, 2, 2, 5, 5
+#define PPUTLIMPL_UDEC_99u   0x063u, 6, 9, 3, 3, 11
+#define PPUTLIMPL_UDEC_98u   0x062u, 6, 9, 2, 7, 7
+#define PPUTLIMPL_UDEC_97u   0x061u, 6, 9,
+#define PPUTLIMPL_UDEC_96u   0x060u, 6, 9, 2, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_95u   0x05Fu, 6, 9, 5, 19
+#define PPUTLIMPL_UDEC_94u   0x05Eu, 6, 9, 2, 47
+#define PPUTLIMPL_UDEC_93u   0x05Du, 6, 9, 3, 31
+#define PPUTLIMPL_UDEC_92u   0x05Cu, 6, 9, 2, 2, 23
+#define PPUTLIMPL_UDEC_91u   0x05Bu, 6, 9, 7, 13
+#define PPUTLIMPL_UDEC_90u   0x05Au, 6, 9, 2, 3, 3, 5
+#define PPUTLIMPL_UDEC_89u   0x059u, 6, 9,
+#define PPUTLIMPL_UDEC_88u   0x058u, 6, 9, 2, 2, 2, 11
+#define PPUTLIMPL_UDEC_87u   0x057u, 6, 9, 3, 29
+#define PPUTLIMPL_UDEC_86u   0x056u, 6, 9, 2, 43
+#define PPUTLIMPL_UDEC_85u   0x055u, 6, 9, 5, 17
+#define PPUTLIMPL_UDEC_84u   0x054u, 6, 9, 2, 2, 3, 7
+#define PPUTLIMPL_UDEC_83u   0x053u, 6, 9,
+#define PPUTLIMPL_UDEC_82u   0x052u, 6, 9, 2, 41
+#define PPUTLIMPL_UDEC_81u   0x051u, 6, 9, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_80u   0x050u, 6, 8, 2, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_79u   0x04Fu, 6, 8,
+#define PPUTLIMPL_UDEC_78u   0x04Eu, 6, 8, 2, 3, 13
+#define PPUTLIMPL_UDEC_77u   0x04Du, 6, 8, 7, 11
+#define PPUTLIMPL_UDEC_76u   0x04Cu, 6, 8, 2, 2, 19
+#define PPUTLIMPL_UDEC_75u   0x04Bu, 6, 8, 3, 5, 5
+#define PPUTLIMPL_UDEC_74u   0x04Au, 6, 8, 2, 37
+#define PPUTLIMPL_UDEC_73u   0x049u, 6, 8,
+#define PPUTLIMPL_UDEC_72u   0x048u, 6, 8, 2, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_71u   0x047u, 6, 8,
+#define PPUTLIMPL_UDEC_70u   0x046u, 6, 8, 2, 5, 7
+#define PPUTLIMPL_UDEC_69u   0x045u, 6, 8, 3, 23
+#define PPUTLIMPL_UDEC_68u   0x044u, 6, 8, 2, 2, 17
+#define PPUTLIMPL_UDEC_67u   0x043u, 6, 8,
+#define PPUTLIMPL_UDEC_66u   0x042u, 6, 8, 2, 3, 11
+#define PPUTLIMPL_UDEC_65u   0x041u, 6, 8, 5, 13
+#define PPUTLIMPL_UDEC_64u   0x040u, 6, 8, 2, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_63u   0x03Fu, 5, 7, 3, 3, 7
+#define PPUTLIMPL_UDEC_62u   0x03Eu, 5, 7, 2, 31
+#define PPUTLIMPL_UDEC_61u   0x03Du, 5, 7,
+#define PPUTLIMPL_UDEC_60u   0x03Cu, 5, 7, 2, 2, 3, 5
+#define PPUTLIMPL_UDEC_59u   0x03Bu, 5, 7,
+#define PPUTLIMPL_UDEC_58u   0x03Au, 5, 7, 2, 29
+#define PPUTLIMPL_UDEC_57u   0x039u, 5, 7, 3, 19
+#define PPUTLIMPL_UDEC_56u   0x038u, 5, 7, 2, 2, 2, 7
+#define PPUTLIMPL_UDEC_55u   0x037u, 5, 7, 5, 11
+#define PPUTLIMPL_UDEC_54u   0x036u, 5, 7, 2, 3, 3, 3
+#define PPUTLIMPL_UDEC_53u   0x035u, 5, 7,
+#define PPUTLIMPL_UDEC_52u   0x034u, 5, 7, 2, 2, 13
+#define PPUTLIMPL_UDEC_51u   0x033u, 5, 7, 3, 17
+#define PPUTLIMPL_UDEC_50u   0x032u, 5, 7, 2, 5, 5
+#define PPUTLIMPL_UDEC_49u   0x031u, 5, 7, 7, 7
+#define PPUTLIMPL_UDEC_48u   0x030u, 5, 6, 2, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_47u   0x02Fu, 5, 6,
+#define PPUTLIMPL_UDEC_46u   0x02Eu, 5, 6, 2, 23
+#define PPUTLIMPL_UDEC_45u   0x02Du, 5, 6, 3, 3, 5
+#define PPUTLIMPL_UDEC_44u   0x02Cu, 5, 6, 2, 2, 11
+#define PPUTLIMPL_UDEC_43u   0x02Bu, 5, 6,
+#define PPUTLIMPL_UDEC_42u   0x02Au, 5, 6, 2, 3, 7
+#define PPUTLIMPL_UDEC_41u   0x029u, 5, 6,
+#define PPUTLIMPL_UDEC_40u   0x028u, 5, 6, 2, 2, 2, 5
+#define PPUTLIMPL_UDEC_39u   0x027u, 5, 6, 3, 13
+#define PPUTLIMPL_UDEC_38u   0x026u, 5, 6, 2, 19
+#define PPUTLIMPL_UDEC_37u   0x025u, 5, 6,
+#define PPUTLIMPL_UDEC_36u   0x024u, 5, 6, 2, 2, 3, 3
+#define PPUTLIMPL_UDEC_35u   0x023u, 5, 5, 5, 7
+#define PPUTLIMPL_UDEC_34u   0x022u, 5, 5, 2, 17
+#define PPUTLIMPL_UDEC_33u   0x021u, 5, 5, 3, 11
+#define PPUTLIMPL_UDEC_32u   0x020u, 5, 5, 2, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_31u   0x01Fu, 4, 5,
+#define PPUTLIMPL_UDEC_30u   0x01Eu, 4, 5, 2, 3, 5
+#define PPUTLIMPL_UDEC_29u   0x01Du, 4, 5,
+#define PPUTLIMPL_UDEC_28u   0x01Cu, 4, 5, 2, 2, 7
+#define PPUTLIMPL_UDEC_27u   0x01Bu, 4, 5, 3, 3, 3
+#define PPUTLIMPL_UDEC_26u   0x01Au, 4, 5, 2, 13
+#define PPUTLIMPL_UDEC_25u   0x019u, 4, 5, 5, 5
+#define PPUTLIMPL_UDEC_24u   0x018u, 4, 4, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_23u   0x017u, 4, 4,
+#define PPUTLIMPL_UDEC_22u   0x016u, 4, 4, 2, 11
+#define PPUTLIMPL_UDEC_21u   0x015u, 4, 4, 3, 7
+#define PPUTLIMPL_UDEC_20u   0x014u, 4, 4, 2, 2, 5
+#define PPUTLIMPL_UDEC_19u   0x013u, 4, 4,
+#define PPUTLIMPL_UDEC_18u   0x012u, 4, 4, 2, 3, 3
+#define PPUTLIMPL_UDEC_17u   0x011u, 4, 4,
+#define PPUTLIMPL_UDEC_16u   0x010u, 4, 4, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_15u   0x00Fu, 3, 3, 3, 5
+#define PPUTLIMPL_UDEC_14u   0x00Eu, 3, 3, 2, 7
+#define PPUTLIMPL_UDEC_13u   0x00Du, 3, 3,
+#define PPUTLIMPL_UDEC_12u   0x00Cu, 3, 3, 2, 2, 3
+#define PPUTLIMPL_UDEC_11u   0x00Bu, 3, 3,
+#define PPUTLIMPL_UDEC_10u   0x00Au, 3, 3, 2, 5
+#define PPUTLIMPL_UDEC_9u    0x009u, 3, 3, 3, 3
+#define PPUTLIMPL_UDEC_8u    0x008u, 3, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_7u    0x007u, 2, 2,
+#define PPUTLIMPL_UDEC_6u    0x006u, 2, 2, 2, 3
+#define PPUTLIMPL_UDEC_5u    0x005u, 2, 2,
+#define PPUTLIMPL_UDEC_4u    0x004u, 2, 2, 2, 2
+#define PPUTLIMPL_UDEC_3u    0x003u, 1, 1,
+#define PPUTLIMPL_UDEC_2u    0x002u, 1, 1,
+#define PPUTLIMPL_UDEC_1u    0x001u, 0, 1,
+#define PPUTLIMPL_UDEC_0u    0x000u, , 0,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

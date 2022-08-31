@@ -32,10 +32,12 @@ namespace api {
 using namespace codegen;
 
 decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "signed integral less-than-zero detection.";
+  docs << "numeric less-than-zero detection.";
 
   tests << ltz("0")            = "0" >> docs;
   tests << ltz("1")            = "0" >> docs;
+  tests << ltz("0u")           = "0" >> docs;
+  tests << ltz("1u")           = "0" >> docs;
   tests << ltz(int_max_s)      = "0" >> docs;
   tests << ltz(int_min_s)      = "1" >> docs;
   tests << ltz(inc(int_max_s)) = "1" >> docs;
@@ -45,7 +47,12 @@ decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
     return impl::hexhex(pp::cat(7, args[0]), "LT");
   };
 
-  return def<"o(...)">{[&](va args) { return args; }}(res + " " + utup(int_(args)));
+  def<"0(word: uint|utup)"> _0 = [&](arg) { return "0"; };
+  def<"1(int)">{}              = [&](arg w) {
+    return def<"o(...)">{[&](va args) { return args; }}(res + " " + utup(w));
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), word(args));
 });
 
 } // namespace api

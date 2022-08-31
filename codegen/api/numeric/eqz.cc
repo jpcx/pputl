@@ -36,7 +36,7 @@ decltype(eqz_0u) eqz_0u = NIFTY_DEF(eqz_0u);
 }
 
 decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
-  docs << "numerical zero detection.";
+  docs << "numeric zero detection.";
 
   tests << eqz("0")                               = "1" >> docs;
   tests << eqz("0u")                              = "1" >> docs;

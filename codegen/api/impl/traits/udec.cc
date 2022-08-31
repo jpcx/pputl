@@ -65,9 +65,9 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
   };
 
   def<"\\UHEX(u, ...) -> uhex">{}          = [&](pack args) { return args[0]; };
-  def<"\\LOG2(u, l, ...) -> udec">{}       = [&](pack args) { return args[1]; };
-  def<"\\SQRT(u, l, s, ...) -> udec">{}    = [&](pack args) { return args[2]; };
-  def<"\\FACT(u, l, s, f) -> (udec...)">{} = [&](pack args) { return args[3]; };
+  def<"\\LOG2(u, l, ...) -> idec">{}       = [&](pack args) { return args[1]; };
+  def<"\\SQRT(u, l, s, ...) -> idec">{}    = [&](pack args) { return args[2]; };
+  def<"\\FACT(u, l, s, ...) -> idec...">{} = [&](pack args) { return args[3]; };
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(is, -2), t), row);
