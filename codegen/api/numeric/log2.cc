@@ -45,8 +45,10 @@ decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
     return word(impl::udec(udec(n), "LOG2"), typeof(n));
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), gtz(args)),
-                  str("[" + log2 + "] value must be greater than zero : " + args), args);
+  return pp::call(
+      xcat(utl::slice(_0, -1), gtz(args)),
+      str(pp::str("[" + log2 + "] value must be greater than zero") + " : " + args),
+      args);
 });
 
 } // namespace api

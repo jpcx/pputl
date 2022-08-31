@@ -194,7 +194,7 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
                          mode(e, typeof(v),
                               enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
                     v);
-  }}(str("[" + word + "] invalid arguments : " + args), args);
+  }}(str(pp::str("[" + word + "] invalid arguments") + " : " + args), args);
 });
 
 } // namespace api

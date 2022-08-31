@@ -64,7 +64,7 @@ decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
 
     return def<"o(e, ...)">{[&](arg e, va args) {
       return xfirst(pp::va_opt(n.back()(e, args + ".") + ", ") + " 0u");
-    }}(str("[" + sizeof_ + "] too many arguments : " + args), args);
+    }}(str(pp::str("[" + sizeof_ + "] too many arguments") + " : " + args), args);
   } else {
     def read = def{"read(" + utl::cat(utl::alpha_base52_seq(conf::size_max), ", ")
                    + ", _sz, ...)"};
@@ -109,7 +109,7 @@ decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
                    return read(args + " " + pp::va_opt(", ") + " "
                                + utl::cat(rseq, ", "));
                  }}(prefix, args));
-    }}(str("[" + sizeof_ + "] too many arguments : " + args), args);
+    }}(str(pp::str("[" + sizeof_ + "] too many arguments") + " : " + args), args);
   }
 });
 

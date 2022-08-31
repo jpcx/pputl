@@ -41,8 +41,10 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
   def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
   def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
 
-  return pp::call(xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")),
-                  str("[" + any + "] any cannot describe multiple args : " + args), args);
+  return pp::call(
+      xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")),
+      str(pp::str("[" + any + "] any cannot describe multiple args") + " : " + args),
+      args);
 });
 
 } // namespace api

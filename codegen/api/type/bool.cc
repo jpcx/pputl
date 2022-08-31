@@ -43,8 +43,9 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(xcat(utl::slice(_0, -1), is_bool(atom)), e, atom);
-  }}(str("[" + bool_
-         + "] bool cannot describe anything but the literal '1' and '0' : " + args),
+  }}(str(pp::str("[" + bool_
+                 + "] bool cannot describe anything but the literal '1' and '0'")
+         + " : " + args),
      atom(args));
 });
 

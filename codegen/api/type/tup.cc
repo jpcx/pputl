@@ -43,7 +43,8 @@ decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
 
   return def<"o(e, obj)">{[&](arg e, arg obj) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), e, obj);
-  }}(str("[" + tup + "] tuple must be wrapped in parentheses : " + args), obj(args));
+  }}(str(pp::str("[" + tup + "] tuple must be wrapped in parentheses") + " : " + args),
+     obj(args));
 });
 
 } // namespace api

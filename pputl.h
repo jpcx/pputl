@@ -994,7 +994,7 @@
 /// PTL_SIZEOF(a, b) // 2u
 /// PTL_SIZEOF(, )   // 2u
 #define PTL_SIZEOF(/* list */...) /* -> udec&size */ \
-  PPUTLSIZEOF_o(PTL_STR([PTL_SIZEOF] too many arguments : __VA_ARGS__), __VA_ARGS__)
+  PPUTLSIZEOF_o(PTL_STR("[PTL_SIZEOF] too many arguments" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1276,7 +1276,7 @@
 /// PTL_ANY(foo) // foo
 #define PTL_ANY(/* any */...) /* -> any */         \
   PTL_XCAT(PPUTLANY_, PPUTLIS_ANY_o(__VA_ARGS__.)) \
-  (PTL_STR([PTL_ANY] any cannot describe multiple args : __VA_ARGS__), __VA_ARGS__)
+  (PTL_STR("[PTL_ANY] any cannot describe multiple args" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1292,7 +1292,7 @@
 /// PTL_NONE() // <nothing>
 #define PTL_NONE(/* none */...) /* -> none */    \
   PTL_XCAT(PPUTLNONE_, PTL_IS_NONE(__VA_ARGS__)) \
-  (PTL_STR([PTL_NONE] none cannot describe something : __VA_ARGS__))
+  (PTL_STR("[PTL_NONE] none cannot describe something" : __VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1306,9 +1306,9 @@
 /// [inherits from PTL_ANY] exactly one non-empty generic value.
 ///
 /// PTL_OBJ(foo) // foo
-#define PTL_OBJ(/* obj */...) /* -> obj */                      \
-  PPUTLOBJ_o(PTL_STR([PTL_OBJ] obj cannot describe empty values \
-                     : __VA_ARGS__),                            \
+#define PTL_OBJ(/* obj */...) /* -> obj */                        \
+  PPUTLOBJ_o(PTL_STR("[PTL_OBJ] obj cannot describe empty values" \
+                     : __VA_ARGS__),                              \
              PTL_ANY(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1334,9 +1334,9 @@
 /// and must be observed by the user where applicable.
 ///
 /// PTL_ATOM(foo) // foo
-#define PTL_ATOM(/* obj */...) /* -> atom */                 \
-  PPUTLATOM_o(PTL_STR([PTL_ATOM] atom cannot describe tuples \
-                      : __VA_ARGS__),                        \
+#define PTL_ATOM(/* obj */...) /* -> atom */                   \
+  PPUTLATOM_o(PTL_STR("[PTL_ATOM] atom cannot describe tuples" \
+                      : __VA_ARGS__),                          \
               PTL_OBJ(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1366,7 +1366,7 @@
 ///  PTL_ENUM(FOO_, GOOD) // GOOD
 ///  PTL_ENUM(FOO_, ,,,)  // <fail>
 #define PTL_ENUM(/* chkprefix: atom, enum<...> */...) /* -> enum<...> */ \
-  PPUTLENUM_o(PTL_STR([PTL_ENUM] enum validation failure                 \
+  PPUTLENUM_o(PTL_STR("[PTL_ENUM] enum validation failure"               \
                       : __VA_ARGS__),                                    \
               PTL_ATOM(PTL_FIRST(__VA_ARGS__)), PTL_ATOM(PTL_REST(__VA_ARGS__)))
 
@@ -1386,10 +1386,10 @@
 ///
 /// PTL_BOOL(0) // 0
 /// PTL_BOOL(1) // 1
-#define PTL_BOOL(/* bool */...) /* -> bool */                                      \
-  PPUTLBOOL_o(                                                                     \
-      PTL_STR([PTL_BOOL] bool cannot describe anything but the literal '1' and '0' \
-              : __VA_ARGS__),                                                      \
+#define PTL_BOOL(/* bool */...) /* -> bool */                                        \
+  PPUTLBOOL_o(                                                                       \
+      PTL_STR("[PTL_BOOL] bool cannot describe anything but the literal '1' and '0'" \
+              : __VA_ARGS__),                                                        \
       PTL_ATOM(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1410,9 +1410,9 @@
 /// PTL_HEX(F)    // F
 /// PTL_HEX(0110) // 6
 /// PTL_HEX(1010) // A
-#define PTL_HEX(/* hex|nybl */...) /* -> hex */                       \
-  PPUTLHEX_o(PTL_STR([PTL_HEX] invalid arguments; must be hex or nybl \
-                     : __VA_ARGS__),                                  \
+#define PTL_HEX(/* hex|nybl */...) /* -> hex */                         \
+  PPUTLHEX_o(PTL_STR("[PTL_HEX] invalid arguments; must be hex or nybl" \
+                     : __VA_ARGS__),                                    \
              PTL_ATOM(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1435,9 +1435,9 @@
 /// PTL_NYBL(0110) // 0110
 /// PTL_NYBL(5)    // 0101
 /// PTL_NYBL(A)    // 1010
-#define PTL_NYBL(/* hex|nybl */...) /* -> nybl */                       \
-  PPUTLNYBL_o(PTL_STR([PTL_NYBL] invalid arguments; must be nybl or hex \
-                      : __VA_ARGS__),                                   \
+#define PTL_NYBL(/* hex|nybl */...) /* -> nybl */                         \
+  PPUTLNYBL_o(PTL_STR("[PTL_NYBL] invalid arguments; must be nybl or hex" \
+                      : __VA_ARGS__),                                     \
               PTL_ATOM(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1500,7 +1500,7 @@
 /// PTL_INT((8, 0, 0), IDEC) // 0x800
 /// PTL_INT((7, F, F), IDEC) // 2047
 #define PTL_INT(/* word, hint=AUTO: enum<IDEC|IHEX|AUTO> */...) /* -> int */ \
-  PPUTLINT_o(PTL_STR([PTL_INT] invalid arguments : __VA_ARGS__), __VA_ARGS__)
+  PPUTLINT_o(PTL_STR("[PTL_INT] invalid arguments" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1565,9 +1565,9 @@
 /// PTL_IDEC(0x005u) // 5
 /// PTL_IDEC(0x7FF)  // 2047
 /// PTL_IDEC(2047)   // 2047
-#define PTL_IDEC(/* word */...) /* -> idec */                        \
-  PPUTLIDEC_o(PTL_STR([PTL_IDEC] cannot represent negative in base10 \
-                      : __VA_ARGS__),                                \
+#define PTL_IDEC(/* word */...) /* -> idec */                          \
+  PPUTLIDEC_o(PTL_STR("[PTL_IDEC] cannot represent negative in base10" \
+                      : __VA_ARGS__),                                  \
               PTL_INT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1648,7 +1648,7 @@
 /// PTL_UINT((0, 0, 0))       // 0x000u
 /// PTL_UINT((F, F, F), UDEC) // 4095u
 #define PTL_UINT(/* word, hint=AUTO: enum<UDEC|UHEX|AUTO> */...) /* -> uint */ \
-  PPUTLUINT_o(PTL_STR([PTL_UINT] invalid arguments : __VA_ARGS__), __VA_ARGS__)
+  PPUTLUINT_o(PTL_STR("[PTL_UINT] invalid arguments" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1749,9 +1749,9 @@
 ///
 /// PTL_TUP(())     // ()
 /// PTL_TUP((1, 2)) // (1, 2)
-#define PTL_TUP(/* tup */...) /* -> tup */                          \
-  PPUTLTUP_o(PTL_STR([PTL_TUP] tuple must be wrapped in parentheses \
-                     : __VA_ARGS__),                                \
+#define PTL_TUP(/* tup */...) /* -> tup */                            \
+  PPUTLTUP_o(PTL_STR("[PTL_TUP] tuple must be wrapped in parentheses" \
+                     : __VA_ARGS__),                                  \
              PTL_OBJ(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1772,9 +1772,9 @@
 /// PTL_UTUP(0x800)     // (8, 0, 0)
 /// PTL_UTUP(2047)      // (7, F, F)
 /// PTL_UTUP((1, 0, 0)) // (1, 0, 0)
-#define PTL_UTUP(/* word */...) /* -> utup */            \
-  PPUTLUTUP_o(PTL_STR([PTL_UTUP] invalid integer or word \
-                      : __VA_ARGS__),                    \
+#define PTL_UTUP(/* word */...) /* -> utup */              \
+  PPUTLUTUP_o(PTL_STR("[PTL_UTUP] invalid integer or word" \
+                      : __VA_ARGS__),                      \
               PTL_OBJ(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -1872,7 +1872,7 @@
 /// PTL_UINT((0, 0, 0), UHEX) // 0x000u
 #define PTL_WORD(                                                                \
     /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> word */ \
-  PPUTLWORD_o(PTL_STR([PTL_WORD] invalid arguments : __VA_ARGS__), __VA_ARGS__)
+  PPUTLWORD_o(PTL_STR("[PTL_WORD] invalid arguments" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -1933,11 +1933,12 @@
 /// PTL_SIZE(1)     // 1
 /// PTL_SIZE(0x007) // 0x007
 /// PTL_SIZE(255u)  // 255u
-#define PTL_SIZE(                                                                      \
-    /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> size */       \
-  PPUTLSIZE_o(PTL_STR([PTL_SIZE] invalid size; must be within 0 and PTL_SIZE_MAX(255u) \
-                      : __VA_ARGS__),                                                  \
-              PTL_WORD(__VA_ARGS__))
+#define PTL_SIZE(                                                                 \
+    /* word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO> */...) /* -> size */  \
+  PPUTLSIZE_o(                                                                    \
+      PTL_STR("[PTL_SIZE] invalid size; must be within 0 and PTL_SIZE_MAX (255u)" \
+              : __VA_ARGS__),                                                     \
+      PTL_WORD(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2099,10 +2100,11 @@
 /// PTL_LT((0, 0, 0), (F, F, F))  // 1
 /// PTL_LT((7, F, F), 2048u)      // 1
 /// PTL_LT(2048u, (7, F, F))      // 0
-#define PTL_LT(/* word, word */...) /* -> bool */                                        \
-  PPUTLLT_o(__VA_ARGS__)(PTL_STR([PTL_LT] comparison of different signedness not allowed \
-                                 : __VA_ARGS__),                                         \
-                         __VA_ARGS__)
+#define PTL_LT(/* word, word */...) /* -> bool */                       \
+  PPUTLLT_o(__VA_ARGS__)(                                               \
+      PTL_STR("[PTL_LT] comparison of different signedness not allowed" \
+              : __VA_ARGS__),                                           \
+      __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2468,7 +2470,7 @@
 /// PTL_LOG2(4095u) // 11u
 #define PTL_LOG2(/* word */...) /* -> word */ \
   PTL_XCAT(PPUTLLOG2_, PTL_GTZ(__VA_ARGS__))  \
-  (PTL_STR([PTL_LOG2] value must be greater than zero : __VA_ARGS__), __VA_ARGS__)
+  (PTL_STR("[PTL_LOG2] value must be greater than zero" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2488,7 +2490,7 @@
 /// PTL_SQRT(4095u) // 63u
 #define PTL_SQRT(/* word */...) /* -> word */ \
   PTL_XCAT(PPUTLSQRT_, PTL_LTZ(__VA_ARGS__))  \
-  (PTL_STR([PTL_SQRT] value must be non - negative : __VA_ARGS__), __VA_ARGS__)
+  (PTL_STR("[PTL_SQRT] value must be non-negative" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2508,7 +2510,7 @@
 /// PTL_FACT(12u) // 2u, 2u, 3u
 #define PTL_FACT(/* word */...) /* -> word... */   \
   PTL_XCAT(PPUTLFACT_, PTL_LTZ(__VA_ARGS__))       \
-  (PTL_STR([PTL_FACT] value must be non - negative \
+  (PTL_STR("[PTL_FACT] value must be non-negative" \
            : __VA_ARGS__),                         \
    PPUTLFACT_R, __VA_ARGS__)
 
@@ -2533,31 +2535,24 @@
 
 /// [numeric.prime]
 /// ---------------
-/// numeric primality test. value must be non-negative.
+/// numeric primality test. numbers less than 2 are non-prime.
 ///
-/// PTL_PRIME(0)     // 0
-/// PTL_PRIME(1)     // 0
-/// PTL_PRIME(2)     // 1
-/// PTL_PRIME(3)     // 1
-/// PTL_PRIME(4)     // 0
-/// PTL_PRIME(13)    // 1
-/// PTL_PRIME(1023)  // 0
-/// PTL_PRIME(2047u) // 0
-#define PTL_PRIME(/* word */...) /* -> bool */                                      \
-  PTL_XCAT(PPUTLPRIME_,                                                             \
-           PTL_XCAT(PTL_LTZ(__VA_ARGS__),                                           \
-                    PTL_XCAT(PTL_EQZ(__VA_ARGS__), PTL_EQZ(PTL_DEC(__VA_ARGS__))))) \
-  (PTL_STR([PTL_PRIME] value must be non - negative : __VA_ARGS__), __VA_ARGS__)
+/// PTL_PRIME(PTL_NEG(2)) // 0
+/// PTL_PRIME(0)          // 0
+/// PTL_PRIME(1)          // 0
+/// PTL_PRIME(2)          // 1
+/// PTL_PRIME(3)          // 1
+/// PTL_PRIME(4)          // 0
+/// PTL_PRIME(13)         // 1
+/// PTL_PRIME(1024)       // 0
+/// PTL_PRIME(2048u)      // 0
+#define PTL_PRIME(/* word */...) /* -> bool */ \
+  PTL_XCAT(PPUTLPRIME_, PTL_LEZ(PTL_DEC(__VA_ARGS__)))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLPRIME_111(e, n) PTL_FAIL(e)
-#define PPUTLPRIME_110(e, n) PTL_FAIL(e)
-#define PPUTLPRIME_101(e, n) PTL_FAIL(e)
-#define PPUTLPRIME_100(e, n) PTL_FAIL(e)
-#define PPUTLPRIME_010(e, n) 0
-#define PPUTLPRIME_001(e, n) 0
-#define PPUTLPRIME_000(e, n) PTL_IS_NONE(PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))
+#define PPUTLPRIME_1(n) 0
+#define PPUTLPRIME_0(n) PTL_IS_NONE(PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -2933,7 +2928,7 @@
 /// PTL_BGET(0xFFEu, 11)    // 0
 /// PTL_BGET((F, F, F), 11) // 1
 #define PTL_BGET(/* word, i: idec */...) /* -> bool */ \
-  PPUTLBGET_o(PTL_STR([PTL_BGET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+  PPUTLBGET_o(PTL_STR("[PTL_BGET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -2973,7 +2968,7 @@
 /// PTL_BSET(0x003u, 11, 0)   // 0x002u
 /// PTL_BSET((F, F, F), 0, 0) // (7, F, F)
 #define PTL_BSET(/* word, i: idec, b: bool */...) /* -> word */ \
-  PPUTLBSET_o(PTL_STR([PTL_BSET] invalid index; args : __VA_ARGS__), __VA_ARGS__)
+  PPUTLBSET_o(PTL_STR("[PTL_BSET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -3225,7 +3220,7 @@
 #define PTL_XTRACE_READ(/* obj */...) /* -> udec&size */                 \
   PTL_XCAT(PPUTLXTRACE_READ_,                                            \
            PTL_IS_NONE(PTL_XCAT(PPUTLXTRACE_READ_DETECT_, __VA_ARGS__))) \
-  (PTL_STR([PTL_XTRACE_READ] invalid xtrace expr : __VA_ARGS__), __VA_ARGS__)
+  (PTL_STR("[PTL_XTRACE_READ] invalid xtrace expr" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 

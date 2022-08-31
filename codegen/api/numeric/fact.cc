@@ -74,8 +74,9 @@ decltype(fact) fact = NIFTY_DEF(fact, [&](va args) {
   };
   def<"\\1(e, r, n)">{} = [&](arg e, arg, arg) { return fail(e); };
 
-  return pp::call(xcat(utl::slice(_0, -1), ltz(args)),
-                  str("[" + fact + "] value must be non-negative : " + args), r, args);
+  return pp::call(
+      xcat(utl::slice(_0, -1), ltz(args)),
+      str(pp::str("[" + fact + "] value must be non-negative") + " : " + args), r, args);
 });
 
 } // namespace api

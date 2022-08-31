@@ -41,7 +41,8 @@ decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
 
   return def<"o(e, ...)">{[&](arg e, va some) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_obj_o(some + ".")), e, some);
-  }}(str("[" + obj + "] obj cannot describe empty values : " + args), any(args));
+  }}(str(pp::str("[" + obj + "] obj cannot describe empty values") + " : " + args),
+     any(args));
 });
 
 } // namespace api

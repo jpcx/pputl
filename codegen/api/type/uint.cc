@@ -169,7 +169,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
                          mode(e, typeof(v),
                               enum_(utl::slice(hint_udec, -4), default_("AUTO", hint)))),
                     v);
-  }}(str("[" + uint + "] invalid arguments : " + args), args);
+  }}(str(pp::str("[" + uint + "] invalid arguments") + " : " + args), args);
 });
 
 } // namespace api

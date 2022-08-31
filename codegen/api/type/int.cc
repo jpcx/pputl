@@ -176,7 +176,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
                          mode(e, typeof(v),
                               enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
                     v);
-  }}(str("[" + int_ + "] invalid arguments : " + args), args);
+  }}(str(pp::str("[" + int_ + "] invalid arguments") + " : " + args), args);
 });
 
 } // namespace api

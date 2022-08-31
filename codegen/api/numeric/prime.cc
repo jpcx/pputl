@@ -33,30 +33,22 @@ namespace api {
 using namespace codegen;
 
 decltype(prime) prime = NIFTY_DEF(prime, [&](va args) {
-  docs << "numeric primality test. value must be non-negative.";
+  docs << "numeric primality test. numbers less than 2 are non-prime.";
 
-  tests << prime(0)                                        = "0" >> docs;
-  tests << prime(1)                                        = "0" >> docs;
-  tests << prime(2)                                        = "1" >> docs;
-  tests << prime(3)                                        = "1" >> docs;
-  tests << prime(4)                                        = "0" >> docs;
-  tests << prime(13)                                       = "1" >> docs;
-  tests << prime(conf::int_max / 2)                        = "0" >> docs;
-  tests << prime(std::to_string(conf::uint_max / 2) + "u") = "0" >> docs;
+  tests << prime(neg(2))                                       = "0" >> docs;
+  tests << prime(0)                                            = "0" >> docs;
+  tests << prime(1)                                            = "0" >> docs;
+  tests << prime(2)                                            = "1" >> docs;
+  tests << prime(3)                                            = "1" >> docs;
+  tests << prime(4)                                            = "0" >> docs;
+  tests << prime(13)                                           = "1" >> docs;
+  tests << prime(conf::int_max / 2 + 1)                        = "0" >> docs;
+  tests << prime(std::to_string(conf::uint_max / 2 + 1) + "u") = "0" >> docs;
 
-  def<"\\000(e, n)"> _000 = [&](arg, arg n) {
-    return is_none(impl::udec(udec(n), "FACT"));
-  };
-  def<"\\001(e, n)">{} = [&](arg, arg) { return "0"; };
-  def<"\\010(e, n)">{} = [&](arg, arg) { return "0"; };
-  def<"\\100(e, n)">{} = [&](arg e, arg) { return fail(e); };
-  def<"\\101(e, n)">{} = [&](arg e, arg) { return fail(e); };
-  def<"\\110(e, n)">{} = [&](arg e, arg) { return fail(e); };
-  def<"\\111(e, n)">{} = [&](arg e, arg) { return fail(e); };
+  def<"\\0(n)"> _0 = [&](arg n) { return is_none(impl::udec(udec(n), "FACT")); };
+  def<"\\1(n)">{}  = [&](arg) { return "0"; };
 
-  return pp::call(
-      xcat(utl::slice(_000, -3), xcat(ltz(args), xcat(eqz(args), eqz(dec(args))))),
-      str("[" + prime + "] value must be non-negative : " + args), args);
+  return pp::call(xcat(utl::slice(_0, -1), lez(dec(args))), args);
 });
 
 } // namespace api

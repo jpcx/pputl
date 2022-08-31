@@ -47,8 +47,9 @@ decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
   };
   def<"\\1(e, n)">{} = [&](arg e, arg) { return fail(e); };
 
-  return pp::call(xcat(utl::slice(_0, -1), ltz(args)),
-                  str("[" + sqrt + "] value must be non-negative : " + args), args);
+  return pp::call(
+      xcat(utl::slice(_0, -1), ltz(args)),
+      str(pp::str("[" + sqrt + "] value must be non-negative") + " : " + args), args);
 });
 
 } // namespace api

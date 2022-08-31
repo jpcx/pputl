@@ -146,7 +146,9 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
         return xcat(utl::slice(intint, -2), xcat(signof(word(l)), signof(word(r))));
       }}(args),
-      str("[" + lt + "] comparison of different signedness not allowed : " + args), args);
+      str(pp::str("[" + lt + "] comparison of different signedness not allowed") + " : "
+          + args),
+      args);
 });
 
 } // namespace api

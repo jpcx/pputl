@@ -42,6 +42,8 @@ namespace api {
 
 inline codegen::category<"math"> math;
 
+// TODO mul2 divr2 div2 mod2
+
 extern codegen::def<"add(...: word, word) -> word"> const& add;
 extern codegen::def<"sub(...: word, word) -> word"> const& sub;
 extern codegen::def<"mul(...: word, word) -> word"> const& mul;

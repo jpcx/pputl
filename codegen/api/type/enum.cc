@@ -55,8 +55,8 @@ decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
   return def<"o(e, chkatom, vatom)">{[&](arg e, arg chkatom, arg vatom) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_enum_o(chkatom, vatom)), e,
                     vatom);
-  }}(str("[" + enum_ + "] enum validation failure : " + args), atom(first(args)),
-     atom(rest(args)));
+  }}(str(pp::str("[" + enum_ + "] enum validation failure") + " : " + args),
+     atom(first(args)), atom(rest(args)));
 });
 
 } // namespace api

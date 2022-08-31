@@ -49,7 +49,8 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
     return pp::call(
         xcat(utl::slice(_00, -2), xcat(detail::is_hex_o(atom), detail::is_nybl_o(atom))),
         e, atom);
-  }}(str("[" + hex + "] invalid arguments; must be hex or nybl : " + args), atom(args));
+  }}(str(pp::str("[" + hex + "] invalid arguments; must be hex or nybl") + " : " + args),
+     atom(args));
 });
 
 } // namespace api

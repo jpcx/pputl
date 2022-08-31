@@ -97,7 +97,7 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
                   }}(e, i, b, lt(i, conf::bit_length), bin);
                 }}(e, idec(i), bool_(b), bdump(v)),
                 typeof(v));
-  }}(str("[" + bset + "] invalid index; args : " + args), args);
+  }}(str(pp::str("[" + bset + "] invalid index") + " : " + args), args);
 });
 
 } // namespace api

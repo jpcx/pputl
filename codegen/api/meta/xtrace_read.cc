@@ -66,7 +66,7 @@ decltype(xtrace_read) xtrace_read = NIFTY_DEF(xtrace_read, [&](va args) {
            is_none(
                xcat(utl::slice(detect_a, -((std::string const&)detail::xtrace_a).size()),
                     args))),
-      str("[" + xtrace_read + "] invalid xtrace expr : " + args), args);
+      str(pp::str("[" + xtrace_read + "] invalid xtrace expr") + " : " + args), args);
 });
 
 } // namespace api

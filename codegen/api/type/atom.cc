@@ -51,7 +51,8 @@ decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
 
   return def<"o(e, obj)">{[&](arg e, arg obj) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_atom_o(obj)), e, obj);
-  }}(str("[" + atom + "] atom cannot describe tuples : " + args), obj(args));
+  }}(str(pp::str("[" + atom + "] atom cannot describe tuples") + " : " + args),
+     obj(args));
 });
 
 } // namespace api
