@@ -44,14 +44,14 @@ inline codegen::category<"math"> math;
 
 extern codegen::def<"add(...: word, word) -> word"> const& add;
 extern codegen::def<"sub(...: word, word) -> word"> const& sub;
-// extern codegen::def<"mul(...: l: uint, r: uint) -> uint{l * r}"> const& mul;
+extern codegen::def<"mul(...: word, word) -> word"> const& mul;
 // extern codegen::def<"fulldiv(...: l: uint, r: uint) -> uint{l / r}, uint{l % r}">
 // const&
 //     fulldiv;
 
 NIFTY_DECL(add);
 NIFTY_DECL(sub);
-// NIFTY_DECL(mul);
+NIFTY_DECL(mul);
 // NIFTY_DECL(fulldiv);
 
 inline codegen::end_category<"math"> math_end;

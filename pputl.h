@@ -2535,22 +2535,29 @@
 /// ---------------
 /// numeric primality test. value must be non-negative.
 ///
-/// PTL_PRIME(0)     // 1
-/// PTL_PRIME(1)     // 1
+/// PTL_PRIME(0)     // 0
+/// PTL_PRIME(1)     // 0
 /// PTL_PRIME(2)     // 1
 /// PTL_PRIME(3)     // 1
 /// PTL_PRIME(4)     // 0
 /// PTL_PRIME(13)    // 1
 /// PTL_PRIME(1023)  // 0
 /// PTL_PRIME(2047u) // 0
-#define PTL_PRIME(/* word */...) /* -> bool */ \
-  PTL_XCAT(PPUTLPRIME_, PTL_LTZ(__VA_ARGS__))  \
+#define PTL_PRIME(/* word */...) /* -> bool */                                      \
+  PTL_XCAT(PPUTLPRIME_,                                                             \
+           PTL_XCAT(PTL_LTZ(__VA_ARGS__),                                           \
+                    PTL_XCAT(PTL_EQZ(__VA_ARGS__), PTL_EQZ(PTL_DEC(__VA_ARGS__))))) \
   (PTL_STR([PTL_PRIME] value must be non - negative : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLPRIME_1(e, n) PTL_FAIL(e)
-#define PPUTLPRIME_0(e, n) PTL_IS_NONE(PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))
+#define PPUTLPRIME_111(e, n) PTL_FAIL(e)
+#define PPUTLPRIME_110(e, n) PTL_FAIL(e)
+#define PPUTLPRIME_101(e, n) PTL_FAIL(e)
+#define PPUTLPRIME_100(e, n) PTL_FAIL(e)
+#define PPUTLPRIME_010(e, n) 0
+#define PPUTLPRIME_001(e, n) 0
+#define PPUTLPRIME_000(e, n) PTL_IS_NONE(PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3573,6 +3580,67 @@
 #define PPUTLSUB_R(...)                     PPUTLSUB_R_o(__VA_ARGS__)
 #define PPUTLSUB_R_o(_, a, b, c, d, e, f)   PPUTLIMPL_HEXHEX(c##f, SUB##_), a, b, f, d, e
 #define PPUTLSUB_X(...)                     __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [math.mul]
+/// ----------
+/// numeric multiplication with overflow.
+///
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
+///
+/// PTL_MUL(0, 0)                   // 0
+/// PTL_MUL(0, 1)                   // 0
+/// PTL_MUL(1, 1)                   // 1
+/// PTL_MUL(1, 2)                   // 2
+/// PTL_MUL(2, 2)                   // 4
+/// PTL_MUL(PTL_NEG(2), 2)          // 0xFFC
+/// PTL_MUL(PTL_NEG(2), PTL_NEG(2)) // 0x004
+/// PTL_MUL(4095u, 1)               // 4095u
+/// PTL_MUL(4095u, 4095u)           // 1u
+/// PTL_MUL(2047, 4095u)            // 2049u
+#define PTL_MUL(/* word, word */...) /* -> word */ \
+  PTL_IF(PTL_EQZ(PTL_REST(__VA_ARGS__)), PPUTLMUL_EQZ_B, PPUTLMUL_NEZ_B)(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLMUL_NEZ_B(a, b)                                  \
+  PTL_XCAT(PPUTLMUL_NEZ_B_, PTL_XCAT(PTL_LTZ(a), PTL_LTZ(b))) \
+  (PTL_TYPEOF(a), PTL_TYPEOF(b), a, b)
+#define PPUTLMUL_NEZ_B_11(ta, tb, a, b) \
+  PPUTLMUL_NEZ_B_11_o(PPUTLIMPL_ARITHHINT(ta, tb), PTL_NEG(a), PTL_NEG(b))
+#define PPUTLMUL_NEZ_B_11_o(hint, a, b)                                        \
+  PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
+                                   0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
+           hint)
+#define PPUTLMUL_NEZ_B_10(ta, tb, a, b)                                                  \
+  PTL_NEG(                                                                               \
+      PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) PTL_NEG(a), \
+                                       b, 0 PTL_RECUR_RP(PTL_LOG2(b)))),                 \
+               PPUTLIMPL_ARITHHINT(ta, tb)))
+#define PPUTLMUL_NEZ_B_01(ta, tb, a, b) \
+  PPUTLMUL_NEZ_B_01_o(PPUTLIMPL_ARITHHINT(ta, tb), a, PTL_NEG(b))
+#define PPUTLMUL_NEZ_B_01_o(hint, a, b)                                                \
+  PTL_NEG(PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
+                                           0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
+                   hint))
+#define PPUTLMUL_NEZ_B_00(ta, tb, a, b)                                        \
+  PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
+                                   0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
+           PPUTLIMPL_ARITHHINT(ta, tb))
+#define PPUTLMUL_EQZ_B(a, b) \
+  PTL_WORD(0, PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
+#define PPUTLMUL_R(...) PPUTLMUL_R_o(__VA_ARGS__)
+#define PPUTLMUL_R_o(a, b, s) \
+  PTL_BSLL(a), PTL_BSRA(b),   \
+      PTL_IF(PTL_BGET(b, 11), PPUTLMUL_R_RECR, PPUTLMUL_R_BASE)(s, a)
+#define PPUTLMUL_R_RECR(s, a)   PTL_ADD(s, a)
+#define PPUTLMUL_R_BASE(s, a)   s
+#define PPUTLMUL_RES(...)       PPUTLMUL_RES_o(__VA_ARGS__)
+#define PPUTLMUL_RES_o(a, b, s) PTL_ADD(a, s)
+#define PPUTLMUL_X(...)         __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
