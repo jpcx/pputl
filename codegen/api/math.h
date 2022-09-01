@@ -26,7 +26,9 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "bitwise.h"
 #include "codegen.h"
+#include "compare.h"
 #include "config.h"
 #include "control.h"
 #include "lang.h"
@@ -40,19 +42,19 @@ namespace api {
 
 inline codegen::category<"math"> math;
 
-extern codegen::def<"add(...: l: uint, r: uint) -> uint{l + r}"> const&                  add;
-extern codegen::def<"sub(...: l: uint, r: uint) -> uint{l - r}"> const&                  sub;
-extern codegen::def<"mul(...: l: uint, r: uint) -> uint{l * r}"> const&                  mul;
-extern codegen::def<"fulldiv(...: l: uint, r: uint) -> uint{l / r}, uint{l % r}"> const& fulldiv;
+extern codegen::def<"add(...: word, word) -> word"> const&        add;
+extern codegen::def<"sub(...: word, word) -> word"> const&        sub;
+extern codegen::def<"mul(...: word, word) -> word"> const&        mul;
+extern codegen::def<"divr(...: word, word) -> word, word"> const& divr;
+extern codegen::def<"div(...: word, word) -> word"> const&        div;
+extern codegen::def<"rem(...: word, word) -> word"> const&        rem;
 
 NIFTY_DECL(add);
-namespace detail {
-extern codegen::def<>& sub_impl;
-NIFTY_DECL(sub_impl);
-} // namespace detail
 NIFTY_DECL(sub);
 NIFTY_DECL(mul);
-NIFTY_DECL(fulldiv);
+NIFTY_DECL(divr);
+NIFTY_DECL(div);
+NIFTY_DECL(rem);
 
 inline codegen::end_category<"math"> math_end;
 

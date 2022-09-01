@@ -33,28 +33,34 @@ namespace api {
 
 inline codegen::category<"lang"> lang;
 
-extern codegen::def<"lp() -> <left parens>"> const&                                           lp;
-extern codegen::def<"rp() -> <left parens>"> const&                                           rp;
-extern codegen::def<"eat(...) -> <nothing>"> const&                                           eat;
-extern codegen::def<"esc(...: v: any...) -> ...v"> const&                                     esc;
-extern codegen::def<"cat(...: a: any, b: any) -> a##b"> const&                                cat;
-extern codegen::def<"istr(...: v: any...) -> <string literal #...v>"> const&                  istr;
-extern codegen::def<"str(...: v: any...) -> <string literal #...v>"> const&                   str;
-extern codegen::def<"first(...: v: any...) -> v[0]"> const&                                   first;
-extern codegen::def<"rest(...:  v: any...) -> ...v"> const&                                   rest;
-extern codegen::def<"trim(...: v: any...) -> v[0] ? (v[1:] ? ...v : v[0]) : ...v[1:]"> const& trim;
-extern codegen::def<"fail(...: msg: <string literal>) -> <preprocessor error>"> const&        fail;
+extern codegen::def<"eat(...) -> none"> const&                                   eat;
+extern codegen::def<"esc(...) -> any..."> const&                                 esc;
+extern codegen::def<"cat(a, b: a: any, b: any) -> any"> const&                   cat;
+extern codegen::def<"xcat(...: a: any, b: any) -> any"> const&                   xcat;
+extern codegen::def<"str(...: any...) -> obj"> const&                            str;
+extern codegen::def<"xstr(...: any...) -> obj"> const&                           xstr;
+extern codegen::def<"first(_, ...: first: any, ...rest: any) -> any"> const&     first;
+extern codegen::def<"xfirst(...: any...) -> any"> const&                         xfirst;
+extern codegen::def<"rest(_, ...: first: any, ...rest: any) -> any..."> const&   rest;
+extern codegen::def<"xrest(...: any...) -> any..."> const&                       xrest;
+extern codegen::def<"trim(...: any...) -> any..."> const&                        trim;
+extern codegen::def<"default(...: default: any, ...args: any) -> any..."> const& default_;
+extern codegen::def<"fail(...: msg: obj)"> const&                                fail;
 
-NIFTY_DECL(lp);
-NIFTY_DECL(rp);
+// TODO fmt.hex
+
 NIFTY_DECL(eat);
 NIFTY_DECL(esc);
 NIFTY_DECL(cat);
-NIFTY_DECL(istr);
+NIFTY_DECL(xcat);
 NIFTY_DECL(str);
+NIFTY_DECL(xstr);
 NIFTY_DECL(first);
+NIFTY_DECL(xfirst);
 NIFTY_DECL(rest);
+NIFTY_DECL(xrest);
 NIFTY_DECL(trim);
+NIFTY_DECL(default_);
 NIFTY_DECL(fail);
 
 inline codegen::end_category<"lang"> lang_end;

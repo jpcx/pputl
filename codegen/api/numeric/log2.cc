@@ -32,27 +32,23 @@ namespace api {
 using namespace codegen;
 
 decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
-  docs << "positive uint logarithm base 2 lookup."
-       << "fails on n=0.";
+  docs << "numeric log2. value must be greater than zero."
+       << "casts result according to the input.";
 
-  tests << log2(1) = "0" >> docs;
-  tests << log2(conf::uint_max) =
-      std::to_string(((unsigned)std::log2(conf::uint_max)) % conf::uint_max) >> docs;
+  tests << log2("1u")                      = "0u" >> docs;
+  tests << log2(2)                         = "1" >> docs;
+  tests << log2("0x" + utl::cat(samp::h4)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << log2(uint_max_s) = (std::to_string(conf::bit_length - 1) + "u") >> docs;
 
-  def<"nez1(err, ...)">{} = [&](arg, va args) {
-    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-        [&](pack args) {
-          return args[2];
-        }}(args);
+  def<"\\0(e, n)"> _0 = [&](arg e, arg) { return fail(e); };
+  def<"\\1(e, n)">{}  = [&](arg, arg n) {
+    return word(impl::udec(udec(n), "LOG2"), typeof(n));
   };
 
-  def<"nez0(err, ...)"> nez0 = [&](arg err, va) {
-    return fail(err);
-  };
-
-  return pp::call(cat(utl::slice(nez0, -1), nez(args)),
-                  istr("[" + log2 + "] log2 of zero not supported : " + args),
-                  cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+  return pp::call(
+      xcat(utl::slice(_0, -1), gtz(args)),
+      str(pp::str("[" + log2 + "] value must be greater than zero") + " : " + args),
+      args);
 });
 
 } // namespace api

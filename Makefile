@@ -27,12 +27,13 @@
 
 CXX       ?= g++
 WARNINGS   = -Wall -Wextra -Werror -pedantic -Wno-gnu-zero-variadic-macro-arguments
-CXXFLAGS  += -std=c++20 -Icodegen -Icodegen/api $(WARNINGS)
+CXXFLAGS  += -std=c++20 -Icodegen -Icodegen/api $(WARNINGS) -O3
 RM        ?= rm -f
 MKDIR     ?= mkdir
 BIN       ?= .build/bin
 SRCS      += $(shell find codegen -type f -name "*.cc")
 TEST_SRC   = tests.cc
+TEST_OBJ   = .tests.o
 OBJS       = $(patsubst codegen/%.cc, .build/%.o, $(SRCS))
 DEPS       = $(patsubst %.o, %.d, $(OBJS))
 
@@ -45,14 +46,13 @@ run: $(BIN) $(CGEN_OUT)
 	./$(BIN)
 
 clean:
-	$(RM) $(BIN)
 	$(RM) $(CGEN_OUT)
-	$(RM) $(TEST_SRC)
+	$(RM) $(TEST_OBJ)
 	$(RM) .depend
 	$(RM) -r .build
 
 test: $(TEST_SRC)
-	$(CXX) -c $(CXXFLAGS) -o /dev/null $<
+	$(CXX) -c $(CXXFLAGS) -o $(TEST_OBJ) $<
 
 .build:
 	@$(MKDIR) .build

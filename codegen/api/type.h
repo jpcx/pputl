@@ -29,42 +29,56 @@
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
+#include "traits.h"
 
 namespace api {
 
 inline codegen::category<"type"> type;
 
-extern codegen::def<"tuple(...: t: any...) -> tuple{t}"> const& tuple;
-extern codegen::def<"bool(...: b: any...) -> bool{b}"> const&   bool_;
-extern codegen::def<"uint(...: n: any...) -> uint{n}"> const&   uint;
+extern codegen::def<"list(...: list) -> list"> const&                            list;
+extern codegen::def<"any(...: any) -> any"> const&                               any;
+extern codegen::def<"none(...: none) -> none"> const&                            none;
+extern codegen::def<"obj(...: obj) -> obj"> const&                               obj;
+extern codegen::def<"atom(...: obj) -> atom"> const&                             atom;
+extern codegen::def<"enum(...: chkprefix: atom, enum<...>) -> enum<...>"> const& enum_;
+extern codegen::def<"bool(...: bool) -> bool"> const&                            bool_;
+extern codegen::def<"hex(...: hex|nybl) -> hex"> const&                          hex;
+extern codegen::def<"nybl(...: hex|nybl) -> nybl"> const&                        nybl;
+extern codegen::def<"int(...: word, hint=AUTO: enum<IDEC|IHEX|AUTO>) -> int"> const& int_;
+extern codegen::def<"idec(...: word) -> idec"> const&                                idec;
+extern codegen::def<"ihex(...: word) -> ihex"> const&                                ihex;
+extern codegen::def<"uint(...: word, hint=AUTO: enum<UDEC|UHEX|AUTO>) -> uint"> const&
+                                                      uint;
+extern codegen::def<"udec(...: word) -> udec"> const& udec;
+extern codegen::def<"uhex(...: word) -> uhex"> const& uhex;
+extern codegen::def<"tup(...: tup) -> tup"> const&    tup;
+extern codegen::def<"utup(...: word) -> utup"> const& utup;
+extern codegen::def<
+    "word(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> word"> const&
+    word;
+extern codegen::def<
+    "size(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const&
+    size;
 
-NIFTY_DECL(tuple);
-namespace detail {
-extern codegen::def<>& bool_pass;
-extern codegen::def<>& bool_fail;
-extern codegen::def<>& bool_o;
-NIFTY_DECL(bool_pass);
-NIFTY_DECL(bool_fail);
-NIFTY_DECL(bool_o);
-} // namespace detail
+NIFTY_DECL(list);
+NIFTY_DECL(any);
+NIFTY_DECL(none);
+NIFTY_DECL(obj);
+NIFTY_DECL(atom);
+NIFTY_DECL(enum_);
 NIFTY_DECL(bool_);
-namespace detail {
-extern codegen::def<>&                                          uint_seq;
-extern codegen::def<>&                                          uint_rseq;
-extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_decimal;
-extern std::array<codegen::def<>, codegen::conf::uint_max + 1>& uint_traits;
-extern codegen::def<>&                                          uint_pass;
-extern codegen::def<>&                                          uint_fail;
-extern codegen::def<>&                                          uint_o;
-NIFTY_DECL(uint_seq);
-NIFTY_DECL(uint_rseq);
-NIFTY_DECL(uint_decimal);
-NIFTY_DECL(uint_traits);
-NIFTY_DECL(uint_pass);
-NIFTY_DECL(uint_fail);
-NIFTY_DECL(uint_o);
-} // namespace detail
+NIFTY_DECL(hex);
+NIFTY_DECL(nybl);
+NIFTY_DECL(int_);
+NIFTY_DECL(idec);
+NIFTY_DECL(ihex);
 NIFTY_DECL(uint);
+NIFTY_DECL(udec);
+NIFTY_DECL(uhex);
+NIFTY_DECL(tup);
+NIFTY_DECL(utup);
+NIFTY_DECL(word);
+NIFTY_DECL(size);
 
 inline codegen::end_category<"type"> type_end;
 

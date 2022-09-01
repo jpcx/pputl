@@ -31,16 +31,15 @@ namespace api {
 
 using namespace codegen;
 
-decltype(cat) cat = NIFTY_DEF(cat, [&](va args) {
-  docs << "concatenates two args after an expansion."
+decltype(cat) cat = NIFTY_DEF(cat, [&](arg a, arg b) {
+  docs << "immediately concatenates a with b."
+       << "must provide at least one arg."
        << "args must be compatible with the ## operator.";
 
   tests << cat("foo", "bar")      = "foobar" >> docs;
-  tests << cat("foo", eat("bar")) = "foo" >> docs;
+  tests << cat("foo", eat("bar")) = ("foo" + eat + "(bar)") >> docs;
 
-  return pp::va_opt(def<"x(a, b)">{[&](arg a, arg b) {
-    return pp::cat(a, b);
-  }}(args));
+  return pp::cat(a, b);
 });
 
 } // namespace api

@@ -32,20 +32,49 @@ namespace api {
 using namespace codegen;
 
 decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
-  docs << "uint decrement lookup w/ underflow.";
+  docs << "numeric decrement w/ underflow.";
 
-  tests << dec(0)                  = uint_max_s >> docs;
-  tests << dec(1)                  = "0";
-  tests << dec(2)                  = "1";
-  tests << dec(conf::uint_max)     = utl::to_string(conf::uint_max - 1);
-  tests << dec(conf::uint_max - 1) = utl::to_string(conf::uint_max - 2);
+  tests << dec(1)         = "0" >> docs;
+  tests << dec("2u")      = "1u" >> docs;
+  tests << dec(0)         = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << dec(int_min_s) = ("0x" + utl::cat(samp::himax)) >> docs;
 
-  return def<"x(...)">{[&](va args) {
-    return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-        [&](pack args) {
-          return args[0];
-        }}(args);
-  }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
+  if constexpr (conf::word_size > 1)
+    tests << dec("16u") = "15u" >> docs;
+
+  tests << dec("0u") = uint_max_s >> docs;
+
+  constexpr auto sz = conf::word_size;
+
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              impl::hex(v[sz], pp::cat("DEC", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
+  };
+
+  def<"res(t, ...)"> res = [&](arg t, va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
+    };
+
+    return word(o(args), t);
+  };
+
+  return def<"o(v)">{[&](arg v) {
+    auto rlp = utl::cat(svect{conf::word_size, r + "("});
+    auto rrp = utl::cat(svect{conf::word_size, ")"});
+    return res(typeof(v), rlp + "1, " + x(esc + " " + utup(v)) + rrp);
+  }}(args);
 });
 
 } // namespace api

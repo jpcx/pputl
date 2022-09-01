@@ -31,37 +31,41 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_uint_o) is_uint_o = NIFTY_DEF(is_uint_o);
+}
+
 decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "detects if args is a uint.";
+  docs << "[extends " + is_atom + "] detects if args is an unsigned integer."
+       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size)
+              + ").";
 
-  tests << is_uint()                   = "0" >> docs;
-  tests << is_uint("foo")              = "0" >> docs;
-  tests << is_uint(0)                  = "1" >> docs;
-  tests << is_uint("()")               = "0" >> docs;
-  tests << is_uint("(), ()")           = "0" >> docs;
-  tests << is_uint(0, 1)               = "0" >> docs;
-  tests << is_uint(conf::uint_max)     = "1" >> docs;
-  tests << is_uint("foo, bar")         = "0";
-  tests << is_uint(conf::uint_max - 1) = "1";
-  tests << is_uint("0, ")              = "0";
-  tests << is_uint(", ")               = "0";
-  tests << is_uint(", , ")             = "0";
-  tests << is_uint("a, ")              = "0";
-  tests << is_uint("a, , ")            = "0";
-  tests << is_uint(", a")              = "0";
-  tests << is_uint(", a, ")            = "0";
-  tests << is_uint(", , a")            = "0";
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
 
-  def fail = def{(std::string const&)detail::uint_fail} = [&] {
-    return "0";
+  tests << is_uint()               = "0" >> docs;
+  tests << is_uint("foo")          = "0" >> docs;
+  tests << is_uint(0)              = "0" >> docs;
+  tests << is_uint("0u")           = "1" >> docs;
+  tests << is_uint(conf::uint_max) = "0" >> docs;
+  tests << is_uint(uint_max_s)     = "1" >> docs;
+  tests << is_uint(min + "u")      = "1" >> docs;
+  tests << is_uint(max)            = "0" >> docs;
+  tests << is_uint("0b110u")       = "0" >> docs;
+  tests << is_uint("(), ()")       = "0" >> docs;
+
+  detail::is_uint_o = def{"o(atom)"} = [&](arg atom) {
+    def<"\\00"> _00 = [&] { return "0"; };
+    def<"\\01">{}   = [&] { return "1"; };
+    def<"\\10">{}   = [&] { return "1"; };
+    return xcat(utl::slice(_00, -2),
+                xcat(impl::udec(atom, "IS"), impl::uhex(atom, "IS")));
   };
 
-  def{(std::string const&)detail::uint_pass} = [&] {
-    return "1";
-  };
+  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
+  def<"\\1">{}  = [&] { return detail::is_uint_o; };
 
-  return cat(utl::slice(fail, -((std::string const&)detail::uint_pass).size()),
-             pp::call(pp::call(detail::uint_o(args + "."), args), args));
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

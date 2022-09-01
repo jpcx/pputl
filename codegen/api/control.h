@@ -26,9 +26,12 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "bitwise.h"
 #include "codegen.h"
+#include "compare.h"
 #include "config.h"
 #include "lang.h"
+#include "logic.h"
 #include "meta.h"
 #include "numeric.h"
 #include "traits.h"
@@ -38,8 +41,8 @@ namespace api {
 
 inline codegen::category<"control"> control;
 
-extern codegen::def<"if(...: b: bool, t: tuple, f: tuple) -> b ? ...t : ...f"> const& if_;
-extern codegen::def<"switch(...: cs: uint, cases: tuple...) -> ...cases[cs]"> const&  switch_;
+extern codegen::def<"if(...: bool, t: any, f: any) -> any"> const&    if_;
+extern codegen::def<"switch(...: size, ...cases: any) -> any"> const& switch_;
 
 NIFTY_DECL(if_);
 NIFTY_DECL(switch_);

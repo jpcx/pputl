@@ -32,21 +32,58 @@ namespace api {
 using namespace codegen;
 
 decltype(add) add = NIFTY_DEF(add, [&](va args) {
-  docs << "uint addition with overflow.";
+  docs << "addition with overflow."
+       << "" << impl::arith_rules;
 
-  tests << add("0, 0")            = "0" >> docs;
-  tests << add("0, 1")            = "1" >> docs;
-  tests << add("1, 2")            = "3" >> docs;
-  tests << add(conf::uint_max, 1) = "0" >> docs;
-  tests << add(conf::uint_max, 2) = "1" >> docs;
-  tests << add(1, conf::uint_max) = "0";
-  tests << add(2, conf::uint_max) = "1";
+  tests << add("0, 0")        = "0" >> docs;
+  tests << add("0, 1")        = "1" >> docs;
+  tests << add("1, 2")        = "3" >> docs;
+  tests << add("3u, 4")       = "7u" >> docs;
+  tests << add("5, 6u")       = "11u" >> docs;
+  tests << add(uint_max_s, 1) = "0u" >> docs;
+  tests << add(uint_max_s, 2) = "1u" >> docs;
+  tests << add(1, uint_max_s) = "0u";
+  tests << add(2, uint_max_s) = "1u";
+  tests << add(uint_max_s, uint_max_s) =
+      (std::to_string(conf::uint_max - 1) + "u") >> docs;
+  tests << add(int_max_s, 1) = int_min_s >> docs;
+  tests << add(int_max_s, pp::tup(samp::h1)) =
+      (std::to_string(conf::int_max + 1) + "u") >> docs;
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
+  constexpr auto sz = conf::word_size;
+
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz * 2), ", ");
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              impl::hexhex(pp::cat(v[sz], v[sz * 2]), pp::cat("ADD", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+              v[sz * 2],
+              utl::cat(svect{&v[sz + 1], &v[sz * 2]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
   };
 
-  return meta_recur(x, first(args), inc, rest(args));
+  def<"res(ta, tb, ...)"> res = [&](arg ta, arg tb, va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
+    };
+
+    return word(o(args), impl::arithhint(ta, tb));
+  };
+
+  return def<"o(a, b)">{[&](arg a, arg b) {
+    auto rlp = utl::cat(svect{conf::word_size, r + "("});
+    auto rrp = utl::cat(svect{conf::word_size, ")"});
+    return res(typeof(a), typeof(b),
+               rlp + "0, " + x(esc + " " + utup(a), esc + " " + utup(b)) + rrp);
+  }}(args);
 });
 
 } // namespace api

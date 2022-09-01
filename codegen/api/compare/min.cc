@@ -32,42 +32,46 @@ namespace api {
 using namespace codegen;
 
 decltype(min) min = NIFTY_DEF(min, [&](va args) {
-  docs << "uint minimum operation.";
+  docs << "word minimum operation."
+       << "prohibits comparison of different signedness."
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
-  tests << min("0, 0")                                 = "0" >> docs;
-  tests << min("0, 1")                                 = "0" >> docs;
-  tests << min("0, 2")                                 = "0";
-  tests << min("0, 3")                                 = "0";
-  tests << min("1, 0")                                 = "0" >> docs;
-  tests << min("1, 1")                                 = "1" >> docs;
-  tests << min("1, 2")                                 = "1";
-  tests << min("1, 3")                                 = "1";
-  tests << min("2, 0")                                 = "0";
-  tests << min("2, 1")                                 = "1";
-  tests << min("2, 2")                                 = "2";
-  tests << min("2, 3")                                 = "2";
-  tests << min("3, 0")                                 = "0";
-  tests << min("3, 1")                                 = "1";
-  tests << min("3, 2")                                 = "2";
-  tests << min("3, 3")                                 = "3";
-  tests << min(0, conf::uint_max)                      = "0";
-  tests << min(0, conf::uint_max - 1)                  = "0";
-  tests << min(1, conf::uint_max)                      = "1";
-  tests << min(1, conf::uint_max - 1)                  = "1";
-  tests << min(conf::uint_max, 0)                      = "0";
-  tests << min(conf::uint_max, 0)                      = "0";
-  tests << min(conf::uint_max - 1, 0)                  = "0";
-  tests << min(conf::uint_max - 1, 0)                  = "0";
-  tests << min(conf::uint_max, 1)                      = "1";
-  tests << min(conf::uint_max, 1)                      = "1";
-  tests << min(conf::uint_max - 1, 1)                  = "1";
-  tests << min(conf::uint_max - 1, 1)                  = "1";
-  tests << min(conf::uint_max, conf::uint_max)         = uint_max_s;
-  tests << min(conf::uint_max, conf::uint_max - 1)     = std::to_string(conf::uint_max - 1);
-  tests << min(conf::uint_max - 1, conf::uint_max)     = std::to_string(conf::uint_max - 1);
-  tests << min(conf::uint_max - 1, conf::uint_max - 1) = std::to_string(conf::uint_max - 1);
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
+  using conf::word_size;
+  using std::vector;
+  using std::string;
 
-  return if_(lt(args), pp::tup(first(args)), pp::tup(rest(args)));
+  tests << min("0, 0")   = "0" >> docs;
+  tests << min("0, 1")   = "0" >> docs;
+  tests << min("7u, 8u") = "7u" >> docs;
+  tests << min("8u, 7u") = "7u";
+  tests << min(int_(uint_max_s), "0") =
+      ("0x" + utl::cat(vector<string>(word_size, "F"))) >> docs;
+  tests << min(int_max_s, int_min_s)                          = int_min_s >> docs;
+  tests << min(int_min_s, int_max_s)                          = int_min_s;
+  tests << min(int_min_s, int_(to_string(int_max + 1) + "u")) = int_min_s >> docs;
+  tests << min(int_min_s, int_(to_string(int_max + 2) + "u")) = int_min_s >> docs;
+  tests << min("0u", uint_max_s)                              = "0u";
+  tests << min(uint_max_s, "0u")                              = "0u";
+  tests << min(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") =
+      to_string((uint_max / 2) - 1) + "u";
+  tests << min(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u") =
+      to_string(uint_max / 2) + "u";
+  tests << min(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") =
+      to_string(uint_max / 2) + "u";
+  tests << min(to_string(int_max / 2), to_string((int_max / 2) - 1)) =
+      to_string((int_max / 2) - 1);
+  tests << min(to_string(int_max / 2), to_string((int_max / 2))) =
+      to_string((int_max / 2));
+  tests << min(to_string(int_max / 2), to_string((int_max / 2) + 1)) =
+      to_string(int_max / 2);
+
+  def<"\\0(a, b)"> _0 = [&](arg, arg b) { return b; };
+  def<"\\1(a, b)">{}  = [&](arg a, arg) { return a; };
+
+  return pp::call(xcat(utl::slice(_0, -1), lt(args)), args);
 });
 
 } // namespace api

@@ -26,9 +26,12 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "bitwise.h"
 #include "codegen.h"
+#include "compare.h"
 #include "config.h"
 #include "lang.h"
+#include "logic.h"
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
@@ -37,34 +40,37 @@ namespace api {
 
 inline codegen::category<"meta"> meta;
 
-// TODO: lp and rp can be moved back here and should not be functions
-//
-extern codegen::def<"id(...: v: any...) -> ...v"> const&                id;
-std::string                                                             xct_expected(unsigned n);
-extern codegen::def<"xct -> xct"> const&                                xct;
-extern codegen::def<"xct_size(...: xct) -> uint"> const&                xct_size;
-extern codegen::def<"ropen(...: n: uint, f: <fn>) -> 'f lp'{n}"> const& ropen;
-extern codegen::def<"rclose(...: n: uint) -> 'rp'{n}"> const&           rclose;
+extern codegen::def<"lp() -> obj"> const&              lp;
+extern codegen::def<"rp() -> obj>"> const&             rp;
+extern codegen::def<"x(...: any...) -> any..."> const& x;
+std::string                                            xtrace_expected(unsigned n);
+extern codegen::def<"xtrace -> obj"> const&            xtrace;
+extern codegen::def<"xtrace_read(...: obj) -> udec&size"> const&  xtrace_read;
+extern codegen::def<"recur_lp(...: size, fn: obj) -> obj"> const& recur_lp;
+extern codegen::def<"recur_rp(...: size) -> obj"> const&          recur_rp;
 
 template<std::convertible_to<std::string>... Args>
 inline std::string
-meta_recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
-  return x + "(" + ropen(n, f) + " "
-       + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...}, ", ") + " "
-       + rclose(n) + ")";
+recur(std::string const& x, std::string const& n, std::string const& f, Args&&... args) {
+  return x + "(" + recur_lp(n, f) + " /**/\\\n"
+       + codegen::utl::cat(std::array{std::string{std::forward<Args>(args)}...},
+                           ", /**/\\\n")
+       + " /**/\\\n" + recur_rp(n) + ")";
 }
 
-NIFTY_DECL(id);
+NIFTY_DECL(lp);
+NIFTY_DECL(rp);
+NIFTY_DECL(x);
 namespace detail {
-extern codegen::def<>& xct_a;
-extern codegen::def<>& xct_b;
-NIFTY_DECL(xct_a);
-NIFTY_DECL(xct_b);
+extern codegen::def<>& xtrace_a;
+extern codegen::def<>& xtrace_b;
+NIFTY_DECL(xtrace_a);
+NIFTY_DECL(xtrace_b);
 } // namespace detail
-NIFTY_DECL(xct);
-NIFTY_DECL(xct_size);
-NIFTY_DECL(ropen);
-NIFTY_DECL(rclose);
+NIFTY_DECL(xtrace);
+NIFTY_DECL(xtrace_read);
+NIFTY_DECL(recur_lp);
+NIFTY_DECL(recur_rp);
 
 inline codegen::end_category<"meta"> meta_end;
 

@@ -32,49 +32,123 @@ namespace api {
 using namespace codegen;
 
 decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
-  docs << "uint less-than comparison.";
+  docs << "word less-than comparison."
+       << "prohibits comparison of different signedness."
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
-  constexpr auto max = conf::uint_max;
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
 
-  tests << lt("0, 0")           = "0" >> docs;
-  tests << lt("0, 1")           = "1" >> docs;
-  tests << lt("0, 2")           = "1";
-  tests << lt("0, 3")           = "1";
-  tests << lt("1, 0")           = "0" >> docs;
-  tests << lt("1, 1")           = "0" >> docs;
-  tests << lt("1, 2")           = "1";
-  tests << lt("1, 3")           = "1";
-  tests << lt("2, 0")           = "0";
-  tests << lt("2, 1")           = "0";
-  tests << lt("2, 2")           = "0";
-  tests << lt("2, 3")           = "1";
-  tests << lt("3, 0")           = "0";
-  tests << lt("3, 1")           = "0";
-  tests << lt("3, 2")           = "0";
-  tests << lt("3, 3")           = "0";
-  tests << lt(0, max)           = "1";
-  tests << lt(0, max - 1)       = "1";
-  tests << lt(1, max)           = "1";
-  tests << lt(1, max - 1)       = "1";
-  tests << lt(max, 0)           = "0";
-  tests << lt(max, 0)           = "0";
-  tests << lt(max - 1, 0)       = "0";
-  tests << lt(max - 1, 0)       = "0";
-  tests << lt(max, 1)           = "0";
-  tests << lt(max, 1)           = "0";
-  tests << lt(max - 1, 1)       = "0";
-  tests << lt(max - 1, 1)       = "0";
-  tests << lt(max, max)         = "0";
-  tests << lt(max, max - 1)     = "0";
-  tests << lt(max - 1, max)     = "1";
-  tests << lt(max - 1, max - 1) = "0";
-  for (int _ = 0; _ < 5; ++_) {
-    int a             = std::rand() % (max + 1);
-    int b             = std::rand() % (max + 1);
-    tests << lt(a, b) = std::to_string(a < b);
-  }
+  tests << lt("0, 0")                                        = "0" >> docs;
+  tests << lt("0, 1")                                        = "1" >> docs;
+  tests << lt("7u, 8u")                                      = "1" >> docs;
+  tests << lt("8u, 7u")                                      = "0";
+  tests << lt(int_(uint_max_s), "0")                         = "1" >> docs;
+  tests << lt(int_max_s, int_min_s)                          = "0" >> docs;
+  tests << lt(int_min_s, int_max_s)                          = "1";
+  tests << lt(int_min_s, int_(to_string(int_max + 1) + "u")) = "0" >> docs;
+  tests << lt(int_min_s, int_(to_string(int_max + 2) + "u")) = "1" >> docs;
+  tests << lt("0u", uint_max_s)                              = "1";
+  tests << lt(uint_max_s, "0u")                              = "0";
+  tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "0";
+  tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
+  tests << lt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";
+  tests << lt(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "0";
+  tests << lt(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
+  tests << lt(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
+  tests << lt(pp::tup(samp::hmax), pp::tup(samp::hmin)) = "0" >> docs;
+  tests << lt(pp::tup(samp::hmin), pp::tup(samp::hmax)) = "1" >> docs;
+  tests << lt(pp::tup(samp::himax), std::to_string(conf::int_max + 1) + "u") =
+      "1" >> docs;
+  tests << lt(std::to_string(conf::int_max + 1) + "u", pp::tup(samp::himax)) =
+      "0" >> docs;
 
-  return rest(detail::sub_impl(args));
+  def<"\\000"> _000 = [&] { return "0"; };
+  def<"\\001">{}    = [&] { return "1"; };
+  def<"\\010">{}    = [&] { return "0"; };
+  def<"\\011">{}    = [&] { return "0"; };
+  def<"\\100">{}    = [&] { return "1"; };
+  def<"\\101">{}    = [&] { return "1"; };
+  def<"\\110">{}    = [&] { return "1"; };
+  def<"\\111">{}    = [&] { return "1"; };
+
+  def<"r(...)"> recur = [&](va args) {
+    return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {
+      return xcat(pp::cat(utl::slice(_000, -3), fl, fg),
+                  impl::hexhex(pp::cat(a, b), "LT"))
+           + ", "
+           + xcat(pp::cat(utl::slice(_000, -3), fg, fl),
+                  impl::hexhex(pp::cat(b, a), "LT"))
+           + ", " + args;
+    }}(args);
+  };
+
+  def<"zip(...)"> zip = [&](va args) {
+    return def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ") + ")",
+               [&](pack args) {
+                 std::vector<std::string> res;
+                 for (std::size_t i = 0; i < args.size() / 2; ++i) {
+                   res.push_back(args[i]);
+                   res.push_back(args[i + (args.size() / 2)]);
+                 }
+                 return utl::cat(res, ", ");
+               }}(args);
+  };
+
+  def<"ucmp(...)"> ucmp = [&](va args) {
+    return xfirst(utl::cat(std::vector<std::string>(conf::word_size, recur + "("))
+                  + "0, 0, " + zip(args)
+                  + utl::cat(std::vector<std::string>(conf::word_size, ")")));
+  };
+
+  def<"icmp(...)"> icmp = [&](va args) {
+    return def<"o(...)">{[&](va args) {
+      def o = def{"<o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
+                  + ")"} = [&](pack args) {
+        def<"\\00(...)"> _00 = [&](va args) { return ucmp(args); };
+        def<"\\01(...)">{}   = [&](va) { return "0"; };
+        def<"\\10(...)">{}   = [&](va) { return "1"; };
+        def<"\\11(...)">{}   = [&](va args) { return ucmp(args); };
+
+        return pp::call(
+            xcat(utl::slice(_00, -2),
+                 xcat(impl::hexhex(pp::cat("7", args[0]), "LT"),
+                      impl::hexhex(pp::cat("7", args[conf::word_size]), "LT"))),
+            args);
+      };
+
+      return o(args);
+    }}(args);
+  };
+
+  def<"signof(word)"> signof = [&](arg word) {
+    def<"\\0(atom)"> _0 = [&](arg atom) {
+      def<"<\\01"> _01 = [&] { return "U"; };
+      def<"<\\10">{}   = [&] { return "I"; };
+      return xcat(utl::slice(_01, -2),
+                  xcat(detail::is_int_o(atom), detail::is_uint_o(atom)));
+    };
+    def<"\\1(tup)">{} = [&](arg) { return "U"; };
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
+  };
+
+  return pp::call(
+      def<"o(l, r)">{[&](arg l, arg r) {
+        def<"\\II(e, l, r)"> intint = [&](arg, arg l, arg r) {
+          return icmp(esc + " " + utup(l), esc + " " + utup(r));
+        };
+        def<"\\IU(e, l, r)">{} = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\UI(e, l, r)">{} = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\UU(e, l, r)">{} = [&](arg, arg l, arg r) {
+          return ucmp(esc + " " + utup(l), esc + " " + utup(r));
+        };
+
+        return xcat(utl::slice(intint, -2), xcat(signof(word(l)), signof(word(r))));
+      }}(args),
+      str(pp::str("[" + lt + "] comparison of different signedness not allowed") + " : "
+          + args),
+      args);
 });
 
 } // namespace api

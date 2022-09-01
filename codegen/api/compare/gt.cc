@@ -32,40 +32,31 @@ namespace api {
 using namespace codegen;
 
 decltype(gt) gt = NIFTY_DEF(gt, [&](va args) {
-  docs << "uint greater-than comparison.";
+  docs << "word greater-than comparison."
+       << "prohibits comparison of different signedness."
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
-  tests << gt("0, 0")                                 = "0" >> docs;
-  tests << gt("0, 1")                                 = "0" >> docs;
-  tests << gt("0, 2")                                 = "0";
-  tests << gt("0, 3")                                 = "0";
-  tests << gt("1, 0")                                 = "1" >> docs;
-  tests << gt("1, 1")                                 = "0" >> docs;
-  tests << gt("1, 2")                                 = "0";
-  tests << gt("1, 3")                                 = "0";
-  tests << gt("2, 0")                                 = "1";
-  tests << gt("2, 1")                                 = "1";
-  tests << gt("2, 2")                                 = "0";
-  tests << gt("2, 3")                                 = "0";
-  tests << gt("3, 0")                                 = "1";
-  tests << gt("3, 1")                                 = "1";
-  tests << gt("3, 2")                                 = "1";
-  tests << gt("3, 3")                                 = "0";
-  tests << gt(0, conf::uint_max)                      = "0";
-  tests << gt(0, conf::uint_max - 1)                  = "0";
-  tests << gt(1, conf::uint_max)                      = "0";
-  tests << gt(1, conf::uint_max - 1)                  = "0";
-  tests << gt(conf::uint_max, 0)                      = "1";
-  tests << gt(conf::uint_max, 0)                      = "1";
-  tests << gt(conf::uint_max - 1, 0)                  = "1";
-  tests << gt(conf::uint_max - 1, 0)                  = "1";
-  tests << gt(conf::uint_max, 1)                      = "1";
-  tests << gt(conf::uint_max, 1)                      = "1";
-  tests << gt(conf::uint_max - 1, 1)                  = "1";
-  tests << gt(conf::uint_max - 1, 1)                  = "1";
-  tests << gt(conf::uint_max, conf::uint_max)         = "0";
-  tests << gt(conf::uint_max, conf::uint_max - 1)     = "1";
-  tests << gt(conf::uint_max - 1, conf::uint_max)     = "0";
-  tests << gt(conf::uint_max - 1, conf::uint_max - 1) = "0";
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
+
+  tests << gt("0, 0")                                                             = "0" >> docs;
+  tests << gt("0, 1")                                                             = "0" >> docs;
+  tests << gt("7u, 8u")                                                           = "0" >> docs;
+  tests << gt("8u, 7u")                                                           = "1";
+  tests << gt(int_(uint_max_s), "0")                                              = "0" >> docs;
+  tests << gt(int_max_s, int_min_s)                                               = "1" >> docs;
+  tests << gt(int_min_s, int_max_s)                                               = "0";
+  tests << gt(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
+  tests << gt(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "0" >> docs;
+  tests << gt("0u", uint_max_s)                                                   = "0";
+  tests << gt(uint_max_s, "0u")                                                   = "1";
+  tests << gt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
+  tests << gt(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
+  tests << gt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "0";
+  tests << gt(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "1";
+  tests << gt(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
+  tests << gt(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "0";
 
   return def<"x(l, r)">{[&](arg l, arg r) {
     return lt(r, l);

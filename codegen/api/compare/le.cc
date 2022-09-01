@@ -32,40 +32,31 @@ namespace api {
 using namespace codegen;
 
 decltype(le) le = NIFTY_DEF(le, [&](va args) {
-  docs << "uint less-than-or-equal-to comparison.";
+  docs << "word less-than-or-equal-to comparison."
+       << "prohibits comparison of different signedness."
+       << "utups are interpreted as (and are comparable with) unsigned.";
 
-  tests << le("0, 0")                                 = "1" >> docs;
-  tests << le("0, 1")                                 = "1" >> docs;
-  tests << le("0, 2")                                 = "1";
-  tests << le("0, 3")                                 = "1";
-  tests << le("1, 0")                                 = "0" >> docs;
-  tests << le("1, 1")                                 = "1" >> docs;
-  tests << le("1, 2")                                 = "1";
-  tests << le("1, 3")                                 = "1";
-  tests << le("2, 0")                                 = "0";
-  tests << le("2, 1")                                 = "0";
-  tests << le("2, 2")                                 = "1";
-  tests << le("2, 3")                                 = "1";
-  tests << le("3, 0")                                 = "0";
-  tests << le("3, 1")                                 = "0";
-  tests << le("3, 2")                                 = "0";
-  tests << le("3, 3")                                 = "1";
-  tests << le(0, conf::uint_max)                      = "1";
-  tests << le(0, conf::uint_max - 1)                  = "1";
-  tests << le(1, conf::uint_max)                      = "1";
-  tests << le(1, conf::uint_max - 1)                  = "1";
-  tests << le(conf::uint_max, 0)                      = "0";
-  tests << le(conf::uint_max, 0)                      = "0";
-  tests << le(conf::uint_max - 1, 0)                  = "0";
-  tests << le(conf::uint_max - 1, 0)                  = "0";
-  tests << le(conf::uint_max, 1)                      = "0";
-  tests << le(conf::uint_max, 1)                      = "0";
-  tests << le(conf::uint_max - 1, 1)                  = "0";
-  tests << le(conf::uint_max - 1, 1)                  = "0";
-  tests << le(conf::uint_max, conf::uint_max)         = "1";
-  tests << le(conf::uint_max, conf::uint_max - 1)     = "0";
-  tests << le(conf::uint_max - 1, conf::uint_max)     = "1";
-  tests << le(conf::uint_max - 1, conf::uint_max - 1) = "1";
+  using std::to_string;
+  using conf::uint_max;
+  using conf::int_max;
+
+  tests << le("0, 0")                                        = "1" >> docs;
+  tests << le("0, 1")                                        = "1" >> docs;
+  tests << le("7u, 8u")                                      = "1" >> docs;
+  tests << le("8u, 7u")                                      = "0";
+  tests << le(int_(uint_max_s), "0")                         = "1" >> docs;
+  tests << le(int_max_s, int_min_s)                          = "0" >> docs;
+  tests << le(int_min_s, int_max_s)                          = "1";
+  tests << le(int_min_s, int_(to_string(int_max + 1) + "u")) = "1" >> docs;
+  tests << le(int_min_s, int_(to_string(int_max + 2) + "u")) = "1" >> docs;
+  tests << le("0u", uint_max_s)                              = "1";
+  tests << le(uint_max_s, "0u")                              = "0";
+  tests << le(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "0";
+  tests << le(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "1";
+  tests << le(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "1";
+  tests << le(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "0";
+  tests << le(to_string(int_max / 2), to_string((int_max / 2)))                   = "1";
+  tests << le(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
 
   return not_(gt(args));
 });

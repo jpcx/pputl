@@ -32,15 +32,28 @@ namespace api {
 
 inline codegen::category<"config"> config;
 
-inline std::string const uint_max_s{std::to_string(codegen::conf::uint_max)};
+inline std::string const uint_max_s{std::to_string(codegen::conf::uint_max) + "u"};
+inline std::string const int_max_s{std::to_string(codegen::conf::int_max)};
+inline std::string const int_min_s =
+    "0x8"
+    + codegen::utl::cat(std::vector<std::string>(codegen::conf::word_size - 1, "0"));
+inline std::string const size_max_s{std::to_string(codegen::conf::size_max) + "u"};
 
-extern codegen::def<"build -> <c++ int>"> const& build;
-extern codegen::def<"uint_bits -> uint"> const&  uint_bits;
-extern codegen::def<"uint_max -> uint"> const&   uint_max;
+extern codegen::def<"build -> <c++ int>"> const&      build;
+extern codegen::def<"word_size -> udec&size"> const&  word_size;
+extern codegen::def<"bit_length -> udec&size"> const& bit_length;
+extern codegen::def<"int_min -> ihex"> const&         int_min;
+extern codegen::def<"int_max -> idec"> const&         int_max;
+extern codegen::def<"uint_max -> udec"> const&        uint_max;
+extern codegen::def<"size_max -> udec&size"> const&   size_max;
 
 NIFTY_DECL(build);
-NIFTY_DECL(uint_bits);
+NIFTY_DECL(word_size);
+NIFTY_DECL(bit_length);
+NIFTY_DECL(int_min);
+NIFTY_DECL(int_max);
 NIFTY_DECL(uint_max);
+NIFTY_DECL(size_max);
 
 inline codegen::end_category<"config"> config_end;
 

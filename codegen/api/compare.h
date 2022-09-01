@@ -28,12 +28,8 @@
 
 #include "codegen.h"
 #include "config.h"
-#include "control.h"
 #include "lang.h"
 #include "logic.h"
-#include "math.h"
-#include "meta.h"
-#include "numeric.h"
 #include "traits.h"
 #include "type.h"
 
@@ -41,14 +37,14 @@ namespace api {
 
 inline codegen::category<"compare"> compare;
 
-extern codegen::def<"lt(...: l: uint, r: uint) -> uint{l < r}"> const&          lt;
-extern codegen::def<"gt(...: l: uint, r: uint) -> uint{l > r}"> const&          gt;
-extern codegen::def<"le(...: l: uint, r: uint) -> uint{l <= r}"> const&         le;
-extern codegen::def<"ge(...: l: uint, r: uint) -> uint{l >= r}"> const&         ge;
-extern codegen::def<"eq(...: l: uint, r: uint) -> uint{l == r}"> const&         eq;
-extern codegen::def<"ne(...: l: uint, r: uint) -> uint{l != r}"> const&         ne;
-extern codegen::def<"min(...: l: uint, r: uint) -> uint{l < r ? l : r}"> const& min;
-extern codegen::def<"max(...: l: uint, r: uint) -> uint{l > r ? l : r}"> const& max;
+extern codegen::def<"lt(...: word, word) -> bool"> const&  lt;
+extern codegen::def<"gt(...: word, word) -> bool"> const&  gt;
+extern codegen::def<"le(...: word, word) -> bool"> const&  le;
+extern codegen::def<"ge(...: word, word) -> bool"> const&  ge;
+extern codegen::def<"eq(...: word, word) -> bool"> const&  eq;
+extern codegen::def<"ne(...: word, word) -> bool"> const&  ne;
+extern codegen::def<"min(...: word, word) -> word"> const& min;
+extern codegen::def<"max(...: word, word) -> word"> const& max;
 
 NIFTY_DECL(lt);
 NIFTY_DECL(gt);

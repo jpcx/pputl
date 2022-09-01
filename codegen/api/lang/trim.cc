@@ -46,27 +46,15 @@ decltype(trim) trim = NIFTY_DEF(trim, [&](va args) {
   tests << trim("a, b, ")  = "a, b," >> docs;
   tests << trim("a, , c")  = "a,  , c";
 
-  def<"00(...)"> _00 = [&](va) {
-    return "";
-  };
+  def<"\\00(...)"> _00    = [&](va) { return ""; };
+  def<"\\001(_, ...)">{}  = [&](arg, va args) { return args; };
+  def<"\\010(_, ...)">{}  = [&](arg _, va) { return _; };
+  def<"\\0101(_, ...)">{} = [&](arg _, va args) { return _ + ", " + args; };
 
-  def<"001(_, ...)">{} = [&](arg, va args) {
-    return args;
-  };
+  def<"sel(...)"> sel = [&](va) { return pp::cat(0, pp::va_opt(1)); };
 
-  def<"010(_, ...)">{} = [&](arg _, va) {
-    return _;
-  };
-
-  def<"0101(_, ...)">{} = [&](arg _, va args) {
-    return _ + ", " + args;
-  };
-
-  def<"sel(...)"> sel = [&](va) {
-    return pp::cat(0, pp::va_opt(1));
-  };
-
-  return pp::call(cat(utl::slice(_00, -2), cat(sel(first(args)), sel(rest(args)))), args);
+  return pp::call(xcat(utl::slice(_00, -2), xcat(sel(xfirst(args)), sel(xrest(args)))),
+                  args);
 });
 
 } // namespace api

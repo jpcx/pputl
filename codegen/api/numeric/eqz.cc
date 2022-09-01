@@ -32,23 +32,25 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(eqz_0) eqz_0 = NIFTY_DEF(eqz_0);
+decltype(eqz_0u) eqz_0u = NIFTY_DEF(eqz_0u);
 }
 
 decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
-  docs << "uint zero detection.";
+  docs << "numeric zero detection.";
 
-  tests << eqz("0")             = "1" >> docs;
-  tests << eqz("1")             = "0";
-  tests << eqz("2")             = "0";
-  tests << eqz(uint_max_s)      = "0";
-  tests << eqz(conf::uint_max)  = "0" >> docs;
+  tests << eqz("0")                               = "1" >> docs;
+  tests << eqz("0u")                              = "1" >> docs;
+  tests << eqz("0x" + utl::cat(samp::hmin))       = "1" >> docs;
+  tests << eqz("0x" + utl::cat(samp::hmin) + "u") = "1" >> docs;
+  tests << eqz(pp::tup(samp::hmin))               = "1" >> docs;
+  tests << eqz("1u")                              = "0" >> docs;
+  tests << eqz("2")                               = "0" >> docs;
+  tests << eqz(uint_max_s)                        = "0" >> docs;
+  tests << eqz(int_min_s)                         = "0" >> docs;
 
-  detail::eqz_0 = def{"0"} = [&] {
-    return "";
-  };
+  detail::eqz_0u = def{"\\0u"} = [&] { return ""; };
 
-  return is_none(cat(utl::slice(detail::eqz_0, -1), uint(args)));
+  return is_none(xcat(utl::slice(detail::eqz_0u, -2), udec(args)));
 });
 
 } // namespace api

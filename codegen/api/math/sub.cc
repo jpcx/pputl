@@ -31,45 +31,56 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(sub_impl) sub_impl = NIFTY_DEF(sub_impl);
-}
-
 decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
-  docs << "uint subtraction with underflow.";
+  docs << "subtraction with underflow."
+       << "" << impl::arith_rules;
 
-  constexpr auto max = conf::uint_max;
+  tests << sub("0, 0")          = "0" >> docs;
+  tests << sub("0, 1")          = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << sub("0u, 1u")        = uint_max_s >> docs;
+  tests << sub("1, 0")          = "1" >> docs;
+  tests << sub("1, 1")          = "0" >> docs;
+  tests << sub("3, 1")          = "2" >> docs;
+  tests << sub("1u, 3u")        = (std::to_string(conf::uint_max - 1) + "u") >> docs;
+  tests << sub(uint_max_s, 0)   = uint_max_s;
+  tests << sub(uint_max_s, 1)   = (std::to_string(conf::uint_max - 1) + "u");
+  tests << sub(0, int_min_s)    = int_min_s >> docs;
+  tests << sub("0u", int_min_s) = (std::to_string(conf::int_max + 1) + "u") >> docs;
 
-  tests << sub("0, 0") = "0" >> docs;
-  tests << sub("0, 1") = uint_max_s >> docs;
-  tests << sub("1, 0") = "1" >> docs;
-  tests << sub("1, 1") = "0" >> docs;
-  tests << sub("3, 1") = "2" >> docs;
-  tests << sub("1, 3") = std::to_string(max - 1) >> docs;
-  tests << sub(max, 0) = uint_max_s;
-  tests << sub(max, 1) = std::to_string(max - 1);
-  tests << sub(0, max) = "1" >> docs;
-  for (int _ = 0; _ < 5; ++_) {
-    int a              = std::rand() % (max + 1);
-    int b              = std::rand() % (max + 1);
-    tests << sub(a, b) = std::to_string(((max + 1) + (a - b)) % (max + 1));
-  }
+  constexpr auto sz = conf::word_size;
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz * 2), ", ");
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              impl::hexhex(pp::cat(v[sz], v[sz * 2]), pp::cat("SUB", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+              v[sz * 2],
+              utl::cat(svect{&v[sz + 1], &v[sz * 2]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
   };
 
-  def<"recur(...)"> recur = [&](va args) {
-    return def<"recur(v, uflow)">{[&](arg v, arg uflow) {
-      return dec(v) + ", " + or_(uflow, eqz(v));
-    }}(args);
+  def<"res(ta, tb, ...)"> res = [&](arg ta, arg tb, va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
+    };
+
+    return word(o(args), impl::arithhint(ta, tb));
   };
 
-  detail::sub_impl = def{"impl(l, r) -> uint, bool"} = [&](arg l, arg r) {
-    return meta_recur(x, r, recur, l, "0");
-  };
-
-  return first(detail::sub_impl(args));
+  return def<"o(a, b)">{[&](arg a, arg b) {
+    auto rlp = utl::cat(svect{conf::word_size, r + "("});
+    auto rrp = utl::cat(svect{conf::word_size, ")"});
+    return res(typeof(a), typeof(b),
+               rlp + "0, " + x(esc + " " + utup(a), esc + " " + utup(b)) + rrp);
+  }}(args);
 });
 
 } // namespace api
