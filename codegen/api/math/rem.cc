@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,36 +25,41 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
 #include "codegen.h"
-#include "compare.h"
 #include "config.h"
-#include "control.h"
-#include "lang.h"
-#include "logic.h"
-#include "meta.h"
-#include "numeric.h"
-#include "traits.h"
-#include "type.h"
+#include "math.h"
 
 namespace api {
 
-inline codegen::category<"math"> math;
+using namespace codegen;
 
-extern codegen::def<"add(...: word, word) -> word"> const&        add;
-extern codegen::def<"sub(...: word, word) -> word"> const&        sub;
-extern codegen::def<"mul(...: word, word) -> word"> const&        mul;
-extern codegen::def<"divr(...: word, word) -> word, word"> const& divr;
-extern codegen::def<"div(...: word, word) -> word"> const&        div;
-extern codegen::def<"rem(...: word, word) -> word"> const&        rem;
+decltype(rem) rem = NIFTY_DEF(rem, [&](va args) {
+  docs << "truncated division remainder."
+       << "fails on division by zero."
+       << "" << impl::arith_rules;
 
-NIFTY_DECL(add);
-NIFTY_DECL(sub);
-NIFTY_DECL(mul);
-NIFTY_DECL(divr);
-NIFTY_DECL(div);
-NIFTY_DECL(rem);
+  tests << rem(10, 5)           = "0" >> docs;
+  tests << rem(11, 5)           = "1" >> docs;
+  tests << rem(12, 5)           = "2" >> docs;
+  tests << rem(13, 5)           = "3" >> docs;
+  tests << rem(14, 5)           = "4" >> docs;
+  tests << rem(neg(10), 5)      = "0" >> docs;
+  tests << rem(neg(11), 5)      = neg(1) >> docs;
+  tests << rem(neg(12), 5)      = neg(2) >> docs;
+  tests << rem(neg(13), 5)      = neg(3) >> docs;
+  tests << rem(neg(14), 5)      = neg(4) >> docs;
+  tests << rem(10, neg(5))      = "0" >> docs;
+  tests << rem(11, neg(5))      = "1" >> docs;
+  tests << rem(12, neg(5))      = "2" >> docs;
+  tests << rem(13, neg(5))      = "3" >> docs;
+  tests << rem(14, neg(5))      = "4" >> docs;
+  tests << rem(neg(10), neg(5)) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << rem(neg(11), neg(5)) = neg(1) >> docs;
+  tests << rem(neg(12), neg(5)) = neg(2) >> docs;
+  tests << rem(neg(13), neg(5)) = neg(3) >> docs;
+  tests << rem(neg(14), neg(5)) = neg(4) >> docs;
 
-inline codegen::end_category<"math"> math_end;
+  return xrest(divr(args));
+});
 
 } // namespace api

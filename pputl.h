@@ -78,8 +78,8 @@
 //           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                                      [numeric, math]    //
-//           inc   dec  neg  add   sub   log2  mul                            //
-//           divr  div  mod  pow2  sqrt  fact                                 //
+//           inc    dec  neg  abs  log2  sqrt  fact                           //
+//           prime  add  sub  mul  divr  div   rem                            //
 //       ‐ comparison                                   [numeric, compare]    //
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
@@ -210,7 +210,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220831
+#define PTL_BUILD /* -> <c++ int> */ 20220901
 
 /// [config.word_size]
 /// ------------------
@@ -3490,9 +3490,10 @@
 /// PTL_SWITCH(1, 1, 2)      // 2
 /// PTL_SWITCH(2, 1, 2)      // 2
 /// PTL_SWITCH(255, 1, 2, 3) // 3
-#define PTL_SWITCH(/* size, ...cases: any */...) /* -> any */                       \
-  PPUTLSWITCH_RES(PPUTLSWITCH_X(PTL_RECUR_LP(PTL_FIRST(__VA_ARGS__), PPUTLSWITCH_R) \
-                                    __VA_ARGS__ PTL_RECUR_RP(PTL_FIRST(__VA_ARGS__))))
+#define PTL_SWITCH(/* size, ...cases: any */...) /* -> any */                            \
+  PPUTLSWITCH_RES(PPUTLSWITCH_X(PTL_RECUR_LP(PTL_FIRST(__VA_ARGS__), PPUTLSWITCH_R) /**/ \
+                                __VA_ARGS__                                         /**/ \
+                                    PTL_RECUR_RP(PTL_FIRST(__VA_ARGS__))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -3606,24 +3607,35 @@
   (PTL_TYPEOF(a), PTL_TYPEOF(b), a, b)
 #define PPUTLMUL_BNEZ_11(ta, tb, a, b) \
   PPUTLMUL_BNEZ_11_o(PPUTLIMPL_ARITHHINT(ta, tb), PTL_NEG(a), PTL_NEG(b))
-#define PPUTLMUL_BNEZ_11_o(hint, a, b)                                         \
-  PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
-                                   0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
+#define PPUTLMUL_BNEZ_11_o(hint, a, b)                                        \
+  PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) /**/ \
+                                   a,                                    /**/ \
+                                   b,                                    /**/ \
+                                   0                                     /**/ \
+                                   PTL_RECUR_RP(PTL_LOG2(b)))),               \
            hint)
-#define PPUTLMUL_BNEZ_10(ta, tb, a, b)                                                   \
-  PTL_NEG(                                                                               \
-      PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) PTL_NEG(a), \
-                                       b, 0 PTL_RECUR_RP(PTL_LOG2(b)))),                 \
-               PPUTLIMPL_ARITHHINT(ta, tb)))
+#define PPUTLMUL_BNEZ_10(ta, tb, a, b)                                                \
+  PTL_NEG(PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) /**/ \
+                                           PTL_NEG(a),                           /**/ \
+                                           b,                                    /**/ \
+                                           0                                     /**/ \
+                                           PTL_RECUR_RP(PTL_LOG2(b)))),               \
+                   PPUTLIMPL_ARITHHINT(ta, tb)))
 #define PPUTLMUL_BNEZ_01(ta, tb, a, b) \
   PPUTLMUL_BNEZ_01_o(PPUTLIMPL_ARITHHINT(ta, tb), a, PTL_NEG(b))
-#define PPUTLMUL_BNEZ_01_o(hint, a, b)                                                 \
-  PTL_NEG(PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
-                                           0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
+#define PPUTLMUL_BNEZ_01_o(hint, a, b)                                                \
+  PTL_NEG(PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) /**/ \
+                                           a,                                    /**/ \
+                                           b,                                    /**/ \
+                                           0                                     /**/ \
+                                           PTL_RECUR_RP(PTL_LOG2(b)))),               \
                    hint))
-#define PPUTLMUL_BNEZ_00(ta, tb, a, b)                                         \
-  PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) a, b, \
-                                   0 PTL_RECUR_RP(PTL_LOG2(b)))),              \
+#define PPUTLMUL_BNEZ_00(ta, tb, a, b)                                        \
+  PTL_WORD(PPUTLMUL_RES(PPUTLMUL_X(PTL_RECUR_LP(PTL_LOG2(b), PPUTLMUL_R) /**/ \
+                                   a,                                    /**/ \
+                                   b,                                    /**/ \
+                                   0                                     /**/ \
+                                   PTL_RECUR_RP(PTL_LOG2(b)))),               \
            PPUTLIMPL_ARITHHINT(ta, tb))
 #define PPUTLMUL_BEQZ(a, b) \
   PTL_WORD(0, PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
@@ -3637,6 +3649,183 @@
 #define PPUTLMUL_X(...)         __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [math.divr]
+/// -----------
+/// truncated division with remainder.
+/// fails on division by zero.
+///
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
+///
+/// quotient and remainder may be formatted differently depending on sign.
+///
+/// PTL_DIVR(10, 5)                   // 2, 0
+/// PTL_DIVR(11, 5)                   // 2, 1
+/// PTL_DIVR(12, 5)                   // 2, 2
+/// PTL_DIVR(13, 5)                   // 2, 3
+/// PTL_DIVR(14, 5)                   // 2, 4
+/// PTL_DIVR(PTL_NEG(10), 5)          // PTL_NEG(2), 0
+/// PTL_DIVR(PTL_NEG(11), 5)          // PTL_NEG(2), PTL_NEG(1)
+/// PTL_DIVR(PTL_NEG(12), 5)          // PTL_NEG(2), PTL_NEG(2)
+/// PTL_DIVR(PTL_NEG(13), 5)          // PTL_NEG(2), PTL_NEG(3)
+/// PTL_DIVR(PTL_NEG(14), 5)          // PTL_NEG(2), PTL_NEG(4)
+/// PTL_DIVR(10, PTL_NEG(5))          // PTL_NEG(2), 0
+/// PTL_DIVR(11, PTL_NEG(5))          // PTL_NEG(2), 1
+/// PTL_DIVR(12, PTL_NEG(5))          // PTL_NEG(2), 2
+/// PTL_DIVR(13, PTL_NEG(5))          // PTL_NEG(2), 3
+/// PTL_DIVR(14, PTL_NEG(5))          // PTL_NEG(2), 4
+/// PTL_DIVR(PTL_NEG(10), PTL_NEG(5)) // 0x002, 0x000
+/// PTL_DIVR(PTL_NEG(11), PTL_NEG(5)) // 0x002, PTL_NEG(1)
+/// PTL_DIVR(PTL_NEG(12), PTL_NEG(5)) // 0x002, PTL_NEG(2)
+/// PTL_DIVR(PTL_NEG(13), PTL_NEG(5)) // 0x002, PTL_NEG(3)
+/// PTL_DIVR(PTL_NEG(14), PTL_NEG(5)) // 0x002, PTL_NEG(4)
+#define PTL_DIVR(/* word, word */...) /* -> word, word */                \
+  PTL_IF(PTL_EQZ(PTL_REST(__VA_ARGS__)), PPUTLDIVR_BEQZ, PPUTLDIVR_BNEZ) \
+  (PTL_STR("[PTL_DIVR] division by zero" : __VA_ARGS__), __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLDIVR_BNEZ(e, a, b)                               \
+  PTL_XCAT(PPUTLDIVR_BNEZ_, PTL_XCAT(PTL_LTZ(a), PTL_LTZ(b))) \
+  (PTL_TYPEOF(a), PTL_TYPEOF(b), a, b)
+#define PPUTLDIVR_BNEZ_11(ta, tb, a, b) \
+  PPUTLDIVR_BNEZ_11_o(PPUTLIMPL_ARITHHINT(ta, tb), PTL_NEG(a), PTL_NEG(b))
+#define PPUTLDIVR_BNEZ_11_o(hint, a, b) PPUTLDIVR_BNEZ_11_oo(hint, a, b, PTL_LOG2(a))
+#define PPUTLDIVR_BNEZ_11_oo(hint, a, b, i) \
+  PPUTLDIVR_BNEZ_11_ooo(hint, a, b, i, PTL_INC(i))
+#define PPUTLDIVR_BNEZ_11_ooo(hint, a, b, i, iter)                       \
+  PPUTLDIVR_BNEZ_11_res(PPUTLDIVR_X(PTL_RECUR_LP(iter, PPUTLDIVR_R) /**/ \
+                                    i,                              /**/ \
+                                    0,                              /**/ \
+                                    0,                              /**/ \
+                                    a,                              /**/ \
+                                    b                               /**/ \
+                                        PTL_RECUR_RP(iter)),             \
+                        hint)
+#define PPUTLDIVR_BNEZ_11_res(...) PPUTLDIVR_BNEZ_11_res_o(__VA_ARGS__)
+#define PPUTLDIVR_BNEZ_11_res_o(i, q, r, a, b, hint) \
+  PTL_WORD(q, hint), PTL_WORD(PTL_NEG(r), hint)
+#define PPUTLDIVR_BNEZ_10(ta, tb, a, b) \
+  PPUTLDIVR_BNEZ_10_o(PPUTLIMPL_ARITHHINT(ta, tb), PTL_NEG(a), b)
+#define PPUTLDIVR_BNEZ_10_o(hint, a, b) PPUTLDIVR_BNEZ_10_oo(hint, a, b, PTL_LOG2(a))
+#define PPUTLDIVR_BNEZ_10_oo(hint, a, b, i) \
+  PPUTLDIVR_BNEZ_10_ooo(hint, a, b, i, PTL_INC(i))
+#define PPUTLDIVR_BNEZ_10_ooo(hint, a, b, i, iter)                       \
+  PPUTLDIVR_BNEZ_10_res(PPUTLDIVR_X(PTL_RECUR_LP(iter, PPUTLDIVR_R) /**/ \
+                                    i,                              /**/ \
+                                    0,                              /**/ \
+                                    0,                              /**/ \
+                                    a,                              /**/ \
+                                    b                               /**/ \
+                                        PTL_RECUR_RP(iter)),             \
+                        hint)
+#define PPUTLDIVR_BNEZ_10_res(...) PPUTLDIVR_BNEZ_10_res_o(__VA_ARGS__)
+#define PPUTLDIVR_BNEZ_10_res_o(i, q, r, a, b, hint) \
+  PTL_WORD(PTL_NEG(q), hint), PTL_WORD(PTL_NEG(r), hint)
+#define PPUTLDIVR_BNEZ_01(ta, tb, a, b) \
+  PPUTLDIVR_BNEZ_01_o(PPUTLIMPL_ARITHHINT(ta, tb), a, PTL_NEG(b), PTL_LOG2(a))
+#define PPUTLDIVR_BNEZ_01_o(hint, a, b, i) PPUTLDIVR_BNEZ_01_oo(hint, a, b, i, PTL_INC(i))
+#define PPUTLDIVR_BNEZ_01_oo(hint, a, b, i, iter)                        \
+  PPUTLDIVR_BNEZ_01_res(PPUTLDIVR_X(PTL_RECUR_LP(iter, PPUTLDIVR_R) /**/ \
+                                    i,                              /**/ \
+                                    0,                              /**/ \
+                                    0,                              /**/ \
+                                    a,                              /**/ \
+                                    b                               /**/ \
+                                        PTL_RECUR_RP(iter)),             \
+                        hint)
+#define PPUTLDIVR_BNEZ_01_res(...) PPUTLDIVR_BNEZ_01_res_o(__VA_ARGS__)
+#define PPUTLDIVR_BNEZ_01_res_o(i, q, r, a, b, hint) \
+  PTL_WORD(PTL_NEG(q), hint), PTL_WORD(r, hint)
+#define PPUTLDIVR_BNEZ_00(ta, tb, a, b) \
+  PPUTLDIVR_BNEZ_00_o(PPUTLIMPL_ARITHHINT(ta, tb), a, b, PTL_LOG2(a))
+#define PPUTLDIVR_BNEZ_00_o(hint, a, b, i) PPUTLDIVR_BNEZ_00_oo(hint, a, b, i, PTL_INC(i))
+#define PPUTLDIVR_BNEZ_00_oo(hint, a, b, i, iter)                        \
+  PPUTLDIVR_BNEZ_00_res(PPUTLDIVR_X(PTL_RECUR_LP(iter, PPUTLDIVR_R) /**/ \
+                                    i,                              /**/ \
+                                    0,                              /**/ \
+                                    0,                              /**/ \
+                                    a,                              /**/ \
+                                    b                               /**/ \
+                                        PTL_RECUR_RP(iter)),             \
+                        hint)
+#define PPUTLDIVR_BNEZ_00_res(...)                   PPUTLDIVR_BNEZ_00_res_o(__VA_ARGS__)
+#define PPUTLDIVR_BNEZ_00_res_o(i, q, r, a, b, hint) PTL_WORD(q, hint), PTL_WORD(r, hint)
+#define PPUTLDIVR_BEQZ(e, a, b)                      PTL_FAIL(e)
+#define PPUTLDIVR_R(...)                             PPUTLDIVR_R_o(__VA_ARGS__)
+#define PPUTLDIVR_R_o(i, q, r, a, b) \
+  PPUTLDIVR_R_oo(i, q, PTL_BSET(PTL_BSLL(r), 0, PTL_BGET(a, i)), a, b)
+#define PPUTLDIVR_R_oo(i, q, r, a, b) \
+  PTL_DEC(i), PTL_IF(PTL_GE(r, b), PPUTLDIVR_R_REM, PPUTLDIVR_R_NOREM)(i, q, r, b), a, b
+#define PPUTLDIVR_R_REM(i, q, r, b)   PTL_BSET(q, i, 1), PTL_SUB(r, b)
+#define PPUTLDIVR_R_NOREM(i, q, r, b) q, r
+#define PPUTLDIVR_X(...)              __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [math.div]
+/// ----------
+/// truncated division.
+/// fails on division by zero.
+///
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
+///
+/// PTL_DIV(10, 5)                   // 2
+/// PTL_DIV(11, 5)                   // 2
+/// PTL_DIV(12, 5)                   // 2
+/// PTL_DIV(13, 5)                   // 2
+/// PTL_DIV(14, 5)                   // 2
+/// PTL_DIV(PTL_NEG(10), 5)          // PTL_NEG(2)
+/// PTL_DIV(PTL_NEG(11), 5)          // PTL_NEG(2)
+/// PTL_DIV(PTL_NEG(12), 5)          // PTL_NEG(2)
+/// PTL_DIV(PTL_NEG(13), 5)          // PTL_NEG(2)
+/// PTL_DIV(PTL_NEG(14), 5)          // PTL_NEG(2)
+/// PTL_DIV(10, PTL_NEG(5))          // PTL_NEG(2)
+/// PTL_DIV(11, PTL_NEG(5))          // PTL_NEG(2)
+/// PTL_DIV(12, PTL_NEG(5))          // PTL_NEG(2)
+/// PTL_DIV(13, PTL_NEG(5))          // PTL_NEG(2)
+/// PTL_DIV(14, PTL_NEG(5))          // PTL_NEG(2)
+/// PTL_DIV(PTL_NEG(10), PTL_NEG(5)) // 0x002
+/// PTL_DIV(PTL_NEG(11), PTL_NEG(5)) // 0x002
+/// PTL_DIV(PTL_NEG(12), PTL_NEG(5)) // 0x002
+/// PTL_DIV(PTL_NEG(13), PTL_NEG(5)) // 0x002
+/// PTL_DIV(PTL_NEG(14), PTL_NEG(5)) // 0x002
+#define PTL_DIV(/* word, word */...) /* -> word */ PTL_XFIRST(PTL_DIVR(__VA_ARGS__))
+
+/// [math.rem]
+/// ----------
+/// truncated division remainder.
+/// fails on division by zero.
+///
+/// returns unsigned if either operand is unsigned, decimal if
+/// either operand is decimal (and the result is non-negative),
+/// utup if both operands are utup, and hex otherwise.
+///
+/// PTL_REM(10, 5)                   // 0
+/// PTL_REM(11, 5)                   // 1
+/// PTL_REM(12, 5)                   // 2
+/// PTL_REM(13, 5)                   // 3
+/// PTL_REM(14, 5)                   // 4
+/// PTL_REM(PTL_NEG(10), 5)          // 0
+/// PTL_REM(PTL_NEG(11), 5)          // PTL_NEG(1)
+/// PTL_REM(PTL_NEG(12), 5)          // PTL_NEG(2)
+/// PTL_REM(PTL_NEG(13), 5)          // PTL_NEG(3)
+/// PTL_REM(PTL_NEG(14), 5)          // PTL_NEG(4)
+/// PTL_REM(10, PTL_NEG(5))          // 0
+/// PTL_REM(11, PTL_NEG(5))          // 1
+/// PTL_REM(12, PTL_NEG(5))          // 2
+/// PTL_REM(13, PTL_NEG(5))          // 3
+/// PTL_REM(14, PTL_NEG(5))          // 4
+/// PTL_REM(PTL_NEG(10), PTL_NEG(5)) // 0x000
+/// PTL_REM(PTL_NEG(11), PTL_NEG(5)) // PTL_NEG(1)
+/// PTL_REM(PTL_NEG(12), PTL_NEG(5)) // PTL_NEG(2)
+/// PTL_REM(PTL_NEG(13), PTL_NEG(5)) // PTL_NEG(3)
+/// PTL_REM(PTL_NEG(14), PTL_NEG(5)) // PTL_NEG(4)
+#define PTL_REM(/* word, word */...) /* -> word */ PTL_XREST(PTL_DIVR(__VA_ARGS__))
 
 /// [range.items]
 /// -------------

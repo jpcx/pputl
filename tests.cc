@@ -76,8 +76,8 @@
 //           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //
 //     ◆ signed and unsigned integers                                         //
 //       ‐ arithmetic                                      [numeric, math]    //
-//           inc   dec  neg  add   sub   log2  mul                            //
-//           divr  div  mod  pow2  sqrt  fact                                 //
+//           inc    dec  neg  abs  log2  sqrt  fact                           //
+//           prime  add  sub  mul  divr  div   rem                            //
 //       ‐ comparison                                   [numeric, compare]    //
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
@@ -1147,6 +1147,69 @@ ASSERT_PP_EQ((PTL_MUL(4095u, 1)), (4095u));
 ASSERT_PP_EQ((PTL_MUL(4095u, 4095u)), (1u));
 ASSERT_PP_EQ((PTL_MUL(2047, 4095u)), (2049u));
 ASSERT_PP_EQ((PTL_MUL(2, PTL_NEG(2))), (0xFFC));
+
+ASSERT_PP_EQ((PTL_DIVR(10, 5)), (2, 0));
+ASSERT_PP_EQ((PTL_DIVR(11, 5)), (2, 1));
+ASSERT_PP_EQ((PTL_DIVR(12, 5)), (2, 2));
+ASSERT_PP_EQ((PTL_DIVR(13, 5)), (2, 3));
+ASSERT_PP_EQ((PTL_DIVR(14, 5)), (2, 4));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(10), 5)), (PTL_NEG(2), 0));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(11), 5)), (PTL_NEG(2), PTL_NEG(1)));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(12), 5)), (PTL_NEG(2), PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(13), 5)), (PTL_NEG(2), PTL_NEG(3)));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(14), 5)), (PTL_NEG(2), PTL_NEG(4)));
+ASSERT_PP_EQ((PTL_DIVR(10, PTL_NEG(5))), (PTL_NEG(2), 0));
+ASSERT_PP_EQ((PTL_DIVR(11, PTL_NEG(5))), (PTL_NEG(2), 1));
+ASSERT_PP_EQ((PTL_DIVR(12, PTL_NEG(5))), (PTL_NEG(2), 2));
+ASSERT_PP_EQ((PTL_DIVR(13, PTL_NEG(5))), (PTL_NEG(2), 3));
+ASSERT_PP_EQ((PTL_DIVR(14, PTL_NEG(5))), (PTL_NEG(2), 4));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(10), PTL_NEG(5))), (0x002, 0x000));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(11), PTL_NEG(5))), (0x002, PTL_NEG(1)));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(12), PTL_NEG(5))), (0x002, PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(13), PTL_NEG(5))), (0x002, PTL_NEG(3)));
+ASSERT_PP_EQ((PTL_DIVR(PTL_NEG(14), PTL_NEG(5))), (0x002, PTL_NEG(4)));
+
+ASSERT_PP_EQ((PTL_DIV(10, 5)), (2));
+ASSERT_PP_EQ((PTL_DIV(11, 5)), (2));
+ASSERT_PP_EQ((PTL_DIV(12, 5)), (2));
+ASSERT_PP_EQ((PTL_DIV(13, 5)), (2));
+ASSERT_PP_EQ((PTL_DIV(14, 5)), (2));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(10), 5)), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(11), 5)), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(12), 5)), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(13), 5)), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(14), 5)), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(10, PTL_NEG(5))), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(11, PTL_NEG(5))), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(12, PTL_NEG(5))), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(13, PTL_NEG(5))), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(14, PTL_NEG(5))), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(10), PTL_NEG(5))), (0x002));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(11), PTL_NEG(5))), (0x002));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(12), PTL_NEG(5))), (0x002));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(13), PTL_NEG(5))), (0x002));
+ASSERT_PP_EQ((PTL_DIV(PTL_NEG(14), PTL_NEG(5))), (0x002));
+
+ASSERT_PP_EQ((PTL_REM(10, 5)), (0));
+ASSERT_PP_EQ((PTL_REM(11, 5)), (1));
+ASSERT_PP_EQ((PTL_REM(12, 5)), (2));
+ASSERT_PP_EQ((PTL_REM(13, 5)), (3));
+ASSERT_PP_EQ((PTL_REM(14, 5)), (4));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(10), 5)), (0));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(11), 5)), (PTL_NEG(1)));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(12), 5)), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(13), 5)), (PTL_NEG(3)));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(14), 5)), (PTL_NEG(4)));
+ASSERT_PP_EQ((PTL_REM(10, PTL_NEG(5))), (0));
+ASSERT_PP_EQ((PTL_REM(11, PTL_NEG(5))), (1));
+ASSERT_PP_EQ((PTL_REM(12, PTL_NEG(5))), (2));
+ASSERT_PP_EQ((PTL_REM(13, PTL_NEG(5))), (3));
+ASSERT_PP_EQ((PTL_REM(14, PTL_NEG(5))), (4));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(10), PTL_NEG(5))), (0x000));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(11), PTL_NEG(5))), (PTL_NEG(1)));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(12), PTL_NEG(5))), (PTL_NEG(2)));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(13), PTL_NEG(5))), (PTL_NEG(3)));
+ASSERT_PP_EQ((PTL_REM(PTL_NEG(14), PTL_NEG(5))), (PTL_NEG(4)));
 
 ASSERT_PP_EQ((PTL_ITEMS(())), ());
 ASSERT_PP_EQ((PTL_ITEMS((a))), (a));

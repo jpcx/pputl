@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,36 +25,41 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
 #include "codegen.h"
-#include "compare.h"
 #include "config.h"
-#include "control.h"
-#include "lang.h"
-#include "logic.h"
-#include "meta.h"
-#include "numeric.h"
-#include "traits.h"
-#include "type.h"
+#include "math.h"
 
 namespace api {
 
-inline codegen::category<"math"> math;
+using namespace codegen;
 
-extern codegen::def<"add(...: word, word) -> word"> const&        add;
-extern codegen::def<"sub(...: word, word) -> word"> const&        sub;
-extern codegen::def<"mul(...: word, word) -> word"> const&        mul;
-extern codegen::def<"divr(...: word, word) -> word, word"> const& divr;
-extern codegen::def<"div(...: word, word) -> word"> const&        div;
-extern codegen::def<"rem(...: word, word) -> word"> const&        rem;
+decltype(div) div = NIFTY_DEF(div, [&](va args) {
+  docs << "truncated division."
+       << "fails on division by zero."
+       << "" << impl::arith_rules;
 
-NIFTY_DECL(add);
-NIFTY_DECL(sub);
-NIFTY_DECL(mul);
-NIFTY_DECL(divr);
-NIFTY_DECL(div);
-NIFTY_DECL(rem);
+  tests << div(10, 5)           = "2" >> docs;
+  tests << div(11, 5)           = "2" >> docs;
+  tests << div(12, 5)           = "2" >> docs;
+  tests << div(13, 5)           = "2" >> docs;
+  tests << div(14, 5)           = "2" >> docs;
+  tests << div(neg(10), 5)      = neg(2) >> docs;
+  tests << div(neg(11), 5)      = neg(2) >> docs;
+  tests << div(neg(12), 5)      = neg(2) >> docs;
+  tests << div(neg(13), 5)      = neg(2) >> docs;
+  tests << div(neg(14), 5)      = neg(2) >> docs;
+  tests << div(10, neg(5))      = neg(2) >> docs;
+  tests << div(11, neg(5))      = neg(2) >> docs;
+  tests << div(12, neg(5))      = neg(2) >> docs;
+  tests << div(13, neg(5))      = neg(2) >> docs;
+  tests << div(14, neg(5))      = neg(2) >> docs;
+  tests << div(neg(10), neg(5)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << div(neg(11), neg(5)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << div(neg(12), neg(5)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << div(neg(13), neg(5)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << div(neg(14), neg(5)) = ("0x" + utl::cat(samp::h2)) >> docs;
 
-inline codegen::end_category<"math"> math_end;
+  return xfirst(divr(args));
+});
 
 } // namespace api
