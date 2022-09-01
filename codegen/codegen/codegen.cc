@@ -47,7 +47,8 @@ slice(std::string const& s, int begin_ofs, int end_ofs) {
   if (begin_ofs < 0)
     begin_ofs = s.size() + begin_ofs;
   res.resize(s.size() + end_ofs - begin_ofs);
-  std::ranges::copy(std::next(s.begin(), begin_ofs), std::prev(s.end(), -end_ofs), res.begin());
+  std::ranges::copy(std::next(s.begin(), begin_ofs), std::prev(s.end(), -end_ofs),
+                    res.begin());
   return res;
 }
 
@@ -117,7 +118,8 @@ alpha_base52_seq(std::size_t size, std::string begin) {
     throw std::runtime_error{"cannot use alpha_base52_seq with an empty begin"};
   for (auto&& v : begin)
     if (not(v >= 'a' and v <= 'z') and not(v >= 'A' and v <= 'Z'))
-      throw std::runtime_error{"cannot use alpha_base52_seq with a non-alpha-base52 begin"};
+      throw std::runtime_error{
+          "cannot use alpha_base52_seq with a non-alpha-base52 begin"};
 
   std::vector<std::string> res{size};
 
@@ -274,9 +276,10 @@ pascal_case(std::string const& input) {
 
 inline std::string
 set_case(std::string const& input) {
-  static_assert(
-      conf::name_case == conf::name_case::screaming or conf::name_case == conf::name_case::snake
-      or conf::name_case == conf::name_case::camel or conf::name_case == conf::name_case::pascal);
+  static_assert(conf::name_case == conf::name_case::screaming
+                or conf::name_case == conf::name_case::snake
+                or conf::name_case == conf::name_case::camel
+                or conf::name_case == conf::name_case::pascal);
   if constexpr (conf::name_case == conf::name_case::screaming) {
     return screaming_case(input);
   } else if constexpr (conf::name_case == conf::name_case::snake) {
@@ -302,34 +305,28 @@ libname(std::string const& short_name, std::string const& prefix) {
 }
 } // namespace impl
 
-// auto dunder = std::ranges::find(short_name, '_');
-// while (dunder != short_name.end() and *(dunder + 1) != '_')
-//   dunder = std::ranges::find(dunder + 1, short_name.end(), '_');
-// std::string pre_esc{short_name.begin(), dunder};
-// std::string post_esc{dunder + (pre_esc.size() < short_name.size()), short_name.end()};
-
 std::string
 apiname(std::string const& short_name) {
   std::string pre_esc{short_name.begin(), std::ranges::find(short_name, '\\')};
-  std::string post_esc{
-      std::next(short_name.begin(), pre_esc.size() + (pre_esc.size() < short_name.size())),
-      short_name.end()};
+  std::string post_esc{std::next(short_name.begin(),
+                                 pre_esc.size() + (pre_esc.size() < short_name.size())),
+                       short_name.end()};
   return impl::libname(pre_esc, conf::api_prefix) + post_esc;
 }
 
 std::string
 implname(std::string short_name) {
   std::string pre_esc{short_name.begin(), std::ranges::find(short_name, '\\')};
-  std::string post_esc{
-      std::next(short_name.begin(), pre_esc.size() + (pre_esc.size() < short_name.size())),
-      short_name.end()};
+  std::string post_esc{std::next(short_name.begin(),
+                                 pre_esc.size() + (pre_esc.size() < short_name.size())),
+                       short_name.end()};
   static std::array<std::pair<std::regex, std::string>,
-                    (sizeof conf::impl_shortnames) / (sizeof(std::array<char const*, 2>))>
+                    (sizeof conf::impl_aliases) / (sizeof(std::array<char const*, 2>))>
       repls = utl::ii << [&]() -> decltype(repls) {
     decltype(repls) res{};
     for (std::size_t i = 0; i < res.size(); ++i)
-      res[i] = {std::regex{conf::impl_shortnames[i][0], std::regex_constants::optimize},
-                conf::impl_shortnames[i][1]};
+      res[i] = {std::regex{conf::impl_aliases[i][0], std::regex_constants::optimize},
+                conf::impl_aliases[i][1]};
     return res;
   };
 
@@ -343,9 +340,9 @@ namespace impl {
 namespace tests {
 
 template<std::ranges::forward_range L, std::ranges::forward_range R>
-  requires(
-      std::ranges::sized_range<L>and std::ranges::sized_range<R>and std::equality_comparable_with<
-          std::ranges::range_reference_t<L>, std::ranges::range_reference_t<R>>)
+  requires(std::ranges::sized_range<L>and std::ranges::sized_range<R>and
+               std::equality_comparable_with<std::ranges::range_reference_t<L>,
+                                             std::ranges::range_reference_t<R>>)
 [[nodiscard]] inline constexpr bool
 range_eq(L&& l, R&& r) noexcept {
   using namespace std::ranges;
@@ -757,7 +754,8 @@ struct def_base::instance*
 def_base::get_instance() {
   /// the empty instance to be returned on macro default constructions.
   static struct instance default_instance {
-    .context = {}, .id = {}, .category = {}, .name = {}, .source_loc = {}, .clang_format = {},
+    .context = {}, .id = {}, .category = {}, .name = {}, .source_loc = {},
+    .clang_format = {},
   };
   return &default_instance;
 }
@@ -766,35 +764,43 @@ struct def_base::instance*
 def_base::get_instance(std::string const& name, detail::source_location const& loc) {
   // construct id
   std::string id{};
+
+  if (_cur_category.starts_with("impl."))
+    id += "impl_";
+
   for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it)
     id += (*it)->name + "_";
 
   id += name;
 
-  // better nesting names
+  // apply underscore removal
 
-  static std::regex xx_xx{"_([xX]+)_([xX])(_|$)", std::regex_constants::optimize};
-  static std::regex oo_oo{"_([oO]+)_([oO])(_|$)", std::regex_constants::optimize};
-  while (std::regex_search(id, xx_xx))
-    id = std::regex_replace(id, xx_xx, "_$1$2$3");
-  while (std::regex_search(id, oo_oo))
-    id = std::regex_replace(id, oo_oo, "_$1$2$3");
+  static std::regex removed_uscore{"_<", std::regex_constants::optimize};
+  id = std::regex_replace(id, removed_uscore, "");
 
   // apply naming scheme
-  if (not _exec_stack.empty()) {
+
+  if (_cur_category.starts_with("impl.") or not _exec_stack.empty()) {
     id = implname(id);
   } else {
     id = apiname(id);
   }
 
-  // better nesting names, cont.
+  // make standalone O+ lowercase (used for nesting)
 
-  static std::regex oo{"_([oO]+)(_|$)", std::regex_constants::optimize};
-  for (auto it = std::sregex_iterator{id.begin(), id.end(), oo}; it != std::sregex_iterator{};
-       ++it) {
-    for (long i = 0; i < it->length(1); ++i)
-      id[it->position(1) + i] = 'o';
+  static std::regex o{"_(O+)(_|$)", std::regex_constants::optimize};
+  while (std::regex_search(id, o)) {
+    for (auto it = std::sregex_iterator{id.begin(), id.end(), o};
+         it != std::sregex_iterator{}; ++it) {
+      for (long i = 0; i < it->length(1); ++i)
+        id[it->position(1) + i] = 'o';
+    }
   }
+
+  // remove format backslashes
+
+  static std::regex bs{"\\\\", std::regex_constants::optimize};
+  id = std::regex_replace(id, bs, "");
 
   // return the macro associated with this id if it exists
   // (and check for exec_stack discrepancies to ensure no id collisions)
@@ -812,9 +818,7 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   instance*                     parent{nullptr};
   if (not _exec_stack.empty()) {
     parent = _exec_stack.back();
-    ins_it = std::ranges::find(_instances, parent, [](auto&& v) {
-      return &v;
-    });
+    ins_it = std::ranges::find(_instances, parent, [](auto&& v) { return &v; });
     if (ins_it == _instances.end())
       throw std::logic_error{"cannot find instance " + _exec_stack.back()->id
                              + " in the instances list"};
@@ -838,17 +842,19 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
 void
 def_base::update_instance(runtime_signature const& sig) {
   if (not _instance)
-    throw std::logic_error{"error in update_instance: instance pointer was somehow not assigned"};
+    throw std::logic_error{
+        "error in update_instance: instance pointer was somehow not assigned"};
   if (_instance->name.empty())
     throw std::logic_error{"attempted to update instance before assigning a name"};
 
   auto e = std::runtime_error{
-      "attempting to add more signature details to an already defined macro " + _instance->id};
+      "attempting to add more signature details to an already defined macro "
+      + _instance->id};
 
   if (not sig.params.empty()) {
     if (_instance->params and sig.params != *_instance->params)
-      throw std::runtime_error{"params mismatch in signature update for " + _instance->id + ". "
-                               + sig.params + " != " + *_instance->params + "."};
+      throw std::runtime_error{"params mismatch in signature update for " + _instance->id
+                               + ". " + sig.params + " != " + *_instance->params + "."};
     if (_instance->definition)
       throw e;
     _instance->params = sig.params;
@@ -863,8 +869,9 @@ def_base::update_instance(runtime_signature const& sig) {
 
   if (not sig.docparams.empty()) {
     if (_instance->docparams and sig.docparams != *_instance->docparams)
-      throw std::runtime_error{"docparams mismatch in signature update for " + _instance->id + ". "
-                               + sig.docparams + " != " + *_instance->docparams + "."};
+      throw std::runtime_error{"docparams mismatch in signature update for "
+                               + _instance->id + ". " + sig.docparams
+                               + " != " + *_instance->docparams + "."};
     if (_instance->definition)
       throw e;
     _instance->docparams = sig.docparams;
@@ -872,8 +879,8 @@ def_base::update_instance(runtime_signature const& sig) {
 
   if (not sig.xout.empty()) {
     if (_instance->xout and sig.xout != *_instance->xout)
-      throw std::runtime_error{"xout mismatch in signature update for " + _instance->id + ". "
-                               + sig.xout + " != " + *_instance->xout + "."};
+      throw std::runtime_error{"xout mismatch in signature update for " + _instance->id
+                               + ". " + sig.xout + " != " + *_instance->xout + "."};
     if (_instance->definition)
       throw e;
     _instance->xout = sig.xout;
@@ -881,8 +888,9 @@ def_base::update_instance(runtime_signature const& sig) {
 
   if (not sig.docreturn.empty()) {
     if (_instance->docreturn and sig.docreturn != *_instance->docreturn)
-      throw std::runtime_error{"docreturn mismatch in signature update for " + _instance->id + ". "
-                               + sig.docreturn + " != " + *_instance->docreturn + "."};
+      throw std::runtime_error{"docreturn mismatch in signature update for "
+                               + _instance->id + ". " + sig.docreturn
+                               + " != " + *_instance->docreturn + "."};
     if (_instance->definition)
       throw e;
     _instance->docreturn = sig.docreturn;
@@ -902,25 +910,27 @@ skip_spaces(char const* s) {
 
 std::string
 def_base::synopsis() {
-  std::string                                                    summary{"# Synopsis\n\n"};
-  std::string                                                    details{};
+  std::string summary{"# Synopsis\n\n"};
+  std::string details{};
   std::unordered_map<std::string, std::vector<struct instance*>> by_category{};
   for (auto&& v : _instances) {
     if (v.category.empty())
-      throw std::runtime_error{"macro " + v.id
-                               + " does not have a category. all macros must have a category"};
+      throw std::runtime_error{
+          "macro " + v.id + " does not have a category. all macros must have a category"};
     if (v.context.empty())
       by_category[v.category].push_back(&v);
   }
   if (by_category.size() != _defined_categories.size())
-    throw std::logic_error{"mismatch between defined categories and instance-derived categories"};
+    throw std::logic_error{
+        "mismatch between defined categories and instance-derived categories"};
   std::unordered_set<std::string> seen_categories{};
   for (auto&& v : _defined_categories) {
     if (seen_categories.contains(v))
       continue;
     seen_categories.insert(v);
     if (not by_category.contains(v))
-      throw std::logic_error{"mismatch between defined categories and instance-derived categories"};
+      throw std::logic_error{
+          "mismatch between defined categories and instance-derived categories"};
     summary += "## [" + v + "](#" + v + ")\n\n";
     details += "[" + v + "]\n\n";
     for (auto&& inst : by_category[v]) {
@@ -957,98 +967,107 @@ def_base::synopsis() {
 
 std::string
 def_base::definitions() {
-  std::string res{};
-  instance*   fdm_end{nullptr};
-  bool        last_clang_format = true;
+  std::vector<std::string> api{};
+  instance*                fdm_end{nullptr};
+  bool                     last_clang_format = true;
+
+  // top-level implementaton macros to be
+  // placed at the end of the file
+  std::vector<std::string> impl{};
+
+  static auto buf = utl::ii << [&] {
+    std::array<std::string, 73> dashes;
+    for (std::size_t i = 0; i < 73; ++i) {
+      if (i % 2 == 0)
+        dashes[i] = "-";
+      else
+        dashes[i] = " ";
+    }
+    return " " + utl::cat(dashes) + " ";
+  };
+
   for (auto&& v : _instances) {
     if (not v.definition)
       throw std::runtime_error{"macro " + v.id + " missing definition"};
 
+    auto&& targ = v.category.starts_with("impl.") ? impl : api;
+
     {
       if (last_clang_format and not v.clang_format)
-        res += "\n// clang-format off\n";
+        targ.push_back("\n// clang-format off\n");
       else if (not last_clang_format and v.clang_format)
-        res += "\n// clang-format on\n";
+        targ.push_back("\n// clang-format on\n");
       last_clang_format = v.clang_format;
 
-      res += *v.definition + "\n";
+      targ.push_back(*v.definition);
     }
 
-    static auto buf = utl::ii << [&] {
-      std::array<std::string, 73> dashes;
-      for (std::size_t i = 0; i < 73; ++i) {
-        if (i % 2 == 0)
-          dashes[i] = "-";
-        else
-          dashes[i] = " ";
-      }
-      return " " + utl::cat(dashes) + " ";
-    };
     if (&v == fdm_end) {
-      res += "\n\n//" + buf + "}}}\n\n";
+      targ.push_back("\n//" + buf + "}}}\n");
       fdm_end = nullptr;
     } else if (v.context.empty() and not v.children.empty()) {
       fdm_end = v.children.front();
       while (not fdm_end->children.empty())
         fdm_end = fdm_end->children.front();
-      res += "\n\n//" + buf + "{{{\n\n";
+      targ.push_back("\n//" + buf + "{{{\n");
     }
   }
-  if (not res.empty())
-    res.pop_back();
-  return res;
+
+  return utl::cat(api, "\n") + "\n\n/// [impl]\n/// ------\n\n//" + buf + "{{{\n"
+       + utl::cat(impl, "\n") + "\n//" + buf + "}}}";
 }
 
 std::string
 def_base::assertions() noexcept {
   static std::unordered_map<std::string, std::string> cache{};
 
-  std::string res{"namespace {\n"
-                  "// streq that trims spacing around outer ASSERT_PP_EQ\n"
-                  "// parens to account for preprocessor discrepancies\n"
-                  "// / *( *\\(.*\\) */\n"
-                  "static constexpr bool\n"
-                  "pp_streq(char const* l, char const* r) {\n"
-                  "  for (; *l and *l != '('; ++l)\n"
-                  "    ;\n"
-                  "  for (; *l and *r != '('; ++r)\n"
-                  "    ;\n"
-                  "  if (not *l)\n"
-                  "    return not *r;\n"
-                  "  if (not *r)\n"
-                  "    return not *l;\n"
-                  "  ++l;\n"
-                  "  ++r;\n"
-                  "  for (; *l == ' '; ++l)\n"
-                  "    ;\n"
-                  "  for (; *r == ' '; ++r)\n"
-                  "    ;\n"
-                  "  char const* le = l;\n"
-                  "  char const* re = r;\n"
-                  "  for (; *le; ++le)\n"
-                  "    ;\n"
-                  "  for (; *re; ++re)\n"
-                  "    ;\n"
-                  "  for (; le > l and *(le - 1) != ')'; --le)\n"
-                  "    ;\n"
-                  "  for (; re > r and *(re - 1) != ')'; --re)\n"
-                  "    ;\n"
-                  "  --le;\n"
-                  "  --re;\n"
-                  "  for (; le > l and *(le - 1) == ' '; --le)\n"
-                  "    ;\n"
-                  "  for (; re > r and *(re - 1) == ' '; --re)\n"
-                  "    ;\n"
-                  "  for (; l != le and r != re and *l == *r; ++l, ++r)\n"
-                  "    ;\n"
-                  "  return l == le and r == re;\n"
-                  "}\n"
-                  "} // namespace\n"
-                  "\n"
-                  "#define ASSERT_PP_EQ_X(a, b) static_assert(pp_streq(#a, #b), #a \" != \" #b)\n"
-                  "#define ASSERT_PP_EQ(a, b)   ASSERT_PP_EQ_X(a, b)\n"
-                  "\n"
-                  "// clang-format off\n"};
+  std::string res{
+      "namespace {\n"
+      "// streq that trims spacing around outer ASSERT_PP_EQ\n"
+      "// parens to account for preprocessor discrepancies\n"
+      "// / *( *\\(.*\\) */\n"
+      "static constexpr bool\n"
+      "pp_streq(char const* l, char const* r) {\n"
+      "  for (; *l and *l != '('; ++l)\n"
+      "    ;\n"
+      "  for (; *l and *r != '('; ++r)\n"
+      "    ;\n"
+      "  if (not *l)\n"
+      "    return not *r;\n"
+      "  if (not *r)\n"
+      "    return not *l;\n"
+      "  ++l;\n"
+      "  ++r;\n"
+      "  for (; *l == ' '; ++l)\n"
+      "    ;\n"
+      "  for (; *r == ' '; ++r)\n"
+      "    ;\n"
+      "  char const* le = l;\n"
+      "  char const* re = r;\n"
+      "  for (; *le; ++le)\n"
+      "    ;\n"
+      "  for (; *re; ++re)\n"
+      "    ;\n"
+      "  for (; le > l and *(le - 1) != ')'; --le)\n"
+      "    ;\n"
+      "  for (; re > r and *(re - 1) != ')'; --re)\n"
+      "    ;\n"
+      "  --le;\n"
+      "  --re;\n"
+      "  for (; le > l and *(le - 1) == ' '; --le)\n"
+      "    ;\n"
+      "  for (; re > r and *(re - 1) == ' '; --re)\n"
+      "    ;\n"
+      "  for (; l != le and r != re and *l == *r; ++l, ++r)\n"
+      "    ;\n"
+      "  return l == le and r == re;\n"
+      "}\n"
+      "} // namespace\n"
+      "\n"
+      "#define ASSERT_PP_EQ_X(a, b) static_assert(pp_streq(#a, #b), #a \" != \" #b)\n"
+      "#define ASSERT_PP_EQ(a, b)   ASSERT_PP_EQ_X(a, b)\n"
+      "\n"
+      "// clang-format off\n"};
   for (auto&& v : _instances) {
     if (v.tests.empty() and v.examples.empty())
       continue;
@@ -1155,12 +1174,14 @@ void
 arg::validate_context() const {
   if (def_base::_exec_stack.empty() or _parent != def_base::_exec_stack.back())
     throw std::runtime_error{"preprocessor arg \"" + _value
-                             + "\" used outside of its defining function: " + _parent->id};
+                             + "\" used outside of its defining function: "
+                             + _parent->id};
 }
 
 arg::arg(std::string const& value)
-    : _value{value}, _parent{def_base::_exec_stack.empty() ? nullptr
-                                                           : def_base::_exec_stack.back()} {
+    : _value{value}, _parent{def_base::_exec_stack.empty()
+                                 ? nullptr
+                                 : def_base::_exec_stack.back()} {
   if (value == "__VA_ARGS__")
     throw std::runtime_error{"cannot use codegen::arg for variadic arguments"};
   if (def_base::_exec_stack.empty())
@@ -1188,13 +1209,15 @@ void
 va::validate_context() const {
   if (def_base::_exec_stack.empty() or _parent != def_base::_exec_stack.back())
     throw std::runtime_error{"preprocessor arg \"" + _value
-                             + "\" used outside of its defining function: " + _parent->id};
+                             + "\" used outside of its defining function: "
+                             + _parent->id};
 }
 
 va::va(std::string const& value)
     : _parent{def_base::_exec_stack.empty() ? nullptr : def_base::_exec_stack.back()} {
   if (value != "__VA_ARGS__")
-    throw std::runtime_error{"cannot use codegen::va for non-variadic arguments: " + value};
+    throw std::runtime_error{"cannot use codegen::va for non-variadic arguments: "
+                             + value};
   if (def_base::_exec_stack.empty())
     throw std::runtime_error{"cannot use codegen::va outside of a macro body"};
 }
@@ -1219,13 +1242,14 @@ operator+(std::string const& l, va const& r) {
 void
 pack::validate_context() const {
   if (def_base::_exec_stack.empty() or _parent != def_base::_exec_stack.back())
-    throw std::runtime_error{"preprocessor pack args used outside of its defining function: "
-                             + _parent->id};
+    throw std::runtime_error{
+        "preprocessor pack args used outside of its defining function: " + _parent->id};
 }
 
 pack::pack(std::vector<std::string> const& value)
-    : _value{value}, _parent{def_base::_exec_stack.empty() ? nullptr
-                                                           : def_base::_exec_stack.back()} {
+    : _value{value}, _parent{def_base::_exec_stack.empty()
+                                 ? nullptr
+                                 : def_base::_exec_stack.back()} {
   if (def_base::_exec_stack.empty())
     throw std::runtime_error{"cannot use codegen::pack outside of a macro body"};
 }
@@ -1245,6 +1269,18 @@ std::vector<std::string>::const_iterator
 pack::end() const {
   validate_context();
   return _value.end();
+}
+
+std::vector<std::string>::const_reverse_iterator
+pack::rbegin() const {
+  validate_context();
+  return _value.rbegin();
+}
+
+std::vector<std::string>::const_reverse_iterator
+pack::rend() const {
+  validate_context();
+  return _value.rend();
 }
 
 std::string const&

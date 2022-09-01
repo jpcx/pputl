@@ -33,8 +33,7 @@ using namespace codegen;
 
 decltype(int_min) int_min = NIFTY_DEF(int_min, [&] {
   docs << "the minimum value of a pputl signed int."
-       << "only representable as binary. see type.int for details."
-       << "see the readme code generation section to configure.";
+       << "only representable as hex. see type.int for details.";
   return int_min_s;
 });
 

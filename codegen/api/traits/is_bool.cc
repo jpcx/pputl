@@ -32,15 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "detects if args is a bool.";
+  docs << "[extends " + is_enum + "] detects if args is a bool (enum<0|1>).";
 
-  auto binmin = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
+  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
 
   tests << is_bool()         = "0" >> docs;
   tests << is_bool(0)        = "1" >> docs;
   tests << is_bool(1)        = "1" >> docs;
   tests << is_bool("1u")     = "0" >> docs;
-  tests << is_bool(binmin)   = "0" >> docs;
+  tests << is_bool(min)      = "0" >> docs;
   tests << is_bool(0, 1)     = "0" >> docs;
   tests << is_bool("(0)")    = "0" >> docs;
   tests << is_bool("()")     = "0";
@@ -54,16 +54,10 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   tests << is_bool(", a, ")  = "0";
   tests << is_bool(", , a")  = "0";
 
-  def fail = def{(std::string const&)detail::bool_fail} = [&] {
-    return "0";
-  };
+  def<"\\0"> _0 = [&] { return ""; };
+  def<"\\1">{}  = [&] { return ""; };
 
-  def{(std::string const&)detail::bool_pass} = [&] {
-    return "1";
-  };
-
-  return cat(utl::slice(fail, -((std::string const&)detail::bool_pass).size()),
-             pp::call(pp::call(detail::bool_o(args + "."), args), args));
+  return is_enum(utl::slice(_0, -1), args);
 });
 
 } // namespace api

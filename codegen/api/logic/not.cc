@@ -37,15 +37,10 @@ decltype(not_) not_ = NIFTY_DEF(not_, [&](va args) {
   tests << not_("0") = "1" >> docs;
   tests << not_("1") = "0" >> docs;
 
-  def<"0"> _0 = [&] {
-    return "1";
-  };
+  def<"\\0"> _0 = [&] { return "1"; };
+  def<"\\1">{}  = [&] { return "0"; };
 
-  def<"1">{} = [&] {
-    return "0";
-  };
-
-  return cat(utl::slice(_0, -1), bool_(args));
+  return xcat(utl::slice(_0, -1), bool_(args));
 });
 
 } // namespace api

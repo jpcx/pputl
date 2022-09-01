@@ -25,26 +25,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
-//   docs << "uint sqrt lookup.";
-// 
-//   tests << sqrt(0)                  = "0";
-//   tests << sqrt(4)                  = "2" >> docs;
-//   tests << sqrt(conf::uint_max / 2) = std::to_string((unsigned)std::sqrt(conf::uint_max / 2));
-//   tests << sqrt(conf::uint_max)     = std::to_string((unsigned)std::sqrt(conf::uint_max)) >> docs;
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[6];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "numeric.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
+  docs << "numeric sqrt. value must be non-negative."
+       << "casts result according to the input.";
+
+  tests << sqrt("0u") = "0u" >> docs;
+  tests << sqrt(4)    = "2" >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << sqrt("0x" + utl::cat(samp::h16)) = ("0x" + utl::cat(samp::h4)) >> docs;
+  tests << sqrt(uint_max_s) =
+      (std::to_string((unsigned)::sqrt(conf::uint_max)) + "u") >> docs;
+
+  def<"\\0(e, n)"> _0 = [&](arg, arg n) {
+    return word(impl::udec(udec(n), "SQRT"), typeof(n));
+  };
+  def<"\\1(e, n)">{} = [&](arg e, arg) { return fail(e); };
+
+  return pp::call(
+      xcat(utl::slice(_0, -1), ltz(args)),
+      str(pp::str("[" + sqrt + "] value must be non-negative") + " : " + args), args);
+});
+
+} // namespace api

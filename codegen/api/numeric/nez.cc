@@ -25,21 +25,26 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
-//   docs << "uint non-zero detection.";
-// 
-//   tests << nez("0")             = "0" >> docs;
-//   tests << nez("1")             = "1";
-//   tests << nez("2")             = "1";
-//   tests << nez(uint_max_s)      = "1" >> docs;
-// 
-//   return is_some(cat(utl::slice(detail::eqz_0, -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "numeric.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
+  docs << "numeric non-zero detection.";
+
+  tests << nez("0")                               = "0" >> docs;
+  tests << nez("0u")                              = "0" >> docs;
+  tests << nez("0x" + utl::cat(samp::hmin))       = "0" >> docs;
+  tests << nez("0x" + utl::cat(samp::hmin) + "u") = "0" >> docs;
+  tests << nez(pp::tup(samp::hmin))               = "0" >> docs;
+  tests << nez("1u")                              = "1" >> docs;
+  tests << nez("2")                               = "1" >> docs;
+  tests << nez(uint_max_s)                        = "1" >> docs;
+  tests << nez(int_min_s)                         = "1" >> docs;
+
+  return not_(is_none(xcat(utl::slice(detail::eqz_0u, -2), udec(args))));
+});
+
+} // namespace api

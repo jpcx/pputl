@@ -31,108 +31,22 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(bool_pass) bool_pass = NIFTY_DEF(bool_pass);
-decltype(bool_fail) bool_fail = NIFTY_DEF(bool_fail);
-decltype(bool_o)    bool_o    = NIFTY_DEF(bool_o);
-} // namespace detail
-
 decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
-  docs << "bool type (0 or 1)."
+  docs << "[specializes " + enum_ + "] bool type (enum<0|1>)."
        << "expands to b if valid, else fails.";
 
   tests << bool_(0) = "0" >> docs;
   tests << bool_(1) = "1" >> docs;
 
-  def<"chk_0"> chk_0 = [&] {
-    return "";
-  };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
+  def<"\\1(e, bool)">{} = [](arg, arg bool_) { return bool_; };
 
-  def<"chk_1">{} = [&] {
-    docs << "concat existence checks";
-    return "";
-  };
-
-  detail::bool_fail = def{"fail(err, ...)"} = [&](arg err, va) {
-    return fail(err);
-  };
-
-  detail::bool_pass = def{"pass(err, ...)"} = [&](arg, va args) {
-    docs << "fourth parentheses; returns";
-    return args;
-  };
-
-  def<>           ooo_no_pass{};
-  def<"ooo(...)"> ooo = [&](va args) {
-    docs << "third parentheses; asserts either 0 or 1.";
-
-    ooo_no_pass = def{"no_pass(...)"} = [&](va) {
-      return detail::bool_fail;
-    };
-
-    def<"pass(...)"> ooo_pass = [&](va) {
-      return detail::bool_pass;
-    };
-
-    return def<"res(...)">{[&](va) {
-      std::string const prefix    = utl::slice(ooo_pass, -4);
-      std::string const pass_s    = utl::slice(ooo_pass, prefix.size(), 0);
-      std::string const no_pass_s = utl::slice(ooo_no_pass, prefix.size(), 0);
-
-      return pp::call(pp::cat(
-          prefix,
-          pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-          pass_s));
-    }}(pp::cat(utl::slice(chk_0, -1), args));
-  };
-
-  def<>             oo_fail{};
-  def<"oo(_, ...)"> oo = [&](arg _, va) {
-    docs << "second parentheses; asserts non-tuple.";
-
-    oo_fail = def{"fail(...)"} = [&](va) {
-      return ooo_no_pass;
-    };
-
-    def<"no_fail(...)"> oo_no_fail = [&](va) {
-      return ooo;
-    };
-
-    return def<"res(...)">{[&](va) {
-      std::string const prefix    = utl::slice(oo_fail, -4);
-      std::string const fail_s    = utl::slice(oo_fail, prefix.size(), 0);
-      std::string const no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
-
-      return pp::call(pp::cat(
-          prefix,
-          pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-          fail_s));
-    }}(eat + " " + _);
-  };
-
-  detail::bool_o = def{"o(_, ...)"} = [&](arg, va) {
-    docs << "first parentheses; asserts only one arg.";
-
-    def<"pass(...)"> pass = [&](va) {
-      return oo;
-    };
-
-    def<"no_pass(...)"> no_pass = [&](va) {
-      return oo_fail;
-    };
-
-    std::string const prefix    = utl::slice(pass, -4);
-    std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
-    std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);
-
-    return pp::call(pp::cat(
-        prefix,
-        pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-        pass_s));
-  };
-
-  return pp::call(pp::call(pp::call(detail::bool_o(args + "."), args), args),
-                  istr("[" + bool_ + "] invalid bool : " + args), args);
+  return def<"o(e, atom)">{[&](arg e, arg atom) {
+    return pp::call(xcat(utl::slice(_0, -1), is_bool(atom)), e, atom);
+  }}(str(pp::str("[" + bool_
+                 + "] bool cannot describe anything but the literal '1' and '0'")
+         + " : " + args),
+     atom(args));
 });
 
 } // namespace api

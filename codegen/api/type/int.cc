@@ -32,194 +32,151 @@ namespace api {
 using namespace codegen;
 
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
-  docs << std::to_string(conf::bit_length) + "-bit signed integer type."
-       << "may be constructed from either unsigned or signed ints."
+  docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
+              + "-bit signed integer type."
+       << "constructible from any word type."
+       << "instance is either idec or ihex."
+       << ""
        << "cannot parse negative decimals; use math.neg instead."
+       << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
-       << "bit length is fixed. cannot parse shorter bit lengths."
+       << "cast modes:"
        << ""
-       << "attempts to preserve binary/decimal representation, but will"
-       << "output binary if casting the input yields a negative number"
+       << "  idec → idec | [default]"
+       << "  idec → ihex | requires IHEX hint"
+       << ""
+       << "  ihex → ihex | [default]; fallback for failed ihex → idec"
+       << "  ihex → idec | requires IDEC hint and positive result"
+       << ""
+       << "  udec → idec | [default]; requires positive result"
+       << "  udec → ihex | requires IHEX hint or udec → idec failure"
+       << ""
+       << "  uhex → ihex | [default]; fallback for failed uhex → idec"
+       << "  uhex → idec | requires IDEC hint and positive result"
+       << ""
+       << "  utup → ihex | [default]; fallback for failed utup → idec"
+       << "  utup → idec | requires IDEC hint and positive result"
+       << ""
+       << "attempts to preserve hex/decimal representation by default, but"
+       << "will output hex if casting the input yields a negative number."
+       << "hint is ignored only if the result is negative and the hint is IDEC."
        << ""
        << "cast from unsigned reinterprets bits as signed two's complement."
        << ""
-       << "value must be a valid signed int; implicit interpretation"
+       << "values above the int max must have a 'u' suffix; implicit interpretation"
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  auto binmin  = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "0"));
-  auto binmax  = "0b0" + utl::cat(std::vector<std::string>(conf::bit_length - 1, "1"));
-  auto binneg1 = "0b" + utl::cat(std::vector<std::string>(conf::bit_length, "1"));
+  // idec  → idec | [default]
+  tests << int_(0)         = "0" >> docs;
+  // idec  → ihex | requires IHEX hint
+  tests << int_(1, "IHEX") = ("0x" + utl::cat(samp::h1)) >> docs;
 
-  tests << int_(0)             = "0" >> docs;
-  tests << int_("1u")          = "1" >> docs;
-  tests << int_(binmin)        = binmin >> docs;
-  tests << int_(conf::int_max) = std::to_string(conf::int_max) >> docs;
-  tests << int_(binmax + "u")  = binmax >> docs;
-  tests << int_(uint_max_s)    = binneg1 >> docs;
+  // ihex  → ihex | [default]; fallback for failed ihex → idec
+  tests << int_("0x" + utl::cat(samp::h2)) = ("0x" + utl::cat(samp::h2)) >> docs;
+  tests << int_("0x" + utl::cat(samp::himin), "IDEC") =
+      ("0x" + utl::cat(samp::himin)) >> docs;
+  // ihex  → idec | requires IDEC hint and positive result
+  tests << int_("0x" + utl::cat(samp::h2), "IDEC") = "2" >> docs;
 
-  def<"fail(e, ...)"> fail_ = [&](arg e, va) {
-    docs << "final parentheses (fail)";
-    return fail(e);
+  // udec  → idec | [default]; requires positive result
+  tests << int_("7u")          = "7" >> docs;
+  // udec  → ihex | requires IHEX hint or udec → idec failure
+  tests << int_("15u", "IHEX") = ("0x" + utl::cat(samp::h15)) >> docs;
+  tests << int_(uint_max_s)    = ("0x" + utl::cat(samp::hmax)) >> docs;
+
+  // uhex  → ihex | [default]; fallback for failed uhex → idec
+  tests << int_("0x" + utl::cat(samp::h7) + "u") = ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << int_("0x" + utl::cat(samp::hmax) + "u", "IDEC") =
+      ("0x" + utl::cat(samp::hmax)) >> docs;
+  // uhex  → idec | requires IDEC hint and positive result
+  tests << int_("0x" + utl::cat(samp::h5) + "u", "IDEC") = "5" >> docs;
+
+  // utup → ihex | [default]; fallback for failed utup → idec
+  tests << int_(pp::tup(samp::hmin))          = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << int_(pp::tup(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
+  // utup → idec | requires IDEC hint and positive result
+  tests << int_(pp::tup(samp::himax), "IDEC") = int_max_s >> docs;
+
+  def<"hint_\\IDEC"> hint_idec = [&] { return ""; };
+  def<"hint_\\IHEX">{}         = [&] { return ""; };
+  def<"hint_\\AUTO">{}         = [&] { return ""; };
+
+  def<"mode(e, t, hint)"> mode = [&](arg e, arg t, arg hint) {
+    docs << "cast mode selector and error detector";
+
+    def<"\\IDEC"> idec_ = [&] { return ""; };
+    def<"\\IHEX">{}     = [&] { return ""; };
+    def<"\\UDEC">{}     = [&] { return ""; };
+    def<"\\UHEX">{}     = [&] { return ""; };
+    def<"\\UTUP">{}     = [&] { return ""; };
+
+    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) { return fail(e); };
+    def<"\\1(e, t, hint)">{}  = [&](arg, arg t, arg hint) {
+      def<"\\IDECIDEC"> idecidec = [&] { return "ID_ID"; };
+      def<"\\IDECIHEX">{}        = [&] { return "ID_IH"; };
+      def<"\\IDECAUTO">{}        = [&] { return "ID_ID"; };
+      def<"\\IHEXIDEC">{}        = [&] { return "IH_IC"; };
+      def<"\\IHEXIHEX">{}        = [&] { return "IH_IH"; };
+      def<"\\IHEXAUTO">{}        = [&] { return "IH_IH"; };
+      def<"\\UDECIDEC">{}        = [&] { return "UD_IC"; };
+      def<"\\UDECIHEX">{}        = [&] { return "UD_IH"; };
+      def<"\\UDECAUTO">{}        = [&] { return "UD_IC"; };
+      def<"\\UHEXIDEC">{}        = [&] { return "UH_IC"; };
+      def<"\\UHEXIHEX">{}        = [&] { return "UH_IH"; };
+      def<"\\UHEXAUTO">{}        = [&] { return "UH_IH"; };
+      def<"\\UTUPIDEC">{}        = [&] { return "XW_IC"; };
+      def<"\\UTUPIHEX">{}        = [&] { return "XW_IH"; };
+      def<"\\UTUPAUTO">{}        = [&] { return "XW_IH"; };
+
+      return pp::cat(utl::slice(idecidec, -8), t, hint);
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), is_none(xcat(utl::slice(idec_, -4), t))), e,
+                    t, hint);
   };
 
-  def<"upass(e, u)"> upass = [&](arg, arg u) {
-    docs << "final parentheses (cast from unsigned)";
+  auto utup_params = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : utup_params)
+    if (v == "u" or v == "x") {
+      v = "_" + v;
+    }
 
-    def<"\\DEC(u)"> dec = [&](arg u) {
-      def<"0(u, ibin, ubin)"> _0 = [&](arg, arg, arg ubin) {
-        return detail::uint_trait(ubin, "BIN_IDEC");
-      };
-
-      def<"1(u, ibin, ubin)">{} = [&](arg, arg ibin, arg) {
-        return ibin;
-      };
-
-      return def<"o(u, ibin)">{[&](arg u, arg ibin) {
-        return def<"o(u_, ibin)">{[&](arg u, arg ibin) {
-          return def<"o(u, ibin, ubin)">{[&](arg u, arg ibin, arg ubin) {
-            return pp::call(
-                cat(utl::slice(_0, -1), esc(ifirst + " " + detail::uint_trait(ubin, "BIN_BITS"))),
-                u, ibin, ubin);
-          }}(u, ibin, pp::cat(ibin, "u"));
-        }}(u, ibin);
-      }}(u, detail::uint_trait(u, "DEC_IBIN"));
+  def<"\\ID_ID(idec)"> id_id = [&](arg idec) { return idec; };
+  def<"\\ID_IH(idec)">{}     = [&](arg idec) {
+    return impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "IHEX");
+  };
+  def<"\\IH_IC(ihex)">{} = [&](arg ihex) {
+    return impl::uhex(pp::cat(ihex, 'u'), "ICAST");
+  };
+  def<"\\IH_IH(ihex)">{} = [&](arg ihex) { return ihex; };
+  def<"\\UD_IC(udec)">{} = [&](arg udec) {
+    return impl::uhex(impl::udec(udec, "UHEX"), "ICAST");
+  };
+  def<"\\UD_IH(udec)">{} = [&](arg udec) {
+    return impl::uhex(impl::udec(udec, "UHEX"), "IHEX");
+  };
+  def<"\\UH_IC(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "ICAST"); };
+  def<"\\UH_IH(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "IHEX"); };
+  def<"\\XW_IC(utup)">{} = [&](arg utup) {
+    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
+      return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "ICAST");
     };
-
-    def<"\\BIN(u)">{} = [&](arg u) {
-      return detail::uint_trait(detail::uint_trait(u, "BIN_UDEC"), "DEC_IBIN");
+    return o + " " + utup;
+  };
+  def<"\\XW_IH(utup)">{} = [&](arg utup) {
+    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
+      return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "IHEX");
     };
-
-    return pp::call(cat(utl::slice(dec, -3), detail::uint_trait(u, "TYPE")), u);
+    return o + " " + utup;
   };
 
-  def<"ipass(e, i)"> ipass = [&](arg, arg i) {
-    docs << "final parentheses (cast from signed)";
-
-    return i;
-  };
-
-  def<>            oooo_fail{};
-  def<>            oooo_ipass{};
-  def<"oooo(...)"> oooo = [&](va args) {
-    docs << "fourth parentheses; attempts cast from unsigned.";
-
-    oooo_fail = def{"fail(...)"} = [&](va) {
-      return fail_;
-    };
-
-    def<"no_fail(...)"> oooo_no_fail = [&](va) {
-      return upass;
-    };
-
-    oooo_ipass = def{"ipass(...)"} = [&](va) {
-      return ipass;
-    };
-
-    return def<"res(...)">{[&](va args) {
-      return def<"o(_, ...)">{[&](arg, va) {
-        std::string const prefix    = utl::slice(oooo_fail, -4);
-        std::string const fail_s    = utl::slice(oooo_fail, prefix.size(), 0);
-        std::string const no_fail_s = utl::slice(oooo_no_fail, prefix.size(), 0);
-
-        return pp::call(pp::cat(
-            prefix,
-            pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-            fail_s));
-      }}(args);
-    }}(pp::cat(utl::slice(detail::uint_traits[0], -2), args));
-  };
-
-  def<>           ooo_fail{};
-  def<"ooo(...)"> ooo = [&](va args) {
-    docs << "third parentheses; attempts cast from signed.";
-
-    def<"ichk_\\DEC(u)"> ichk_dec = [&](arg u) {
-      def<"0"> _0 = [&] {
-        return oooo_ipass;
-      };
-
-      def<"1">{} = [&] {
-        return oooo_fail;
-      };
-
-      return cat(utl::slice(_0, -1), detail::uint_trait(u, "DEC_INEG"));
-    };
-
-    def<"ichk_\\BIN(u)">{} = [&](arg) {
-      return oooo_ipass;
-    };
-
-    ooo_fail = def{"fail(u)"} = [&](arg) {
-      return oooo;
-    };
-
-    def<"no_fail(u)"> ooo_no_fail = [&](arg u) {
-      return pp::call(cat(utl::slice(ichk_dec, -3), detail::uint_trait(u, "TYPE")), u);
-    };
-
-    return def<"res(u, ...)">{[&](arg u, va args) {
-      return def<"o(u, _, ...)">{[&](arg u, arg, va) {
-        std::string const prefix    = utl::slice(ooo_fail, -4);
-        std::string const fail_s    = utl::slice(ooo_fail, prefix.size(), 0);
-        std::string const no_fail_s = utl::slice(ooo_no_fail, prefix.size(), 0);
-
-        return pp::call(pp::cat(prefix,
-                                pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2)
-                                                                     - no_fail_s.size())),
-                                fail_s),
-                        u);
-      }}(u, args);
-    }}(pp::cat(args, "u"), pp::cat(utl::slice(detail::uint_traits[0], -2), args, "u"));
-  };
-
-  def<>             oo_fail{};
-  def<"oo(_, ...)"> oo = [&](arg _, va) {
-    docs << "second parentheses; asserts non-tuple.";
-
-    oo_fail = def{"fail(...)"} = [&](va) {
-      return ooo_fail;
-    };
-
-    def<"no_fail(...)"> oo_no_fail = [&](va) {
-      return ooo;
-    };
-
-    return def<"res(...)">{[&](va) {
-      std::string const prefix    = utl::slice(oo_fail, -4);
-      std::string const fail_s    = utl::slice(oo_fail, prefix.size(), 0);
-      std::string const no_fail_s = utl::slice(oo_no_fail, prefix.size(), 0);
-
-      return pp::call(pp::cat(
-          prefix,
-          pp::va_opt(utl::slice(no_fail_s, (no_fail_s.size() == 7 ? 3 : 2) - no_fail_s.size())),
-          fail_s));
-    }}(eat + " " + _);
-  };
-
-  def<"o(_, ...)"> o = [&](arg, va) {
-    docs << "first parentheses; asserts only one arg.";
-
-    def<"pass(...)"> pass = [&](va) {
-      return oo;
-    };
-
-    def<"no_pass(...)"> no_pass = [&](va) {
-      return oo_fail;
-    };
-
-    std::string const prefix    = utl::slice(pass, -4);
-    std::string const pass_s    = utl::slice(pass, prefix.size(), 0);
-    std::string const no_pass_s = utl::slice(no_pass, prefix.size(), 0);
-
-    return pp::call(pp::cat(
-        prefix,
-        pp::va_opt(utl::slice(no_pass_s, (no_pass_s.size() == 7 ? 3 : 2) - no_pass_s.size())),
-        pass_s));
-  };
-
-  return pp::call(pp::call(pp::call(pp::call(o(args + "."), args), args), args),
-                  istr("[" + int_ + "] invalid int : " + args), args);
+  return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
+    return pp::call(xcat(utl::slice(id_id, -5),
+                         mode(e, typeof(v),
+                              enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
+                    v);
+  }}(str(pp::str("[" + int_ + "] invalid arguments") + " : " + args), args);
 });
 
 } // namespace api

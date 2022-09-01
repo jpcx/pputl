@@ -31,6 +31,7 @@
 #include "config.h"
 #include "lang.h"
 #include "logic.h"
+#include "numeric.h"
 #include "traits.h"
 #include "type.h"
 
@@ -38,22 +39,39 @@ namespace api {
 
 inline codegen::category<"bitwise"> bitwise;
 
-// TODO: bitzip
+extern codegen::def<"bdump(...: word) -> bool..."> const&               bdump;
+extern codegen::def<"bsll(...: word, n=1: idec) -> word"> const&        bsll;
+extern codegen::def<"bsrl(...: word, n=1: idec) -> word"> const&        bsrl;
+extern codegen::def<"bsra(...: word, n=1: idec) -> word"> const&        bsra;
+extern codegen::def<"bnot(...: word) -> word"> const&                   bnot;
+extern codegen::def<"band(...: word, word) -> word"> const&             band;
+extern codegen::def<"bor(...: word, word) -> word"> const&              bor;
+extern codegen::def<"bxor(...: word, word) -> word"> const&             bxor;
+extern codegen::def<"bnand(...: word, word) -> word"> const&            bnand;
+extern codegen::def<"bnor(...: word, word) -> word"> const&             bnor;
+extern codegen::def<"bxnor(...: word, word) -> word"> const&            bxnor;
+extern codegen::def<"bget(...: word, i: idec) -> bool"> const&          bget;
+extern codegen::def<"bset(...: word, i: idec, b: bool) -> word"> const& bset;
+extern codegen::def<"bflip(...: word, i: idec) -> word"> const&         bflip;
+extern codegen::def<"brotl(...: word, n: idec) -> word"> const&         brotl;
+extern codegen::def<"brotr(...: word, n: idec) -> word"> const&         brotr;
 
-extern codegen::def<"bitget(...: v: uint|int, i: int) -> v[i]: bool"> const& bitget_;
-extern codegen::def<"bitset(...: v: uint|int, i: int, b: bool) -> (v[i] = b): typeof(v)"> const&
-    bitset_;
-extern codegen::def<"bitflip(...: v: uint|int, i: int) -> (v[i] = !v[i]): typeof(v)"> const&
-                                                                        bitflip_;
-extern codegen::def<"bitnot(...: v: uint|int) -> ~v: typeof(v)"> const& bitnot_;
-extern codegen::def<"bitshift_left(...: v: uint|int, ct: ibase10) -> (v << i): typeof(v)"> const&
-    bitshift_left_;
-
-NIFTY_DECL(bitget_);
-NIFTY_DECL(bitset_);
-NIFTY_DECL(bitflip_);
-NIFTY_DECL(bitnot_);
-NIFTY_DECL(bitshift_left_);
+NIFTY_DECL(bdump);
+NIFTY_DECL(bsll);
+NIFTY_DECL(bsrl);
+NIFTY_DECL(bsra);
+NIFTY_DECL(bnot);
+NIFTY_DECL(band);
+NIFTY_DECL(bor);
+NIFTY_DECL(bxor);
+NIFTY_DECL(bnand);
+NIFTY_DECL(bnor);
+NIFTY_DECL(bxnor);
+NIFTY_DECL(bget);
+NIFTY_DECL(bset);
+NIFTY_DECL(bflip);
+NIFTY_DECL(brotl);
+NIFTY_DECL(brotr);
 
 inline codegen::end_category<"bitwise"> bitwise_end;
 

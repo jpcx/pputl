@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
-  docs << "detects if args is nothing.";
+  docs << "[extends " + is_any + "] detects if args is nothing.";
 
   tests << is_none("")         = "1" >> docs;
   tests << is_none("foo")      = "0" >> docs;
@@ -46,15 +46,10 @@ decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
   tests << is_none(", a, ")    = "0";
   tests << is_none(", , a")    = "0";
 
-  def<"\\o"> o = [] {
-    return "1";
-  };
+  def<"\\0"> _0 = [] { return "1"; };
+  def<"\\01">{} = [] { return "0"; };
 
-  def<"\\o0">{} = [] {
-    return "0";
-  };
-
-  return pp::cat(o, pp::va_opt("0"));
+  return pp::cat(_0, pp::va_opt("1"));
 });
 
 } // namespace api

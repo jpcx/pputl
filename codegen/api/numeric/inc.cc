@@ -25,27 +25,58 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
-//   docs << "uint increment lookup w/ overflow.";
-// 
-//   tests << inc(0)                  = "1";
-//   tests << inc(1)                  = "2";
-//   tests << inc(2)                  = "3";
-//   tests << inc(conf::uint_max)     = "0" >> docs;
-//   tests << inc(conf::uint_max - 1) = uint_max_s;
-// 
-//   return def<"x(...)">{[&](va args) {
-//     return def<"x(de, in, lg, dv, ml, mlf, sq, pw, pwf, m2, m4, m8, m16, m32, m64, ...)">{
-//         [&](pack args) {
-//           return args[1];
-//         }}(args);
-//   }}(cat(utl::slice(detail::uint_traits[0], -1), uint(args)));
-// });
-// 
-// } // namespace api
+#include "numeric.h"
+
+namespace api {
+
+using namespace codegen;
+
+decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
+  docs << "numeric increment w/ overflow.";
+
+  tests << inc(0)                            = "1" >> docs;
+  tests << inc("1u")                         = "2u" >> docs;
+  tests << inc(int_max_s)                    = int_min_s >> docs;
+  tests << inc("0x" + utl::cat(samp::himax)) = (int_min_s) >> docs;
+
+  if constexpr (conf::word_size > 1) {
+    tests << inc("15u")      = "16u" >> docs;
+    tests << inc(uint_max_s) = "0u" >> docs;
+  } else {
+    tests << inc("15u") = "0u" >> docs;
+  }
+
+  constexpr auto sz = conf::word_size;
+
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              impl::hex(v[sz], pp::cat("INC", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
+  };
+
+  def<"res(t, ...)"> res = [&](arg t, va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
+    };
+
+    return word(o(args), t);
+  };
+
+  return def<"o(v)">{[&](arg v) {
+    auto rlp = utl::cat(svect{conf::word_size, r + "("});
+    auto rrp = utl::cat(svect{conf::word_size, ")"});
+    return res(typeof(v), rlp + "1, " + x(esc + " " + utup(v)) + rrp);
+  }}(args);
+});
+
+} // namespace api

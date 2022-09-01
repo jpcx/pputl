@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(int_max) int_max = NIFTY_DEF(int_max, [&] {
-  docs << "the maximum value of a pputl signed int."
-       << "see the readme code generation section to configure.";
+  docs << "the maximum value of a pputl signed int.";
   return int_max_s;
 });
 

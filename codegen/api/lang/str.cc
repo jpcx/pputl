@@ -32,12 +32,12 @@ namespace api {
 using namespace codegen;
 
 decltype(str) str = NIFTY_DEF(str, [&](va args) {
-  docs << "stringizes args after an expansion.";
+  docs << "immediately stringizes args.";
 
   tests << str()                  = "\"\"" >> docs;
   tests << str("foo")             = "\"foo\"";
   tests << str("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << str(cat("foo", "bar")) = pp::str("foobar") >> docs;
+  tests << str(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
   tests << str(", ")              = "\",\"";
   tests << str(", , ")            = "\", ,\"";
   tests << str("a, ")             = "\"a,\"";
@@ -46,7 +46,7 @@ decltype(str) str = NIFTY_DEF(str, [&](va args) {
   tests << str(", a, ")           = "\", a,\"";
   tests << str(", , a")           = "\", , a\"";
 
-  return istr(args);
+  return "#" + args;
 });
 
 } // namespace api

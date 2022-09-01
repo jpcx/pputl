@@ -39,24 +39,13 @@ decltype(xnor_) xnor_ = NIFTY_DEF(xnor_, [&](va args) {
   tests << xnor_("1, 0") = "0" >> docs;
   tests << xnor_("1, 1") = "1" >> docs;
 
-  def<"00"> _00 = [&] {
-    return "1";
-  };
-
-  def<"01">{} = [&] {
-    return "0";
-  };
-
-  def<"10">{} = [&] {
-    return "0";
-  };
-
-  def<"11">{} = [&] {
-    return "1";
-  };
+  def<"\\00"> _00 = [&] { return "1"; };
+  def<"\\01">{}   = [&] { return "0"; };
+  def<"\\10">{}   = [&] { return "0"; };
+  def<"\\11">{}   = [&] { return "1"; };
 
   return def<"x(a, b)">{[&](arg a, arg b) {
-    return cat(utl::slice(_00, -2), cat(bool_(a), bool_(b)));
+    return xcat(utl::slice(_00, -2), xcat(bool_(a), bool_(b)));
   }}(args);
 });
 
