@@ -30,9 +30,11 @@
 #include "codegen.h"
 #include "compare.h"
 #include "config.h"
+#include "control.h"
 #include "lang.h"
 #include "logic.h"
 #include "math.h"
+#include "meta.h"
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
@@ -42,8 +44,11 @@ namespace api {
 inline codegen::category<"range"> range;
 
 extern codegen::def<"items(...: tup) -> list"> const& items;
+extern codegen::def<"bisect(...: end_idx: size, range: tup) -> tup, tup, bool"> const&
+    bisect;
 
 NIFTY_DECL(items);
+NIFTY_DECL(bisect);
 
 inline codegen::end_category<"range"> range_end;
 

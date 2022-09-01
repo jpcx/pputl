@@ -3843,6 +3843,26 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [range.bisect]
+/// --------------
+/// splits a range in two given an index.
+/// index may exceed the range size.
+///
+/// returns:
+///   (1) head: a tuple of the items from 0 to end_idx
+///   (2) tail: a tuple of the items from end_idx to size
+///   (3) type: 1 if two empty elements were split, else 0
+///
+/// the bisection type is essential for information
+/// perservation when working with empty elements,
+/// but can ignored in other cases. for example:
+///
+///   bisect(0, ())     -> (), (), 0
+///   bisect(1, (, ))   -> (), (), 1
+///   bisect(0, (a))    -> (a), (), 0
+///   bisect(1, (a, b)) -> (a), (b), 0
+#define PTL_BISECT(/* end_idx: size, range: tup */...) /* -> tup, tup, bool */ __VA_ARGS__
+
 /// [impl]
 /// ------
 
