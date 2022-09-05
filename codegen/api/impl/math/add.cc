@@ -25,36 +25,49 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/traits.h"
-#include "math.h"
+#include "impl/math.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
 decltype(add) add = NIFTY_DEF(add, [&](va args) {
-  docs << "addition with overflow."
-       << "" << impl::arith_rules;
+  docs << "[internal] addition with overflow.";
 
-  tests << add("0, 0")        = "0" >> docs;
-  tests << add("0, 1")        = "1" >> docs;
-  tests << add("1, 2")        = "3" >> docs;
-  tests << add("3u, 4")       = "7u" >> docs;
-  tests << add("5, 6u")       = "11u" >> docs;
-  tests << add(uint_max_s, 1) = "0u" >> docs;
-  tests << add(uint_max_s, 2) = "1u" >> docs;
-  tests << add(1, uint_max_s) = "0u";
-  tests << add(2, uint_max_s) = "1u";
-  tests << add(uint_max_s, uint_max_s) =
-      (std::to_string(conf::uint_max - 1) + "u") >> docs;
-  tests << add(int_max_s, 1) = int_min_s >> docs;
-  tests << add(int_max_s, pp::tup(samp::h1)) =
-      (std::to_string(conf::int_max + 1) + "u") >> docs;
+  constexpr auto sz = conf::word_size;
+
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz * 2), ", ");
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              hexhex(pp::cat(v[sz], v[sz * 2]), pp::cat("ADD", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+              v[sz * 2],
+              utl::cat(svect{&v[sz + 1], &v[sz * 2]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
+  };
+
+  def<"res(...)"> res = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
+    };
+    return o(args);
+  };
 
   return def<"o(a, b)">{[&](arg a, arg b) {
-    return word(impl::add(utup(a), utup(b)),
-                impl::xarithhint(typeof(word(a)), typeof(word(b))));
+    auto rlp = utl::cat(svect{conf::word_size, r + "("});
+    auto rrp = utl::cat(svect{conf::word_size, ")"});
+    return res(rlp + "0, " + x(esc + " " + a, esc + " " + b) + rrp);
   }}(args);
 });
 
+} // namespace impl
 } // namespace api

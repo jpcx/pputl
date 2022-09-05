@@ -37,7 +37,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << "constructible from any word type."
        << "instance is either idec or ihex."
        << ""
-       << "cannot parse negative decimals; use math.neg instead."
+       << "cannot parse negative decimals; use numeric.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
        << "cast modes:"

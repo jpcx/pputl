@@ -51,6 +51,7 @@ extern codegen::def<"log2(...: word) -> word"> const&    log2;
 extern codegen::def<"sqrt(...: word) -> word"> const&    sqrt;
 extern codegen::def<"fact(...: word) -> word..."> const& fact;
 extern codegen::def<"prime(...: word) -> bool"> const&   prime;
+/* extern codegen::def<"index(...: idx, range: size) -> udec&size"> const& index; */
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);
@@ -70,6 +71,7 @@ NIFTY_DECL(log2);
 NIFTY_DECL(sqrt);
 NIFTY_DECL(fact);
 NIFTY_DECL(prime);
+/* NIFTY_DECL(index); */
 
 inline codegen::end_category<"numeric"> numeric_end;
 

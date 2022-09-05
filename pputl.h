@@ -88,8 +88,8 @@
 //           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //
 //           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //
 //     ◆ range algorithms                                                     //
-//       ‐ element access                                          [range]    //
-//           items  bisect  unite  get  set  push  pop  slice                 //
+//       ‐ element access                                 [numeric, range]    //
+//           index  items  bisect  unite  get  set  push  pop  slice          //
 //       ‐ generation                                               [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
 //       ‐ transformation                                           [algo]    //
@@ -1593,7 +1593,7 @@
 /// constructible from any word type.
 /// instance is either idec or ihex.
 ///
-/// cannot parse negative decimals; use math.neg instead.
+/// cannot parse negative decimals; use numeric.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
 /// cast modes:
@@ -1746,7 +1746,7 @@
 /// constructible from any word type.
 /// instance is either udec, uhex, or utup.
 ///
-/// cannot parse negative decimals; use math.neg instead.
+/// cannot parse negative decimals; use numeric.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
 /// cast modes:
@@ -1867,7 +1867,7 @@
 /// [union PTL_INT|PTL_UINT] any defined integer representation.
 /// constructibe from any word type.
 ///
-/// cannot parse negative decimals; use math.neg instead.
+/// cannot parse negative decimals; use numeric.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
 /// cast modes:
@@ -1987,7 +1987,7 @@
 /// [inherits from PTL_WORD] a non-negative word less than PTL_SIZE_MAX (255u).
 /// constructibe from any word type.
 ///
-/// cannot parse negative decimals; use math.neg instead.
+/// cannot parse negative decimals; use numeric.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
 /// see type.word for available cast modes.
@@ -2023,7 +2023,7 @@
 /// [inherits from PTL_WORD] a word within [max(int_min, -size_max), size_max).
 /// constructibe from any word type.
 ///
-/// cannot parse negative decimals; use math.neg instead.
+/// cannot parse negative decimals; use numeric.neg instead.
 /// hex length is fixed. cannot parse shorter hex lengths.
 ///
 /// see type.word for available cast modes.
@@ -2236,7 +2236,7 @@
 
 #define PPUTLLT_o(l, r) \
   PTL_XCAT(PPUTLLT_o_, PTL_XCAT(PPUTLLT_SIGNOF(PTL_WORD(l)), PPUTLLT_SIGNOF(PTL_WORD(r))))
-#define PPUTLLT_o_UU(e, l, r) PPUTLLT_UCMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
+#define PPUTLLT_o_UU(e, l, r) PPUTLIMPL_LT(PTL_UTUP(l), PTL_UTUP(r))
 #define PPUTLLT_o_UI(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_IU(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_II(e, l, r) PPUTLLT_ICMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
@@ -2252,26 +2252,10 @@
   PTL_XCAT(PPUTLLT_ICMP_oo_,                                                 \
            PTL_XCAT(PPUTLIMPL_HEXHEX(7##a, LT), PPUTLIMPL_HEXHEX(7##d, LT))) \
   (a, b, c, d, e, f)
-#define PPUTLLT_ICMP_oo_11(...) PPUTLLT_UCMP(__VA_ARGS__)
+#define PPUTLLT_ICMP_oo_11(...) PPUTLIMPL_LT_UCMP(__VA_ARGS__)
 #define PPUTLLT_ICMP_oo_10(...) 1
 #define PPUTLLT_ICMP_oo_01(...) 0
-#define PPUTLLT_ICMP_oo_00(...) PPUTLLT_UCMP(__VA_ARGS__)
-#define PPUTLLT_UCMP(...) \
-  PTL_XFIRST(PPUTLLT_R(PPUTLLT_R(PPUTLLT_R(0, 0, PPUTLLT_ZIP(__VA_ARGS__)))))
-#define PPUTLLT_ZIP(...)                PPUTLLT_ZIP_o(__VA_ARGS__)
-#define PPUTLLT_ZIP_o(a, b, c, d, e, f) a, d, b, e, c, f
-#define PPUTLLT_R(...)                  PPUTLLT_R_o(__VA_ARGS__)
-#define PPUTLLT_R_o(fl, fg, a, b, ...)                    \
-  PTL_XCAT(PPUTLLT_##fl##fg, PPUTLIMPL_HEXHEX(a##b, LT)), \
-      PTL_XCAT(PPUTLLT_##fg##fl, PPUTLIMPL_HEXHEX(b##a, LT)), __VA_ARGS__
-#define PPUTLLT_111 1
-#define PPUTLLT_110 1
-#define PPUTLLT_101 1
-#define PPUTLLT_100 1
-#define PPUTLLT_011 0
-#define PPUTLLT_010 0
-#define PPUTLLT_001 1
-#define PPUTLLT_000 0
+#define PPUTLLT_ICMP_oo_00(...) PPUTLIMPL_LT_UCMP(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3658,16 +3642,9 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLADD_o(a, b)                         \
-  PPUTLADD_RES(PTL_TYPEOF(a), PTL_TYPEOF(b),     \
-               PPUTLADD_R(PPUTLADD_R(PPUTLADD_R( \
-                   0, PPUTLADD_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
-#define PPUTLADD_RES(ta, tb, ...) \
-  PTL_WORD(PPUTLADD_RES_o(__VA_ARGS__), PPUTLIMPL_ARITHHINT(ta, tb))
-#define PPUTLADD_RES_o(_, a, b, c, d, e, f) (a, b, c)
-#define PPUTLADD_R(...)                     PPUTLADD_R_o(__VA_ARGS__)
-#define PPUTLADD_R_o(_, a, b, c, d, e, f)   PPUTLIMPL_HEXHEX(c##f, ADD##_), a, b, f, d, e
-#define PPUTLADD_X(...)                     __VA_ARGS__
+#define PPUTLADD_o(a, b)                            \
+  PTL_WORD(PPUTLIMPL_ADD(PTL_UTUP(a), PTL_UTUP(b)), \
+           PPUTLIMPL_XARITHHINT(PTL_TYPEOF(PTL_WORD(a)), PTL_TYPEOF(PTL_WORD(b))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -3692,16 +3669,9 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLSUB_o(a, b)                         \
-  PPUTLSUB_RES(PTL_TYPEOF(a), PTL_TYPEOF(b),     \
-               PPUTLSUB_R(PPUTLSUB_R(PPUTLSUB_R( \
-                   0, PPUTLSUB_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
-#define PPUTLSUB_RES(ta, tb, ...) \
-  PTL_WORD(PPUTLSUB_RES_o(__VA_ARGS__), PPUTLIMPL_ARITHHINT(ta, tb))
-#define PPUTLSUB_RES_o(_, a, b, c, d, e, f) (a, b, c)
-#define PPUTLSUB_R(...)                     PPUTLSUB_R_o(__VA_ARGS__)
-#define PPUTLSUB_R_o(_, a, b, c, d, e, f)   PPUTLIMPL_HEXHEX(c##f, SUB##_), a, b, f, d, e
-#define PPUTLSUB_X(...)                     __VA_ARGS__
+#define PPUTLSUB_o(a, b)                            \
+  PTL_WORD(PPUTLIMPL_SUB(PTL_UTUP(a), PTL_UTUP(b)), \
+           PPUTLIMPL_XARITHHINT(PTL_TYPEOF(PTL_WORD(a)), PTL_TYPEOF(PTL_WORD(b))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -12643,6 +12613,73 @@
 #define PPUTLIMPL_XARITHHINT(                                                \
     /* enum<IDEC|IHEX|UDEC|UHEX|UTUP>, enum<IDEC|IHEX|UDEC|UHEX|UTUP> */...) \
   PPUTLIMPL_ARITHHINT(__VA_ARGS__)
+
+/// [impl.compare.lt]
+/// -----------------
+/// utup less-than comparison.
+#define PPUTLIMPL_LT(/* utup, utup */...) /* -> bool */ PPUTLIMPL_LT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_LT_o(a, b) PPUTLIMPL_LT_UCMP(PTL_ESC a, PTL_ESC b)
+#define PPUTLIMPL_LT_UCMP(...) \
+  PTL_XFIRST(PPUTLIMPL_LT_R(   \
+      PPUTLIMPL_LT_R(PPUTLIMPL_LT_R(0, 0, PPUTLIMPL_LT_ZIP(__VA_ARGS__)))))
+#define PPUTLIMPL_LT_ZIP(...)                PPUTLIMPL_LT_ZIP_o(__VA_ARGS__)
+#define PPUTLIMPL_LT_ZIP_o(a, b, c, d, e, f) a, d, b, e, c, f
+#define PPUTLIMPL_LT_R(...)                  PPUTLIMPL_LT_R_o(__VA_ARGS__)
+#define PPUTLIMPL_LT_R_o(fl, fg, a, b, ...)                    \
+  PTL_XCAT(PPUTLIMPL_LT_##fl##fg, PPUTLIMPL_HEXHEX(a##b, LT)), \
+      PTL_XCAT(PPUTLIMPL_LT_##fg##fl, PPUTLIMPL_HEXHEX(b##a, LT)), __VA_ARGS__
+#define PPUTLIMPL_LT_111 1
+#define PPUTLIMPL_LT_110 1
+#define PPUTLIMPL_LT_101 1
+#define PPUTLIMPL_LT_100 1
+#define PPUTLIMPL_LT_011 0
+#define PPUTLIMPL_LT_010 0
+#define PPUTLIMPL_LT_001 1
+#define PPUTLIMPL_LT_000 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [impl.math.add]
+/// ---------------
+/// [internal] addition with overflow.
+#define PPUTLIMPL_ADD(/* utup, utup */...) /* -> utup */ PPUTLIMPL_ADD_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_ADD_o(a, b)        \
+  PPUTLIMPL_ADD_RES(PPUTLIMPL_ADD_R( \
+      PPUTLIMPL_ADD_R(PPUTLIMPL_ADD_R(0, PPUTLIMPL_ADD_X(PTL_ESC a, PTL_ESC b)))))
+#define PPUTLIMPL_ADD_RES(...)                   PPUTLIMPL_ADD_RES_o(__VA_ARGS__)
+#define PPUTLIMPL_ADD_RES_o(_, a, b, c, d, e, f) (a, b, c)
+#define PPUTLIMPL_ADD_R(...)                     PPUTLIMPL_ADD_R_o(__VA_ARGS__)
+#define PPUTLIMPL_ADD_R_o(_, a, b, c, d, e, f) \
+  PPUTLIMPL_HEXHEX(c##f, ADD##_), a, b, f, d, e
+#define PPUTLIMPL_ADD_X(...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [impl.math.sub]
+/// ---------------
+/// subtraction with underflow.
+#define PPUTLIMPL_SUB(/* utup, utup */...) /* -> utup */ PPUTLIMPL_SUB_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_SUB_o(a, b)        \
+  PPUTLIMPL_SUB_RES(PPUTLIMPL_SUB_R( \
+      PPUTLIMPL_SUB_R(PPUTLIMPL_SUB_R(0, PPUTLIMPL_SUB_X(PTL_ESC a, PTL_ESC b)))))
+#define PPUTLIMPL_SUB_RES(...)                   PPUTLIMPL_SUB_RES_o(__VA_ARGS__)
+#define PPUTLIMPL_SUB_RES_o(_, a, b, c, d, e, f) (a, b, c)
+#define PPUTLIMPL_SUB_R(...)                     PPUTLIMPL_SUB_R_o(__VA_ARGS__)
+#define PPUTLIMPL_SUB_R_o(_, a, b, c, d, e, f) \
+  PPUTLIMPL_HEXHEX(c##f, SUB##_), a, b, f, d, e
+#define PPUTLIMPL_SUB_X(...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // vim: fdm=marker:fmr={{{,}}}

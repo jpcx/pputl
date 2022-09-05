@@ -86,8 +86,8 @@
 //           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //
 //           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //
 //     ◆ range algorithms                                                     //
-//       ‐ element access                                          [range]    //
-//           items  bisect  unite  get  set  push  pop  slice                 //
+//       ‐ element access                                 [numeric, range]    //
+//           index  items  bisect  unite  get  set  push  pop  slice          //
 //       ‐ generation                                               [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
 //       ‐ transformation                                           [algo]    //

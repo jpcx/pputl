@@ -36,7 +36,7 @@ decltype(idx) idx = NIFTY_DEF(idx, [&](va args) {
               + "] a word within [max(int_min, -size_max), size_max)."
        << "constructibe from any word type."
        << ""
-       << "cannot parse negative decimals; use math.neg instead."
+       << "cannot parse negative decimals; use numeric.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
        << "see type.word for available cast modes."

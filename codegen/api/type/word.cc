@@ -35,7 +35,7 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   docs << "[union " + int_ + "|" + uint + "] any defined integer representation."
        << "constructibe from any word type."
        << ""
-       << "cannot parse negative decimals; use math.neg instead."
+       << "cannot parse negative decimals; use numeric.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
        << "cast modes:"

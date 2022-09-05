@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,36 +26,24 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+//
 #include "impl/traits.h"
-#include "math.h"
 
 namespace api {
+namespace impl {
 
-using namespace codegen;
+inline codegen::category<"impl.math"> math;
 
-decltype(add) add = NIFTY_DEF(add, [&](va args) {
-  docs << "addition with overflow."
-       << "" << impl::arith_rules;
+extern codegen::def<"add(...: utup, utup) -> utup"> const& add;
+extern codegen::def<"sub(...: utup, utup) -> utup"> const& sub;
 
-  tests << add("0, 0")        = "0" >> docs;
-  tests << add("0, 1")        = "1" >> docs;
-  tests << add("1, 2")        = "3" >> docs;
-  tests << add("3u, 4")       = "7u" >> docs;
-  tests << add("5, 6u")       = "11u" >> docs;
-  tests << add(uint_max_s, 1) = "0u" >> docs;
-  tests << add(uint_max_s, 2) = "1u" >> docs;
-  tests << add(1, uint_max_s) = "0u";
-  tests << add(2, uint_max_s) = "1u";
-  tests << add(uint_max_s, uint_max_s) =
-      (std::to_string(conf::uint_max - 1) + "u") >> docs;
-  tests << add(int_max_s, 1) = int_min_s >> docs;
-  tests << add(int_max_s, pp::tup(samp::h1)) =
-      (std::to_string(conf::int_max + 1) + "u") >> docs;
+NIFTY_DECL(add);
+NIFTY_DECL(sub);
 
-  return def<"o(a, b)">{[&](arg a, arg b) {
-    return word(impl::add(utup(a), utup(b)),
-                impl::xarithhint(typeof(word(a)), typeof(word(b))));
-  }}(args);
-});
+inline codegen::end_category<"impl.math"> math_end;
 
+} // namespace impl
 } // namespace api
