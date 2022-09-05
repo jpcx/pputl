@@ -33,8 +33,7 @@ using namespace codegen;
 
 decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
   docs << "gets the ith bit from the word, indexed from least to most significant."
-       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+       << "fails on invalid bit index.";
 
   auto maxless1 =
       "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "E";
@@ -46,6 +45,7 @@ decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
   tests << bget(maxless1, 1)            = "1" >> docs;
   tests << bget(maxless1 + "u", 0)      = "0" >> docs;
   tests << bget(pp::tup(samp::hmax), 0) = "1" >> docs;
+  tests << bget(int_min_s, neg(1))      = "1" >> docs;
 
   auto bitparams = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -58,19 +58,9 @@ decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
   }
 
   return def<"o(e, v, i)">{[&](arg e, arg v, arg i) {
-    return def<"<o(e, i, ...)">{[&](arg e, arg i, va bin) {
-      return def<"<o(...)">{[&](va args) {
-        return def<"<o(e, i, gelt, ...)">{[&](arg e, arg i, arg gelt, va args) {
-          def<"\\0(e, ...)"> gelt0 = [&](arg e, va) { return fail(e); };
-
-          def<"\\1(e, i, ...)">{} = [&](arg, arg i, va args) {
-            return pp::call(pp::cat(utl::slice(_0, -1), i), args);
-          };
-
-          return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, args);
-        }}(args);
-      }}(e, i, and_(ge(i, 0), lt(i, conf::bit_length)), bin);
-    }}(e, idec(i), bdump(v));
+    return def<"<o(i, ...)">{[&](arg i, va bin) {
+      return pp::call(cat(utl::slice(_0, -1), i), bin);
+    }}(idec(impl::index(utup(i), is_int(i), impl::bitlen, e)), bdump(v));
   }}(str(pp::str("[" + bget + "] invalid index") + " : " + args), args);
 });
 

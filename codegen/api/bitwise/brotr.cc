@@ -37,7 +37,7 @@ decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
   docs << "bitwise right rotation by n places.";
 
   tests << brotr("0x" + utl::cat(samp::hmin), 0) = ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h1), 0)   = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << brotr("0x" + utl::cat(samp::h1))      = ("0x" + utl::cat(samp::himin)) >> docs;
   tests << brotr("0x" + utl::cat(samp::h1), 1)   = ("0x" + utl::cat(samp::himin)) >> docs;
   tests << brotr("0x" + utl::cat(samp::h2), 1)   = ("0x" + utl::cat(samp::h1)) >> docs;
   tests << brotr("0x" + utl::cat(samp::himax), 2) =
@@ -69,14 +69,14 @@ decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
     };
   }
 
-  return def<"o(v, n)">{[&](arg v, arg n) {
+  return def<"o(v, ...)">{[&](arg v, va n) {
     return word(
         def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
               xcat(utl::slice(_0, -1),
                    band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
-        }}(n, bdump(v)),
+        }}(size(default_(1, n)), bdump(v)),
         typeof(v));
   }}(args);
 });

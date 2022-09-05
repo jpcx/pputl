@@ -26,6 +26,8 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include <iomanip>
+
 #include "codegen.h"
 #include "config.h"
 #include "lang.h"
@@ -36,6 +38,19 @@ namespace api {
 namespace impl {
 
 inline codegen::category<"impl.numeric"> numeric;
+
+inline std::string bitlen = codegen::utl::ii << [] {
+  std::ostringstream oss;
+  oss << std::setfill('0') << std::setw(codegen::conf::word_size) << std::uppercase
+      << std::hex << (codegen::conf::bit_length | 0);
+  auto hex = oss.str();
+
+  codegen::svect res{hex.size()};
+  for (std::size_t i = 0; i < res.size(); ++i)
+    res[i] = std::string{hex[i]};
+
+  return codegen::pp::tup(res);
+};
 
 extern codegen::def<"inc(n: utup) -> utup"> const& inc;
 extern codegen::def<"dec(n: utup) -> utup"> const& dec;

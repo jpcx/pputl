@@ -11423,6 +11423,33 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// [impl.range.index]
+/// ------------------
+/// [internal] translates an idx to a positive zero-offset index for a given range size.
+#define PPUTLIMPL_INDEX(/* utup, bool, utup, obj */ i, sign, sz, err) /* -> utup */ \
+  PTL_CAT(PPUTLIMPL_INDEX_, sign)(i, sz, err)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_INDEX_1(i, sz, err) \
+  PTL_XCAT(PPUTLIMPL_INDEX_1_, PPUTLIMPL_LTZ(i))(i, sz, err)
+#define PPUTLIMPL_INDEX_1_1(i, sz, err)                                             \
+  PTL_XCAT(PPUTLIMPL_INDEX_1_1_, PPUTLIMPL_LT(PPUTLIMPL_NEG(i), PPUTLIMPL_INC(sz))) \
+  (i, sz, err)
+#define PPUTLIMPL_INDEX_1_1_1(i, sz, err) PPUTLIMPL_ADD(i, sz)
+#define PPUTLIMPL_INDEX_1_1_0(i, sz, err) PTL_FAIL(err)
+#define PPUTLIMPL_INDEX_1_0(i, sz, err)   PPUTLIMPL_INDEX_0(i, sz, err)
+#define PPUTLIMPL_INDEX_0(i, sz, err) \
+  PTL_XCAT(PPUTLIMPL_INDEX_0_, PPUTLIMPL_LT(i, sz))(i, err)
+#define PPUTLIMPL_INDEX_0_1(i, err) i
+#define PPUTLIMPL_INDEX_0_0(i, err) PTL_FAIL(err)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [bitwise.bdump]
 /// ---------------
 /// dumps the bits of a word.
@@ -11454,7 +11481,7 @@
 /// PTL_BSLL(1, 11)    // 0x800
 /// PTL_BSLL(1, 12)    // 0
 /// PTL_BSLL(1, 13)    // 0
-#define PTL_BSLL(/* word, n=1: idec */...) /* -> word */ PPUTLBSLL_o(__VA_ARGS__)
+#define PTL_BSLL(/* word, n=1: size */...) /* -> word */ PPUTLBSLL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11509,7 +11536,7 @@
 /// PTL_BSRL(4, 2)      // 1
 /// PTL_BSRL(0x800, 11) // 0x001
 /// PTL_BSRL(0x800, 12) // 0x000
-#define PTL_BSRL(/* word, n=1: idec */...) /* -> word */ PPUTLBSRL_o(__VA_ARGS__)
+#define PTL_BSRL(/* word, n=1: size */...) /* -> word */ PPUTLBSRL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11564,7 +11591,7 @@
 /// PTL_BSRA(0x800, 2) // 0xE00
 /// PTL_BSRA(0x800, 3) // 0xF00
 /// PTL_BSRA(0x800, 4) // 0xF80
-#define PTL_BSRA(/* word, n=1: idec */...) /* -> word */ PPUTLBSRA_o(__VA_ARGS__)
+#define PTL_BSRA(/* word, n=1: size */...) /* -> word */ PPUTLBSRA_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11785,29 +11812,25 @@
 /// [bitwise.bget]
 /// --------------
 /// gets the ith bit from the word, indexed from least to most significant.
-/// i must be less than PTL_BIT_LENGTH (12).
+/// fails on invalid bit index.
 ///
-/// PTL_BGET(2, 2)         // 0
-/// PTL_BGET(2, 1)         // 1
-/// PTL_BGET(2, 0)         // 0
-/// PTL_BGET(5u, 2)        // 1
-/// PTL_BGET(0xFFE, 1)     // 1
-/// PTL_BGET(0xFFEu, 0)    // 0
-/// PTL_BGET((F, F, F), 0) // 1
-#define PTL_BGET(/* word, i: idec */...) /* -> bool */ \
+/// PTL_BGET(2, 2)              // 0
+/// PTL_BGET(2, 1)              // 1
+/// PTL_BGET(2, 0)              // 0
+/// PTL_BGET(5u, 2)             // 1
+/// PTL_BGET(0xFFE, 1)          // 1
+/// PTL_BGET(0xFFEu, 0)         // 0
+/// PTL_BGET((F, F, F), 0)      // 1
+/// PTL_BGET(0x800, PTL_NEG(1)) // 1
+#define PTL_BGET(/* word, idx */...) /* -> bool */ \
   PPUTLBGET_o(PTL_STR("[PTL_BGET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBGET_o(e, v, i) PPUTLBGET_oo(e, PTL_IDEC(i), PTL_BDUMP(v))
-#define PPUTLBGET_oo(e, i, ...) \
-  PPUTLBGET_ooo(e, i, PTL_AND(PTL_GE(i, 0), PTL_LT(i, 12)), __VA_ARGS__)
-#define PPUTLBGET_ooo(...) PPUTLBGET_oooo(__VA_ARGS__)
-
-#define PPUTLBGET_oooo(e, i, gelt, ...) PPUTLBGET_oooo_##gelt(e, i, __VA_ARGS__)
-
-#define PPUTLBGET_oooo_1(e, i, ...)                      PPUTLBGET_##i(__VA_ARGS__)
-#define PPUTLBGET_oooo_0(e, ...)                         PTL_FAIL(e)
+#define PPUTLBGET_o(e, v, i)                                                        \
+  PPUTLBGET_oo(PTL_IDEC(PPUTLIMPL_INDEX(PTL_UTUP(i), PTL_IS_INT(i), (0, 0, C), e)), \
+               PTL_BDUMP(v))
+#define PPUTLBGET_oo(i, ...)                             PTL_CAT(PPUTLBGET_, i)(__VA_ARGS__)
 #define PPUTLBGET_11(a, b, c, d, e, f, g, h, i, j, k, l) a
 #define PPUTLBGET_10(a, b, c, d, e, f, g, h, i, j, k, l) b
 #define PPUTLBGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  c
@@ -11826,26 +11849,25 @@
 /// [bitwise.bset]
 /// --------------
 /// sets the ith bit of the word to b, indexed from least to most significant.
-/// i must be less than PTL_BIT_LENGTH (12).
+/// fails on invalid bit index.
 ///
-/// PTL_BSET(0, 1, 1)          // 2
-/// PTL_BSET(1u, 2, 1)         // 5u
-/// PTL_BSET(5, 4, 1)          // 21
-/// PTL_BSET(0x002, 0, 1)      // 0x003
-/// PTL_BSET(0x003u, 0, 0)     // 0x002u
-/// PTL_BSET((F, F, F), 11, 0) // (7, F, F)
-#define PTL_BSET(/* word, i: idec, b: bool */...) /* -> word */ \
+/// PTL_BSET(0, 1, 1)                  // 2
+/// PTL_BSET(1u, 2, 1)                 // 5u
+/// PTL_BSET(5, 4, 1)                  // 21
+/// PTL_BSET(0x002, 0, 1)              // 0x003
+/// PTL_BSET(0x003u, 0, 0)             // 0x002u
+/// PTL_BSET((F, F, F), PTL_NEG(1), 0) // (7, F, F)
+#define PTL_BSET(/* word, idx, bool */...) /* -> word */ \
   PPUTLBSET_o(PTL_STR("[PTL_BSET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBSET_o(e, v, i, b) \
-  PTL_WORD(PPUTLBSET_oo(e, PTL_IDEC(i), PTL_BOOL(b), PTL_BDUMP(v)), PTL_TYPEOF(v))
-#define PPUTLBSET_oo(e, i, b, ...)         PPUTLBSET_ooo(e, i, b, PTL_LT(i, 12), __VA_ARGS__)
-#define PPUTLBSET_ooo(...)                 PPUTLBSET_oooo(__VA_ARGS__)
-#define PPUTLBSET_oooo(e, i, b, gelt, ...) PPUTLBSET_oooo_##gelt(e, i, b, __VA_ARGS__)
-#define PPUTLBSET_oooo_1(e, i, b, ...)     PPUTLBSET_##i(b, __VA_ARGS__)
-#define PPUTLBSET_oooo_0(e, ...)           PTL_FAIL(e)
+#define PPUTLBSET_o(e, v, i, b)                                                         \
+  PTL_WORD(                                                                             \
+      PPUTLBSET_oo(PTL_IDEC(PPUTLIMPL_INDEX(PTL_UTUP(i), PTL_IS_INT(i), (0, 0, C), e)), \
+                   PTL_BOOL(b), PTL_BDUMP(v)),                                          \
+      PTL_TYPEOF(v))
+#define PPUTLBSET_oo(i, ...) PTL_CAT(PPUTLBSET_, i)(__VA_ARGS__)
 #define PPUTLBSET_11(a, _, b, c, d, e, f, g, h, i, j, k, l)          \
   (PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
    PPUTLIMPL_NYBL(i##j##k##l, HEX))
@@ -11888,14 +11910,14 @@
 /// [bitwise.bflip]
 /// ---------------
 /// flips the ith bit in the uint. indexed from least to most significant.
-/// i must be less than PTL_BIT_LENGTH (12).
+/// fails on invalid bit index.
 ///
-/// PTL_BFLIP(0, 0)          // 1
-/// PTL_BFLIP(1u, 1)         // 3u
-/// PTL_BFLIP(0x002, 2)      // 0x006
-/// PTL_BFLIP(0x003u, 3)     // 0x00Bu
-/// PTL_BFLIP((F, F, F), 11) // (7, F, F)
-#define PTL_BFLIP(/* word, i: idec */...) /* -> word */ \
+/// PTL_BFLIP(0, 0)                  // 1
+/// PTL_BFLIP(1u, 1)                 // 3u
+/// PTL_BFLIP(0x002, 2)              // 0x006
+/// PTL_BFLIP(0x003u, 3)             // 0x00Bu
+/// PTL_BFLIP((F, F, F), PTL_NEG(1)) // (7, F, F)
+#define PTL_BFLIP(/* word, idx */...) /* -> word */ \
   PTL_BSET(__VA_ARGS__, PTL_NOT(PTL_BGET(__VA_ARGS__)))
 
 /// [bitwise.brotl]
@@ -11903,15 +11925,17 @@
 /// bitwise left rotation by n places.
 ///
 /// PTL_BROTL(0x000, 0) // 0x000
+/// PTL_BROTL(0x001)    // 0x002
 /// PTL_BROTL(0x001, 1) // 0x002
 /// PTL_BROTL(0x001, 2) // 0x004
 /// PTL_BROTL(0x003, 2) // 0x00C
-#define PTL_BROTL(/* word, n: idec */...) /* -> word */ PPUTLBROTL_o(__VA_ARGS__)
+#define PTL_BROTL(/* word, n=1: size */...) /* -> word */ PPUTLBROTL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBROTL_o(v, n) \
-  PTL_WORD(PPUTLBROTL_oo(n, PTL_ESC(PTL_BDUMP(v))), PTL_TYPEOF(v))
+#define PPUTLBROTL_o(v, ...)                                                            \
+  PTL_WORD(PPUTLBROTL_oo(PTL_SIZE(PTL_DEFAULT(1, __VA_ARGS__)), PTL_ESC(PTL_BDUMP(v))), \
+           PTL_TYPEOF(v))
 #define PPUTLBROTL_oo(n, ...) PTL_XCAT(PPUTLBROTL_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
 #define PPUTLBROTL_15(a, b, c, d, e, f, g, h, i, j, k, l)            \
   (PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
@@ -11969,15 +11993,17 @@
 /// bitwise right rotation by n places.
 ///
 /// PTL_BROTR(0x000, 0) // 0x000
-/// PTL_BROTR(0x001, 0) // 0x001
+/// PTL_BROTR(0x001)    // 0x800
 /// PTL_BROTR(0x001, 1) // 0x800
 /// PTL_BROTR(0x002, 1) // 0x001
 /// PTL_BROTR(0x7FF, 2) // 0xDFF
-#define PTL_BROTR(/* word, n: idec */...) /* -> word */ PPUTLBROTR_o(__VA_ARGS__)
+#define PTL_BROTR(/* word, n=1: size */...) /* -> word */ PPUTLBROTR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBROTR_o(v, n)    PTL_WORD(PPUTLBROTR_oo(n, PTL_BDUMP(v)), PTL_TYPEOF(v))
+#define PPUTLBROTR_o(v, ...)                                                   \
+  PTL_WORD(PPUTLBROTR_oo(PTL_SIZE(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BDUMP(v)), \
+           PTL_TYPEOF(v))
 #define PPUTLBROTR_oo(n, ...) PTL_XCAT(PPUTLBROTR_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
 #define PPUTLBROTR_15(a, b, c, d, e, f, g, h, i, j, k, l)            \
   (PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
@@ -12679,33 +12705,6 @@
 /// PTL_REM(PTL_NEG(13), PTL_NEG(5)) // PTL_NEG(3)
 /// PTL_REM(PTL_NEG(14), PTL_NEG(5)) // PTL_NEG(4)
 #define PTL_REM(/* word, word */...) /* -> word */ PTL_XREST(PTL_DIVR(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// [impl.range.index]
-/// ------------------
-/// [internal] translates an idx to a positive zero-offset index for a given range size.
-#define PPUTLIMPL_INDEX(/* utup, bool, utup, obj */ i, sign, sz, err) /* -> utup */ \
-  PTL_CAT(PPUTLIMPL_INDEX_, sign)(i, sz, err)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_INDEX_1(i, sz, err) \
-  PTL_XCAT(PPUTLIMPL_INDEX_1_, PPUTLIMPL_LTZ(i))(i, sz, err)
-#define PPUTLIMPL_INDEX_1_1(i, sz, err)                                             \
-  PTL_XCAT(PPUTLIMPL_INDEX_1_1_, PPUTLIMPL_LT(PPUTLIMPL_NEG(i), PPUTLIMPL_INC(sz))) \
-  (i, sz, err)
-#define PPUTLIMPL_INDEX_1_1_1(i, sz, err) PPUTLIMPL_ADD(i, sz)
-#define PPUTLIMPL_INDEX_1_1_0(i, sz, err) PTL_FAIL(err)
-#define PPUTLIMPL_INDEX_1_0(i, sz, err)   PPUTLIMPL_INDEX_0(i, sz, err)
-#define PPUTLIMPL_INDEX_0(i, sz, err) \
-  PTL_XCAT(PPUTLIMPL_INDEX_0_, PPUTLIMPL_LT(i, sz))(i, err)
-#define PPUTLIMPL_INDEX_0_1(i, err) i
-#define PPUTLIMPL_INDEX_0_0(i, err) PTL_FAIL(err)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [range.index]
 /// -------------
