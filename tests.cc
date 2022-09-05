@@ -64,12 +64,13 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
-//           list  any   none  obj   atom  enum  bool  hex   nybl  int        //
-//           idec  ihex  uint  udec  uhex  tup   utup  word  size             //
+//           list  none  obj  atom  enum  bool  hex   nybl  idec  ihex        //
+//           udec  uhex  int  tup   utup  uint  word  size  idx   any         //
 //       ‐ traits detection                                       [traits]    //
-//           is_list  is_any   is_none  is_obj   is_atom  is_enum  is_bool    //
-//           is_hex   is_nybl  is_int   is_idec  is_ihex  is_uint  is_udec    //
-//           is_uhex  is_tup   is_utup  is_word  is_size  typeof   sizeof     //
+//           is_list  is_none  is_obj   is_atom  is_enum  is_bool             //
+//           is_hex   is_nybl  is_idec  is_ihex  is_udec  is_uhex             //
+//           is_int   is_tup   is_utup  is_uint  is_word  is_size             //
+//           is_idx   is_any   typeof   sizeof                                //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -151,31 +152,39 @@
 //                                                                            //
 //    pputl makes extensive use of duck-typing  for control flow and error    //
 //    management.  pputl types are essentially pairs of functions: one for    //
-//    traits identification and another for type casting and assertions.      //
+//    traits identification and another for construction and assertion.       //
 //                                                                            //
 //    API functions are strictly documented using this type system. Inputs    //
-//    are verified directly or indirectly by invoking the appropriate type    //
-//    constructors or by using some other form of inference.                  //
+//    are validated by invoking the associated constructor or through some    //
+//    other form of inference. An argument is valid if it can be converted    //
+//    to its parameter type; see [type] for constructor documentation.        //
 //                                                                            //
-//     list: __VA_ARGS__; tokens delimited by non-parenthesized commas        //
-//      └╴any: <abstract> a list with no separatory commas (0-1 elements)     //
-//         ├╴none: nothing; an absence of pp-tokens                           //
-//         └╴obj: a non-empty generic value                                   //
-//            ├╴atom: an individual value that may form an identifier tail    //
-//            │  ├╴enum<v0|v1|...>: an atom that matches a specified union    //
-//            │  ├╴bool: a literal `1` or `0`                                 //
-//            │  ├╴hex:  a literal uppercase hexadecimal digit [e.g. F]       //
-//            │  ├╴nybl: a literal 4-bit bool concatenation [e.g. 0110]       //
-//            │  ├╴int: <abstract> a word-sized signed integer                //
-//            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //
-//            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //
-//            │  └╴uint: <abstract> a word-sized unsigned integer             //
-//            │     ├╴udec: an unsigned decimal integer [e.g. 42u]            //
-//            │     └╴uhex: an unsigned hex integer [e.g. 0x02Au]             //
-//            ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b)]              //
-//            │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]      //
-//            └╴word: <union> int | uint | utup                               //
-//               └╴size: a non-negative word capped by the argument limit     //
+//    The following schema depicts the pputl type hierarchy, starting with    //
+//    "list" as the most basic description of any __VA_ARGS__ expression.     //
+//                                                                            //
+//     list: tokens potentially delimited by non-parenthesized commas         //
+//      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
+//      ├╴obj:  a list with exactly one element                               //
+//      │  ├╴atom: a sequence of digit|nondigit tokens (/[\w\d_]+/)           //
+//      │  │  ├╴enum<v0|v1|...>: an atom that matches a specified union       //
+//      │  │  │  ├╴bool: enum<0|1>                                            //
+//      │  │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>                //
+//      │  │  │  ├╴nybl: enum<0000|0001|0010|...|1101|1110|1111>              //
+//      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //
+//      │  │  │  ├╴ihex: enum<0x000|0x001|...|0xFFE|0xFFF>                    //
+//      │  │  │  ├╴udec: enum<0u|1u|2u|...4093u|4094u|4095u>                  //
+//      │  │  │  └╴uhex: enum<0x000u|0x001u|...|0xFFEu|0xFFFu>                //
+//      │  │  └╴int: <union> idec|ihex; a signed 2s-complement integer        //
+//      │  ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b, , )]             //
+//      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //
+//      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //
+//      │  └╴word: <union> int|uint; any defined integer representation       //
+//      │     ├╴size: a word within [0, size_max]                             //
+//      │     └╴idx:  a word within [max(int_min, -size_max), size_max)       //
+//      └╴any: <union> none|obj; a list with no separatory commas             //
+//                                                                            //
+//    Note: integral enum ranges and hexadecimal literal lengths depend on    //
+//    the configured word_size. Schema descriptions use the default.          //
 //                                                                            //
 //    All pputl traits are fully testable except for atom,  which requires    //
 //    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
@@ -329,18 +338,6 @@ ASSERT_PP_EQ((PTL_IS_LIST(, a)), (1));
 ASSERT_PP_EQ((PTL_IS_LIST(, a, )), (1));
 ASSERT_PP_EQ((PTL_IS_LIST(, , a)), (1));
 
-ASSERT_PP_EQ((PTL_IS_ANY()), (1));
-ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
-ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (0));
-
 ASSERT_PP_EQ((PTL_IS_NONE()), (1));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
@@ -417,16 +414,6 @@ ASSERT_PP_EQ((PTL_IS_NYBL(000)), (0));
 ASSERT_PP_EQ((PTL_IS_NYBL(0000)), (1));
 ASSERT_PP_EQ((PTL_IS_NYBL(0110)), (1));
 
-ASSERT_PP_EQ((PTL_IS_INT()), (0));
-ASSERT_PP_EQ((PTL_IS_INT(foo)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0)), (1));
-ASSERT_PP_EQ((PTL_IS_INT(0u)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(4095)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0x000u)), (0));
-ASSERT_PP_EQ((PTL_IS_INT(0xFFF)), (1));
-ASSERT_PP_EQ((PTL_IS_INT(0xF)), (0));
-ASSERT_PP_EQ((PTL_IS_INT((), ())), (0));
-
 ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
 ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
 ASSERT_PP_EQ((PTL_IS_IDEC(2047)), (1));
@@ -442,17 +429,6 @@ ASSERT_PP_EQ((PTL_IS_IHEX(0xFFF)), (1));
 ASSERT_PP_EQ((PTL_IS_IHEX(0xFFFu)), (0));
 ASSERT_PP_EQ((PTL_IS_IHEX((), ())), (0));
 
-ASSERT_PP_EQ((PTL_IS_UINT()), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(0u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(4095)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(4095u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(0x000u)), (1));
-ASSERT_PP_EQ((PTL_IS_UINT(0xFFF)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
-ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
-
 ASSERT_PP_EQ((PTL_IS_UDEC(1)), (0));
 ASSERT_PP_EQ((PTL_IS_UDEC(1u)), (1));
 ASSERT_PP_EQ((PTL_IS_UDEC(4095)), (0));
@@ -466,6 +442,16 @@ ASSERT_PP_EQ((PTL_IS_UHEX(1u)), (0));
 ASSERT_PP_EQ((PTL_IS_UHEX(0x000u)), (1));
 ASSERT_PP_EQ((PTL_IS_UHEX(0xFFF)), (0));
 ASSERT_PP_EQ((PTL_IS_UHEX((), ())), (0));
+
+ASSERT_PP_EQ((PTL_IS_INT()), (0));
+ASSERT_PP_EQ((PTL_IS_INT(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0)), (1));
+ASSERT_PP_EQ((PTL_IS_INT(0u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_INT(0xFFF)), (1));
+ASSERT_PP_EQ((PTL_IS_INT(0xF)), (0));
+ASSERT_PP_EQ((PTL_IS_INT((), ())), (0));
 
 ASSERT_PP_EQ((PTL_IS_TUP()), (0));
 ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
@@ -499,6 +485,18 @@ ASSERT_PP_EQ((PTL_IS_UTUP((9, B, C, E))), (0));
 ASSERT_PP_EQ((PTL_IS_UTUP(())), (0));
 ASSERT_PP_EQ((PTL_IS_UTUP((0))), (0));
 
+ASSERT_PP_EQ((PTL_IS_UINT()), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT((7, F, F))), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(4095u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0x000u)), (1));
+ASSERT_PP_EQ((PTL_IS_UINT(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT(0b110u)), (0));
+ASSERT_PP_EQ((PTL_IS_UINT((), ())), (0));
+
 ASSERT_PP_EQ((PTL_IS_WORD(0)), (1));
 ASSERT_PP_EQ((PTL_IS_WORD(0u)), (1));
 ASSERT_PP_EQ((PTL_IS_WORD(foo)), (0));
@@ -519,6 +517,25 @@ ASSERT_PP_EQ((PTL_IS_SIZE(4095u)), (0));
 ASSERT_PP_EQ((PTL_IS_SIZE(0xFFFu)), (0));
 ASSERT_PP_EQ((PTL_IS_SIZE(255u)), (1));
 ASSERT_PP_EQ((PTL_IS_SIZE((0, 0, 8))), (1));
+
+ASSERT_PP_EQ((PTL_IS_IDX(0)), (1));
+ASSERT_PP_EQ((PTL_IS_IDX(255u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDX(254)), (1));
+ASSERT_PP_EQ((PTL_IS_IDX(0xFFF)), (1));
+ASSERT_PP_EQ((PTL_IS_IDX(0xF01)), (1));
+ASSERT_PP_EQ((PTL_IS_IDX(0xF00)), (0));
+
+ASSERT_PP_EQ((PTL_IS_ANY()), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (0));
 
 ASSERT_PP_EQ((PTL_TYPEOF((foo))), (TUP));
 ASSERT_PP_EQ((PTL_TYPEOF(0)), (IDEC));
@@ -554,9 +571,6 @@ ASSERT_PP_EQ((PTL_LIST()), ());
 ASSERT_PP_EQ((PTL_LIST(foo)), (foo));
 ASSERT_PP_EQ((PTL_LIST(foo, bar)), (foo, bar));
 
-ASSERT_PP_EQ((PTL_ANY()), ());
-ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
-
 ASSERT_PP_EQ((PTL_NONE()), ());
 
 ASSERT_PP_EQ((PTL_OBJ(foo)), (foo));
@@ -576,21 +590,6 @@ ASSERT_PP_EQ((PTL_NYBL(0110)), (0110));
 ASSERT_PP_EQ((PTL_NYBL(5)), (0101));
 ASSERT_PP_EQ((PTL_NYBL(A)), (1010));
 
-ASSERT_PP_EQ((PTL_INT(0)), (0));
-ASSERT_PP_EQ((PTL_INT(1, IHEX)), (0x001));
-ASSERT_PP_EQ((PTL_INT(0x002)), (0x002));
-ASSERT_PP_EQ((PTL_INT(0x800, IDEC)), (0x800));
-ASSERT_PP_EQ((PTL_INT(0x002, IDEC)), (2));
-ASSERT_PP_EQ((PTL_INT(7u)), (7));
-ASSERT_PP_EQ((PTL_INT(15u, IHEX)), (0x00F));
-ASSERT_PP_EQ((PTL_INT(4095u)), (0xFFF));
-ASSERT_PP_EQ((PTL_INT(0x007u)), (0x007));
-ASSERT_PP_EQ((PTL_INT(0xFFFu, IDEC)), (0xFFF));
-ASSERT_PP_EQ((PTL_INT(0x005u, IDEC)), (5));
-ASSERT_PP_EQ((PTL_INT((0, 0, 0))), (0x000));
-ASSERT_PP_EQ((PTL_INT((8, 0, 0), IDEC)), (0x800));
-ASSERT_PP_EQ((PTL_INT((7, F, F), IDEC)), (2047));
-
 ASSERT_PP_EQ((PTL_IDEC(0x000)), (0));
 ASSERT_PP_EQ((PTL_IDEC(0x001)), (1));
 ASSERT_PP_EQ((PTL_IDEC(0x005u)), (5));
@@ -602,17 +601,6 @@ ASSERT_PP_EQ((PTL_IHEX(1)), (0x001));
 ASSERT_PP_EQ((PTL_IHEX(5)), (0x005));
 ASSERT_PP_EQ((PTL_IHEX(4095u)), (0xFFF));
 ASSERT_PP_EQ((PTL_IHEX(2047u)), (0x7FF));
-
-ASSERT_PP_EQ((PTL_UINT(0)), (0u));
-ASSERT_PP_EQ((PTL_UINT(2, UHEX)), (0x002u));
-ASSERT_PP_EQ((PTL_UINT(0x007)), (0x007u));
-ASSERT_PP_EQ((PTL_UINT(0x00F, UDEC)), (15u));
-ASSERT_PP_EQ((PTL_UINT(8u)), (8u));
-ASSERT_PP_EQ((PTL_UINT(6u, UHEX)), (0x006u));
-ASSERT_PP_EQ((PTL_UINT(0x005u)), (0x005u));
-ASSERT_PP_EQ((PTL_UINT(0x004u, UDEC)), (4u));
-ASSERT_PP_EQ((PTL_UINT((0, 0, 0))), (0x000u));
-ASSERT_PP_EQ((PTL_UINT((F, F, F), UDEC)), (4095u));
 
 ASSERT_PP_EQ((PTL_UDEC(0x000u)), (0u));
 ASSERT_PP_EQ((PTL_UDEC(1)), (1u));
@@ -629,6 +617,21 @@ ASSERT_PP_EQ((PTL_UHEX(0x000u)), (0x000u));
 ASSERT_PP_EQ((PTL_UHEX(0x001u)), (0x001u));
 ASSERT_PP_EQ((PTL_UHEX(0xFFF)), (0xFFFu));
 
+ASSERT_PP_EQ((PTL_INT(0)), (0));
+ASSERT_PP_EQ((PTL_INT(1, IHEX)), (0x001));
+ASSERT_PP_EQ((PTL_INT(0x002)), (0x002));
+ASSERT_PP_EQ((PTL_INT(0x800, IDEC)), (0x800));
+ASSERT_PP_EQ((PTL_INT(0x002, IDEC)), (2));
+ASSERT_PP_EQ((PTL_INT(7u)), (7));
+ASSERT_PP_EQ((PTL_INT(15u, IHEX)), (0x00F));
+ASSERT_PP_EQ((PTL_INT(4095u)), (0xFFF));
+ASSERT_PP_EQ((PTL_INT(0x007u)), (0x007));
+ASSERT_PP_EQ((PTL_INT(0xFFFu, IDEC)), (0xFFF));
+ASSERT_PP_EQ((PTL_INT(0x005u, IDEC)), (5));
+ASSERT_PP_EQ((PTL_INT((0, 0, 0))), (0x000));
+ASSERT_PP_EQ((PTL_INT((8, 0, 0), IDEC)), (0x800));
+ASSERT_PP_EQ((PTL_INT((7, F, F), IDEC)), (2047));
+
 ASSERT_PP_EQ((PTL_TUP(())), (()));
 ASSERT_PP_EQ((PTL_TUP((1, 2))), ((1, 2)));
 
@@ -637,6 +640,22 @@ ASSERT_PP_EQ((PTL_UTUP(4095u)), ((F, F, F)));
 ASSERT_PP_EQ((PTL_UTUP(0x800)), ((8, 0, 0)));
 ASSERT_PP_EQ((PTL_UTUP(2047)), ((7, F, F)));
 ASSERT_PP_EQ((PTL_UTUP((1, 0, 0))), ((1, 0, 0)));
+
+ASSERT_PP_EQ((PTL_UINT(0)), (0u));
+ASSERT_PP_EQ((PTL_UINT(2, UHEX)), (0x002u));
+ASSERT_PP_EQ((PTL_UINT(4, UTUP)), ((0, 0, 4)));
+ASSERT_PP_EQ((PTL_UINT(0x007)), (0x007u));
+ASSERT_PP_EQ((PTL_UINT(0x00F, UDEC)), (15u));
+ASSERT_PP_EQ((PTL_UINT(0x00C, UTUP)), ((0, 0, C)));
+ASSERT_PP_EQ((PTL_UINT(8u)), (8u));
+ASSERT_PP_EQ((PTL_UINT(6u, UHEX)), (0x006u));
+ASSERT_PP_EQ((PTL_UINT(4u, UTUP)), ((0, 0, 4)));
+ASSERT_PP_EQ((PTL_UINT(0x005u)), (0x005u));
+ASSERT_PP_EQ((PTL_UINT(0x004u, UDEC)), (4u));
+ASSERT_PP_EQ((PTL_UINT(0x003u, UTUP)), ((0, 0, 3)));
+ASSERT_PP_EQ((PTL_UINT((0, 0, 0), UHEX)), (0x000u));
+ASSERT_PP_EQ((PTL_UINT((F, F, F), UDEC)), (4095u));
+ASSERT_PP_EQ((PTL_UINT((7, F, F))), ((7, F, F)));
 
 ASSERT_PP_EQ((PTL_WORD(0)), (0));
 ASSERT_PP_EQ((PTL_WORD(1, IHEX)), (0x001));
@@ -672,6 +691,15 @@ ASSERT_PP_EQ((PTL_SIZE(0)), (0));
 ASSERT_PP_EQ((PTL_SIZE(1)), (1));
 ASSERT_PP_EQ((PTL_SIZE(0x007)), (0x007));
 ASSERT_PP_EQ((PTL_SIZE(255u)), (255u));
+
+ASSERT_PP_EQ((PTL_IDX(0)), (0));
+ASSERT_PP_EQ((PTL_IDX(1)), (1));
+ASSERT_PP_EQ((PTL_IDX(0x007)), (0x007));
+ASSERT_PP_EQ((PTL_IDX(0xFFF)), (0xFFF));
+ASSERT_PP_EQ((PTL_IDX(254)), (254));
+
+ASSERT_PP_EQ((PTL_ANY()), ());
+ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
 
 ASSERT_PP_EQ((PTL_NOT(0)), (1));
 ASSERT_PP_EQ((PTL_NOT(1)), (0));

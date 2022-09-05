@@ -32,17 +32,15 @@ namespace api {
 using namespace codegen;
 
 decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
-  docs << "[inherits from " + any + "] exactly one non-empty generic value.";
+  docs << "[inherits from " + list + "] a list with exactly one element.";
 
   tests << obj("foo") = "foo" >> docs;
 
   def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
   def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
 
-  return def<"o(e, ...)">{[&](arg e, va some) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_obj_o(some + ".")), e, some);
-  }}(str(pp::str("[" + obj + "] obj cannot describe empty values") + " : " + args),
-     any(args));
+  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)),
+                  error(obj, "obj must describe exactly one element", args), args);
 });
 
 } // namespace api

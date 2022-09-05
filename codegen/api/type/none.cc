@@ -32,7 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(none) none = NIFTY_DEF(none, [&](va args) {
-  docs << "[inherits from " + any + "] nothing. fails if something.";
+  docs << "[inherits from " + list
+              + "] nothing; an absence of pp-tokens (an empty list).";
 
   tests << none() = "" >> docs;
 

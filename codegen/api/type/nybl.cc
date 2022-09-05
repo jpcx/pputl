@@ -32,9 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
-  docs << "[inherits from " + atom + "] 4-bit bool concatenation type."
-       << "constructible from either nybl or hex."
-       << "expands to v if valid, else fails.";
+  docs << "[" + enum_ + "<0000|0001|...|1110|1111>] 4-bit bool concatenation type."
+       << "constructible from either nybl or hex.";
 
   tests << nybl("0000") = "0000" >> docs;
   tests << nybl("0110") = "0110" >> docs;
@@ -45,12 +44,8 @@ decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
   def<"\\01(e, hex)">{}   = [](arg, arg hex) { return impl::hex(hex, "NYBL"); };
   def<"\\10(e, nybl)">{}  = [](arg, arg nybl) { return nybl; };
 
-  return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(
-        xcat(utl::slice(_00, -2), xcat(detail::is_nybl_o(atom), detail::is_hex_o(atom))),
-        e, atom);
-  }}(str(pp::str("[" + nybl + "] invalid arguments; must be nybl or hex") + " : " + args),
-     atom(args));
+  return pp::call(xcat(utl::slice(_00, -2), xcat(is_nybl(args), is_hex(args))),
+                  error(nybl, "invalid arguments; must be nybl or hex", args), args);
 });
 
 } // namespace api

@@ -33,30 +33,24 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_size_o) is_size_o = NIFTY_DEF(is_size_o);
+decltype(is_idx_o) is_idx_o = NIFTY_DEF(is_idx_o);
 }
 
-decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
-  docs << "[extends " + is_word + "] detects if args is a non-negative word less than "
-              + size_max + ".";
+decltype(is_idx) is_idx = NIFTY_DEF(is_idx, [&](va args) {
+  docs << "[extends " + is_word
+              + "] detects if args is within [max(int_min, -size_max), size_max).";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
 
-  tests << is_size("0")       = "1" >> docs;
-  tests << is_size("0u")      = "1" >> docs;
-  tests << is_size("foo")     = "0" >> docs;
-  tests << is_size("()")      = "0" >> docs;
-  tests << is_size("A")       = "0" >> docs;
-  tests << is_size(int_min_s) = "0" >> docs;
-  if constexpr (size_lt_max) {
-    tests << is_size(uint_max_s)                        = "0" >> docs;
-    tests << is_size("0x" + utl::cat(samp::hmax) + "u") = "0" >> docs;
-    tests << is_size(size_max_s)                        = "1" >> docs;
-  } else {
-    tests << is_size(uint_max_s)                        = "1" >> docs;
-    tests << is_size("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
-  }
-  tests << is_size(pp::tup(samp::h8)) = "1" >> docs;
+  tests << is_idx("0")                         = "1" >> docs;
+  tests << is_idx(size_max_s)                  = "0" >> docs;
+  tests << is_idx(conf::size_max - 1)          = "1" >> docs;
+  tests << is_idx("0x" + utl::cat(samp::hmax)) = "1" >> docs;
+  if constexpr (conf::word_size > 2)
+    tests << is_idx("0xF" + utl::cat(svect{conf::word_size - 2, "0"}) + "1") =
+        "1" >> docs;
+  if constexpr (conf::word_size > 1)
+    tests << is_idx("0xF" + utl::cat(svect{conf::word_size - 1, "0"})) = "0" >> docs;
 
   def<"x(...)"> x = [&](va args) { return args; };
 
@@ -71,21 +65,21 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     return pp::cat("0x", pp::cat(args), "u");
   };
 
-  detail::is_size_o = def{"o(obj)"} = [&](arg obj) {
+  detail::is_idx_o = def{"o(obj)"} = [&](arg obj) {
     if constexpr (size_lt_max) {
       def<"\\0(atom)"> _0 = [&](arg atom) {
         def<"\\0000(atom)"> _0000 = [&](arg) { return "0"; };
         def<"\\0001(uhex)">{}     = [&](arg uhex) {
-          return impl::udec(impl::uhex(uhex, "UDEC"), "USIZE");
+          return impl::udec(impl::uhex(uhex, "UDEC"), "UIDX");
         };
         def<"\\0010(udec)">{} = [&](arg udec) { //
-          return impl::udec(udec, "USIZE");
+          return impl::udec(udec, "UIDX");
         };
         def<"\\0100(ihex)">{} = [&](arg ihex) {
-          return impl::udec(impl::uhex(pp::cat(ihex, 'u'), "UDEC"), "ISIZE");
+          return impl::udec(impl::uhex(pp::cat(ihex, 'u'), "UDEC"), "IIDX");
         };
         def<"\\1000(idec)">{} = [&](arg idec) { //
-          return impl::udec(pp::cat(idec, 'u'), "ISIZE");
+          return impl::udec(pp::cat(idec, 'u'), "IIDX");
         };
 
         return pp::call(xcat(utl::slice(_0000, -4),
@@ -98,7 +92,7 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       def<"\\1(tup)">{} = [&](arg tup) {
         def<"\\0(tup)"> _0 = [&](arg) { return "0"; };
         def<"\\1(utup)">{} = [&](arg utup) {
-          return impl::udec(impl::uhex(x(ut_hex + " " + utup), "UDEC"), "USIZE");
+          return impl::udec(impl::uhex(x(ut_hex + " " + utup), "UDEC"), "UIDX");
         };
         return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), tup);
       };
@@ -110,7 +104,7 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
   };
 
   def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_size_o; };
+  def<"\\1">{}  = [&] { return detail::is_idx_o; };
 
   return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });

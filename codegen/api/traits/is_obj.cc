@@ -31,12 +31,8 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_obj_o) is_obj_o = NIFTY_DEF(is_obj_o);
-}
-
 decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va args) {
-  docs << "[extends " + is_any + "] detects if args is a non-empty generic value.";
+  docs << "[extends " + is_list + "] detects if args has exactly one element.";
 
   tests << is_obj("")         = "0" >> docs;
   tests << is_obj(",")        = "0" >> docs;
@@ -45,16 +41,14 @@ decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va args) {
   tests << is_obj("foo")      = "1" >> docs;
   tests << is_obj("(42)")     = "1" >> docs;
 
-  detail::is_obj_o = def{"o(any)"} = [&](arg any) {
+  def<"\\0(...)"> _0    = [] { return "0"; };
+  def<"\\01(_, ...)">{} = [] {
     def<"\\0"> _0 = [&] { return "1"; };
-    def<"\\1">{}  = [&] { return "0"; };
-    return xcat(utl::slice(_0, -1), is_none(any));
+    def<"\\01">{} = [&] { return "0"; };
+    return pp::cat(_0, pp::va_opt(1));
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_obj_o; };
-
-  return pp::call(xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")), args);
+  return pp::call(pp::cat(_0, pp::va_opt("1")), args + ".");
 });
 
 } // namespace api

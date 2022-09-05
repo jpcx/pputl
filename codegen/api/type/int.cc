@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
-  docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
+  docs << "[union " + idec + "|" + ihex + "] " + std::to_string(conf::word_size * 4)
               + "-bit signed integer type."
        << "constructible from any word type."
        << "instance is either idec or ihex."
@@ -176,7 +176,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
                          mode(e, typeof(v),
                               enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
                     v);
-  }}(str(pp::str("[" + int_ + "] invalid arguments") + " : " + args), args);
+  }}(error(int_, "invalid arguments", args), args);
 });
 
 } // namespace api

@@ -69,11 +69,10 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
 
     chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
               + ", ...)"} = [&](pack args) {
-      def verify = def{utl::cat(std::vector<std::string>(conf::word_size - 1, "1"))} =
-          [&] { return ""; };
+      def verify = def{utl::cat(svect(conf::word_size - 1, "1"))} = [&] { return ""; };
 
       return pp::cat(utl::slice(verify, -(conf::word_size - 1)),
-                     pp::cat(std::vector<std::string>{args.begin(), args.end() - 1}));
+                     pp::cat(svect{args.begin(), args.end() - 1}));
     };
 
     res = def{"res(...)"} = [&](va args) {
@@ -94,8 +93,8 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
 
   detail::is_utup_o = def{"o(tup)"} = [&](arg tup) {
     if constexpr (conf::word_size > 1) {
-      auto open  = utl::cat(std::vector<std::string>(conf::word_size - 1, r + "("));
-      auto close = utl::cat(std::vector<std::string>(conf::word_size - 1, ")"));
+      auto open  = utl::cat(svect(conf::word_size - 1, r + "("));
+      auto close = utl::cat(svect(conf::word_size - 1, ")"));
       return res(open + "(), " + esc + " " + tup + close);
     } else {
       return is_hex(esc + " " + tup);

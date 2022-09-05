@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
-  docs << "[extends " + is_enum + "] detects if args is a bool (enum<0|1>).";
+  docs << "[extends " + is_enum + "] detects if args is an enum<0|1>.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
 
@@ -57,7 +57,7 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   def<"\\0"> _0 = [&] { return ""; };
   def<"\\1">{}  = [&] { return ""; };
 
-  return is_enum(utl::slice(_0, -1), args);
+  return detail::is_enum_o(utl::slice(_0, -1), args);
 });
 
 } // namespace api

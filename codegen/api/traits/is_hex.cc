@@ -31,12 +31,8 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_hex_o) is_hex_o = NIFTY_DEF(is_hex_o);
-}
-
 decltype(is_hex) is_hex = NIFTY_DEF(is_hex, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is an uppercase hexadecimal digit.";
+  docs << "[extends " + is_enum + "] detects if args is an enum<0|1|2|...|D|E|F>";
 
   tests << is_hex()      = "0" >> docs;
   tests << is_hex(0)     = "1" >> docs;
@@ -46,12 +42,7 @@ decltype(is_hex) is_hex = NIFTY_DEF(is_hex, [&](va args) {
   tests << is_hex('b')   = "0" >> docs;
   tests << is_hex('F')   = "1" >> docs;
 
-  detail::is_hex_o = def{"o(atom)"} = [&](arg atom) { return impl::hex(atom, "IS"); };
-
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_hex_o; };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+  return detail::is_enum_o(impl::hex_prefix, args);
 });
 
 } // namespace api

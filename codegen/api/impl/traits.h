@@ -42,20 +42,35 @@ inline std::string const arith_rules{
     "either operand is decimal (and the result is non-negative),\n"
     "utup if both operands are utup, and hex otherwise."};
 
+extern std::string& hex_prefix;
+extern std::string& nybl_prefix;
+extern std::string& udec_prefix;
+extern std::string& uhex_prefix;
+
 extern codegen::def<
-    "hex(v, t: {<atom>, IS}|{<hex>, NOT|DEC0|DEC1|INC0|INC1|NYBL|BITS})"> const& hex;
+    "hex(v, t: enum<0|1|...|E|F>, enum<NOT|DEC0|DEC1|INC0|INC1|NYBL|BITS>)"> const& hex;
 extern codegen::def<
-    "hexhex(v, t: {<atom>, IS}|{<hex##hex>, LT|AND|OR|XOR|SUB0-1|ADD0-1|MUL0-E})"> const&
-                                                                          hexhex;
-extern codegen::def<"nybl(v, t: {<atom>, IS}|{<nybl>, HEX|BITS})"> const& nybl;
-extern codegen::def<"udec(v, t: {<atom>, IS}|{<udec>, UHEX|LOG2|SQRT|FACT})"> const& udec;
-extern codegen::def<
-    "uhex(v, t: {<atom>, IS}|{<uhex>, UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT})"> const& uhex;
+    "hexhex(v, t: enum<00|01|...|FE|FF>, "
+    "enum<LT|AND|OR|XOR|SUB0|SUB1|ADD0|ADD1|MUL0|MUL1|...|MULD|MULE>)"> const& hexhex;
+extern codegen::def<"nybl(v, t: enum<0000|0001|...|1110|1111>, enum<HEX|BITS>)"> const&
+    nybl;
+extern std::conditional_t<
+    (codegen::conf::word_size > 2 and codegen::conf::cpp20_arglimit),
+    codegen::def<
+        "udec(v, t: enum<0u|1u|...>, enum<UHEX|ISIZE|USIZE|IIDX|UIDX|LOG2|SQRT|FACT>)">,
+    codegen::def<
+        "udec(v, t: enum<0u|1u|...>, enum<UHEX|IIDX|UIDX|LOG2|SQRT|FACT>)">> const& udec;
+extern codegen::def<"uhex(v, t: enum<...>, enum<UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT>)"> const&
+                                                              uhex;
 extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "
-                    "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const&                   arithhint;
+                    "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const& arithhint;
 extern codegen::def<"xarithhint(...: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "
                     "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const& xarithhint;
 
+NIFTY_DECL(hex_prefix);
+NIFTY_DECL(nybl_prefix);
+NIFTY_DECL(udec_prefix);
+NIFTY_DECL(uhex_prefix);
 NIFTY_DECL(hex);
 NIFTY_DECL(hexhex);
 NIFTY_DECL(nybl);

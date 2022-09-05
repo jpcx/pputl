@@ -33,9 +33,9 @@ using namespace codegen;
 
 decltype(atom) atom = NIFTY_DEF(atom, [&](va args) {
   docs << "[inherits from " + obj
-              + "] an individual value that may form an identifier tail."
+              + "] a sequence of digit|nondigit tokens (/[\\w\\d_]+/)."
        << ""
-       << "this function only tests for tuples and multiple values."
+       << "this function only tests for nothing, tuples, and multiple values."
        << ""
        << "while not testable, the true semantics of atom implies"
        << "that its values are able to concatenate with identifiers"

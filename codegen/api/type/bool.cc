@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
-  docs << "[specializes " + enum_ + "] bool type (enum<0|1>)."
-       << "expands to b if valid, else fails.";
+  docs << "[" + enum_ + "<0|1>] boolean type.";
 
   tests << bool_(0) = "0" >> docs;
   tests << bool_(1) = "1" >> docs;

@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(list) list = NIFTY_DEF(list, [&](va args) {
-  docs << "list type. returns args in all cases (root type; everything matches)";
+  docs << "__VA_ARGS__ base type. returns args in all cases (matches everything)";
 
   tests << list()           = "" >> docs;
   tests << list("foo")      = "foo" >> docs;

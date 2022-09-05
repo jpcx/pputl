@@ -32,6 +32,8 @@ namespace impl {
 
 using namespace codegen;
 
+decltype(nybl_prefix) nybl_prefix = NIFTY_DEF(nybl_prefix);
+
 decltype(nybl) nybl = NIFTY_DEF(nybl, [&](arg v, arg t) {
   docs << "[internal] nybl traits";
 
@@ -54,17 +56,14 @@ decltype(nybl) nybl = NIFTY_DEF(nybl, [&](arg v, arg t) {
       def{"1111"} = [&] { return "F, " + detail::bits(15); },
   };
 
-  def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\01">{} = [&] { return "1"; };
-    return pp::cat(_0, pp::va_opt("1"));
-  };
-  def<"\\HEX(hex, ...) -> hex">{}      = [&](pack args) { return args[0]; };
+  nybl_prefix = utl::slice(nybls[0], -4);
+
+  def<"\\HEX(hex, ...) -> hex"> hex    = [&](pack args) { return args[0]; };
   def<"\\BITS(hex, ...) -> ...bool">{} = [&](pack args) { return args[1]; };
 
   return def<"o(t, ...)">{[&](arg t, va row) {
-    return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, xcat(utl::slice(nybls[0], -4), v));
+    return pp::call(pp::cat(utl::slice(hex, -3), t), row);
+  }}(t, xcat(nybl_prefix, v));
 });
 
 } // namespace impl

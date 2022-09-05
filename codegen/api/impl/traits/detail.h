@@ -113,6 +113,29 @@ bits(std::size_t i) {
 }
 
 inline std::string
+isize(unsigned n) {
+  return (n <= conf::int_max and n <= conf::size_max) ? "1" : "0";
+}
+
+inline std::string
+usize(unsigned n) {
+  return n <= conf::size_max ? "1" : "0";
+}
+
+inline std::string
+iidx(unsigned n) {
+  return (n <= conf::int_max ? (n < conf::size_max)
+                             : (n > (conf::uint_max - conf::size_max)))
+           ? "1"
+           : "0";
+}
+
+inline std::string
+uidx(unsigned n) {
+  return n < conf::size_max ? "1" : "0";
+}
+
+inline std::string
 log2(unsigned n) {
   if (n == 0)
     return "";

@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
-  docs << "[inherits from " + obj + "] a union of int|uint|utup."
+  docs << "[union " + int_ + "|" + uint + "] any defined integer representation."
        << "constructibe from any word type."
        << ""
        << "cannot parse negative decimals; use math.neg instead."
@@ -184,9 +184,9 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
     }
 
   def<"\\IDEC(word)"> idec = [&](arg word) { return int_(word, "IDEC"); };
-  def<"\\IHEX(word)">{}    = [&](arg word) { return int_(word, "IHEX"); };
-  def<"\\UDEC(word)">{}    = [&](arg word) { return uint(word, "UDEC"); };
-  def<"\\UHEX(word)">{}    = [&](arg word) { return uint(word, "UHEX"); };
+  def<"\\IHEX(word)">{}    = [&](arg word) { return ihex(word); };
+  def<"\\UDEC(word)">{}    = [&](arg word) { return udec(word); };
+  def<"\\UHEX(word)">{}    = [&](arg word) { return uhex(word); };
   def<"\\UTUP(word)">{}    = [&](arg word) { return utup(word); };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
