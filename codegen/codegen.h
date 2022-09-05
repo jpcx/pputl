@@ -189,7 +189,7 @@ constexpr char const project_header[]{
     "//           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //\n"
     "//           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //\n"
     "//     ◆ range algorithms                                                     //\n"
-    "//       ‐ element access                                 [numeric, range]    //\n"
+    "//       ‐ element access                                          [range]    //\n"
     "//           index  items  bisect  unite  get  set  push  pop  slice          //\n"
     "//       ‐ generation                                               [algo]    //\n"
     "//           seq  repeat  gen_lp  gen_rp                                      //\n"

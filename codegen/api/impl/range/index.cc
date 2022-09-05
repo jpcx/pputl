@@ -25,35 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-// #include "numeric.h"
-// 
-// namespace api {
-// 
-// using namespace codegen;
-// 
-// decltype(index) index = NIFTY_DEF(index, [&](va args) {
-//   docs << "translates an idx to a positive zero-offset index for a given range size."
-//        << "fails if out of bounds.";
-// 
-//   tests << index(0, 5)      = "0" >> docs;
-//   tests << index(1, 5)      = "1" >> docs;
-//   tests << index(3, 5)      = "3" >> docs;
-//   tests << index(4, 5)      = "4" >> docs;
-//   tests << index(neg(1), 5) = "4" >> docs;
-//   tests << index(neg(2), 5) = "3" >> docs;
-//   tests << index(neg(4), 5) = "1" >> docs;
-//   tests << index(neg(5), 5) = "0" >> docs;
-// 
-//   def<"\\0(idx, range)"> _0 = [&](arg idx, arg range) {
-//     //
-//     return "";
-//   };
-//   def<"\\1(idx, range)">{} = [&](arg idx, arg range) {
-//     //
-//     return "";
-//   };
-// 
-//   return pp::call(xcat(utl::slice(_0, -1), ltz(first(args))), args);
-// });
-// 
-// } // namespace api
+#include "impl/range.h"
+
+namespace api {
+namespace impl {
+
+using namespace codegen;
+
+decltype(index) index = NIFTY_DEF(index, [&](arg i, arg sign, arg sz, arg err) {
+  docs << "[internal] translates an idx to a positive zero-offset index for a given "
+          "range size.";
+
+  def<"\\0(i, sz, err)"> sign0 = [&](arg i, arg sz, arg err) {
+    def<"\\0(i, err)"> _0 = [&](arg, arg err) { return fail(err); };
+    def<"\\1(i, err)">{}  = [&](arg i, arg) { return i; };
+
+    return pp::call(xcat(utl::slice(_0, -1), lt(i, sz)), i, err);
+  };
+
+  def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
+    def<"\\0(i, sz, err)"> _0 = [&](arg i, arg sz, arg err) { return sign0(i, sz, err); };
+    def<"\\1(i, sz, err)">{}  = [&](arg i, arg sz, arg err) {
+      def<"\\0(i, sz, err)"> _0 = [&](arg, arg, arg err) { return fail(err); };
+      def<"\\1(i, sz, err)">{}  = [&](arg i, arg sz, arg) { return add(i, sz); };
+
+      return pp::call(xcat(utl::slice(_0, -1), lt(neg(i), inc(sz))), i, sz, err);
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), ltz(i)), i, sz, err);
+  };
+
+  return pp::call(cat(utl::slice(sign0, -1), sign), i, sz, err);
+});
+
+} // namespace impl
+} // namespace api

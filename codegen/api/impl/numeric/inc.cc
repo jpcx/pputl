@@ -25,27 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "impl/numeric.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "numeric less-than-zero detection.";
+decltype(inc) inc = NIFTY_DEF(inc, [&](arg n) {
+  docs << "[internal] numeric increment w/ overflow.";
 
-  tests << ltz("0")            = "0" >> docs;
-  tests << ltz("1")            = "0" >> docs;
-  tests << ltz("0u")           = "0" >> docs;
-  tests << ltz("1u")           = "0" >> docs;
-  tests << ltz(int_max_s)      = "0" >> docs;
-  tests << ltz(int_min_s)      = "1" >> docs;
-  tests << ltz(inc(int_max_s)) = "1" >> docs;
+  constexpr auto sz = conf::word_size;
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
+  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"r(...)"> r = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return utl::cat(
+          std::array{
+              impl::hex(v[sz], pp::cat("INC", v[0])),
+              utl::cat(svect{&v[1], &v[sz]}, ", "),
+          },
+          ", ");
+    };
+    return o(args);
+  };
+
+  def<"res(...)"> res = [&](va args) {
+    def o = def{"o(" + p + ")"} = [&](pack v) {
+      return pp::tup(svect{&v[1], &v[sz + 1]});
+    };
+
+    return o(args);
+  };
+
+  auto rlp = utl::cat(svect{conf::word_size, r + "("});
+  auto rrp = utl::cat(svect{conf::word_size, ")"});
+  return res(rlp + "1, " + x(esc + " " + n) + rrp);
 });
 
+} // namespace impl
 } // namespace api

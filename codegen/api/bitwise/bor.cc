@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bor) bor = NIFTY_DEF(bor, [&](va args) {
-  docs << "bitwise OR operation."
+  docs << "bitwise OR."
        << "" << impl::arith_rules;
 
   tests << bor(0, 0)                 = "0" >> docs;

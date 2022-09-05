@@ -32,8 +32,8 @@ namespace impl {
 
 using namespace codegen;
 
-decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
-  docs << "subtraction with underflow.";
+decltype(sub) sub = NIFTY_DEF(sub, [&](arg a, arg b) {
+  docs << "[internal] subtraction with underflow.";
 
   constexpr auto sz = conf::word_size;
 
@@ -63,11 +63,9 @@ decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
     return o(args);
   };
 
-  return def<"o(a, b)">{[&](arg a, arg b) {
-    auto rlp = utl::cat(svect{conf::word_size, r + "("});
-    auto rrp = utl::cat(svect{conf::word_size, ")"});
-    return res(rlp + "0, " + x(esc + " " + a, esc + " " + b) + rrp);
-  }}(args);
+  auto rlp = utl::cat(svect{conf::word_size, r + "("});
+  auto rrp = utl::cat(svect{conf::word_size, ")"});
+  return res(rlp + "0, " + x(esc + " " + a, esc + " " + b) + rrp);
 });
 
 } // namespace impl

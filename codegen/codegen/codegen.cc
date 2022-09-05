@@ -967,13 +967,10 @@ def_base::synopsis() {
 
 std::string
 def_base::definitions() {
-  std::vector<std::string> api{};
+  std::vector<std::string> chunks{};
   instance*                fdm_end{nullptr};
   bool                     last_clang_format = true;
-
-  // top-level implementaton macros to be
-  // placed at the end of the file
-  std::vector<std::string> impl{};
+  bool                     last_impl         = false;
 
   static auto buf = utl::ii << [&] {
     std::array<std::string, 73> dashes;
@@ -990,31 +987,36 @@ def_base::definitions() {
     if (not v.definition)
       throw std::runtime_error{"macro " + v.id + " missing definition"};
 
-    auto&& targ = v.category.starts_with("impl.") ? impl : api;
-
     {
+      auto cur_impl = v.category.starts_with("impl.");
+
       if (last_clang_format and not v.clang_format)
-        targ.push_back("\n// clang-format off\n");
+        chunks.push_back("\n// clang-format off\n");
       else if (not last_clang_format and v.clang_format)
-        targ.push_back("\n// clang-format on\n");
+        chunks.push_back("\n// clang-format on\n");
       last_clang_format = v.clang_format;
 
-      targ.push_back(*v.definition);
+      if (not last_impl and cur_impl)
+        chunks.push_back("\n//" + buf + "{{{\n");
+      else if (last_impl and not cur_impl)
+        chunks.push_back("\n//" + buf + "}}}\n");
+      last_impl = v.category.starts_with("impl.");
+
+      chunks.push_back(*v.definition);
     }
 
     if (&v == fdm_end) {
-      targ.push_back("\n//" + buf + "}}}\n");
+      chunks.push_back("\n//" + buf + "}}}\n");
       fdm_end = nullptr;
     } else if (v.context.empty() and not v.children.empty()) {
       fdm_end = v.children.front();
       while (not fdm_end->children.empty())
         fdm_end = fdm_end->children.front();
-      targ.push_back("\n//" + buf + "{{{\n");
+      chunks.push_back("\n//" + buf + "{{{\n");
     }
   }
 
-  return utl::cat(api, "\n") + "\n\n/// [impl]\n/// ------\n\n//" + buf + "{{{\n"
-       + utl::cat(impl, "\n") + "\n//" + buf + "}}}";
+  return utl::cat(chunks, "\n");
 }
 
 std::string

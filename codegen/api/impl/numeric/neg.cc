@@ -25,27 +25,32 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "codegen.h"
+#include "impl/numeric.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "numeric less-than-zero detection.";
+decltype(neg) neg = NIFTY_DEF(neg, [&](arg n) {
+  docs << "[internal] integral negation.";
 
-  tests << ltz("0")            = "0" >> docs;
-  tests << ltz("1")            = "0" >> docs;
-  tests << ltz("0u")           = "0" >> docs;
-  tests << ltz("1u")           = "0" >> docs;
-  tests << ltz(int_max_s)      = "0" >> docs;
-  tests << ltz(int_min_s)      = "1" >> docs;
-  tests << ltz(inc(int_max_s)) = "1" >> docs;
+  def<"x(...)"> x = [&](va args) { return args; };
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
+  auto p = utl::alpha_base52_seq(conf::word_size);
+  for (auto&& v : p)
+    if (v == "u") {
+      v = "_u";
+      break;
+    }
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
+  def uhex = def{"uhex(" + utl::cat(p, ", ") + ")"} = [&](pack args) {
+    return pp::cat("0x", pp::cat(args), "u");
+  };
+
+  return inc(impl::uhex(impl::uhex(x(uhex + " " + n), "BNOT"), "UTUP"));
 });
 
+} // namespace impl
 } // namespace api

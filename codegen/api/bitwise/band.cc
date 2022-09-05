@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(band) band = NIFTY_DEF(band, [&](va args) {
-  docs << "bitwise AND operation."
+  docs << "bitwise AND."
        << "" << impl::arith_rules;
 
   tests << band(0, 0)                                     = "0" >> docs;

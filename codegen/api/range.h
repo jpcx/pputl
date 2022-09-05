@@ -38,15 +38,19 @@
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
+//
+#include "impl/range.h"
 
 namespace api {
 
 inline codegen::category<"range"> range;
 
-extern codegen::def<"items(...: tup) -> list"> const& items;
+extern codegen::def<"index(...: idx, range_sz: size) -> size"> const& index;
+extern codegen::def<"items(...: tup) -> list"> const&                      items;
 extern codegen::def<"bisect(...: end_idx: size, range: tup) -> tup, tup, bool"> const&
     bisect;
 
+NIFTY_DECL(index);
 NIFTY_DECL(items);
 NIFTY_DECL(bisect);
 

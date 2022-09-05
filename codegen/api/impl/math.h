@@ -37,8 +37,8 @@ namespace impl {
 
 inline codegen::category<"impl.math"> math;
 
-extern codegen::def<"add(...: utup, utup) -> utup"> const& add;
-extern codegen::def<"sub(...: utup, utup) -> utup"> const& sub;
+extern codegen::def<"add(a, b: utup, utup) -> utup"> const& add;
+extern codegen::def<"sub(a, b: utup, utup) -> utup"> const& sub;
 
 NIFTY_DECL(add);
 NIFTY_DECL(sub);

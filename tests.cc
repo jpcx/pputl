@@ -86,7 +86,7 @@
 //           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //
 //           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //
 //     ◆ range algorithms                                                     //
-//       ‐ element access                                 [numeric, range]    //
+//       ‐ element access                                          [range]    //
 //           index  items  bisect  unite  get  set  push  pop  slice          //
 //       ‐ generation                                               [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
@@ -1017,9 +1017,9 @@ ASSERT_PP_EQ((PTL_BSRA(4, 1)), (2));
 ASSERT_PP_EQ((PTL_BSRA(4, 2)), (1));
 
 ASSERT_PP_EQ((PTL_BNOT(0u)), (4095u));
-ASSERT_PP_EQ((PTL_BNOT(0)), (0xFFF));
+ASSERT_PP_EQ((PTL_BNOT(0xFFF)), (0x000));
 ASSERT_PP_EQ((PTL_BNOT((7, F, F))), ((8, 0, 0)));
-ASSERT_PP_EQ((PTL_BNOT((7, F, F))), ((8, 0, 0)));
+ASSERT_PP_EQ((PTL_BNOT((8, 0, 0))), ((7, F, F)));
 
 ASSERT_PP_EQ((PTL_BAND(0, 0)), (0));
 ASSERT_PP_EQ((PTL_BAND(0, 1)), (0));
@@ -1238,6 +1238,15 @@ ASSERT_PP_EQ((PTL_REM(PTL_NEG(11), PTL_NEG(5))), (PTL_NEG(1)));
 ASSERT_PP_EQ((PTL_REM(PTL_NEG(12), PTL_NEG(5))), (PTL_NEG(2)));
 ASSERT_PP_EQ((PTL_REM(PTL_NEG(13), PTL_NEG(5))), (PTL_NEG(3)));
 ASSERT_PP_EQ((PTL_REM(PTL_NEG(14), PTL_NEG(5))), (PTL_NEG(4)));
+
+ASSERT_PP_EQ((PTL_INDEX(0, 5)), (0));
+ASSERT_PP_EQ((PTL_INDEX(1, 5)), (1));
+ASSERT_PP_EQ((PTL_INDEX(3, 5)), (3));
+ASSERT_PP_EQ((PTL_INDEX(4, 5)), (4));
+ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(1), 5)), (0x004));
+ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(2), 5)), (0x003));
+ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(4), 5)), (0x001));
+ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(5), 5)), (0x000));
 
 ASSERT_PP_EQ((PTL_ITEMS(())), ());
 ASSERT_PP_EQ((PTL_ITEMS((a))), (a));

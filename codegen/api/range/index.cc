@@ -25,27 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "range.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "numeric less-than-zero detection.";
+decltype(index) index = NIFTY_DEF(index, [&](va args) {
+  docs << "translates an idx to a positive zero-offset index for a given range size."
+       << "fails if out of bounds.";
 
-  tests << ltz("0")            = "0" >> docs;
-  tests << ltz("1")            = "0" >> docs;
-  tests << ltz("0u")           = "0" >> docs;
-  tests << ltz("1u")           = "0" >> docs;
-  tests << ltz(int_max_s)      = "0" >> docs;
-  tests << ltz(int_min_s)      = "1" >> docs;
-  tests << ltz(inc(int_max_s)) = "1" >> docs;
+  tests << index(0, 5)      = "0" >> docs;
+  tests << index(1, 5)      = "1" >> docs;
+  tests << index(3, 5)      = "3" >> docs;
+  tests << index(4, 5)      = "4" >> docs;
+  tests << index(neg(1), 5) = ("0x" + utl::cat(samp::h4)) >> docs;
+  tests << index(neg(2), 5) = ("0x" + utl::cat(samp::h3)) >> docs;
+  tests << index(neg(4), 5) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << index(neg(5), 5) = ("0x" + utl::cat(samp::hmin)) >> docs;
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
+  return def<"o(e, i, sz)">{[&](arg e, arg i, arg sz) {
+    return size(impl::index(utup(i), is_int(i), utup(sz), e), typeof(i));
+  }}(error(index, "index out of bounds", args), args);
 });
 
 } // namespace api

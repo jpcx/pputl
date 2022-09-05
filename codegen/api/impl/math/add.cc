@@ -32,7 +32,7 @@ namespace impl {
 
 using namespace codegen;
 
-decltype(add) add = NIFTY_DEF(add, [&](va args) {
+decltype(add) add = NIFTY_DEF(add, [&](arg a, arg b) {
   docs << "[internal] addition with overflow.";
 
   constexpr auto sz = conf::word_size;
@@ -62,11 +62,9 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
     return o(args);
   };
 
-  return def<"o(a, b)">{[&](arg a, arg b) {
-    auto rlp = utl::cat(svect{conf::word_size, r + "("});
-    auto rrp = utl::cat(svect{conf::word_size, ")"});
-    return res(rlp + "0, " + x(esc + " " + a, esc + " " + b) + rrp);
-  }}(args);
+  auto rlp = utl::cat(svect{conf::word_size, r + "("});
+  auto rrp = utl::cat(svect{conf::word_size, ")"});
+  return res(rlp + "0, " + x(esc + " " + a, esc + " " + b) + rrp);
 });
 
 } // namespace impl

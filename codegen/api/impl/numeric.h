@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,27 +26,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+//
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
-using namespace codegen;
+inline codegen::category<"impl.numeric"> numeric;
 
-decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "numeric less-than-zero detection.";
+extern codegen::def<"inc(n: utup) -> utup"> const& inc;
+extern codegen::def<"dec(n: utup) -> utup"> const& dec;
+extern codegen::def<"neg(n: utup) -> utup"> const& neg;
+extern codegen::def<"ltz(n: utup) -> bool"> const& ltz;
 
-  tests << ltz("0")            = "0" >> docs;
-  tests << ltz("1")            = "0" >> docs;
-  tests << ltz("0u")           = "0" >> docs;
-  tests << ltz("1u")           = "0" >> docs;
-  tests << ltz(int_max_s)      = "0" >> docs;
-  tests << ltz(int_min_s)      = "1" >> docs;
-  tests << ltz(inc(int_max_s)) = "1" >> docs;
+NIFTY_DECL(inc);
+NIFTY_DECL(dec);
+NIFTY_DECL(neg);
+NIFTY_DECL(ltz);
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
+inline codegen::end_category<"impl.numeric"> numeric_end;
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
-});
-
+} // namespace impl
 } // namespace api

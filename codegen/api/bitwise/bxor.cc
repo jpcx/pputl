@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
-  docs << "bitwise XOR operation."
+  docs << "bitwise XOR."
        << "" << impl::arith_rules;
 
   tests << bxor(0, 0) = "0" >> docs;

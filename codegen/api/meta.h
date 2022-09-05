@@ -40,6 +40,9 @@ namespace api {
 
 inline codegen::category<"meta"> meta;
 
+// TODO: xtrace should create n arguments, not n commas
+//       (for xtrace_read -> size compatibility)
+
 extern codegen::def<"lp() -> obj"> const&              lp;
 extern codegen::def<"rp() -> obj>"> const&             rp;
 extern codegen::def<"x(...: any...) -> any..."> const& x;

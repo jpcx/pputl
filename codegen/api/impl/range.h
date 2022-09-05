@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,27 +26,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "codegen.h"
+#include "config.h"
+#include "lang.h"
+//
+#include "impl/compare.h"
+#include "impl/numeric.h"
+#include "impl/math.h"
 
 namespace api {
+namespace impl {
 
-using namespace codegen;
+inline codegen::category<"impl.range"> range;
 
-decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "numeric less-than-zero detection.";
+extern codegen::def<"index(i, sign, sz, err: utup, bool, utup, obj) -> utup"> const&
+    index;
 
-  tests << ltz("0")            = "0" >> docs;
-  tests << ltz("1")            = "0" >> docs;
-  tests << ltz("0u")           = "0" >> docs;
-  tests << ltz("1u")           = "0" >> docs;
-  tests << ltz(int_max_s)      = "0" >> docs;
-  tests << ltz(int_min_s)      = "1" >> docs;
-  tests << ltz(inc(int_max_s)) = "1" >> docs;
+NIFTY_DECL(index);
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
+inline codegen::end_category<"impl.range"> range_end;
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
-});
-
+} // namespace impl
 } // namespace api

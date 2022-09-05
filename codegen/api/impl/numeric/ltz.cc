@@ -25,27 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "numeric.h"
+#include "impl/numeric.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
-  docs << "numeric less-than-zero detection.";
+decltype(ltz) ltz = NIFTY_DEF(ltz, [&](arg n) {
+  docs << "[internal] numeric less-than-zero detection.";
 
-  tests << ltz("0")            = "0" >> docs;
-  tests << ltz("1")            = "0" >> docs;
-  tests << ltz("0u")           = "0" >> docs;
-  tests << ltz("1u")           = "0" >> docs;
-  tests << ltz(int_max_s)      = "0" >> docs;
-  tests << ltz(int_min_s)      = "1" >> docs;
-  tests << ltz(inc(int_max_s)) = "1" >> docs;
+  def<"x(...)"> x = [&](va args) { return args; };
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
+  def res = def{"res(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
+                + ")"} = [&](pack args) { //
+    return impl::hexhex(pp::cat(7, args[0]), "LT");
+  };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
+  return x(res + " " + n);
 });
 
+} // namespace impl
 } // namespace api

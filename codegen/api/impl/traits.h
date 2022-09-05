@@ -50,8 +50,8 @@ extern std::string& uhex_prefix;
 extern codegen::def<
     "hex(v, t: enum<0|1|...|E|F>, enum<NOT|DEC0|DEC1|INC0|INC1|NYBL|BITS>)"> const& hex;
 extern codegen::def<
-    "hexhex(v, t: enum<00|01|...|FE|FF>, "
-    "enum<LT|AND|OR|XOR|SUB0|SUB1|ADD0|ADD1|MUL0|MUL1|...|MULD|MULE>)"> const& hexhex;
+    "hexhex(v, t: enum<00|01|...|FE|FF>, enum<LT|AND|OR|XOR|SUB0|SUB1|ADD0|ADD1>)"> const&
+    hexhex;
 extern codegen::def<"nybl(v, t: enum<0000|0001|...|1110|1111>, enum<HEX|BITS>)"> const&
     nybl;
 extern std::conditional_t<
