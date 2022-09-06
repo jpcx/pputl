@@ -66,11 +66,11 @@
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           list  none  obj  atom  enum  bool  hex   nybl  idec  ihex        //
 //           udec  uhex  int  tup   utup  uint  word  size  idx   any         //
-//       ‐ traits detection                                       [traits]    //
+//       ‐ traits detection                                [traits, range]    //
 //           is_list  is_none  is_obj   is_atom  is_enum  is_bool             //
 //           is_hex   is_nybl  is_idec  is_ihex  is_udec  is_uhex             //
 //           is_int   is_tup   is_utup  is_uint  is_word  is_size             //
-//           is_idx   is_any   typeof   sizeof                                //
+//           is_idx   is_any   typeof   countof  sizeof   is_empty            //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -160,7 +160,8 @@
 //    to its parameter type; see [type] for constructor documentation.        //
 //                                                                            //
 //    The following schema depicts the pputl type hierarchy, starting with    //
-//    "list" as the most basic description of any __VA_ARGS__ expression.     //
+//    "list" as the most basic description of any  __VA_ARGS__ expression.    //
+//    Examples and descriptions represent the default configuration.          //
 //                                                                            //
 //     list: tokens potentially delimited by non-parenthesized commas         //
 //      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
@@ -179,12 +180,9 @@
 //      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //
 //      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //
 //      │  └╴word: <union> int|uint; any defined integer representation       //
-//      │     ├╴size: a word within [0, size_max]                             //
-//      │     └╴idx:  a word within [max(int_min, -size_max), size_max)       //
-//      └╴any: <union> none|obj; a list with no separatory commas             //
-//                                                                            //
-//    Note: integral enum ranges and hexadecimal literal lengths depend on    //
-//    the configured word_size. Schema descriptions use the default.          //
+//      │     ├╴size: any non-negative word up to size_max (default 255u)     //
+//      │     └╴idx:  any word whose absolute value is a valid size           //
+//      └╴any: <union> none|obj; a list without separators (an element)       //
 //                                                                            //
 //    All pputl traits are fully testable except for atom,  which requires    //
 //    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
@@ -519,8 +517,9 @@ ASSERT_PP_EQ((PTL_IS_SIZE(255u)), (1));
 ASSERT_PP_EQ((PTL_IS_SIZE((0, 0, 8))), (1));
 
 ASSERT_PP_EQ((PTL_IS_IDX(0)), (1));
-ASSERT_PP_EQ((PTL_IS_IDX(255u)), (0));
 ASSERT_PP_EQ((PTL_IS_IDX(254)), (1));
+ASSERT_PP_EQ((PTL_IS_IDX(255u)), (1));
+ASSERT_PP_EQ((PTL_IS_IDX(256u)), (0));
 ASSERT_PP_EQ((PTL_IS_IDX(0xFFF)), (1));
 ASSERT_PP_EQ((PTL_IS_IDX(0xF01)), (1));
 ASSERT_PP_EQ((PTL_IS_IDX(0xF00)), (0));
@@ -1243,10 +1242,13 @@ ASSERT_PP_EQ((PTL_REM(PTL_NEG(14), PTL_NEG(5))), (PTL_NEG(4)));
 
 ASSERT_PP_EQ((PTL_INDEX(0, 5)), (0));
 ASSERT_PP_EQ((PTL_INDEX(1, 5)), (1));
+ASSERT_PP_EQ((PTL_INDEX(2, 5)), (2));
 ASSERT_PP_EQ((PTL_INDEX(3, 5)), (3));
 ASSERT_PP_EQ((PTL_INDEX(4, 5)), (4));
+ASSERT_PP_EQ((PTL_INDEX(5, 5)), (5));
 ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(1), 5)), (0x004));
 ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(2), 5)), (0x003));
+ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(3), 5)), (0x002));
 ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(4), 5)), (0x001));
 ASSERT_PP_EQ((PTL_INDEX(PTL_NEG(5), 5)), (0x000));
 
@@ -1262,4 +1264,102 @@ ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
 ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
 ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
 ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
+
+ASSERT_PP_EQ((PTL_BISECT(0, (a))), ((), (a), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (a))), ((a), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, ())), ((), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (a, b, c))), ((a), (b, c), 0));
+ASSERT_PP_EQ((PTL_BISECT(2, (a, b, c))), ((a, b), (c), 0));
+ASSERT_PP_EQ((PTL_BISECT(3, (a, b, c))), ((a, b, c), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(PTL_NEG(1), (a, b, c))), ((a, b), (c), 0));
+ASSERT_PP_EQ((PTL_BISECT(PTL_NEG(2), (a, b, c))), ((a), (b, c), 0));
+ASSERT_PP_EQ((PTL_BISECT(PTL_NEG(3), (a, b, c))), ((), (a, b, c), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (, ))), ((), (,), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (, ))), ((), (), 1));
+ASSERT_PP_EQ((PTL_BISECT(2, (, ))), ((,), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(2, (, , ))), ((,), (), 1));
+ASSERT_PP_EQ((PTL_BISECT(0, (a, b))), ((), (a, b), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (a, b))), ((a), (b), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (, , ))), ((), (, ,), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (, , ))), ((), (,), 1));
+ASSERT_PP_EQ((PTL_BISECT(3, (, , ))), ((,,), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (a, ))), ((), (a,), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (a, ))), ((a), (), 1));
+ASSERT_PP_EQ((PTL_BISECT(2, (a, ))), ((a,), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (a, , ))), ((), (a, ,), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (a, , ))), ((a), (,), 1));
+ASSERT_PP_EQ((PTL_BISECT(2, (a, , ))), ((a,), (), 1));
+ASSERT_PP_EQ((PTL_BISECT(3, (a, , ))), ((a,,), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (, a))), ((), (, a), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (, a))), ((), (a), 1));
+ASSERT_PP_EQ((PTL_BISECT(2, (, a))), ((, a), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (, a, ))), ((), (, a,), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (, a, ))), ((), (a,), 1));
+ASSERT_PP_EQ((PTL_BISECT(2, (, a, ))), ((, a), (), 1));
+ASSERT_PP_EQ((PTL_BISECT(3, (, a, ))), ((, a,), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (, , a))), ((), (, , a), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (, , a))), ((), (, a), 1));
+ASSERT_PP_EQ((PTL_BISECT(2, (, , a))), ((,), (a), 1));
+ASSERT_PP_EQ((PTL_BISECT(3, (, , a))), ((,, a), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(0, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((), (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a), (b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 0));
+ASSERT_PP_EQ((PTL_BISECT(2, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b), (c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 0));
+ASSERT_PP_EQ((PTL_BISECT(255, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(254, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT), (eU), 0));
+ASSERT_PP_EQ((PTL_BISECT(253, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS), (eT, eU), 0));
+ASSERT_PP_EQ((PTL_BISECT(PTL_NEG(1), (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT), (eU), 0));
+ASSERT_PP_EQ((PTL_BISECT(PTL_NEG(2), (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS), (eT, eU), 0));
+
+ASSERT_PP_EQ((PTL_UNITE((a), ())), ((a)));
+ASSERT_PP_EQ((PTL_UNITE((), (b))), ((b)));
+ASSERT_PP_EQ((PTL_UNITE((a), (b))), ((a, b)));
+ASSERT_PP_EQ((PTL_UNITE((a, b), (c, d))), ((a, b, c, d)));
+ASSERT_PP_EQ((PTL_BISECT(0, ())), ((), (), 0));
+ASSERT_PP_EQ((PTL_BISECT(1, (, ))), ((), (), 1));
+ASSERT_PP_EQ((PTL_UNITE((), ())), (()));
+ASSERT_PP_EQ((PTL_UNITE((), (), 0)), (()));
+ASSERT_PP_EQ((PTL_UNITE((), (), 1)), ((, )));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, ()))), (()));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (, )))), ((, )));
+ASSERT_PP_EQ((PTL_UNITE((a), (b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU))), ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU)));
+ASSERT_PP_EQ((PTL_UNITE((a), (, ))), ((a, ,)));
+ASSERT_PP_EQ((PTL_UNITE((a), (, , ))), ((a, , ,)));
+ASSERT_PP_EQ((PTL_UNITE((a), (b, ))), ((a, b,)));
+ASSERT_PP_EQ((PTL_UNITE((a), (b, , ))), ((a, b, ,)));
+ASSERT_PP_EQ((PTL_UNITE((a), (, b))), ((a, , b)));
+ASSERT_PP_EQ((PTL_UNITE((a), (, b, ))), ((a, , b,)));
+ASSERT_PP_EQ((PTL_UNITE((a), (, , b))), ((a, , , b)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (a)))), ((a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (a)))), ((a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (a, b)))), ((a, b)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (a, b)))), ((a, b)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (a, b, c)))), ((a, b, c)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (a, b, c)))), ((a, b, c)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(3, (a, b, c)))), ((a, b, c)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (, )))), ((,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (, )))), ((,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (, , )))), ((, ,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (, , )))), ((, ,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (, , )))), ((,, )));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(3, (, , )))), ((,,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (a, )))), ((a,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (a, )))), ((a, )));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (a, )))), ((a,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (a, , )))), ((a, ,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (a, , )))), ((a, ,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (a, , )))), ((a,, )));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(3, (a, , )))), ((a,,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (, a)))), ((, a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (, a)))), ((, a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (, a)))), ((, a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (, a, )))), ((, a,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (, a, )))), ((, a,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (, a, )))), ((, a, )));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(3, (, a, )))), ((, a,)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, (, , a)))), ((, , a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (, , a)))), ((, , a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(2, (, , a)))), ((,, a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(3, (, , a)))), ((,, a)));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(0, ()))), (()));
+ASSERT_PP_EQ((PTL_UNITE(PTL_BISECT(1, (, )))), ((, )));
 // clang-format on

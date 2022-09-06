@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(size) size = NIFTY_DEF(size, [&](va args) {
-  docs << "[inherits from " + word + "] a non-negative word less than " + size_max + " ("
+  docs << "[inherits from " + word + "] any non-negative word up to " + size_max + " ("
               + size_max_s + ")."
        << "constructibe from any word type."
        << ""

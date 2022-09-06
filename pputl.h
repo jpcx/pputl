@@ -68,11 +68,11 @@
 //       ‐ type casting                            [type; see TERMINOLOGY]    //
 //           list  none  obj  atom  enum  bool  hex   nybl  idec  ihex        //
 //           udec  uhex  int  tup   utup  uint  word  size  idx   any         //
-//       ‐ traits detection                                       [traits]    //
+//       ‐ traits detection                                [traits, range]    //
 //           is_list  is_none  is_obj   is_atom  is_enum  is_bool             //
 //           is_hex   is_nybl  is_idec  is_ihex  is_udec  is_uhex             //
 //           is_int   is_tup   is_utup  is_uint  is_word  is_size             //
-//           is_idx   is_any   typeof   sizeof                                //
+//           is_idx   is_any   typeof   countof  sizeof   is_empty            //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -162,7 +162,8 @@
 //    to its parameter type; see [type] for constructor documentation.        //
 //                                                                            //
 //    The following schema depicts the pputl type hierarchy, starting with    //
-//    "list" as the most basic description of any __VA_ARGS__ expression.     //
+//    "list" as the most basic description of any  __VA_ARGS__ expression.    //
+//    Examples and descriptions represent the default configuration.          //
 //                                                                            //
 //     list: tokens potentially delimited by non-parenthesized commas         //
 //      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
@@ -181,12 +182,9 @@
 //      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //
 //      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //
 //      │  └╴word: <union> int|uint; any defined integer representation       //
-//      │     ├╴size: a word within [0, size_max]                             //
-//      │     └╴idx:  a word within [max(int_min, -size_max), size_max)       //
-//      └╴any: <union> none|obj; a list with no separatory commas             //
-//                                                                            //
-//    Note: integral enum ranges and hexadecimal literal lengths depend on    //
-//    the configured word_size. Schema descriptions use the default.          //
+//      │     ├╴size: any non-negative word up to size_max (default 255u)     //
+//      │     └╴idx:  any word whose absolute value is a valid size           //
+//      └╴any: <union> none|obj; a list without separators (an element)       //
 //                                                                            //
 //    All pputl traits are fully testable except for atom,  which requires    //
 //    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
@@ -219,7 +217,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220905
+#define PTL_BUILD /* -> <c++ int> */ 20220906
 
 /// [config.word_size]
 /// ------------------
@@ -4634,7 +4632,7 @@
 #define PPUTLIMPL_UDEC_258u  0x102u, 0, 0, 0, 0, 8, 16, 2, 3, 43
 #define PPUTLIMPL_UDEC_257u  0x101u, 0, 0, 0, 0, 8, 16,
 #define PPUTLIMPL_UDEC_256u  0x100u, 0, 0, 0, 0, 8, 16, 2, 2, 2, 2, 2, 2, 2, 2
-#define PPUTLIMPL_UDEC_255u  0x0FFu, 1, 1, 0, 0, 7, 15, 3, 5, 17
+#define PPUTLIMPL_UDEC_255u  0x0FFu, 1, 1, 1, 1, 7, 15, 3, 5, 17
 #define PPUTLIMPL_UDEC_254u  0x0FEu, 1, 1, 1, 1, 7, 15, 2, 127
 #define PPUTLIMPL_UDEC_253u  0x0FDu, 1, 1, 1, 1, 7, 15, 11, 23
 #define PPUTLIMPL_UDEC_252u  0x0FCu, 1, 1, 1, 1, 7, 15, 2, 2, 3, 3, 7
@@ -9471,7 +9469,7 @@
 
 /// [traits.is_size]
 /// ----------------
-/// [extends PTL_IS_WORD] detects if args is a non-negative word less than PTL_SIZE_MAX.
+/// [extends PTL_IS_WORD] detects if args is any non-negative word up to PTL_SIZE_MAX.
 ///
 /// PTL_IS_SIZE(0)         // 1
 /// PTL_IS_SIZE(0u)        // 1
@@ -9514,11 +9512,12 @@
 
 /// [traits.is_idx]
 /// ---------------
-/// [extends PTL_IS_WORD] detects if args is within [max(int_min, -size_max), size_max).
+/// [extends PTL_IS_WORD] detects if args is any word whose abs is a valid size.
 ///
 /// PTL_IS_IDX(0)     // 1
-/// PTL_IS_IDX(255u)  // 0
 /// PTL_IS_IDX(254)   // 1
+/// PTL_IS_IDX(255u)  // 1
+/// PTL_IS_IDX(256u)  // 0
 /// PTL_IS_IDX(0xFFF) // 1
 /// PTL_IS_IDX(0xF01) // 1
 /// PTL_IS_IDX(0xF00) // 0
@@ -10635,7 +10634,7 @@
 
 /// [type.size]
 /// -----------
-/// [inherits from PTL_WORD] a non-negative word less than PTL_SIZE_MAX (255u).
+/// [inherits from PTL_WORD] any non-negative word up to PTL_SIZE_MAX (255u).
 /// constructibe from any word type.
 ///
 /// cannot parse negative decimals; use numeric.neg instead.
@@ -10671,7 +10670,7 @@
 
 /// [type.idx]
 /// ----------
-/// [inherits from PTL_WORD] a word within [max(int_min, -size_max), size_max).
+/// [inherits from PTL_WORD] any word whose absolute value is a valid size.
 /// constructibe from any word type.
 ///
 /// cannot parse negative decimals; use numeric.neg instead.
@@ -11427,7 +11426,7 @@
 
 /// [impl.range.index]
 /// ------------------
-/// [internal] translates an idx to a positive zero-offset index for a given range size.
+/// [internal] translates an idx to a non-negative zero-offset for a given range size.
 #define PPUTLIMPL_INDEX(/* utup, bool, utup, obj */ i, sign, sz, err) /* -> utup */ \
   PTL_CAT(PPUTLIMPL_INDEX_, sign)(i, sz, err)
 
@@ -11442,7 +11441,7 @@
 #define PPUTLIMPL_INDEX_1_1_0(i, sz, err) PTL_FAIL(err)
 #define PPUTLIMPL_INDEX_1_0(i, sz, err)   PPUTLIMPL_INDEX_0(i, sz, err)
 #define PPUTLIMPL_INDEX_0(i, sz, err) \
-  PTL_XCAT(PPUTLIMPL_INDEX_0_, PPUTLIMPL_LT(i, sz))(i, err)
+  PTL_XCAT(PPUTLIMPL_INDEX_0_, PPUTLIMPL_LT(i, PPUTLIMPL_INC(sz)))(i, err)
 #define PPUTLIMPL_INDEX_0_1(i, err) i
 #define PPUTLIMPL_INDEX_0_0(i, err) PTL_FAIL(err)
 
@@ -11481,7 +11480,7 @@
 /// PTL_BSLL(1, 11)    // 0x800
 /// PTL_BSLL(1, 12)    // 0
 /// PTL_BSLL(1, 13)    // 0
-#define PTL_BSLL(/* word, n=1: size */...) /* -> word */ PPUTLBSLL_o(__VA_ARGS__)
+#define PTL_BSLL(/* word, size=1 */...) /* -> word */ PPUTLBSLL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11536,7 +11535,7 @@
 /// PTL_BSRL(4, 2)      // 1
 /// PTL_BSRL(0x800, 11) // 0x001
 /// PTL_BSRL(0x800, 12) // 0x000
-#define PTL_BSRL(/* word, n=1: size */...) /* -> word */ PPUTLBSRL_o(__VA_ARGS__)
+#define PTL_BSRL(/* word, size=1 */...) /* -> word */ PPUTLBSRL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11591,7 +11590,7 @@
 /// PTL_BSRA(0x800, 2) // 0xE00
 /// PTL_BSRA(0x800, 3) // 0xF00
 /// PTL_BSRA(0x800, 4) // 0xF80
-#define PTL_BSRA(/* word, n=1: size */...) /* -> word */ PPUTLBSRA_o(__VA_ARGS__)
+#define PTL_BSRA(/* word, size=1 */...) /* -> word */ PPUTLBSRA_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11929,7 +11928,7 @@
 /// PTL_BROTL(0x001, 1) // 0x002
 /// PTL_BROTL(0x001, 2) // 0x004
 /// PTL_BROTL(0x003, 2) // 0x00C
-#define PTL_BROTL(/* word, n=1: size */...) /* -> word */ PPUTLBROTL_o(__VA_ARGS__)
+#define PTL_BROTL(/* word, size=1 */...) /* -> word */ PPUTLBROTL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -11997,7 +11996,7 @@
 /// PTL_BROTR(0x001, 1) // 0x800
 /// PTL_BROTR(0x002, 1) // 0x001
 /// PTL_BROTR(0x7FF, 2) // 0xDFF
-#define PTL_BROTR(/* word, n=1: size */...) /* -> word */ PPUTLBROTR_o(__VA_ARGS__)
+#define PTL_BROTR(/* word, size=1 */...) /* -> word */ PPUTLBROTR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -12708,24 +12707,30 @@
 
 /// [range.index]
 /// -------------
-/// translates an idx to a positive zero-offset index for a given range size.
-/// fails if out of bounds.
+/// translates an idx to a non-negative zero-offset for a given range size.
+/// positive indices return unchanged, negative indices return added to the size.
+///
+/// fails if input is out of bounds: [-size, size];
+/// allows one-past-the-end indexing.
 ///
 /// PTL_INDEX(0, 5)          // 0
 /// PTL_INDEX(1, 5)          // 1
+/// PTL_INDEX(2, 5)          // 2
 /// PTL_INDEX(3, 5)          // 3
 /// PTL_INDEX(4, 5)          // 4
+/// PTL_INDEX(5, 5)          // 5
 /// PTL_INDEX(PTL_NEG(1), 5) // 0x004
 /// PTL_INDEX(PTL_NEG(2), 5) // 0x003
+/// PTL_INDEX(PTL_NEG(3), 5) // 0x002
 /// PTL_INDEX(PTL_NEG(4), 5) // 0x001
 /// PTL_INDEX(PTL_NEG(5), 5) // 0x000
-#define PTL_INDEX(/* idx, range_sz: size */...) /* -> size */ \
+#define PTL_INDEX(/* idx, size */...) /* -> size */ \
   PPUTLINDEX_o(PTL_STR("[PTL_INDEX] index out of bounds" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLINDEX_o(e, i, sz) \
-  PTL_SIZE(PPUTLIMPL_INDEX(PTL_UTUP(i), PTL_IS_INT(i), PTL_UTUP(sz), e), PTL_TYPEOF(i))
+  PTL_IDX(PPUTLIMPL_INDEX(PTL_UTUP(i), PTL_IS_INT(i), PTL_UTUP(sz), e), PTL_TYPEOF(i))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -12748,22 +12753,89 @@
 /// [range.bisect]
 /// --------------
 /// splits a range in two given an index.
-/// index may exceed the range size.
+///
+/// abs(index) must be less than or equal to the tuple size.
 ///
 /// returns:
-///   (1) head: a tuple of the items from 0 to end_idx
-///   (2) tail: a tuple of the items from end_idx to size
-///   (3) type: 1 if two empty elements were split, else 0
+///   (1) head: a tuple of the items strictly before the index
+///   (2) tail: a tuple of the items from the index to the end
+///   (3) type: 1 if two empty elements were split (information loss), else 0
 ///
-/// the bisection type is essential for information
-/// perservation when working with empty elements,
-/// but can ignored in other cases. for example:
+/// PTL_BISECT(0, (a))                // (), (a), 0
+/// PTL_BISECT(1, (a))                // (a), (), 0
+/// PTL_BISECT(0, ())                 // (), (), 0
+/// PTL_BISECT(1, (a, b, c))          // (a), (b, c), 0
+/// PTL_BISECT(2, (a, b, c))          // (a, b), (c), 0
+/// PTL_BISECT(3, (a, b, c))          // (a, b, c), (), 0
+/// PTL_BISECT(PTL_NEG(1), (a, b, c)) // (a, b), (c), 0
+/// PTL_BISECT(PTL_NEG(2), (a, b, c)) // (a), (b, c), 0
+/// PTL_BISECT(PTL_NEG(3), (a, b, c)) // (), (a, b, c), 0
+/// PTL_BISECT(0, (, ))               // (), (,), 0
+/// PTL_BISECT(1, (, ))               // (), (), 1
+/// PTL_BISECT(2, (, ))               // (,), (), 0
+/// PTL_BISECT(2, (, , ))             // (,), (), 1
+#define PTL_BISECT(/* idx, tup */...) /* -> tup, tup, bool */ PPUTLBISECT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLBISECT_o(i, t) PPUTLBISECT_oo(i, PTL_ITEMS(t))
+#define PPUTLBISECT_oo(i, ...) \
+  PPUTLBISECT_ooo(PTL_INDEX(i, PTL_SIZEOF(__VA_ARGS__)), __VA_ARGS__)
+#define PPUTLBISECT_ooo(n, ...) \
+  PTL_IF(PTL_EQZ(n), PPUTLBISECT_EQZ, PPUTLBISECT_NEZ)(n, __VA_ARGS__)
+#define PPUTLBISECT_NEZ(n, ...) PPUTLBISECT_NEZ_o(PTL_DEC(n), __VA_ARGS__)
+#define PPUTLBISECT_NEZ_o(n, ...)                                   \
+  PPUTLBISECT_RES(PPUTLBISECT_X(PTL_RECUR_LP(n, PPUTLBISECT_R) /**/ \
+                                (),                            /**/ \
+                                __VA_ARGS__                    /**/ \
+                                    PTL_RECUR_RP(n)))
+#define PPUTLBISECT_EQZ(n, ...) (), (__VA_ARGS__), 0
+#define PPUTLBISECT_RES(...)    PPUTLBISECT_RES_o(__VA_ARGS__)
+#define PPUTLBISECT_RES_o(head, ...)                                          \
+  (PTL_XREST(PTL_ESC head, PTL_FIRST(__VA_ARGS__))), (PTL_REST(__VA_ARGS__)), \
+      PPUTLBISECT_TYPE(__VA_ARGS__, .)
+#define PPUTLBISECT_R(...)            PPUTLBISECT_R_o(__VA_ARGS__)
+#define PPUTLBISECT_R_o(head, _, ...) (PTL_ESC head, _), __VA_ARGS__
+#define PPUTLBISECT_TYPE(_, __, ...) \
+  PTL_OR(PTL_AND(PTL_IS_NONE(_), PTL_NOT(PTL_IS_NONE(__VA_ARGS__))), PTL_IS_NONE(__))
+#define PPUTLBISECT_X(...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [range.unite]
+/// -------------
+/// unites two ranges given an optional bisection type.
+/// type is used to preserve information when two empty elements are split.
 ///
-///   bisect(0, ())     -> (), (), 0
-///   bisect(1, (, ))   -> (), (), 1
-///   bisect(0, (a))    -> (a), (), 0
-///   bisect(1, (a, b)) -> (a), (b), 0
-#define PTL_BISECT(/* end_idx: size, range: tup */...) /* -> tup, tup, bool */ __VA_ARGS__
+/// PTL_UNITE((a), ())             // (a)
+/// PTL_UNITE((), (b))             // (b)
+/// PTL_UNITE((a), (b))            // (a, b)
+/// PTL_UNITE((a, b), (c, d))      // (a, b, c, d)
+/// PTL_BISECT(0, ())              // (), (), 0
+/// PTL_BISECT(1, (, ))            // (), (), 1
+/// PTL_UNITE((), ())              // ()
+/// PTL_UNITE((), (), 0)           // ()
+/// PTL_UNITE((), (), 1)           // (, )
+/// PTL_UNITE(PTL_BISECT(0, ()))   // ()
+/// PTL_UNITE(PTL_BISECT(1, (, ))) // (, )
+#define PTL_UNITE(/* tup, tup, bool=0 */...) /* -> tup */ \
+  PPUTLUNITE_o(__VA_ARGS__)(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLUNITE_o(head, tail, ...)                                    \
+  PTL_XCAT(PTL_XCAT(PPUTLUNITE_, PTL_BOOL(PTL_DEFAULT(0, __VA_ARGS__))), \
+           PTL_XCAT(PTL_IS_NONE(PTL_ITEMS(head)), PTL_IS_NONE(PTL_ITEMS(tail))))
+#define PPUTLUNITE_111(head, tail, ...) (, )
+#define PPUTLUNITE_110(head, tail, ...) (, PTL_ITEMS(tail))
+#define PPUTLUNITE_101(head, tail, ...) (PTL_ITEMS(head), )
+#define PPUTLUNITE_100(head, tail, ...) (PTL_ITEMS(head), PTL_ITEMS(tail))
+#define PPUTLUNITE_011(head, tail, ...) ()
+#define PPUTLUNITE_010(head, tail, ...) tail
+#define PPUTLUNITE_001(head, tail, ...) head
+#define PPUTLUNITE_000(head, tail, ...) (PTL_ITEMS(head), PTL_ITEMS(tail))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // vim: fdm=marker:fmr={{{,}}}
 

@@ -34,6 +34,8 @@
 
 namespace api {
 
+// TODO: sizeof -> countof
+
 inline codegen::category<"traits"> traits;
 
 extern codegen::def<"is_list(...: list) -> enum<1>"> const&               is_list;

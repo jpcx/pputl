@@ -33,14 +33,14 @@ namespace impl {
 using namespace codegen;
 
 decltype(index) index = NIFTY_DEF(index, [&](arg i, arg sign, arg sz, arg err) {
-  docs << "[internal] translates an idx to a positive zero-offset index for a given "
-          "range size.";
+  docs << "[internal] translates an idx to a non-negative zero-offset for a given range "
+          "size.";
 
   def<"\\0(i, sz, err)"> sign0 = [&](arg i, arg sz, arg err) {
     def<"\\0(i, err)"> _0 = [&](arg, arg err) { return fail(err); };
     def<"\\1(i, err)">{}  = [&](arg i, arg) { return i; };
 
-    return pp::call(xcat(utl::slice(_0, -1), lt(i, sz)), i, err);
+    return pp::call(xcat(utl::slice(_0, -1), lt(i, inc(sz))), i, err);
   };
 
   def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {

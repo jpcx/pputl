@@ -38,13 +38,15 @@ decltype(is_idx_o) is_idx_o = NIFTY_DEF(is_idx_o);
 
 decltype(is_idx) is_idx = NIFTY_DEF(is_idx, [&](va args) {
   docs << "[extends " + is_word
-              + "] detects if args is within [max(int_min, -size_max), size_max).";
+              + "] detects if args is any word whose abs is a valid size.";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
 
-  tests << is_idx("0")                         = "1" >> docs;
-  tests << is_idx(size_max_s)                  = "0" >> docs;
-  tests << is_idx(conf::size_max - 1)          = "1" >> docs;
+  tests << is_idx("0")                = "1" >> docs;
+  tests << is_idx(conf::size_max - 1) = "1" >> docs;
+  tests << is_idx(size_max_s)         = "1" >> docs;
+  if constexpr (size_lt_max and conf::word_size > 2)
+    tests << is_idx(std::to_string(conf::size_max + 1) + "u") = "0" >> docs;
   tests << is_idx("0x" + utl::cat(samp::hmax)) = "1" >> docs;
   if constexpr (conf::word_size > 2)
     tests << is_idx("0xF" + utl::cat(svect{conf::word_size - 2, "0"}) + "1") =

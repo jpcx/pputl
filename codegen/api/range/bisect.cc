@@ -33,76 +33,104 @@ using namespace codegen;
 
 decltype(bisect) bisect = NIFTY_DEF(bisect, [&](va args) {
   docs << "splits a range in two given an index."
-       << "index may exceed the range size."
+       << ""
+       << "abs(index) must be less than or equal to the tuple size."
        << ""
        << "returns:"
-       << "  (1) head: a tuple of the items from 0 to end_idx"
-       << "  (2) tail: a tuple of the items from end_idx to size"
-       << "  (3) type: 1 if two empty elements were split, else 0"
-       << ""
-       << "the bisection type is essential for information"
-       << "perservation when working with empty elements,"
-       << "but can ignored in other cases. for example:"
-       << ""
-       << "  bisect(0, ())     -> (), (), 0"
-       << "  bisect(1, (, ))   -> (), (), 1"
-       << "  bisect(0, (a))    -> (a), (), 0"
-       << "  bisect(1, (a, b)) -> (a), (b), 0";
+       << "  (1) head: a tuple of the items strictly before the index"
+       << "  (2) tail: a tuple of the items from the index to the end"
+       << "  (3) type: 1 if two empty elements were split (information loss), else 0";
 
-  /* auto                    bigargs = utl::alpha_base52_seq(conf::uint_max + 3); */
-  /* std::deque<std::string> pf_bigargs{bigargs.begin(), bigargs.end()}; */
-  /* pf_bigargs.pop_front(); */
-  /* auto        biggerargs   = utl::alpha_base52_seq(conf::uint_max * 2 + 3); */
-  /* auto        bigargs_s    = utl::cat(bigargs, ", "); */
-  /* auto        pf_bigargs_s = utl::cat(pf_bigargs, ", "); */
-  /* auto        biggerargs_s = utl::cat(biggerargs, ", "); */
-  /* std::string biggerargs_back{}; */
-  /* for (size_t i = conf::uint_max; i < biggerargs.size() - 1; ++i) */
-  /*   biggerargs_back += biggerargs[i] + ", "; */
-  /* biggerargs_back += biggerargs[biggerargs.size() - 1]; */
+  auto bigargs = utl::alpha_base52_seq(conf::size_max);
+  auto bigtup  = pp::tup(bigargs);
 
-  // tests << bisect(0, "(a)")       = "(), (a), 0" >> docs;
-  // tests << bisect(1, "(a)")       = "(a), (), 0" >> docs;
-  // tests << bisect(0, "()")        = "(), (), 0" >> docs;
-  // tests << bisect(0, "(a, b)")    = "(), (a, b), 0";
-  // tests << bisect(1, "(a, b)")    = "(a), (b), 0";
-  // tests << bisect(1, "(a, b, c)") = "(a), (b, c), 0" >> docs;
-  // tests << bisect(2, "(a, b, c)") = "(a, b), (c), 0" >> docs;
-  // tests << bisect(3, "(a, b, c)") = "(a, b, c), (), 0";
-  // tests << bisect(0, "(, )")      = "(), (,), 0" >> docs;
-  // tests << bisect(1, "(, )")      = "(), (), 1" >> docs;
-  // tests << bisect(2, "(, )")      = "(, ), (), 0" >> docs;
-  // tests << bisect(0, "(, , )")    = "(), (, ,), 0";
-  // tests << bisect(1, "(, , )")    = "(), (,), 1";
-  // tests << bisect(2, "(, , )")    = "(, ), (), 1" >> docs;
-  // tests << bisect(3, "(, , )")    = "(, , ), (), 0";
-  // tests << bisect(0, "(a, )")     = "(), (a,), 0";
-  // tests << bisect(1, "(a, )")     = "(a), (), 1";
-  // tests << bisect(2, "(a, )")     = "(a, ), (), 0";
-  // tests << bisect(0, "(a, , )")   = "(), (a, ,), 0";
-  // tests << bisect(1, "(a, , )")   = "(a), (,), 1";
-  // tests << bisect(2, "(a, , )")   = "(a, ), (), 1";
-  // tests << bisect(3, "(a, , )")   = "(a, , ), (), 0";
-  // tests << bisect(0, "(, a)")     = "(), (, a), 0";
-  // tests << bisect(1, "(, a)")     = "(), (a), 1";
-  // tests << bisect(2, "(, a)")     = "(, a), (), 0";
-  // tests << bisect(0, "(, a, )")   = "(), (, a,), 0";
-  // tests << bisect(1, "(, a, )")   = "(), (a,), 1";
-  // tests << bisect(2, "(, a, )")   = "(, a), (), 1";
-  // tests << bisect(3, "(, a, )")   = "(, a, ), (), 0";
-  // tests << bisect(0, "(, , a)")   = "(), (, , a), 0";
-  // tests << bisect(1, "(, , a)")   = "(), (, a), 1";
-  // tests << bisect(2, "(, , a)")   = "(, ), (a), 1";
-  // tests << bisect(3, "(, , a)")   = "(, , a), (), 0";
-  
-  /* tests << bisect(0, bigargs_s) = tup() + ", " + tup(bigargs_s) + ", 0"; */
-  /* tests << bisect(1, bigargs_s) = tup(bigargs[0]) + ", " + tup(pf_bigargs_s) + ", 0";
-   */
-  /* tests << bisect(conf::size_max, biggerargs_s) = */
-  /*     tup(utl::cat(utl::alpha_base52_seq(conf::uint_max), ", ")) + ", " */
-  /*     + tup(biggerargs_back) + ", 0"; */
+  tests << bisect(0, "(a)")            = "(), (a), 0" >> docs;
+  tests << bisect(1, "(a)")            = "(a), (), 0" >> docs;
+  tests << bisect(0, "()")             = "(), (), 0" >> docs;
+  tests << bisect(0, "(a, b)")         = "(), (a, b), 0";
+  tests << bisect(1, "(a, b)")         = "(a), (b), 0";
+  tests << bisect(1, "(a, b, c)")      = "(a), (b, c), 0" >> docs;
+  tests << bisect(2, "(a, b, c)")      = "(a, b), (c), 0" >> docs;
+  tests << bisect(3, "(a, b, c)")      = "(a, b, c), (), 0" >> docs;
+  tests << bisect(neg(1), "(a, b, c)") = "(a, b), (c), 0" >> docs;
+  tests << bisect(neg(2), "(a, b, c)") = "(a), (b, c), 0" >> docs;
+  tests << bisect(neg(3), "(a, b, c)") = "(), (a, b, c), 0" >> docs;
+  tests << bisect(0, "(, )")           = "(), (,), 0" >> docs;
+  tests << bisect(1, "(, )")           = "(), (), 1" >> docs;
+  tests << bisect(2, "(, )")           = "(,), (), 0" >> docs;
+  tests << bisect(0, "(, , )")         = "(), (, ,), 0";
+  tests << bisect(1, "(, , )")         = "(), (,), 1";
+  tests << bisect(2, "(, , )")         = "(,), (), 1" >> docs;
+  tests << bisect(3, "(, , )")         = "(,,), (), 0";
+  tests << bisect(0, "(a, )")          = "(), (a,), 0";
+  tests << bisect(1, "(a, )")          = "(a), (), 1";
+  tests << bisect(2, "(a, )")          = "(a,), (), 0";
+  tests << bisect(0, "(a, , )")        = "(), (a, ,), 0";
+  tests << bisect(1, "(a, , )")        = "(a), (,), 1";
+  tests << bisect(2, "(a, , )")        = "(a,), (), 1";
+  tests << bisect(3, "(a, , )")        = "(a,,), (), 0";
+  tests << bisect(0, "(, a)")          = "(), (, a), 0";
+  tests << bisect(1, "(, a)")          = "(), (a), 1";
+  tests << bisect(2, "(, a)")          = "(, a), (), 0";
+  tests << bisect(0, "(, a, )")        = "(), (, a,), 0";
+  tests << bisect(1, "(, a, )")        = "(), (a,), 1";
+  tests << bisect(2, "(, a, )")        = "(, a), (), 1";
+  tests << bisect(3, "(, a, )")        = "(, a,), (), 0";
+  tests << bisect(0, "(, , a)")        = "(), (, , a), 0";
+  tests << bisect(1, "(, , a)")        = "(), (, a), 1";
+  tests << bisect(2, "(, , a)")        = "(,), (a), 1";
+  tests << bisect(3, "(, , a)")        = "(,, a), (), 0";
 
-  return args;
+  tests << bisect(0, bigtup) = pp::tup() + ", " + bigtup + ", 0";
+  tests << bisect(1, bigtup) = pp::tup(bigargs[0]) + ", "
+                             + pp::tup(svect{bigargs.begin() + 1, bigargs.end()}) + ", 0";
+  tests << bisect(2, bigtup) = pp::tup(bigargs[0], bigargs[1]) + ", "
+                             + pp::tup(svect{bigargs.begin() + 2, bigargs.end()}) + ", 0";
+  tests << bisect(conf::size_max, bigtup) = bigtup + ", " + pp::tup() + ", 0";
+  tests << bisect(conf::size_max - 1, bigtup) =
+      pp::tup(svect{bigargs.begin(), bigargs.end() - 1}) + ", "
+      + pp::tup(*bigargs.rbegin()) + ", 0";
+  tests << bisect(conf::size_max - 2, bigtup) =
+      pp::tup(svect{bigargs.begin(), bigargs.end() - 2}) + ", "
+      + pp::tup(*(bigargs.rbegin() + 1), *bigargs.rbegin()) + ", 0";
+  tests << bisect(neg(1), bigtup) = pp::tup(svect{bigargs.begin(), bigargs.end() - 1})
+                                  + ", " + pp::tup(*bigargs.rbegin()) + ", 0";
+  tests << bisect(neg(2), bigtup) =
+      pp::tup(svect{bigargs.begin(), bigargs.end() - 2}) + ", "
+      + pp::tup(*(bigargs.rbegin() + 1), *bigargs.rbegin()) + ", 0";
+
+  def<"x(...)"> x = [&](va args) { return args; };
+
+  def<"type(_, __, ...)"> type = [&](arg _0, arg _1, va args) {
+    return or_(and_(is_none(_0), not_(is_none(args))), is_none(_1));
+  };
+
+  def<"r(...)"> r = [&](va args) {
+    return def<"o(head, _, ...)">{[&](arg head, arg first, va rest) {
+      return pp::tup(esc + " " + head, first) + ", " + rest;
+    }}(args);
+  };
+
+  def<"res(...)"> res = [&](va args) {
+    return def<"o(head, ...)">{[&](arg head, va args) {
+      return pp::tup(xrest(esc + " " + head, first(args))) + ", " + pp::tup(rest(args))
+           + ", " + type(args, ".");
+    }}(args);
+  };
+
+  def<"eqz(n, ...)"> eq = [&](arg, va range) { return "(), " + pp::tup(range) + ", 0"; };
+  def<"nez(n, ...)"> ne = [&](arg n, va range) {
+    return def<"o(n, ...)">{
+        [&](arg n, va range) { return res(recur(x, n, r, "()", range)); }}(dec(n), range);
+  };
+
+  return def<"o(i, t)">{[&](arg i, arg t) {
+    return def<"<o(i, ...)">{[&](arg i, va range) {
+      return def<"<o(n, ...)">{[&](arg n, va range) {
+        return pp::call(if_(eqz(n), eq, ne), n, range);
+      }}(index(i, sizeof_(range)), range);
+    }}(i, items(t));
+  }}(args);
 });
 
 } // namespace api

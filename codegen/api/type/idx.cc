@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(idx) idx = NIFTY_DEF(idx, [&](va args) {
-  docs << "[inherits from " + word
-              + "] a word within [max(int_min, -size_max), size_max)."
+  docs << "[inherits from " + word + "] any word whose absolute value is a valid size."
        << "constructibe from any word type."
        << ""
        << "cannot parse negative decimals; use numeric.neg instead."

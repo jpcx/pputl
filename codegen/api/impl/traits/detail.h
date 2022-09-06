@@ -124,7 +124,7 @@ usize(unsigned n) {
 
 inline std::string
 iidx(unsigned n) {
-  return (n <= conf::int_max ? (n < conf::size_max)
+  return (n <= conf::int_max ? (n <= conf::size_max)
                              : (n > (conf::uint_max - conf::size_max)))
            ? "1"
            : "0";
@@ -132,7 +132,7 @@ iidx(unsigned n) {
 
 inline std::string
 uidx(unsigned n) {
-  return n < conf::size_max ? "1" : "0";
+  return n <= conf::size_max ? "1" : "0";
 }
 
 inline std::string

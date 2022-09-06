@@ -32,20 +32,26 @@ namespace api {
 using namespace codegen;
 
 decltype(index) index = NIFTY_DEF(index, [&](va args) {
-  docs << "translates an idx to a positive zero-offset index for a given range size."
-       << "fails if out of bounds.";
+  docs << "translates an idx to a non-negative zero-offset for a given range size."
+       << "positive indices return unchanged, negative indices return added to the size."
+       << ""
+       << "fails if input is out of bounds: [-size, size];"
+       << "allows one-past-the-end indexing.";
 
   tests << index(0, 5)      = "0" >> docs;
   tests << index(1, 5)      = "1" >> docs;
+  tests << index(2, 5)      = "2" >> docs;
   tests << index(3, 5)      = "3" >> docs;
   tests << index(4, 5)      = "4" >> docs;
+  tests << index(5, 5)      = "5" >> docs;
   tests << index(neg(1), 5) = ("0x" + utl::cat(samp::h4)) >> docs;
   tests << index(neg(2), 5) = ("0x" + utl::cat(samp::h3)) >> docs;
+  tests << index(neg(3), 5) = ("0x" + utl::cat(samp::h2)) >> docs;
   tests << index(neg(4), 5) = ("0x" + utl::cat(samp::h1)) >> docs;
   tests << index(neg(5), 5) = ("0x" + utl::cat(samp::hmin)) >> docs;
 
   return def<"o(e, i, sz)">{[&](arg e, arg i, arg sz) {
-    return size(impl::index(utup(i), is_int(i), utup(sz), e), typeof(i));
+    return idx(impl::index(utup(i), is_int(i), utup(sz), e), typeof(i));
   }}(error(index, "index out of bounds", args), args);
 });
 

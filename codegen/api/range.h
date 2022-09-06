@@ -45,14 +45,17 @@ namespace api {
 
 inline codegen::category<"range"> range;
 
-extern codegen::def<"index(...: idx, range_sz: size) -> size"> const& index;
-extern codegen::def<"items(...: tup) -> list"> const&                      items;
-extern codegen::def<"bisect(...: end_idx: size, range: tup) -> tup, tup, bool"> const&
-    bisect;
+// TODO sizeof, is_empty
+
+extern codegen::def<"index(...: idx, size) -> size"> const&           index;
+extern codegen::def<"items(...: tup) -> list"> const&                 items;
+extern codegen::def<"bisect(...: idx, tup) -> tup, tup, bool"> const& bisect;
+extern codegen::def<"unite(...: tup, tup, bool=0) -> tup"> const&     unite;
 
 NIFTY_DECL(index);
 NIFTY_DECL(items);
 NIFTY_DECL(bisect);
+NIFTY_DECL(unite);
 
 inline codegen::end_category<"range"> range_end;
 

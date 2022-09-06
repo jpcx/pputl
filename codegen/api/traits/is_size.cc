@@ -37,7 +37,7 @@ decltype(is_size_o) is_size_o = NIFTY_DEF(is_size_o);
 }
 
 decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
-  docs << "[extends " + is_word + "] detects if args is a non-negative word less than "
+  docs << "[extends " + is_word + "] detects if args is any non-negative word up to "
               + size_max + ".";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
