@@ -40,8 +40,12 @@ decltype(default_) default_ = NIFTY_DEF(default_, [&](va args) {
   tests << default_("a, b")    = "b" >> docs;
   tests << default_("a, b, c") = "b, c" >> docs;
 
-  def<"\\0(_, ...)"> _0 = [&](arg first, va) { return first; };
-  def<"\\01(_, ...)">{} = [&](arg, va args) { return args; };
+  def<"\\0(_, ...)"> _0 = [&](arg first, va) {
+    return first;
+  };
+  def<"\\01(_, ...)">{} = [&](arg, va args) {
+    return args;
+  };
 
   return def<"o(_, ...)">{[&](arg first, va rest) {
     return pp::call(pp::cat(_0, pp::va_opt("1")), first, rest);

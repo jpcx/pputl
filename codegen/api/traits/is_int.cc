@@ -54,16 +54,28 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
   tests << is_int("(), ()") = "0" >> docs;
 
   detail::is_int_o = def{"o(atom)"} = [&](arg atom) {
-    def<"\\00"> _00 = [&] { return "0"; };
-    def<"\\01">{}   = [&] { return "1"; };
-    def<"\\10">{}   = [&] { return "1"; };
+    def<"\\00"> _00 = [&] {
+      return "0";
+    };
+    def<"\\01">{} = [&] {
+      return "1";
+    };
+    def<"\\10">{} = [&] {
+      return "1";
+    };
 
     return xcat(utl::slice(_00, -2),
                 xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)));
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_int_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_int_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });

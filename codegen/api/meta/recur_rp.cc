@@ -86,10 +86,18 @@ decltype(recur_rp) recur_rp = NIFTY_DEF(recur_rp, [&](va args) {
 
   std::array<def<>, (conf::size_max + 1) / 4> n{};
 
-  n[0] = def{"\\0"} = [&] { return ""; };
-  n[1] = def{"\\1"} = [&] { return rp() + " " + rp() + " " + rp() + " " + rp(); };
-  n[2] = def{"\\2"} = [&] { return n[1] + " " + n[1]; };
-  n[3] = def{"\\3"} = [&] { return n[1] + " " + n[1] + " " + n[1]; };
+  n[0] = def{"\\0"} = [&] {
+    return "";
+  };
+  n[1] = def{"\\1"} = [&] {
+    return rp() + " " + rp() + " " + rp() + " " + rp();
+  };
+  n[2] = def{"\\2"} = [&] {
+    return n[1] + " " + n[1];
+  };
+  n[3] = def{"\\3"} = [&] {
+    return n[1] + " " + n[1] + " " + n[1];
+  };
 
   for (std::size_t i = 4; i < n.size(); ++i) {
     n[i] = def{"\\" + std::to_string(i)} = [&] {
@@ -121,8 +129,10 @@ decltype(recur_rp) recur_rp = NIFTY_DEF(recur_rp, [&](va args) {
   // 9: f( f( f( f( f( f( f( f( f( ) ) ) ) ) ) ) ) ) 9/4=2 9%4=1 -> f( o2 c2 )
 
   return def<"o(n)">{[&](arg n_) {
-    def<"\\0u(n)"> _0u = [&](arg n_) { return xcat(utl::slice(n[0], -1), n_); };
-    def<"\\1u(n)">{}   = [&](arg n_) {
+    def<"\\0u(n)"> _0u = [&](arg n_) {
+      return xcat(utl::slice(n[0], -1), n_);
+    };
+    def<"\\1u(n)">{} = [&](arg n_) {
       return xcat(utl::slice(n[0], -1), n_) + " " + rp();
     };
     def<"\\2u(n)">{} = [&](arg n_) {

@@ -55,22 +55,34 @@ decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
        << " " + is_enum + "(FOO_, GOOD) // 1"
        << " " + is_enum + "(FOO_, ,,,)  // 0";
 
-  def<"fail(...)"> fail = [&](va) { return "0"; };
+  def<"fail(...)"> fail = [&](va) {
+    return "0";
+  };
 
   detail::is_enum_o = def{"o(chk_atom, ...)"} = [&](arg chk_atom, va args) {
     detail::is_enum_oo = def{"<o(chk_atom, atom)"} = [&](arg chk_atom, arg atom) {
-      def<"\\0"> _0 = [&] { return "1"; };
-      def<"\\1">{}  = [&] { return "0"; };
+      def<"\\0"> _0 = [&] {
+        return "1";
+      };
+      def<"\\1">{} = [&] {
+        return "0";
+      };
       return xcat(utl::slice(_0, -1), is_obj(xcat(chk_atom, atom)));
     };
 
-    def<"\\0"> _0 = [&] { return fail; };
-    def<"\\1">{}  = [&] { return detail::is_enum_oo; };
+    def<"\\0"> _0 = [&] {
+      return fail;
+    };
+    def<"\\1">{} = [&] {
+      return detail::is_enum_oo;
+    };
 
     return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), chk_atom, args);
   };
 
-  def<"\\0(e, ...)"> _0          = [&](arg e, va) { return api::fail(e); };
+  def<"\\0(e, ...)"> _0 = [&](arg e, va) {
+    return api::fail(e);
+  };
   def<"\\1(e, chk_atom, ...)">{} = [&](arg, arg chk_atom, va args) {
     return detail::is_enum_o(chk_atom, args);
   };

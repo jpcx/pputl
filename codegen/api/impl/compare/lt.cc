@@ -41,14 +41,30 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](arg a, arg b) {
   using conf::uint_max;
   using conf::int_max;
 
-  def<"\\000"> _000 = [&] { return "0"; };
-  def<"\\001">{}    = [&] { return "1"; };
-  def<"\\010">{}    = [&] { return "0"; };
-  def<"\\011">{}    = [&] { return "0"; };
-  def<"\\100">{}    = [&] { return "1"; };
-  def<"\\101">{}    = [&] { return "1"; };
-  def<"\\110">{}    = [&] { return "1"; };
-  def<"\\111">{}    = [&] { return "1"; };
+  def<"\\000"> _000 = [&] {
+    return "0";
+  };
+  def<"\\001">{} = [&] {
+    return "1";
+  };
+  def<"\\010">{} = [&] {
+    return "0";
+  };
+  def<"\\011">{} = [&] {
+    return "0";
+  };
+  def<"\\100">{} = [&] {
+    return "1";
+  };
+  def<"\\101">{} = [&] {
+    return "1";
+  };
+  def<"\\110">{} = [&] {
+    return "1";
+  };
+  def<"\\111">{} = [&] {
+    return "1";
+  };
 
   def<"r(...)"> recur = [&](va args) {
     return def<"o(fl, fg, a, b, ...)">{[&](arg fl, arg fg, arg a, arg b, va args) {

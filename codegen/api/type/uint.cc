@@ -111,42 +111,102 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   // utup → utup | [default]
   tests << uint(pp::tup(samp::himax))        = pp::tup(samp::himax) >> docs;
 
-  def<"hint_\\UDEC"> hint_udec = [&] { return ""; };
-  def<"hint_\\UHEX">{}         = [&] { return ""; };
-  def<"hint_\\UTUP">{}         = [&] { return ""; };
-  def<"hint_\\AUTO">{}         = [&] { return ""; };
+  def<"hint_\\UDEC"> hint_udec = [&] {
+    return "";
+  };
+  def<"hint_\\UHEX">{} = [&] {
+    return "";
+  };
+  def<"hint_\\UTUP">{} = [&] {
+    return "";
+  };
+  def<"hint_\\AUTO">{} = [&] {
+    return "";
+  };
 
   def<"mode(e, t, hint) -> <cast mode>"> mode = [&](arg e, arg t, arg hint) {
     docs << "cast mode selector and error detector";
 
-    def<"\\IDEC"> idec_ = [&] { return ""; };
-    def<"\\IHEX">{}     = [&] { return ""; };
-    def<"\\UDEC">{}     = [&] { return ""; };
-    def<"\\UHEX">{}     = [&] { return ""; };
-    def<"\\UTUP">{}     = [&] { return ""; };
+    def<"\\IDEC"> idec_ = [&] {
+      return "";
+    };
+    def<"\\IHEX">{} = [&] {
+      return "";
+    };
+    def<"\\UDEC">{} = [&] {
+      return "";
+    };
+    def<"\\UHEX">{} = [&] {
+      return "";
+    };
+    def<"\\UTUP">{} = [&] {
+      return "";
+    };
 
-    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) { return fail(e); };
-    def<"\\1(e, t, hint)">{}  = [&](arg, arg t, arg hint) {
-      def<"\\IDECUDEC"> idecidec = [&] { return "ID_UD"; };
-      def<"\\IDECUHEX">{}        = [&] { return "ID_UH"; };
-      def<"\\IDECUTUP">{}        = [&] { return "ID_UT"; };
-      def<"\\IDECAUTO">{}        = [&] { return "ID_UD"; };
-      def<"\\IHEXUDEC">{}        = [&] { return "IH_UD"; };
-      def<"\\IHEXUHEX">{}        = [&] { return "IH_UH"; };
-      def<"\\IHEXUTUP">{}        = [&] { return "IH_UT"; };
-      def<"\\IHEXAUTO">{}        = [&] { return "IH_UH"; };
-      def<"\\UDECUDEC">{}        = [&] { return "UD_UD"; };
-      def<"\\UDECUHEX">{}        = [&] { return "UD_UH"; };
-      def<"\\UDECUTUP">{}        = [&] { return "UD_UT"; };
-      def<"\\UDECAUTO">{}        = [&] { return "UD_UD"; };
-      def<"\\UHEXUDEC">{}        = [&] { return "UH_UD"; };
-      def<"\\UHEXUHEX">{}        = [&] { return "UH_UH"; };
-      def<"\\UHEXUTUP">{}        = [&] { return "UH_UT"; };
-      def<"\\UHEXAUTO">{}        = [&] { return "UH_UH"; };
-      def<"\\UTUPUDEC">{}        = [&] { return "UT_UD"; };
-      def<"\\UTUPUHEX">{}        = [&] { return "UT_UH"; };
-      def<"\\UTUPUTUP">{}        = [&] { return "UT_UT"; };
-      def<"\\UTUPAUTO">{}        = [&] { return "UT_UT"; };
+    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, t, hint)">{} = [&](arg, arg t, arg hint) {
+      def<"\\IDECUDEC"> idecidec = [&] {
+        return "ID_UD";
+      };
+      def<"\\IDECUHEX">{} = [&] {
+        return "ID_UH";
+      };
+      def<"\\IDECUTUP">{} = [&] {
+        return "ID_UT";
+      };
+      def<"\\IDECAUTO">{} = [&] {
+        return "ID_UD";
+      };
+      def<"\\IHEXUDEC">{} = [&] {
+        return "IH_UD";
+      };
+      def<"\\IHEXUHEX">{} = [&] {
+        return "IH_UH";
+      };
+      def<"\\IHEXUTUP">{} = [&] {
+        return "IH_UT";
+      };
+      def<"\\IHEXAUTO">{} = [&] {
+        return "IH_UH";
+      };
+      def<"\\UDECUDEC">{} = [&] {
+        return "UD_UD";
+      };
+      def<"\\UDECUHEX">{} = [&] {
+        return "UD_UH";
+      };
+      def<"\\UDECUTUP">{} = [&] {
+        return "UD_UT";
+      };
+      def<"\\UDECAUTO">{} = [&] {
+        return "UD_UD";
+      };
+      def<"\\UHEXUDEC">{} = [&] {
+        return "UH_UD";
+      };
+      def<"\\UHEXUHEX">{} = [&] {
+        return "UH_UH";
+      };
+      def<"\\UHEXUTUP">{} = [&] {
+        return "UH_UT";
+      };
+      def<"\\UHEXAUTO">{} = [&] {
+        return "UH_UH";
+      };
+      def<"\\UTUPUDEC">{} = [&] {
+        return "UT_UD";
+      };
+      def<"\\UTUPUHEX">{} = [&] {
+        return "UT_UH";
+      };
+      def<"\\UTUPUTUP">{} = [&] {
+        return "UT_UT";
+      };
+      def<"\\UTUPAUTO">{} = [&] {
+        return "UT_UT";
+      };
 
       return pp::cat(utl::slice(idecidec, -8), t, hint);
     };
@@ -161,8 +221,10 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
       v = "_" + v;
     }
 
-  def<"\\ID_UD(idec)"> id_id = [&](arg idec) { return pp::cat(idec, 'u'); };
-  def<"\\ID_UH(idec)">{}     = [&](arg idec) {
+  def<"\\ID_UD(idec)"> id_id = [&](arg idec) {
+    return pp::cat(idec, 'u');
+  };
+  def<"\\ID_UH(idec)">{} = [&](arg idec) {
     return impl::udec(pp::cat(idec, 'u'), "UHEX");
   };
   def<"\\ID_UT(idec)">{} = [&](arg idec) {
@@ -171,18 +233,30 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   def<"\\IH_UD(ihex)">{} = [&](arg ihex) {
     return impl::uhex(pp::cat(ihex, 'u'), "UDEC");
   };
-  def<"\\IH_UH(ihex)">{} = [&](arg ihex) { return pp::cat(ihex, 'u'); };
+  def<"\\IH_UH(ihex)">{} = [&](arg ihex) {
+    return pp::cat(ihex, 'u');
+  };
   def<"\\IH_UT(ihex)">{} = [&](arg ihex) {
     return impl::uhex(pp::cat(ihex, 'u'), "UTUP");
   };
-  def<"\\UD_UD(udec)">{} = [&](arg udec) { return udec; };
-  def<"\\UD_UH(udec)">{} = [&](arg udec) { return impl::udec(udec, "UHEX"); };
+  def<"\\UD_UD(udec)">{} = [&](arg udec) {
+    return udec;
+  };
+  def<"\\UD_UH(udec)">{} = [&](arg udec) {
+    return impl::udec(udec, "UHEX");
+  };
   def<"\\UD_UT(udec)">{} = [&](arg udec) {
     return impl::uhex(impl::udec(udec, "UHEX"), "UTUP");
   };
-  def<"\\UH_UD(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "UDEC"); };
-  def<"\\UH_UH(uhex)">{} = [&](arg uhex) { return uhex; };
-  def<"\\UH_UT(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "UTUP"); };
+  def<"\\UH_UD(uhex)">{} = [&](arg uhex) {
+    return impl::uhex(uhex, "UDEC");
+  };
+  def<"\\UH_UH(uhex)">{} = [&](arg uhex) {
+    return uhex;
+  };
+  def<"\\UH_UT(uhex)">{} = [&](arg uhex) {
+    return impl::uhex(uhex, "UTUP");
+  };
   def<"\\UT_UD(utup)">{} = [&](arg utup) {
     def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
       return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "UDEC");
@@ -195,7 +269,9 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     };
     return o + " " + utup;
   };
-  def<"\\UT_UT(utup)">{} = [&](arg utup) { return utup; };
+  def<"\\UT_UT(utup)">{} = [&](arg utup) {
+    return utup;
+  };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(xcat(utl::slice(id_id, -5),

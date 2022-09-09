@@ -40,9 +40,15 @@ decltype(nybl) nybl = NIFTY_DEF(nybl, [&](va args) {
   tests << nybl("5")    = "0101" >> docs;
   tests << nybl("A")    = "1010" >> docs;
 
-  def<"\\00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
-  def<"\\01(e, hex)">{}   = [](arg, arg hex) { return impl::hex(hex, "NYBL"); };
-  def<"\\10(e, nybl)">{}  = [](arg, arg nybl) { return nybl; };
+  def<"\\00(e, ...)"> _00 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\01(e, hex)">{} = [](arg, arg hex) {
+    return impl::hex(hex, "NYBL");
+  };
+  def<"\\10(e, nybl)">{} = [](arg, arg nybl) {
+    return nybl;
+  };
 
   return pp::call(xcat(utl::slice(_00, -2), xcat(is_nybl(args), is_hex(args))),
                   error(nybl, "invalid arguments; must be nybl or hex", args), args);

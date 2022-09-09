@@ -37,17 +37,27 @@ decltype(index) index = NIFTY_DEF(index, [&](arg i, arg sign, arg sz, arg err) {
           "size.";
 
   def<"\\0(i, sz, err)"> sign0 = [&](arg i, arg sz, arg err) {
-    def<"\\0(i, err)"> _0 = [&](arg, arg err) { return fail(err); };
-    def<"\\1(i, err)">{}  = [&](arg i, arg) { return i; };
+    def<"\\0(i, err)"> _0 = [&](arg, arg err) {
+      return fail(err);
+    };
+    def<"\\1(i, err)">{} = [&](arg i, arg) {
+      return i;
+    };
 
     return pp::call(xcat(utl::slice(_0, -1), lt(i, inc(sz))), i, err);
   };
 
   def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
-    def<"\\0(i, sz, err)"> _0 = [&](arg i, arg sz, arg err) { return sign0(i, sz, err); };
-    def<"\\1(i, sz, err)">{}  = [&](arg i, arg sz, arg err) {
-      def<"\\0(i, sz, err)"> _0 = [&](arg, arg, arg err) { return fail(err); };
-      def<"\\1(i, sz, err)">{}  = [&](arg i, arg sz, arg) { return add(i, sz); };
+    def<"\\0(i, sz, err)"> _0 = [&](arg i, arg sz, arg err) {
+      return sign0(i, sz, err);
+    };
+    def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
+      def<"\\0(i, sz, err)"> _0 = [&](arg, arg, arg err) {
+        return fail(err);
+      };
+      def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg) {
+        return add(i, sz);
+      };
 
       return pp::call(xcat(utl::slice(_0, -1), lt(neg(i), inc(sz))), i, sz, err);
     };

@@ -142,7 +142,7 @@ constexpr char const project_header[]{
     "//    would otherwise utilize a separate code generation script or require    //\n"
     "//    higly verbose/redundant syntax, such as comprehensive test coverage,    //\n"
     "//    struct reflection, static initialization control, or optimization of    //\n"
-    "//    algorithms that generate template specializations.                      //\n"
+    "//    template specialization algorithms.                                     //\n"
     "//                                                                            //\n"
     "//    ABOUT                                                                   //\n"
     "//    -----                                                                   //\n"
@@ -166,35 +166,48 @@ constexpr char const project_header[]{
     "//           eat  esc  first  xfirst  rest  xrest  trim                       //\n"
     "//       ‐ control flow                                    [lang, control]    //\n"
     "//           default  fail  if  switch                                        //\n"
-    "//       ‐ type casting                            [type; see TERMINOLOGY]    //\n"
-    "//           list  none  obj  atom  enum  bool  hex   nybl  idec  ihex        //\n"
-    "//           udec  uhex  int  tup   utup  uint  word  size  idx   any         //\n"
-    "//       ‐ traits detection                                [traits, range]    //\n"
-    "//           is_list  is_none  is_obj   is_atom  is_enum  is_bool             //\n"
-    "//           is_hex   is_nybl  is_idec  is_ihex  is_udec  is_uhex             //\n"
-    "//           is_int   is_tup   is_utup  is_uint  is_word  is_size             //\n"
-    "//           is_idx   is_any   typeof   countof  sizeof   is_empty            //\n"
+    "//       ‐ type casting                                             [type]    //\n"
+    "//           list   none   obj     atom  enum  bool  hex                      //\n"
+    "//           nybl   idec   ihex    udec  uhex  int   tup                      //\n"
+    "//           utup   uint   word    size  ofs   map   set                      //\n"
+    "//           stack  queue  pqueue  any                                        //\n"
+    "//       ‐ type traits                                      [traits, data]    //\n"
+    "//           is_list    is_none  is_obj   is_atom  is_enum   is_bool          //\n"
+    "//           is_hex     is_nybl  is_idec  is_ihex  is_udec   is_uhex          //\n"
+    "//           is_int     is_tup   is_utup  is_uint  is_word   is_size          //\n"
+    "//           is_ofs     is_any   is_map   is_set   is_stack  is_queue         //\n"
+    "//           is_pqueue  typeof   countof  sizeof   is_empty                   //\n"
     "//       ‐ boolean logic                                           [logic]    //\n"
     "//           not  and  or  xor  nand  nor  xnor                               //\n"
     "//       ‐ paste formatting                                    [lang, fmt]    //\n"
-    "//           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //\n"
+    "//           str  xstr  cat  xcat  c_int  c_bin                               //\n"
     "//     ◆ signed and unsigned integers                                         //\n"
     "//       ‐ arithmetic                                      [numeric, math]    //\n"
-    "//           inc    dec  neg  abs  log2  sqrt  fact                           //\n"
-    "//           prime  add  sub  mul  divr  div   rem                            //\n"
+    "//           inc  dec  neg  abs   log2  sqrt  fact  prime                     //\n"
+    "//           add  sub  mul  divr  div   rem   index                           //\n"
     "//       ‐ comparison                                   [numeric, compare]    //\n"
     "//           eqz  nez  ltz  gtz  lez  gez  lt                                 //\n"
     "//           gt   le   ge   eq   ne   min  max                                //\n"
     "//       ‐ bitwise operations                                    [bitwise]    //\n"
-    "//           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //\n"
-    "//           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //\n"
-    "//     ◆ range algorithms                                                     //\n"
-    "//       ‐ element access                                          [range]    //\n"
-    "//           index  items  bisect  unite  get  set  push  pop  slice          //\n"
+    "//           bitdump  bitsll   bitsrl   bitsra   bitnot   bitand              //\n"
+    "//           bitor    bitxor   bitnand  bitnor   bitxnor  bitget              //\n"
+    "//           bitset   bitflip  bitrotl  bitrotr                               //\n"
+    "//     ◆ datastructures and algorithms                                        //\n"
+    "//       ‐ tuple manipulation                                        [tup]    //\n"
+    "//           tup_items  tup_bisect  tup_unite   tup_head                      //\n"
+    "//           tup_tail   tup_lpush   tup_rpush   tup_lpop                      //\n"
+    "//           tup_rpop   tup_get     tup_set     tup_front                     //\n"
+    "//           tup_back   tup_slice   tup_splice  tup_insert                    //\n"
+    "//       ‐ specialized data storage                                 [data]    //\n"
+    "//           map_items    map_has      map_get     map_set                    //\n"
+    "//           map_del      set_items    set_has     set_add                    //\n"
+    "//           set_del      stack_items  stack_push  stack_pop                  //\n"
+    "//           queue_items  queue_push   queue_pop   pqueue_items               //\n"
+    "//           pqueue_push  pqueue_pop                                          //\n"
     "//       ‐ generation                                               [algo]    //\n"
     "//           seq  repeat  gen_lp  gen_rp                                      //\n"
     "//       ‐ transformation                                           [algo]    //\n"
-    "//           rev  map_lp  map_rp  shift  rotate                               //\n"
+    "//           rev  transform_lp  transform_rp  shift  rotate                   //\n"
     "//       ‐ reduction                                                [algo]    //\n"
     "//           reduce_lp  reduce_rp                                             //\n"
     "//     ◆ metaprogramming utilities                                            //\n"
@@ -206,7 +219,7 @@ constexpr char const project_header[]{
     "//           recur_lp  recur_rp                                               //\n"
     "//     ◆ configuration details                                    [config]    //\n"
     "//           build    word_size  bit_length  int_min                          //\n"
-    "//           int_max  uint_max   size_max                                     //\n"
+    "//           int_max  uint_max   size_max    ofs_max                          //\n"
     "//                                                                            //\n"
     "//    USAGE                                                                   //\n"
     "//    -----                                                                   //\n"
@@ -282,9 +295,14 @@ constexpr char const project_header[]{
     "//      │  ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b, , )]             //\n"
     "//      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //\n"
     "//      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //\n"
-    "//      │  └╴word: <union> int|uint; any defined integer representation       //\n"
-    "//      │     ├╴size: any non-negative word up to size_max (default 255u)     //\n"
-    "//      │     └╴idx:  any word whose absolute value is a valid size           //\n"
+    "//      │  ├╴word: <union> int|uint; any defined integer representation       //\n"
+    "//      │  │  ├╴size: any non-negative word up to size_max (default 255u)     //\n"
+    "//      │  │  └╴ofs:  any word whose absolute value is a valid size           //\n"
+    "//      │  ├╴map:    a mapping of sizes to lists                              //\n"
+    "//      │  ├╴set:    a set of sizes                                           //\n"
+    "//      │  ├╴stack:  a LIFO stack of lists                                    //\n"
+    "//      │  ├╴queue:  a FIFO queue of lists                                    //\n"
+    "//      │  └╴pqueue: a priority queue of lists                                //\n"
     "//      └╴any: <union> none|obj; a list without separators (an element)       //\n"
     "//                                                                            //\n"
     "//    All pputl traits are fully testable except for atom,  which requires    //\n"
@@ -1235,6 +1253,9 @@ class def_base {
   friend class clang_format;
   template<detail::string_literal Name>
     requires(not Name.empty())
+  friend class category_fwd;
+  template<detail::string_literal Name>
+    requires(not Name.empty())
   friend class category;
   template<detail::string_literal Name>
     requires(not Name.empty())
@@ -1340,16 +1361,25 @@ inline class clang_format {
 [[nodiscard]] tests::example_tag operator>>(std::string const& expected,
                                             class docs const&) noexcept;
 
-/// sets the category for all newly constructed defs.
+/// sets a forward-declared category for all newly constructed defs.
 template<detail::string_literal Name>
   requires(not Name.empty())
-class category {
+class category_fwd {
  public:
-  category() {
+  category_fwd() {
     if (not def_base::_cur_category.empty())
       throw std::runtime_error{"cannot start a new category before ending category "
                                + def_base::_cur_category};
     def_base::_cur_category = Name.c_str();
+  }
+};
+
+/// sets the category for all newly constructed defs.
+template<detail::string_literal Name>
+  requires(not Name.empty())
+class category : public category_fwd<Name> {
+ public:
+  category() {
     def_base::_defined_categories.push_back(def_base::_cur_category);
   }
 };

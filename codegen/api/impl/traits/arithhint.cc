@@ -41,31 +41,81 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
        << "UDEC|IDEC if either operand is UDEC|IDEC, UTUP if"
        << "both operands are UTUP, and UHEX|IHEX otherwise.";
 
-  def<"\\IDECIDEC"> idecidec = [&] { return "IDEC"; };
-  def<"\\IDECIHEX">{}        = [&] { return "IDEC"; };
-  def<"\\IDECUDEC">{}        = [&] { return "UDEC"; };
-  def<"\\IDECUHEX">{}        = [&] { return "UDEC"; };
-  def<"\\IDECUTUP">{}        = [&] { return "UDEC"; };
-  def<"\\IHEXIDEC">{}        = [&] { return "IDEC"; };
-  def<"\\IHEXIHEX">{}        = [&] { return "IHEX"; };
-  def<"\\IHEXUDEC">{}        = [&] { return "UDEC"; };
-  def<"\\IHEXUHEX">{}        = [&] { return "UHEX"; };
-  def<"\\IHEXUTUP">{}        = [&] { return "UHEX"; };
-  def<"\\UDECIDEC">{}        = [&] { return "UDEC"; };
-  def<"\\UDECIHEX">{}        = [&] { return "UDEC"; };
-  def<"\\UDECUDEC">{}        = [&] { return "UDEC"; };
-  def<"\\UDECUHEX">{}        = [&] { return "UDEC"; };
-  def<"\\UDECUTUP">{}        = [&] { return "UDEC"; };
-  def<"\\UHEXIDEC">{}        = [&] { return "UDEC"; };
-  def<"\\UHEXIHEX">{}        = [&] { return "UHEX"; };
-  def<"\\UHEXUDEC">{}        = [&] { return "UDEC"; };
-  def<"\\UHEXUHEX">{}        = [&] { return "UHEX"; };
-  def<"\\UHEXUTUP">{}        = [&] { return "UHEX"; };
-  def<"\\UTUPIDEC">{}        = [&] { return "UDEC"; };
-  def<"\\UTUPIHEX">{}        = [&] { return "UHEX"; };
-  def<"\\UTUPUDEC">{}        = [&] { return "UDEC"; };
-  def<"\\UTUPUHEX">{}        = [&] { return "UHEX"; };
-  def<"\\UTUPUTUP">{}        = [&] { return "UTUP"; };
+  def<"\\IDECIDEC"> idecidec = [&] {
+    return "IDEC";
+  };
+  def<"\\IDECIHEX">{} = [&] {
+    return "IDEC";
+  };
+  def<"\\IDECUDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\IDECUHEX">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\IDECUTUP">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\IHEXIDEC">{} = [&] {
+    return "IDEC";
+  };
+  def<"\\IHEXIHEX">{} = [&] {
+    return "IHEX";
+  };
+  def<"\\IHEXUDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\IHEXUHEX">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\IHEXUTUP">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\UDECIDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UDECIHEX">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UDECUDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UDECUHEX">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UDECUTUP">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UHEXIDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UHEXIHEX">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\UHEXUDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UHEXUHEX">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\UHEXUTUP">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\UTUPIDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UTUPIHEX">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\UTUPUDEC">{} = [&] {
+    return "UDEC";
+  };
+  def<"\\UTUPUHEX">{} = [&] {
+    return "UHEX";
+  };
+  def<"\\UTUPUTUP">{} = [&] {
+    return "UTUP";
+  };
 
   return pp::cat(utl::slice(idecidec, -8), a, b);
 });

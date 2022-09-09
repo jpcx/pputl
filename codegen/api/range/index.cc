@@ -32,26 +32,28 @@ namespace api {
 using namespace codegen;
 
 decltype(index) index = NIFTY_DEF(index, [&](va args) {
-  docs << "translates an idx to a non-negative zero-offset for a given range size."
+  docs << "translates an ofs to a non-negative zero-offset for a given range size."
        << "positive indices return unchanged, negative indices return added to the size."
        << ""
        << "fails if input is out of bounds: [-size, size];"
-       << "allows one-past-the-end indexing.";
+       << "allows one-past-the-end indexing."
+       << ""
+       << "casts to typeof input size";
 
-  tests << index(0, 5)      = "0" >> docs;
-  tests << index(1, 5)      = "1" >> docs;
-  tests << index(2, 5)      = "2" >> docs;
-  tests << index(3, 5)      = "3" >> docs;
-  tests << index(4, 5)      = "4" >> docs;
-  tests << index(5, 5)      = "5" >> docs;
-  tests << index(neg(1), 5) = ("0x" + utl::cat(samp::h4)) >> docs;
-  tests << index(neg(2), 5) = ("0x" + utl::cat(samp::h3)) >> docs;
-  tests << index(neg(3), 5) = ("0x" + utl::cat(samp::h2)) >> docs;
-  tests << index(neg(4), 5) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << index(neg(5), 5) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << index(5, 0)         = "0" >> docs;
+  tests << index("5u", 1)      = "1u" >> docs;
+  tests << index(5, 2)         = "2" >> docs;
+  tests << index(5, 3)         = "3" >> docs;
+  tests << index(5, 4)         = "4" >> docs;
+  tests << index(5, 5)         = "5" >> docs;
+  tests << index(5, neg(1))    = "4" >> docs;
+  tests << index(5, neg(2))    = "3" >> docs;
+  tests << index(5, neg(3))    = "2" >> docs;
+  tests << index("5u", neg(4)) = "1u" >> docs;
+  tests << index(5, neg(5))    = "0" >> docs;
 
-  return def<"o(e, i, sz)">{[&](arg e, arg i, arg sz) {
-    return idx(impl::index(utup(i), is_int(i), utup(sz), e), typeof(i));
+  return def<"o(e, sz, i)">{[&](arg e, arg sz, arg i) {
+    return ofs(impl::index(utup(i), is_int(i), utup(sz), e), typeof(sz));
   }}(error(index, "index out of bounds", args), args);
 });
 

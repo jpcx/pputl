@@ -40,17 +40,17 @@ decltype(ge) ge = NIFTY_DEF(ge, [&](va args) {
   using conf::uint_max;
   using conf::int_max;
 
-  tests << ge("0, 0")                                                             = "1" >> docs;
-  tests << ge("0, 1")                                                             = "0" >> docs;
-  tests << ge("7u, 8u")                                                           = "0" >> docs;
-  tests << ge("8u, 7u")                                                           = "1";
-  tests << ge(int_(uint_max_s), "0")                                              = "0" >> docs;
-  tests << ge(int_max_s, int_min_s)                                               = "1" >> docs;
-  tests << ge(int_min_s, int_max_s)                                               = "0";
-  tests << ge(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "1" >> docs;
-  tests << ge(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "0" >> docs;
-  tests << ge("0u", uint_max_s)                                                   = "0";
-  tests << ge(uint_max_s, "0u")                                                   = "1";
+  tests << ge("0, 0")                                        = "1" >> docs;
+  tests << ge("0, 1")                                        = "0" >> docs;
+  tests << ge("7u, 8u")                                      = "0" >> docs;
+  tests << ge("8u, 7u")                                      = "1";
+  tests << ge(int_(uint_max_s), "0")                         = "0" >> docs;
+  tests << ge(int_max_s, int_min_s)                          = "1" >> docs;
+  tests << ge(int_min_s, int_max_s)                          = "0";
+  tests << ge(int_min_s, int_(to_string(int_max + 1) + "u")) = "1" >> docs;
+  tests << ge(int_min_s, int_(to_string(int_max + 2) + "u")) = "0" >> docs;
+  tests << ge("0u", uint_max_s)                              = "0";
+  tests << ge(uint_max_s, "0u")                              = "1";
   tests << ge(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
   tests << ge(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "1";
   tests << ge(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "0";

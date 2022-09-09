@@ -62,14 +62,24 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
   def<> res;
   def<> r;
   if constexpr (conf::word_size > 1) {
-    _00 = def{"00"} = [&] { return "0"; };
-    def<"\\01">{}   = [&] { return "0"; };
-    def<"\\10">{}   = [&] { return "0"; };
-    def<"\\11">{}   = [&] { return "1"; };
+    _00 = def{"00"} = [&] {
+      return "0";
+    };
+    def<"\\01">{} = [&] {
+      return "0";
+    };
+    def<"\\10">{} = [&] {
+      return "0";
+    };
+    def<"\\11">{} = [&] {
+      return "1";
+    };
 
     chk = def{"chk(" + utl::cat(utl::alpha_base52_seq(conf::word_size - 1), ", ")
               + ", ...)"} = [&](pack args) {
-      def verify = def{utl::cat(svect(conf::word_size - 1, "1"))} = [&] { return ""; };
+      def verify = def{utl::cat(svect(conf::word_size - 1, "1"))} = [&] {
+        return "";
+      };
 
       return pp::cat(utl::slice(verify, -(conf::word_size - 1)),
                      pp::cat(svect{args.begin(), args.end() - 1}));
@@ -78,8 +88,9 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
     res = def{"res(...)"} = [&](va args) {
       return def<"o(ctup, ...)">{[&](arg ctup, va fin) {
         return def<"<o(...)">{[&](va args) {
-          return def<"<o(c, n)">{
-              [&](arg c, arg n) { return pp::cat(utl::slice(_00, -2), c, n); }}(args);
+          return def<"<o(c, n)">{[&](arg c, arg n) {
+            return pp::cat(utl::slice(_00, -2), c, n);
+          }}(args);
         }}(is_none(chk + " " + ctup), is_hex(fin));
       }}(args);
     };
@@ -101,8 +112,14 @@ decltype(is_utup) is_utup = NIFTY_DEF(is_utup, [&](va args) {
     }
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_utup_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_utup_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_tup(args)), args);
 });

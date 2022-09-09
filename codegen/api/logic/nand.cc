@@ -39,10 +39,18 @@ decltype(nand_) nand_ = NIFTY_DEF(nand_, [&](va args) {
   tests << nand_("1, 0") = "1" >> docs;
   tests << nand_("1, 1") = "0" >> docs;
 
-  def<"\\00"> _00 = [&] { return "1"; };
-  def<"\\01">{}   = [&] { return "1"; };
-  def<"\\10">{}   = [&] { return "1"; };
-  def<"\\11">{}   = [&] { return "0"; };
+  def<"\\00"> _00 = [&] {
+    return "1";
+  };
+  def<"\\01">{} = [&] {
+    return "1";
+  };
+  def<"\\10">{} = [&] {
+    return "1";
+  };
+  def<"\\11">{} = [&] {
+    return "0";
+  };
 
   return def<"x(a, b)">{[&](arg a, arg b) {
     return xcat(utl::slice(_00, -2), xcat(bool_(a), bool_(b)));

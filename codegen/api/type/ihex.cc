@@ -49,7 +49,9 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   tests << ihex(uint_max_s)                          = umax >> docs;
   tests << ihex(std::to_string(conf::int_max) + "u") = max >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   auto utparams = utl::alpha_base52_seq(conf::word_size);
   def  ut_hex = def{"ut_hex(" + utl::cat(utparams, ", ") + ")"} = [&](pack args) {
@@ -57,14 +59,22 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   };
 
   def<"\\0(e, obj)"> _0 = [&](arg e, arg obj) {
-    def<"\\0(e, obj)"> _0 = [&](arg e, arg) { return fail(e); };
+    def<"\\0(e, obj)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
     def<"\\1(e, atom)">{} = [&](arg e, arg atom) {
-      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) { return fail(e); };
-      def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) { return impl::uhex(uhex, "IHEX"); };
+      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) {
+        return fail(e);
+      };
+      def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) {
+        return impl::uhex(uhex, "IHEX");
+      };
       def<"\\0010(e, udec)">{} = [&](arg, arg udec) {
         return impl::uhex(impl::udec(udec, "UHEX"), "IHEX");
       };
-      def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) { return ihex; };
+      def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) {
+        return ihex;
+      };
       def<"\\1000(e, idec)">{} = [&](arg, arg idec) {
         return impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "IHEX");
       };
@@ -80,8 +90,12 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   };
 
   def<"\\1(e, tup)">{} = [&](arg e, arg tup) {
-    def<"\\0(e, tup)"> _0 = [&](arg e, arg) { return fail(e); };
-    def<"\\1(e, utup)">{} = [&](arg, arg utup) { return x(ut_hex + " " + utup); };
+    def<"\\0(e, tup)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, utup)">{} = [&](arg, arg utup) {
+      return x(ut_hex + " " + utup);
+    };
 
     return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), e, tup);
   };

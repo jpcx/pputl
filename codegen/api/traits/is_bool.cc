@@ -54,8 +54,12 @@ decltype(is_bool) is_bool = NIFTY_DEF(is_bool, [&](va args) {
   tests << is_bool(", a, ")  = "0";
   tests << is_bool(", , a")  = "0";
 
-  def<"\\0"> _0 = [&] { return ""; };
-  def<"\\1">{}  = [&] { return ""; };
+  def<"\\0"> _0 = [&] {
+    return "";
+  };
+  def<"\\1">{} = [&] {
+    return "";
+  };
 
   return detail::is_enum_o(utl::slice(_0, -1), args);
 });

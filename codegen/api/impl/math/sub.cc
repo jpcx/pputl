@@ -39,7 +39,9 @@ decltype(sub) sub = NIFTY_DEF(sub, [&](arg a, arg b) {
 
   auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz * 2), ", ");
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def<"r(...)"> r = [&](va args) {
     def o = def{"o(" + p + ")"} = [&](pack v) {

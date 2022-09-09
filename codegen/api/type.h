@@ -59,8 +59,13 @@ extern codegen::def<
     "size(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const&
     size;
 extern codegen::def<
-    "idx(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> idx"> const& idx;
-extern codegen::def<"any(...: any) -> any"> const&                                  any;
+    "ofs(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> ofs"> const& ofs;
+extern codegen::def<"map(...: map?) -> map"> const&                                 map;
+extern codegen::def<"set(...: set?) -> set"> const&                                 set;
+extern codegen::def<"stack(...: stack?) -> stack"> const&                           stack;
+extern codegen::def<"queue(...: queue?) -> queue"> const&                           queue;
+extern codegen::def<"pqueue(...: pqueue?) -> pqueue"> const& pqueue;
+extern codegen::def<"any(...: any) -> any"> const&           any;
 
 NIFTY_DECL(list);
 NIFTY_DECL(none);
@@ -80,7 +85,12 @@ NIFTY_DECL(utup);
 NIFTY_DECL(uint);
 NIFTY_DECL(word);
 NIFTY_DECL(size);
-NIFTY_DECL(idx);
+NIFTY_DECL(ofs);
+NIFTY_DECL(map);
+NIFTY_DECL(set);
+NIFTY_DECL(stack);
+NIFTY_DECL(queue);
+NIFTY_DECL(pqueue);
 NIFTY_DECL(any);
 
 inline codegen::end_category<"type"> type_end;

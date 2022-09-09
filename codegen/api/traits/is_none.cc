@@ -46,8 +46,12 @@ decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
   tests << is_none(", a, ")    = "0";
   tests << is_none(", , a")    = "0";
 
-  def<"\\0"> _0 = [] { return "1"; };
-  def<"\\01">{} = [] { return "0"; };
+  def<"\\0"> _0 = [] {
+    return "1";
+  };
+  def<"\\01">{} = [] {
+    return "0";
+  };
 
   return pp::cat(_0, pp::va_opt("1"));
 });

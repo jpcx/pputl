@@ -64,12 +64,24 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](arg v, arg t) {
 
   uhex_prefix = utl::slice(uhexs[0], -(conf::word_size + 3));
 
-  def<"\\UDEC(u, ...) -> udec"> udec             = [&](pack args) { return args[0]; };
-  def<"\\UTUP(u, x, ...) -> utup">{}             = [&](pack args) { return args[1]; };
-  def<"\\IHEX(u, x, h, ...) -> ihex">{}          = [&](pack args) { return args[2]; };
-  def<"\\ICAST(u, x, h, i, ...) -> idec|ihex">{} = [&](pack args) { return args[3]; };
-  def<"\\ILTZ(u, x, h, i, z, ...) -> bool">{}    = [&](pack args) { return args[4]; };
-  def<"\\BNOT(u, x, h, i, z, b) -> uhex">{}      = [&](pack args) { return args[5]; };
+  def<"\\UDEC(u, ...) -> udec"> udec = [&](pack args) {
+    return args[0];
+  };
+  def<"\\UTUP(u, x, ...) -> utup">{} = [&](pack args) {
+    return args[1];
+  };
+  def<"\\IHEX(u, x, h, ...) -> ihex">{} = [&](pack args) {
+    return args[2];
+  };
+  def<"\\ICAST(u, x, h, i, ...) -> idec|ihex">{} = [&](pack args) {
+    return args[3];
+  };
+  def<"\\ILTZ(u, x, h, i, z, ...) -> bool">{} = [&](pack args) {
+    return args[4];
+  };
+  def<"\\BNOT(u, x, h, i, z, b) -> uhex">{} = [&](pack args) {
+    return args[5];
+  };
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(udec, -4), t), row);

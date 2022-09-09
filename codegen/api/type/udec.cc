@@ -48,7 +48,9 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   tests << udec(max)  = uint_max_s >> docs;
   tests << udec(in1)  = uint_max_s >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   auto utparams = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : utparams)
@@ -62,15 +64,25 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   };
 
   def<"\\0(e, obj)"> _0 = [&](arg e, arg obj) {
-    def<"\\0(e, obj)"> _0 = [&](arg e, arg) { return fail(e); };
+    def<"\\0(e, obj)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
     def<"\\1(e, atom)">{} = [&](arg e, arg atom) {
-      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) { return fail(e); };
-      def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) { return impl::uhex(uhex, "UDEC"); };
-      def<"\\0010(e, udec)">{} = [&](arg, arg udec) { return udec; };
+      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) {
+        return fail(e);
+      };
+      def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) {
+        return impl::uhex(uhex, "UDEC");
+      };
+      def<"\\0010(e, udec)">{} = [&](arg, arg udec) {
+        return udec;
+      };
       def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) {
         return impl::uhex(pp::cat(ihex, 'u'), "UDEC");
       };
-      def<"\\1000(e, idec)">{} = [&](arg, arg idec) { return pp::cat(idec, 'u'); };
+      def<"\\1000(e, idec)">{} = [&](arg, arg idec) {
+        return pp::cat(idec, 'u');
+      };
 
       return pp::call(xcat(utl::slice(_0000, -4),
                            xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
@@ -83,7 +95,9 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   };
 
   def<"\\1(e, tup)">{} = [&](arg e, arg tup) {
-    def<"\\0(e, tup)"> _0 = [&](arg e, arg) { return fail(e); };
+    def<"\\0(e, tup)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
     def<"\\1(e, utup)">{} = [&](arg, arg utup) {
       return impl::uhex(x(ut_hex + " " + utup), "UDEC");
     };

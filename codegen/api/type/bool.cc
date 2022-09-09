@@ -37,8 +37,12 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
   tests << bool_(0) = "0" >> docs;
   tests << bool_(1) = "1" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, bool)">{} = [](arg, arg bool_) { return bool_; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, bool)">{} = [](arg, arg bool_) {
+    return bool_;
+  };
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(xcat(utl::slice(_0, -1), is_bool(atom)), e, atom);

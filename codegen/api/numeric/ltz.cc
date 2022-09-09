@@ -42,8 +42,12 @@ decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
   tests << ltz(int_min_s)      = "1" >> docs;
   tests << ltz(inc(int_max_s)) = "1" >> docs;
 
-  def<"0(n)"> _0 = [&](arg) { return "0"; };
-  def<"1(n)">{}  = [&](arg n) { return impl::ltz(n); };
+  def<"0(n)"> _0 = [&](arg) {
+    return "0";
+  };
+  def<"1(n)">{} = [&](arg n) {
+    return impl::ltz(n);
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
 });

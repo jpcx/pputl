@@ -36,7 +36,9 @@ using namespace codegen;
 decltype(neg) neg = NIFTY_DEF(neg, [&](arg n) {
   docs << "[internal] integral negation.";
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   auto p = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : p)

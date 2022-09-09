@@ -30,11 +30,10 @@
 #include "config.h"
 #include "lang.h"
 //
+#include "fwd.h"
 #include "impl/traits.h"
 
 namespace api {
-
-// TODO: sizeof -> countof
 
 inline codegen::category<"traits"> traits;
 
@@ -56,12 +55,17 @@ extern codegen::def<"is_utup(...: list) -> bool"> const&                  is_utu
 extern codegen::def<"is_uint(...: list) -> bool"> const&                  is_uint;
 extern codegen::def<"is_word(...: list) -> bool"> const&                  is_word;
 extern codegen::def<"is_size(...: list) -> bool"> const&                  is_size;
-extern codegen::def<"is_idx(...: list) -> bool"> const&                   is_idx;
+extern codegen::def<"is_ofs(...: list) -> bool"> const&                   is_ofs;
+extern codegen::def<"is_map(...: list) -> bool"> const&                   is_map;
+extern codegen::def<"is_set(...: list) -> bool"> const&                   is_set;
+extern codegen::def<"is_stack(...: list) -> bool"> const&                 is_stack;
+extern codegen::def<"is_queue(...: list) -> bool"> const&                 is_queue;
+extern codegen::def<"is_pqueue(...: list) -> bool"> const&                is_pqueue;
 extern codegen::def<"is_any(...: list) -> bool"> const&                   is_any;
-extern codegen::def<
-    "typeof(...: list) -> "
-    "enum<NONE|LIST|TUP|UTUP|ATOM|HEX|NYBL|IDEC|IHEX|UDEC|UHEX>"> const& typeof;
-extern codegen::def<"sizeof(...: list) -> udec&size"> const& sizeof_;
+extern codegen::def<"typeof(...: list) -> "
+                    "enum<NONE|LIST|TUP|UTUP|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|"
+                    "IDEC|IHEX|UDEC|UHEX>"> const& typeof;
+extern codegen::def<"countof(...: list) -> udec&size"> const& countof;
 
 namespace detail {
 extern codegen::def<>& is_atom_o;
@@ -75,7 +79,17 @@ extern codegen::def<>& is_utup_o;
 extern codegen::def<>& is_uint_o;
 extern codegen::def<>& is_word_o;
 extern codegen::def<>& is_size_o;
-extern codegen::def<>& is_idx_o;
+extern codegen::def<>& is_ofs_o;
+extern codegen::def<>& is_map_o;
+extern codegen::def<>& is_map_oo;
+extern codegen::def<>& is_set_o;
+extern codegen::def<>& is_set_oo;
+extern codegen::def<>& is_stack_o;
+extern codegen::def<>& is_stack_oo;
+extern codegen::def<>& is_queue_o;
+extern codegen::def<>& is_queue_oo;
+extern codegen::def<>& is_pqueue_o;
+extern codegen::def<>& is_pqueue_oo;
 NIFTY_DECL(is_atom_o);
 NIFTY_DECL(is_enum_o);
 NIFTY_DECL(is_enum_oo);
@@ -87,7 +101,17 @@ NIFTY_DECL(is_utup_o);
 NIFTY_DECL(is_uint_o);
 NIFTY_DECL(is_word_o);
 NIFTY_DECL(is_size_o);
-NIFTY_DECL(is_idx_o);
+NIFTY_DECL(is_ofs_o);
+NIFTY_DECL(is_map_o);
+NIFTY_DECL(is_map_oo);
+NIFTY_DECL(is_set_o);
+NIFTY_DECL(is_set_oo);
+NIFTY_DECL(is_stack_o);
+NIFTY_DECL(is_stack_oo);
+NIFTY_DECL(is_queue_o);
+NIFTY_DECL(is_queue_oo);
+NIFTY_DECL(is_pqueue_o);
+NIFTY_DECL(is_pqueue_oo);
 } // namespace detail
 
 NIFTY_DECL(is_list);
@@ -108,10 +132,15 @@ NIFTY_DECL(is_utup);
 NIFTY_DECL(is_uint);
 NIFTY_DECL(is_word);
 NIFTY_DECL(is_size);
-NIFTY_DECL(is_idx);
+NIFTY_DECL(is_ofs);
+NIFTY_DECL(is_map);
+NIFTY_DECL(is_set);
+NIFTY_DECL(is_stack);
+NIFTY_DECL(is_queue);
+NIFTY_DECL(is_pqueue);
 NIFTY_DECL(is_any);
 NIFTY_DECL(typeof);
-NIFTY_DECL(sizeof_);
+NIFTY_DECL(countof);
 
 inline codegen::end_category<"traits"> traits_end;
 

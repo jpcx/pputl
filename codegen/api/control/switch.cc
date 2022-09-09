@@ -53,10 +53,14 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   tests << switch_(1, maxcases_s)              = "b";
   tests << switch_(conf::size_max, maxcases_s) = utl::alpha_base52(conf::size_max);
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def<"r(...)"> r = [&](va args) {
-    def<"base(i, _, ...)"> base = [&](arg, arg _0, va) { return "0, " + _0; };
+    def<"base(i, _, ...)"> base = [&](arg, arg _0, va) {
+      return "0, " + _0;
+    };
     def<"recr(i, _, ...)"> recr = [&](arg i, arg, va args) {
       return dec(i) + ", " + args;
     };
@@ -67,7 +71,9 @@ decltype(switch_) switch_ = NIFTY_DEF(switch_, [&](va args) {
   };
 
   def<"res(...)"> res = [&](va args) {
-    return def<"x(i, _, ...)">{[&](arg, arg _0, va) { return _0; }}(args);
+    return def<"x(i, _, ...)">{[&](arg, arg _0, va) {
+      return _0;
+    }}(args);
   };
 
   return res(recur(x, first(args), r, args));

@@ -67,7 +67,9 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
 
   auto p0 = params;
   std::swap(p0.front(), p0.back());
-  def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) { return pp::tup(res); };
+  def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) {
+    return pp::tup(res);
+  };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
     auto pn = params;

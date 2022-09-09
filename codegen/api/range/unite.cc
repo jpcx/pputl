@@ -40,13 +40,13 @@ decltype(unite) unite = NIFTY_DEF(unite, [&](va args) {
   tests << unite("()", "(b)")        = "(b)" >> docs;
   tests << unite("(a)", "(b)")       = "(a, b)" >> docs;
   tests << unite("(a, b)", "(c, d)") = "(a, b, c, d)" >> docs;
-  tests << bisect(0, "()")           = "(), (), 0" >> docs;
-  tests << bisect(1, "(, )")         = "(), (), 1" >> docs;
+  tests << bisect("()", 0)           = "(), (), 0" >> docs;
+  tests << bisect("(, )", 1)         = "(), (), 1" >> docs;
   tests << unite("()", "()")         = "()" >> docs;
   tests << unite("()", "()", 0)      = "()" >> docs;
   tests << unite("()", "()", 1)      = "(, )" >> docs;
-  tests << unite(bisect(0, "()"))    = "()" >> docs;
-  tests << unite(bisect(1, "(, )"))  = "(, )" >> docs;
+  tests << unite(bisect("()", 0))    = "()" >> docs;
+  tests << unite(bisect("(, )", 1))  = "(, )" >> docs;
   tests << unite(pp::tup('a'), pp::tup(utl::alpha_base52_seq(conf::size_max - 1, "b"))) =
       pp::tup(utl::alpha_base52_seq(conf::size_max));
   tests << unite(pp::tup('a'), "(, )")    = "(a, ,)";
@@ -56,46 +56,52 @@ decltype(unite) unite = NIFTY_DEF(unite, [&](va args) {
   tests << unite(pp::tup('a'), "(, b)")   = "(a, , b)";
   tests << unite(pp::tup('a'), "(, b, )") = "(a, , b,)";
   tests << unite(pp::tup('a'), "(, , b)") = "(a, , , b)";
-  tests << unite(bisect(0, "(a)"))        = "(a)";
-  tests << unite(bisect(1, "(a)"))        = "(a)";
-  tests << unite(bisect(0, "(a, b)"))     = "(a, b)";
-  tests << unite(bisect(1, "(a, b)"))     = "(a, b)";
-  tests << unite(bisect(1, "(a, b, c)"))  = "(a, b, c)";
-  tests << unite(bisect(2, "(a, b, c)"))  = "(a, b, c)";
-  tests << unite(bisect(3, "(a, b, c)"))  = "(a, b, c)";
-  tests << unite(bisect(0, "(, )"))       = "(,)";
-  tests << unite(bisect(2, "(, )"))       = "(,)";
-  tests << unite(bisect(0, "(, , )"))     = "(, ,)";
-  tests << unite(bisect(1, "(, , )"))     = "(, ,)";
-  tests << unite(bisect(2, "(, , )"))     = "(,, )";
-  tests << unite(bisect(3, "(, , )"))     = "(,,)";
-  tests << unite(bisect(0, "(a, )"))      = "(a,)";
-  tests << unite(bisect(1, "(a, )"))      = "(a, )";
-  tests << unite(bisect(2, "(a, )"))      = "(a,)";
-  tests << unite(bisect(0, "(a, , )"))    = "(a, ,)";
-  tests << unite(bisect(1, "(a, , )"))    = "(a, ,)";
-  tests << unite(bisect(2, "(a, , )"))    = "(a,, )";
-  tests << unite(bisect(3, "(a, , )"))    = "(a,,)";
-  tests << unite(bisect(0, "(, a)"))      = "(, a)";
-  tests << unite(bisect(1, "(, a)"))      = "(, a)";
-  tests << unite(bisect(2, "(, a)"))      = "(, a)";
-  tests << unite(bisect(0, "(, a, )"))    = "(, a,)";
-  tests << unite(bisect(1, "(, a, )"))    = "(, a,)";
-  tests << unite(bisect(2, "(, a, )"))    = "(, a, )";
-  tests << unite(bisect(3, "(, a, )"))    = "(, a,)";
-  tests << unite(bisect(0, "(, , a)"))    = "(, , a)";
-  tests << unite(bisect(1, "(, , a)"))    = "(, , a)";
-  tests << unite(bisect(2, "(, , a)"))    = "(,, a)";
-  tests << unite(bisect(3, "(, , a)"))    = "(,, a)";
-  tests << unite(bisect(0, "()"))         = "()";
-  tests << unite(bisect(1, "(, )"))       = "(, )";
+  tests << unite(bisect("(a)", 0))        = "(a)";
+  tests << unite(bisect("(a)", 1))        = "(a)";
+  tests << unite(bisect("(a, b)", 0))     = "(a, b)";
+  tests << unite(bisect("(a, b)", 1))     = "(a, b)";
+  tests << unite(bisect("(a, b, c)", 1))  = "(a, b, c)";
+  tests << unite(bisect("(a, b, c)", 2))  = "(a, b, c)";
+  tests << unite(bisect("(a, b, c)", 3))  = "(a, b, c)";
+  tests << unite(bisect("(, )", 0))       = "(,)";
+  tests << unite(bisect("(, )", 2))       = "(,)";
+  tests << unite(bisect("(, , )", 0))     = "(, ,)";
+  tests << unite(bisect("(, , )", 1))     = "(, ,)";
+  tests << unite(bisect("(, , )", 2))     = "(,, )";
+  tests << unite(bisect("(, , )", 3))     = "(,,)";
+  tests << unite(bisect("(a, )", 0))      = "(a,)";
+  tests << unite(bisect("(a, )", 1))      = "(a, )";
+  tests << unite(bisect("(a, )", 2))      = "(a,)";
+  tests << unite(bisect("(a, , )", 0))    = "(a, ,)";
+  tests << unite(bisect("(a, , )", 1))    = "(a, ,)";
+  tests << unite(bisect("(a, , )", 2))    = "(a,, )";
+  tests << unite(bisect("(a, , )", 3))    = "(a,,)";
+  tests << unite(bisect("(, a)", 0))      = "(, a)";
+  tests << unite(bisect("(, a)", 1))      = "(, a)";
+  tests << unite(bisect("(, a)", 2))      = "(, a)";
+  tests << unite(bisect("(, a, )", 0))    = "(, a,)";
+  tests << unite(bisect("(, a, )", 1))    = "(, a,)";
+  tests << unite(bisect("(, a, )", 2))    = "(, a, )";
+  tests << unite(bisect("(, a, )", 3))    = "(, a,)";
+  tests << unite(bisect("(, , a)", 0))    = "(, , a)";
+  tests << unite(bisect("(, , a)", 1))    = "(, , a)";
+  tests << unite(bisect("(, , a)", 2))    = "(,, a)";
+  tests << unite(bisect("(, , a)", 3))    = "(,, a)";
+  tests << unite(bisect("()", 0))         = "()";
+  tests << unite(bisect("(, )", 1))       = "(, )";
 
   def<"000(head, tail, ...)"> _000 = [&](arg head, arg tail, va) {
     return pp::tup(items(head) + ", " + items(tail));
   };
-  def<"001(head, tail, ...)">{} = [&](arg head, arg, va) { return head; };
-  def<"010(head, tail, ...)">{} = [&](arg, arg tail, va) { return tail; };
-  def<"011(head, tail, ...)">{} = [&](pack) { return "()"; };
+  def<"001(head, tail, ...)">{} = [&](arg head, arg, va) {
+    return head;
+  };
+  def<"010(head, tail, ...)">{} = [&](arg, arg tail, va) {
+    return tail;
+  };
+  def<"011(head, tail, ...)">{} = [&](pack) {
+    return "()";
+  };
   def<"100(head, tail, ...)">{} = [&](arg head, arg tail, va) {
     return pp::tup(items(head) + ", " + items(tail));
   };
@@ -105,7 +111,9 @@ decltype(unite) unite = NIFTY_DEF(unite, [&](va args) {
   def<"110(head, tail, ...)">{} = [&](arg, arg tail, va) {
     return pp::tup(", " + items(tail));
   };
-  def<"111(head, tail, ...)">{} = [&](arg, arg, va) { return "(, )"; };
+  def<"111(head, tail, ...)">{} = [&](arg, arg, va) {
+    return "(, )";
+  };
 
   return pp::call(def<"o(head, tail, ...)">{[&](arg head, arg tail, va type) {
                     return xcat(xcat(utl::slice(_000, -3), bool_(default_(0, type))),

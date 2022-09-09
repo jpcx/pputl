@@ -49,7 +49,9 @@ decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
 
   auto bitparams = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
-  def _0 = def{"0(" + bitparams + ")"} = [&](pack args) { return args.back(); };
+  def _0 = def{"0(" + bitparams + ")"} = [&](pack args) {
+    return args.back();
+  };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
     def{"" + std::to_string(i) + "(" + bitparams + ")"} = [&](pack args) {

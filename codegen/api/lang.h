@@ -51,7 +51,7 @@ extern codegen::def<"fail(...: msg: obj)"> const&                               
 // see type.any for a simple usage example
 [[nodiscard]] inline std::string
 error(codegen::def_base const& targ, std::string const& msg, codegen::va args) {
-  return str(codegen::pp::str("[" + targ + "] " + msg) + " : " + args);
+  return str(codegen::pp::str(msg) + " : " + targ(args));
 }
 
 // TODO fmt.hex

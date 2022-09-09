@@ -61,11 +61,15 @@ decltype(divr) divr = NIFTY_DEF(divr, [&](va args) {
   tests << divr(neg(13), neg(5)) = ("0x" + utl::cat(samp::h2) + ", " + neg(3)) >> docs;
   tests << divr(neg(14), neg(5)) = ("0x" + utl::cat(samp::h2) + ", " + neg(4)) >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def<"r(...)"> r = [&](va args) {
-    def<"norem(i, q, r, b)"> norem = [&](arg, arg q, arg r, arg) { return q + ", " + r; };
-    def<"rem(i, q, r, b)">   rem   = [&](arg i, arg q, arg r, arg b) {
+    def<"norem(i, q, r, b)"> norem = [&](arg, arg q, arg r, arg) {
+      return q + ", " + r;
+    };
+    def<"rem(i, q, r, b)"> rem = [&](arg i, arg q, arg r, arg b) {
       return bset(q, i, 1) + ", " + sub(r, b);
     };
 
@@ -77,7 +81,9 @@ decltype(divr) divr = NIFTY_DEF(divr, [&](va args) {
     }}(args);
   };
 
-  def<"beqz(e, a, b)"> beqz = [&](arg e, arg, arg) { return fail(e); };
+  def<"beqz(e, a, b)"> beqz = [&](arg e, arg, arg) {
+    return fail(e);
+  };
   def<"bnez(e, a, b)"> bnez = [&](arg, arg a, arg b) {
     def<"\\00(ta, tb, a, b)"> _00 = [&](arg ta, arg tb, arg a, arg b) {
       def<"res(...)"> res = [&](va args) {

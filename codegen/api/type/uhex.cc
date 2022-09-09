@@ -51,7 +51,9 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   tests << uhex(one)        = one >> docs;
   tests << uhex(imax)       = max >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   auto utparams = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : utparams)
@@ -65,12 +67,22 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   };
 
   def<"\\0(e, obj)"> _0 = [&](arg e, arg obj) {
-    def<"\\0(e, obj)"> _0 = [&](arg e, arg) { return fail(e); };
+    def<"\\0(e, obj)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
     def<"\\1(e, atom)">{} = [&](arg e, arg atom) {
-      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) { return fail(e); };
-      def<"\\0001(e, uhex)">{}     = [&](arg, arg uhex) { return uhex; };
-      def<"\\0010(e, udec)">{} = [&](arg, arg udec) { return impl::udec(udec, "UHEX"); };
-      def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) { return pp::cat(ihex, 'u'); };
+      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) {
+        return fail(e);
+      };
+      def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) {
+        return uhex;
+      };
+      def<"\\0010(e, udec)">{} = [&](arg, arg udec) {
+        return impl::udec(udec, "UHEX");
+      };
+      def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) {
+        return pp::cat(ihex, 'u');
+      };
       def<"\\1000(e, idec)">{} = [&](arg, arg idec) {
         return impl::udec(pp::cat(idec, 'u'), "UHEX");
       };
@@ -86,8 +98,12 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   };
 
   def<"\\1(e, tup)">{} = [&](arg e, arg tup) {
-    def<"\\0(e, tup)"> _0 = [&](arg e, arg) { return fail(e); };
-    def<"\\1(e, utup)">{} = [&](arg, arg utup) { return x(ut_hex + " " + utup); };
+    def<"\\0(e, tup)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, utup)">{} = [&](arg, arg utup) {
+      return x(ut_hex + " " + utup);
+    };
 
     return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), e, tup);
   };

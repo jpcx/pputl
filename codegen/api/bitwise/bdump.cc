@@ -43,12 +43,15 @@ decltype(bdump) bdump = NIFTY_DEF(bdump, [&](va args) {
   def bits = def{"bits(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
                  + ")"} = [&](pack args) {
     std::vector<std::string> res{};
-    std::ranges::transform(args, std::back_inserter(res),
-                           [&](auto&& v) { return impl::hex(v, "BITS"); });
+    std::ranges::transform(args, std::back_inserter(res), [&](auto&& v) {
+      return impl::hex(v, "BITS");
+    });
     return utl::cat(res, ", ");
   };
 
-  return def<"o(...)">{[&](va args) { return args; }}(bits + " " + utup(args));
+  return def<"o(...)">{[&](va args) {
+    return args;
+  }}(bits + " " + utup(args));
 });
 
 } // namespace api

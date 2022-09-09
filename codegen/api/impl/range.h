@@ -31,8 +31,8 @@
 #include "lang.h"
 //
 #include "impl/compare.h"
-#include "impl/numeric.h"
 #include "impl/math.h"
+#include "impl/numeric.h"
 
 namespace api {
 namespace impl {

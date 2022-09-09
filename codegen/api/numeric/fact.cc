@@ -40,14 +40,18 @@ decltype(fact) fact = NIFTY_DEF(fact, [&](va args) {
   tests << fact(4)     = "2, 2" >> docs;
   tests << fact("12u") = "2u, 2u, 3u" >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def<"update(t, _, ...)"> update = [&](arg t, arg first, va args) {
     return pp::tup(args, word(first, t));
   };
 
   def<"init(...)"> init = [&](va args) {
-    def<"<\\0(t, ...)"> _0    = [&](arg t, va) { return "(), " + t; };
+    def<"<\\0(t, ...)"> _0 = [&](arg t, va) {
+      return "(), " + t;
+    };
     def<"<\\01(t, _, ...)">{} = [&](arg t, arg first, va rest) {
       return pp::tup(word(first, t)) + ", " + t + ", " + rest;
     };
@@ -57,7 +61,9 @@ decltype(fact) fact = NIFTY_DEF(fact, [&](va args) {
   };
 
   def<"r(...)"> r = [&](va args) {
-    def<"<\\0(a, t, ...)"> _0    = [&](arg a, arg t, va) { return a + ", " + t; };
+    def<"<\\0(a, t, ...)"> _0 = [&](arg a, arg t, va) {
+      return a + ", " + t;
+    };
     def<"<\\01(a, t, _, ...)">{} = [&](arg a, arg t, arg first, va rest) {
       return update(t, first, esc + " " + a) + ", " + t + ", " + rest;
     };
@@ -72,7 +78,9 @@ decltype(fact) fact = NIFTY_DEF(fact, [&](va args) {
                       + init(typeof(n) + ", " + impl::udec(udec(n), "FACT"))
                       + utl::cat(svect{conf::bit_length - 2, ")"})));
   };
-  def<"\\1(e, r, n)">{} = [&](arg e, arg, arg) { return fail(e); };
+  def<"\\1(e, r, n)">{} = [&](arg e, arg, arg) {
+    return fail(e);
+  };
 
   return pp::call(
       xcat(utl::slice(_0, -1), ltz(args)),

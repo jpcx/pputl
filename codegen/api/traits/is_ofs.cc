@@ -33,28 +33,30 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_idx_o) is_idx_o = NIFTY_DEF(is_idx_o);
+decltype(is_ofs_o) is_ofs_o = NIFTY_DEF(is_ofs_o);
 }
 
-decltype(is_idx) is_idx = NIFTY_DEF(is_idx, [&](va args) {
+decltype(is_ofs) is_ofs = NIFTY_DEF(is_ofs, [&](va args) {
   docs << "[extends " + is_word
               + "] detects if args is any word whose abs is a valid size.";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
 
-  tests << is_idx("0")                = "1" >> docs;
-  tests << is_idx(conf::size_max - 1) = "1" >> docs;
-  tests << is_idx(size_max_s)         = "1" >> docs;
+  tests << is_ofs("0")                = "1" >> docs;
+  tests << is_ofs(conf::size_max - 1) = "1" >> docs;
+  tests << is_ofs(size_max_s)         = "1" >> docs;
   if constexpr (size_lt_max and conf::word_size > 2)
-    tests << is_idx(std::to_string(conf::size_max + 1) + "u") = "0" >> docs;
-  tests << is_idx("0x" + utl::cat(samp::hmax)) = "1" >> docs;
+    tests << is_ofs(std::to_string(conf::size_max + 1) + "u") = "0" >> docs;
+  tests << is_ofs("0x" + utl::cat(samp::hmax)) = "1" >> docs;
   if constexpr (conf::word_size > 2)
-    tests << is_idx("0xF" + utl::cat(svect{conf::word_size - 2, "0"}) + "1") =
+    tests << is_ofs("0xF" + utl::cat(svect{conf::word_size - 2, "0"}) + "1") =
         "1" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << is_idx("0xF" + utl::cat(svect{conf::word_size - 1, "0"})) = "0" >> docs;
+    tests << is_ofs("0xF" + utl::cat(svect{conf::word_size - 1, "0"})) = "0" >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   auto utparams = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : utparams)
@@ -67,21 +69,23 @@ decltype(is_idx) is_idx = NIFTY_DEF(is_idx, [&](va args) {
     return pp::cat("0x", pp::cat(args), "u");
   };
 
-  detail::is_idx_o = def{"o(obj)"} = [&](arg obj) {
+  detail::is_ofs_o = def{"o(obj)"} = [&](arg obj) {
     if constexpr (size_lt_max) {
       def<"\\0(atom)"> _0 = [&](arg atom) {
-        def<"\\0000(atom)"> _0000 = [&](arg) { return "0"; };
-        def<"\\0001(uhex)">{}     = [&](arg uhex) {
-          return impl::udec(impl::uhex(uhex, "UDEC"), "UIDX");
+        def<"\\0000(atom)"> _0000 = [&](arg) {
+          return "0";
+        };
+        def<"\\0001(uhex)">{} = [&](arg uhex) {
+          return impl::udec(impl::uhex(uhex, "UDEC"), "UOFS");
         };
         def<"\\0010(udec)">{} = [&](arg udec) { //
-          return impl::udec(udec, "UIDX");
+          return impl::udec(udec, "UOFS");
         };
         def<"\\0100(ihex)">{} = [&](arg ihex) {
-          return impl::udec(impl::uhex(pp::cat(ihex, 'u'), "UDEC"), "IIDX");
+          return impl::udec(impl::uhex(pp::cat(ihex, 'u'), "UDEC"), "IOFS");
         };
         def<"\\1000(idec)">{} = [&](arg idec) { //
-          return impl::udec(pp::cat(idec, 'u'), "IIDX");
+          return impl::udec(pp::cat(idec, 'u'), "IOFS");
         };
 
         return pp::call(xcat(utl::slice(_0000, -4),
@@ -92,9 +96,11 @@ decltype(is_idx) is_idx = NIFTY_DEF(is_idx, [&](va args) {
       };
 
       def<"\\1(tup)">{} = [&](arg tup) {
-        def<"\\0(tup)"> _0 = [&](arg) { return "0"; };
+        def<"\\0(tup)"> _0 = [&](arg) {
+          return "0";
+        };
         def<"\\1(utup)">{} = [&](arg utup) {
-          return impl::udec(impl::uhex(x(ut_hex + " " + utup), "UDEC"), "UIDX");
+          return impl::udec(impl::uhex(x(ut_hex + " " + utup), "UDEC"), "UOFS");
         };
         return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), tup);
       };
@@ -105,8 +111,14 @@ decltype(is_idx) is_idx = NIFTY_DEF(is_idx, [&](va args) {
     }
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_idx_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_ofs_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });

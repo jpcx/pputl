@@ -215,15 +215,18 @@ def_base::define(Body&& body) {
     throw std::runtime_error{"macro " + _instance->id + " defined twice"};
 
   { // ensure instance directly follows parent (fix forward declaration misplacements)
-    auto it = std::ranges::find(_instances, _instance, [](auto&& v) { return &v; });
+    auto it = std::ranges::find(_instances, _instance, [](auto&& v) {
+      return &v;
+    });
     if (it == _instances.end())
       throw std::logic_error{"could not find instance " + _instance->id
                              + " in the instances list"};
 
     auto ins = _instances.end();
     if (not _instance->context.empty()) {
-      ins = std::ranges::find(_instances, _instance->context.back(),
-                              [](auto&& v) { return &v; });
+      ins = std::ranges::find(_instances, _instance->context.back(), [](auto&& v) {
+        return &v;
+      });
       if (ins != _instances.end()) {
         // register this child with its parent
         ins->children.push_back(_instance);

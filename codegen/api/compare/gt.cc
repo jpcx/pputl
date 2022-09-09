@@ -40,17 +40,17 @@ decltype(gt) gt = NIFTY_DEF(gt, [&](va args) {
   using conf::uint_max;
   using conf::int_max;
 
-  tests << gt("0, 0")                                                             = "0" >> docs;
-  tests << gt("0, 1")                                                             = "0" >> docs;
-  tests << gt("7u, 8u")                                                           = "0" >> docs;
-  tests << gt("8u, 7u")                                                           = "1";
-  tests << gt(int_(uint_max_s), "0")                                              = "0" >> docs;
-  tests << gt(int_max_s, int_min_s)                                               = "1" >> docs;
-  tests << gt(int_min_s, int_max_s)                                               = "0";
-  tests << gt(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "0" >> docs;
-  tests << gt(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "0" >> docs;
-  tests << gt("0u", uint_max_s)                                                   = "0";
-  tests << gt(uint_max_s, "0u")                                                   = "1";
+  tests << gt("0, 0")                                        = "0" >> docs;
+  tests << gt("0, 1")                                        = "0" >> docs;
+  tests << gt("7u, 8u")                                      = "0" >> docs;
+  tests << gt("8u, 7u")                                      = "1";
+  tests << gt(int_(uint_max_s), "0")                         = "0" >> docs;
+  tests << gt(int_max_s, int_min_s)                          = "1" >> docs;
+  tests << gt(int_min_s, int_max_s)                          = "0";
+  tests << gt(int_min_s, int_(to_string(int_max + 1) + "u")) = "0" >> docs;
+  tests << gt(int_min_s, int_(to_string(int_max + 2) + "u")) = "0" >> docs;
+  tests << gt("0u", uint_max_s)                              = "0";
+  tests << gt(uint_max_s, "0u")                              = "1";
   tests << gt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "1";
   tests << gt(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "0";
   tests << gt(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "0";

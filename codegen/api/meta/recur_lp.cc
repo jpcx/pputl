@@ -67,13 +67,19 @@ decltype(recur_lp) recur_lp = NIFTY_DEF(recur_lp, [&](va args) {
 
   std::array<def<>, (conf::size_max + 1) / 4> n{};
 
-  n[0] = def{"\\0(f)"} = [&](arg) { return ""; };
+  n[0] = def{"\\0(f)"} = [&](arg) {
+    return "";
+  };
   n[1] = def{"\\1(f)"} = [&](arg f) {
     return f + " " + lp() + " " + f + " " + lp() + " " + f + " " + lp() + " " + f + " "
          + lp();
   };
-  n[2] = def{"\\2(f)"} = [&](arg f) { return n[1](f) + " " + n[1](f); };
-  n[3] = def{"\\3(f)"} = [&](arg f) { return n[1](f) + " " + n[1](f) + " " + n[1](f); };
+  n[2] = def{"\\2(f)"} = [&](arg f) {
+    return n[1](f) + " " + n[1](f);
+  };
+  n[3] = def{"\\3(f)"} = [&](arg f) {
+    return n[1](f) + " " + n[1](f) + " " + n[1](f);
+  };
 
   for (std::size_t i = 4; i < n.size(); ++i) {
     n[i] = def{"\\" + std::to_string(i) + "(f)"} = [&](arg f) {

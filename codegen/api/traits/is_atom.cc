@@ -72,18 +72,30 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   tests << is_atom("(, a, )")        = "0";
   tests << is_atom("(, , a)")        = "0";
 
-  def<"fail(...)"> fail = [&](va) { return "0"; };
+  def<"fail(...)"> fail = [&](va) {
+    return "0";
+  };
 
   detail::is_atom_o = def{"o(obj)"} = [&](arg obj) {
-    def<"\\0"> _0 = [] { return "1"; };
-    def<"\\1">{}  = [] { return "0"; };
+    def<"\\0"> _0 = [] {
+      return "1";
+    };
+    def<"\\1">{} = [] {
+      return "0";
+    };
     return xcat(utl::slice(_0, -1), is_none(eat + " " + obj));
   };
 
-  def<"\\0(...)"> _0    = [&] { return fail; };
+  def<"\\0(...)"> _0 = [&] {
+    return fail;
+  };
   def<"\\01(_, ...)">{} = [&] {
-    def<"\\0"> _0 = [&] { return detail::is_atom_o; };
-    def<"\\01">{} = [&] { return fail; };
+    def<"\\0"> _0 = [&] {
+      return detail::is_atom_o;
+    };
+    def<"\\01">{} = [&] {
+      return fail;
+    };
     return pp::cat(_0, pp::va_opt(1));
   };
 

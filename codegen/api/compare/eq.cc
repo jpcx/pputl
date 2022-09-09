@@ -40,17 +40,17 @@ decltype(eq) eq = NIFTY_DEF(eq, [&](va args) {
   using conf::uint_max;
   using conf::int_max;
 
-  tests << eq("0, 0")                                                             = "1" >> docs;
-  tests << eq("0, 1")                                                             = "0" >> docs;
-  tests << eq("7u, 8u")                                                           = "0" >> docs;
-  tests << eq("8u, 7u")                                                           = "0";
-  tests << eq(int_(uint_max_s), "0")                                              = "0" >> docs;
-  tests << eq(int_max_s, int_min_s)                                               = "0" >> docs;
-  tests << eq(int_min_s, int_max_s)                                               = "0";
-  tests << eq(int_min_s, int_(to_string(int_max + 1) + "u"))                      = "1" >> docs;
-  tests << eq(int_min_s, int_(to_string(int_max + 2) + "u"))                      = "0" >> docs;
-  tests << eq("0u", uint_max_s)                                                   = "0";
-  tests << eq(uint_max_s, "0u")                                                   = "0";
+  tests << eq("0, 0")                                        = "1" >> docs;
+  tests << eq("0, 1")                                        = "0" >> docs;
+  tests << eq("7u, 8u")                                      = "0" >> docs;
+  tests << eq("8u, 7u")                                      = "0";
+  tests << eq(int_(uint_max_s), "0")                         = "0" >> docs;
+  tests << eq(int_max_s, int_min_s)                          = "0" >> docs;
+  tests << eq(int_min_s, int_max_s)                          = "0";
+  tests << eq(int_min_s, int_(to_string(int_max + 1) + "u")) = "1" >> docs;
+  tests << eq(int_min_s, int_(to_string(int_max + 2) + "u")) = "0" >> docs;
+  tests << eq("0u", uint_max_s)                              = "0";
+  tests << eq(uint_max_s, "0u")                              = "0";
   tests << eq(to_string(uint_max / 2) + "u", to_string((uint_max / 2) - 1) + "u") = "0";
   tests << eq(to_string(uint_max / 2) + "u", to_string((uint_max / 2)) + "u")     = "1";
   tests << eq(to_string(uint_max / 2) + "u", to_string((uint_max / 2) + 1) + "u") = "0";

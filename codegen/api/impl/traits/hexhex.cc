@@ -107,8 +107,12 @@ decltype(hexhex) hexhex = NIFTY_DEF(hexhex, [&](arg v, arg t) {
   }
 
   def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\01">{} = [&] { return "1"; };
+    def<"\\0"> _0 = [&] {
+      return "0";
+    };
+    def<"\\01">{} = [&] {
+      return "1";
+    };
     return pp::cat(_0, pp::va_opt("1"));
   };
 

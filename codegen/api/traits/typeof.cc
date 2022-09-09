@@ -43,8 +43,10 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << "  | NONE | LIST | TUP  | UTUP | ATOM | HEX"
-       << "  | NYBL | IDEC | IHEX | UDEC | UHEX";
+       << " | NONE   | LIST | TUP   | UTUP"
+       << " | MAP    | SET  | STACK | QUEUE"
+       << " | PQUEUE | ATOM | HEX   | NYBL"
+       << " | IDEC   | IHEX | UDEC  | UHEX";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -68,6 +70,11 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof(pp::tup(
       utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "UTUP" >> docs;
   tests << typeof()                                                    = "NONE" >> docs;
+  tests << typeof(fwd::map + "()")                                     = "MAP" >> docs;
+  tests << typeof(fwd::set + "()")                                     = "SET" >> docs;
+  tests << typeof(fwd::stack + "()")                                   = "STACK" >> docs;
+  tests << typeof(fwd::queue + "()")                                   = "QUEUE" >> docs;
+  tests << typeof(fwd::pqueue + "()")                                  = "PQUEUE" >> docs;
 
   // !none
   def<"\\0(...)"> _0 = [&](va args) {
@@ -83,46 +90,93 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
     def<"\\1(obj)">{} = [&](arg obj) {
       docs << "^!none → obj";
 
-      // !none → obj → !atom
-      def<"\\0(tup)"> _0 = [&](arg tup) {
-        docs << "^!none → obj → !atom";
+      // !none → obj → !tup
+      def<"\\0(obj)"> _0 = [&](arg obj) {
+        docs << "^!none → obj → !tup";
+
+        def<"\\00000(atom)"> _00000 = [&](arg atom) {
+          docs << "^!none → obj → !tup → !(map|set|stack|queue|pqueue)";
+
+          def<"\\000000"> _000000 = [&] {
+            return "ATOM";
+          }; // no match
+          def<"\\000001">{} = [&] {
+            return "UHEX";
+          }; // uhex
+          def<"\\000010">{} = [&] {
+            return "UDEC";
+          }; // udec
+          def<"\\000100">{} = [&] {
+            return "IHEX";
+          }; // ihex
+          def<"\\001000">{} = [&] {
+            return "IDEC";
+          }; // hex|bool|idec
+          def<"\\010000">{} = [&] {
+            return "NYBL";
+          }; // nybl
+          if constexpr (conf::int_max >= 1000)
+            def<"\\011000">{} = [&] {
+              return "IDEC";
+            }; // nybl&idec
+          def<"\\100000">{} = [&] {
+            return "HEX";
+          }; // hex
+          def<"\\101000">{} = [&] {
+            return "IDEC";
+          }; // hex&idec
+
+          return xcat(xcat(utl::slice(_000000, -6), xcat(is_hex(atom), is_nybl(atom))),
+                      xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
+                           xcat(is_udec(atom), is_uhex(atom))));
+        };
+
+        def<"\\00001(mem)">{} = [&](arg) {
+          return "PQUEUE";
+        };
+
+        def<"\\00010(mem)">{} = [&](arg) {
+          return "QUEUE";
+        };
+
+        def<"\\00100(mem)">{} = [&](arg) {
+          return "STACK";
+        };
+
+        def<"\\01000(mem)">{} = [&](arg) {
+          return "SET";
+        };
+
+        def<"\\10000(mem)">{} = [&](arg) {
+          return "MAP";
+        };
+
+        return pp::call(xcat(xcat(xcat(utl::slice(_00000, -5), detail::is_map_oo(obj)),
+                                  xcat(detail::is_set_oo(obj), detail::is_stack_oo(obj))),
+                             xcat(detail::is_queue_oo(obj), detail::is_pqueue_oo(obj))),
+                        obj);
+      };
+
+      // !none → obj → tup
+      def<"\\1(tup)">{} = [&](arg tup) {
+        docs << "^!none → obj → tup";
 
         // !none → obj → !atom → !utup
         def<"\\0(tup)"> _0 = [&](arg) {
-          docs << "^!none → obj → !atom → !utup";
+          docs << "^!none → obj → tup → !utup";
           return "TUP";
         };
 
         // !none → obj → !atom → utup
         def<"\\1(utup)">{} = [&](arg) {
-          docs << "^!none → obj → !atom → utup";
+          docs << "^!none → obj → tup → utup";
           return "UTUP";
         };
 
         return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), tup);
       };
 
-      // !none → obj → atom
-      def<"\\1(atom)">{} = [&](arg atom) {
-        docs << "^!none → obj → atom";
-
-        def<"\\000000"> _000000 = [&] { return "ATOM"; }; // no match
-        def<"\\000001">{}       = [&] { return "UHEX"; }; // uhex
-        def<"\\000010">{}       = [&] { return "UDEC"; }; // udec
-        def<"\\000100">{}       = [&] { return "IHEX"; }; // ihex
-        def<"\\001000">{}       = [&] { return "IDEC"; }; // hex|bool|idec
-        def<"\\010000">{}       = [&] { return "NYBL"; }; // nybl
-        if constexpr (conf::int_max >= 1000)
-          def<"\\011000">{} = [&] { return "IDEC"; }; // nybl&idec
-        def<"\\100000">{} = [&] { return "HEX"; };    // hex
-        def<"\\101000">{} = [&] { return "IDEC"; };   // hex&idec
-
-        return xcat(xcat(utl::slice(_000000, -6), xcat(is_hex(atom), is_nybl(atom))),
-                    xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
-                         xcat(is_udec(atom), is_uhex(atom))));
-      };
-
-      return pp::call(xcat(utl::slice(_0, -1), detail::is_atom_o(obj)), obj);
+      return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
     };
 
     return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);

@@ -51,26 +51,42 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
   detail::is_word_o = def{"o(obj)"} = [&](arg obj) {
     def<"\\0(atom)"> _0 = [&](arg atom) {
       def<"\\0(atom)"> _0 = [&](arg atom) {
-        def<"\\00"> _00 = [&] { return "0"; };
-        def<"\\01">{}   = [&] { return "1"; };
-        def<"\\10">{}   = [&] { return "1"; };
+        def<"\\00"> _00 = [&] {
+          return "0";
+        };
+        def<"\\01">{} = [&] {
+          return "1";
+        };
+        def<"\\10">{} = [&] {
+          return "1";
+        };
 
         return xcat(utl::slice(_00, -2),
                     xcat(detail::is_enum_oo(impl::udec_prefix, atom),
                          detail::is_enum_oo(impl::uhex_prefix, atom)));
       };
-      def<"\\1(int)">{} = [&](arg) { return "1"; };
+      def<"\\1(int)">{} = [&](arg) {
+        return "1";
+      };
 
       return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
     };
 
-    def<"\\1(tup)">{} = [&](arg tup) { return detail::is_utup_o(tup); };
+    def<"\\1(tup)">{} = [&](arg tup) {
+      return detail::is_utup_o(tup);
+    };
 
     return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_word_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_word_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });

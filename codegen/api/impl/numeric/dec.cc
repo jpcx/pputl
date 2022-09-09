@@ -39,7 +39,9 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](arg n) {
 
   auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def<"r(...)"> r = [&](va args) {
     def o = def{"o(" + p + ")"} = [&](pack v) {

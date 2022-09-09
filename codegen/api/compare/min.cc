@@ -68,8 +68,12 @@ decltype(min) min = NIFTY_DEF(min, [&](va args) {
   tests << min(to_string(int_max / 2), to_string((int_max / 2) + 1)) =
       to_string(int_max / 2);
 
-  def<"\\0(a, b)"> _0 = [&](arg, arg b) { return b; };
-  def<"\\1(a, b)">{}  = [&](arg a, arg) { return a; };
+  def<"\\0(a, b)"> _0 = [&](arg, arg b) {
+    return b;
+  };
+  def<"\\1(a, b)">{} = [&](arg a, arg) {
+    return a;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), lt(args)), args);
 });

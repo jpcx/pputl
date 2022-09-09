@@ -53,7 +53,8 @@ main() {
          << def_base::definitions() << "\n\n// vim: fdm=marker:fmr={{{,}}}\n\n#endif\n";
     tout << conf::project_header << "\n\n"
          << "#include "
-         << fs::relative(conf::lib_output, fs::path(conf::tests_output).remove_filename()) << "\n\n"
+         << fs::relative(conf::lib_output, fs::path(conf::tests_output).remove_filename())
+         << "\n\n"
          << def_base::assertions() << '\n';
   } // namespace std::filesystem;
 
@@ -61,9 +62,9 @@ main() {
 
   system(std::string{"clang-format -i " + std::string{conf::lib_output}}.c_str());
 
-  // clang-format AlignConsecutiveMacros breaks ColumnLimit; add newlines around sections where this
-  // happens make sure that we are not splitting lines that necessarily need to be long (e.g.
-  // PTL_CAT)
+  // clang-format AlignConsecutiveMacros breaks ColumnLimit; add newlines around sections
+  // where this happens make sure that we are not splitting lines that necessarily need to
+  // be long (e.g. PTL_CAT)
   {
     unsigned col_lim{0};
     {
@@ -73,7 +74,8 @@ main() {
       clang_in.read(clang.data(), sz);
       std::smatch m;
       if (std::regex_search(
-              clang, m, std::regex{"ColumnLimit\\s*:\\s*(\\d+)", std::regex_constants::optimize})) {
+              clang, m,
+              std::regex{"ColumnLimit\\s*:\\s*(\\d+)", std::regex_constants::optimize})) {
         std::istringstream iss{m[1]};
         iss >> col_lim;
       } else {
@@ -98,7 +100,8 @@ main() {
       } mode{find};
       bool prev_line_was_comment{false};
       bool clang_format{true};
-      for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+      for (auto&& line :
+           utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
         if (line == "// clang-format off") {
           clang_format = false;
         } else if (line == "// clang-format on") {
@@ -144,12 +147,14 @@ main() {
       lin.read(lib.data(), sz);
       lin.close();
       std::vector<std::string> formatted{};
-      std::string const        close_section{
-          "// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}"};
-      std::size_t i = 0;
-      for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+      std::string const close_section{"// - - - - - - - - - - - - - - - - - - - - - - - "
+                                      "- - - - - - - - - - - - - - }}}"};
+      std::size_t       i = 0;
+      for (auto&& line :
+           utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
         formatted.push_back(line);
-        if (i > 2 and line == "// clang-format on" and formatted[i - 2] == close_section) {
+        if (i > 2 and line == "// clang-format on"
+            and formatted[i - 2] == close_section) {
           if (i > 3 and formatted[i - 3].empty()) {
             std::swap(formatted[i - 3], formatted[i]);
             std::swap(formatted[i - 2], formatted[i - 1]);
@@ -176,7 +181,8 @@ main() {
       lin.close();
       std::vector<std::string> formatted{};
       std::size_t              i = 0;
-      for (auto&& line : utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
+      for (auto&& line :
+           utl::split(lib, std::regex{"\n", std::regex_constants::optimize})) {
         if (not line.empty())
           formatted.push_back(line);
         else if (not formatted.empty() and not formatted.back().empty())

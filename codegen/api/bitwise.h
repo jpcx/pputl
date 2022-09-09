@@ -52,9 +52,9 @@ extern codegen::def<"bxor(...: word, word) -> word"> const&      bxor;
 extern codegen::def<"bnand(...: word, word) -> word"> const&     bnand;
 extern codegen::def<"bnor(...: word, word) -> word"> const&      bnor;
 extern codegen::def<"bxnor(...: word, word) -> word"> const&     bxnor;
-extern codegen::def<"bget(...: word, idx) -> bool"> const&       bget;
-extern codegen::def<"bset(...: word, idx, bool) -> word"> const& bset;
-extern codegen::def<"bflip(...: word, idx) -> word"> const&      bflip;
+extern codegen::def<"bget(...: word, ofs) -> bool"> const&       bget;
+extern codegen::def<"bset(...: word, ofs, bool) -> word"> const& bset;
+extern codegen::def<"bflip(...: word, ofs) -> word"> const&      bflip;
 extern codegen::def<"brotl(...: word, size=1) -> word"> const&   brotl;
 extern codegen::def<"brotr(...: word, size=1) -> word"> const&   brotr;
 

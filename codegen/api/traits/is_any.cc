@@ -48,8 +48,12 @@ decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
   tests << is_any(", , a")  = "0";
 
   return def<"o(_, ...)">{[&](arg, va) {
-    def<"\\0"> _0 = [&] { return "1"; };
-    def<"\\01">{} = [&] { return "0"; };
+    def<"\\0"> _0 = [&] {
+      return "1";
+    };
+    def<"\\01">{} = [&] {
+      return "0";
+    };
     return pp::cat(_0, pp::va_opt(1));
   }}(args + ".");
 });

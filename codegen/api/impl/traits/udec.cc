@@ -48,7 +48,7 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
         auto bin = detail::binary(i);
         udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
           return utl::cat(std::array{detail::uhex(bin), detail::isize(i),
-                                     detail::usize(i), detail::iidx(i), detail::uidx(i),
+                                     detail::usize(i), detail::iofs(i), detail::uofs(i),
                                      detail::log2(i), detail::sqrt(i), detail::fact(i)},
                           ", ");
         };
@@ -56,9 +56,9 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
       {
         auto bin = detail::binary(i);
         udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
-          docs << "UHEX, ISIZE, USIZE, IIDX, UIDX, LOG2, SQRT, FACT";
+          docs << "UHEX, ISIZE, USIZE, IOFS, UOFS, LOG2, SQRT, FACT";
           return utl::cat(std::array{detail::uhex(bin), detail::isize(i),
-                                     detail::usize(i), detail::iidx(i), detail::uidx(i),
+                                     detail::usize(i), detail::iofs(i), detail::uofs(i),
                                      detail::log2(i), detail::sqrt(i), detail::fact(i)},
                           ", ");
         };
@@ -67,11 +67,21 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
 
     udec_prefix = utl::slice(udecs[0], -2);
 
-    def<"\\UHEX(u, ...) -> uhex"> uhex              = [&](pack args) { return args[0]; };
-    def<"\\ISIZE(u, is, ...) -> bool">{}            = [&](pack args) { return args[1]; };
-    def<"\\USIZE(u, is, us, ...) -> bool">{}        = [&](pack args) { return args[2]; };
-    def<"\\IIDX(u, is, us, ii, ...) -> bool">{}     = [&](pack args) { return args[3]; };
-    def<"\\UIDX(u, is, us, ii, ui, ...) -> bool">{} = [&](pack args) { return args[4]; };
+    def<"\\UHEX(u, ...) -> uhex"> uhex = [&](pack args) {
+      return args[0];
+    };
+    def<"\\ISIZE(u, is, ...) -> bool">{} = [&](pack args) {
+      return args[1];
+    };
+    def<"\\USIZE(u, is, us, ...) -> bool">{} = [&](pack args) {
+      return args[2];
+    };
+    def<"\\IOFS(u, is, us, ii, ...) -> bool">{} = [&](pack args) {
+      return args[3];
+    };
+    def<"\\UOFS(u, is, us, ii, ui, ...) -> bool">{} = [&](pack args) {
+      return args[4];
+    };
     def<"\\LOG2(u, is, us, ii, ui, l, ...) -> idec">{} = [&](pack args) {
       return args[5];
     };
@@ -99,7 +109,7 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
       {
         auto bin = detail::binary(i);
         udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
-          docs << "UHEX, IIDX, UIDX, LOG2, SQRT, FACT";
+          docs << "UHEX, IOFS, UOFS, LOG2, SQRT, FACT";
           return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
                                      detail::fact(i)},
                           ", ");
@@ -109,11 +119,21 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
 
     udec_prefix = utl::slice(udecs[0], -2);
 
-    def<"\\UHEX(u, ...) -> uhex"> uhex             = [&](pack args) { return args[0]; };
-    def<"\\IIDX(u, ii, ...) -> bool">{}            = [&](pack args) { return args[1]; };
-    def<"\\UIDX(u, ii, ui, ...) -> bool">{}        = [&](pack args) { return args[2]; };
-    def<"\\LOG2(u, ii, ui, l, ...) -> idec">{}     = [&](pack args) { return args[3]; };
-    def<"\\SQRT(u, ii, ui, l, sq, ...) -> idec">{} = [&](pack args) { return args[4]; };
+    def<"\\UHEX(u, ...) -> uhex"> uhex = [&](pack args) {
+      return args[0];
+    };
+    def<"\\IOFS(u, ii, ...) -> bool">{} = [&](pack args) {
+      return args[1];
+    };
+    def<"\\UOFS(u, ii, ui, ...) -> bool">{} = [&](pack args) {
+      return args[2];
+    };
+    def<"\\LOG2(u, ii, ui, l, ...) -> idec">{} = [&](pack args) {
+      return args[3];
+    };
+    def<"\\SQRT(u, ii, ui, l, sq, ...) -> idec">{} = [&](pack args) {
+      return args[4];
+    };
     def<"\\FACT(u, ii, ui, l, sq, ...) -> idec...">{} = [&](pack args) {
       return args[5];
     };

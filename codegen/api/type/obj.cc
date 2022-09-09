@@ -36,8 +36,12 @@ decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
 
   tests << obj("foo") = "foo" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, obj)">{} = [](arg, arg obj) {
+    return obj;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_obj(args)),
                   error(obj, "obj must describe exactly one element", args), args);

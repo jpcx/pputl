@@ -35,7 +35,9 @@ using namespace codegen;
 decltype(ltz) ltz = NIFTY_DEF(ltz, [&](arg n) {
   docs << "[internal] numeric less-than-zero detection.";
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def res = def{"res(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
                 + ")"} = [&](pack args) { //

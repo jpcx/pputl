@@ -50,15 +50,23 @@ decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
       (std::to_string((conf::int_max * conf::uint_max) % (conf::uint_max + 1)) + "u")
       >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   def<"res(...)"> res = [&](va args) {
-    return def<"o(a, b, s)">{[&](arg a, arg, arg s) { return add(a, s); }}(args);
+    return def<"o(a, b, s)">{[&](arg a, arg, arg s) {
+      return add(a, s);
+    }}(args);
   };
 
   def<"r(...)"> r = [&](va args) {
-    def<"base(s, a)"> base = [&](arg s, arg) { return s; };
-    def<"recr(s, a)"> recr = [&](arg s, arg a) { return add(s, a); };
+    def<"base(s, a)"> base = [&](arg s, arg) {
+      return s;
+    };
+    def<"recr(s, a)"> recr = [&](arg s, arg a) {
+      return add(s, a);
+    };
 
     return def<"o(a, b, s)">{[&](arg a, arg b, arg s) {
       return bsll(a) + ", " + bsra(b) + ", "

@@ -56,10 +56,16 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
 
   detail::is_idec_o = def{"o(atom)"} = [&](arg atom) {
     return def<"o(atom)">{[&](arg atom) {
-      def<"\\0(atom)"> _0 = [&](arg) { return "0"; };
-      def<"\\1(udec)">{}  = [&](arg udec) {
-        def<"\\0"> _0 = [&] { return "1"; };
-        def<"\\1">{}  = [&] { return "0"; };
+      def<"\\0(atom)"> _0 = [&](arg) {
+        return "0";
+      };
+      def<"\\1(udec)">{} = [&](arg udec) {
+        def<"\\0"> _0 = [&] {
+          return "1";
+        };
+        def<"\\1">{} = [&] {
+          return "0";
+        };
         return xcat(utl::slice(_0, -1), impl::uhex(impl::udec(udec, "UHEX"), "ILTZ"));
       };
 
@@ -68,8 +74,14 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
     }}(pp::cat(atom, 'u'));
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_idec_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_idec_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });

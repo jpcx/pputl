@@ -47,7 +47,9 @@ decltype(items) items = NIFTY_DEF(items, [&](va args) {
   tests << items("(, a, )")         = ", a,";
   tests << items("(, , a)")         = ", , a";
 
-  return def<"x(...)">{[&](va args) { return esc + " " + args; }}(tup(args));
+  return def<"x(...)">{[&](va args) {
+    return esc + " " + args;
+  }}(tup(args));
 });
 
 } // namespace api

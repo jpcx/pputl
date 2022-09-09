@@ -38,28 +38,80 @@ decltype(nybl) nybl = NIFTY_DEF(nybl, [&](arg v, arg t) {
   docs << "[internal] nybl traits";
 
   std::array<def<>, 16> nybls{
-      def{"0000"} = [&] { return "0, " + detail::bits(0); },
-      def{"0001"} = [&] { return "1, " + detail::bits(1); },
-      def{"0010"} = [&] { return "2, " + detail::bits(2); },
-      def{"0011"} = [&] { return "3, " + detail::bits(3); },
-      def{"0100"} = [&] { return "4, " + detail::bits(4); },
-      def{"0101"} = [&] { return "5, " + detail::bits(5); },
-      def{"0110"} = [&] { return "6, " + detail::bits(6); },
-      def{"0111"} = [&] { return "7, " + detail::bits(7); },
-      def{"1000"} = [&] { return "8, " + detail::bits(8); },
-      def{"1001"} = [&] { return "9, " + detail::bits(9); },
-      def{"1010"} = [&] { return "A, " + detail::bits(10); },
-      def{"1011"} = [&] { return "B, " + detail::bits(11); },
-      def{"1100"} = [&] { return "C, " + detail::bits(12); },
-      def{"1101"} = [&] { return "D, " + detail::bits(13); },
-      def{"1110"} = [&] { return "E, " + detail::bits(14); },
-      def{"1111"} = [&] { return "F, " + detail::bits(15); },
+      def{"0000"} =
+          [&] {
+            return "0, " + detail::bits(0);
+          },
+      def{"0001"} =
+          [&] {
+            return "1, " + detail::bits(1);
+          },
+      def{"0010"} =
+          [&] {
+            return "2, " + detail::bits(2);
+          },
+      def{"0011"} =
+          [&] {
+            return "3, " + detail::bits(3);
+          },
+      def{"0100"} =
+          [&] {
+            return "4, " + detail::bits(4);
+          },
+      def{"0101"} =
+          [&] {
+            return "5, " + detail::bits(5);
+          },
+      def{"0110"} =
+          [&] {
+            return "6, " + detail::bits(6);
+          },
+      def{"0111"} =
+          [&] {
+            return "7, " + detail::bits(7);
+          },
+      def{"1000"} =
+          [&] {
+            return "8, " + detail::bits(8);
+          },
+      def{"1001"} =
+          [&] {
+            return "9, " + detail::bits(9);
+          },
+      def{"1010"} =
+          [&] {
+            return "A, " + detail::bits(10);
+          },
+      def{"1011"} =
+          [&] {
+            return "B, " + detail::bits(11);
+          },
+      def{"1100"} =
+          [&] {
+            return "C, " + detail::bits(12);
+          },
+      def{"1101"} =
+          [&] {
+            return "D, " + detail::bits(13);
+          },
+      def{"1110"} =
+          [&] {
+            return "E, " + detail::bits(14);
+          },
+      def{"1111"} =
+          [&] {
+            return "F, " + detail::bits(15);
+          },
   };
 
   nybl_prefix = utl::slice(nybls[0], -4);
 
-  def<"\\HEX(hex, ...) -> hex"> hex    = [&](pack args) { return args[0]; };
-  def<"\\BITS(hex, ...) -> ...bool">{} = [&](pack args) { return args[1]; };
+  def<"\\HEX(hex, ...) -> hex"> hex = [&](pack args) {
+    return args[0];
+  };
+  def<"\\BITS(hex, ...) -> ...bool">{} = [&](pack args) {
+    return args[1];
+  };
 
   return def<"o(t, ...)">{[&](arg t, va row) {
     return pp::call(pp::cat(utl::slice(hex, -3), t), row);

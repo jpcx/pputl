@@ -42,7 +42,9 @@ decltype(band) band = NIFTY_DEF(band, [&](va args) {
   tests << band(int_min_s, ("0x" + utl::cat(samp::hmax))) = int_min_s >> docs;
 
   if constexpr (conf::word_size > 1) {
-    def<"x(...)"> x = [&](va args) { return args; };
+    def<"x(...)"> x = [&](va args) {
+      return args;
+    };
 
     def<"r(...)"> r = [&](va args) {
       def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")

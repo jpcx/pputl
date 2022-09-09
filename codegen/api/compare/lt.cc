@@ -68,10 +68,18 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
     return def<"o(...)">{[&](va args) {
       def o = def{"<o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
                   + ")"} = [&](pack args) {
-        def<"\\00(...)"> _00 = [&](va args) { return impl::lt_ucmp(args); };
-        def<"\\01(...)">{}   = [&](va) { return "0"; };
-        def<"\\10(...)">{}   = [&](va) { return "1"; };
-        def<"\\11(...)">{}   = [&](va args) { return impl::lt_ucmp(args); };
+        def<"\\00(...)"> _00 = [&](va args) {
+          return impl::lt_ucmp(args);
+        };
+        def<"\\01(...)">{} = [&](va) {
+          return "0";
+        };
+        def<"\\10(...)">{} = [&](va) {
+          return "1";
+        };
+        def<"\\11(...)">{} = [&](va args) {
+          return impl::lt_ucmp(args);
+        };
 
         return pp::call(
             xcat(utl::slice(_00, -2),
@@ -86,12 +94,18 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
 
   def<"signof(word)"> signof = [&](arg word) {
     def<"\\0(atom)"> _0 = [&](arg atom) {
-      def<"<\\01"> _01 = [&] { return "U"; };
-      def<"<\\10">{}   = [&] { return "I"; };
+      def<"<\\01"> _01 = [&] {
+        return "U";
+      };
+      def<"<\\10">{} = [&] {
+        return "I";
+      };
       return xcat(utl::slice(_01, -2),
                   xcat(detail::is_int_o(atom), detail::is_uint_o(atom)));
     };
-    def<"\\1(tup)">{} = [&](arg) { return "U"; };
+    def<"\\1(tup)">{} = [&](arg) {
+      return "U";
+    };
     return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
   };
 
@@ -100,8 +114,12 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
         def<"\\II(e, l, r)"> intint = [&](arg, arg l, arg r) {
           return icmp(esc + " " + utup(l), esc + " " + utup(r));
         };
-        def<"\\IU(e, l, r)">{} = [&](arg e, arg, arg) { return fail(e); };
-        def<"\\UI(e, l, r)">{} = [&](arg e, arg, arg) { return fail(e); };
+        def<"\\IU(e, l, r)">{} = [&](arg e, arg, arg) {
+          return fail(e);
+        };
+        def<"\\UI(e, l, r)">{} = [&](arg e, arg, arg) {
+          return fail(e);
+        };
         def<"\\UU(e, l, r)">{} = [&](arg, arg l, arg r) {
           return impl::lt(utup(l), utup(r));
         };

@@ -58,7 +58,9 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
   }
   tests << is_size(pp::tup(samp::h8)) = "1" >> docs;
 
-  def<"x(...)"> x = [&](va args) { return args; };
+  def<"x(...)"> x = [&](va args) {
+    return args;
+  };
 
   auto utparams = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : utparams)
@@ -74,8 +76,10 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
   detail::is_size_o = def{"o(obj)"} = [&](arg obj) {
     if constexpr (size_lt_max) {
       def<"\\0(atom)"> _0 = [&](arg atom) {
-        def<"\\0000(atom)"> _0000 = [&](arg) { return "0"; };
-        def<"\\0001(uhex)">{}     = [&](arg uhex) {
+        def<"\\0000(atom)"> _0000 = [&](arg) {
+          return "0";
+        };
+        def<"\\0001(uhex)">{} = [&](arg uhex) {
           return impl::udec(impl::uhex(uhex, "UDEC"), "USIZE");
         };
         def<"\\0010(udec)">{} = [&](arg udec) { //
@@ -96,7 +100,9 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
       };
 
       def<"\\1(tup)">{} = [&](arg tup) {
-        def<"\\0(tup)"> _0 = [&](arg) { return "0"; };
+        def<"\\0(tup)"> _0 = [&](arg) {
+          return "0";
+        };
         def<"\\1(utup)">{} = [&](arg utup) {
           return impl::udec(impl::uhex(x(ut_hex + " " + utup), "UDEC"), "USIZE");
         };
@@ -109,8 +115,14 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     }
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_size_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_size_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });

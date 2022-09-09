@@ -49,8 +49,12 @@ decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
        << " " + enum_ + "(FOO_, GOOD) // GOOD"
        << " " + enum_ + "(FOO_, ,,,)  // <fail>";
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, enum)">{} = [](arg, arg enum_) { return enum_; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, enum)">{} = [](arg, arg enum_) {
+    return enum_;
+  };
 
   return def<"o(e, chk, v)">{[&](arg e, arg chk, arg v) {
     return def<"<o(e, chkatom, vatom)">{[&](arg e, arg chkatom, arg vatom) {

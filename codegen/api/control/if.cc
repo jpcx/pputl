@@ -39,8 +39,12 @@ decltype(if_) if_ = NIFTY_DEF(if_, [&](va args) {
   tests << if_(1, "t, f") = "t" >> docs;
   tests << if_(0, "t, f") = "f" >> docs;
 
-  def<"\\0(_, t, ...)"> _0 = [&](arg, arg, va f) { return any(f); };
-  def<"\\1(_, t, ...)">{}  = [&](arg, arg t, va) { return t; };
+  def<"\\0(_, t, ...)"> _0 = [&](arg, arg, va f) {
+    return any(f);
+  };
+  def<"\\1(_, t, ...)">{} = [&](arg, arg t, va) {
+    return t;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), bool_(first(args))), args);
 });

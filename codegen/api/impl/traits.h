@@ -57,9 +57,9 @@ extern codegen::def<"nybl(v, t: enum<0000|0001|...|1110|1111>, enum<HEX|BITS>)">
 extern std::conditional_t<
     (codegen::conf::word_size > 2 and codegen::conf::cpp20_arglimit),
     codegen::def<
-        "udec(v, t: enum<0u|1u|...>, enum<UHEX|ISIZE|USIZE|IIDX|UIDX|LOG2|SQRT|FACT>)">,
+        "udec(v, t: enum<0u|1u|...>, enum<UHEX|ISIZE|USIZE|IOFS|UOFS|LOG2|SQRT|FACT>)">,
     codegen::def<
-        "udec(v, t: enum<0u|1u|...>, enum<UHEX|IIDX|UIDX|LOG2|SQRT|FACT>)">> const& udec;
+        "udec(v, t: enum<0u|1u|...>, enum<UHEX|IOFS|UOFS|LOG2|SQRT|FACT>)">> const& udec;
 extern codegen::def<"uhex(v, t: enum<...>, enum<UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT>)"> const&
                                                               uhex;
 extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "

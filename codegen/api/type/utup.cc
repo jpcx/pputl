@@ -54,12 +54,16 @@ decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
   }
 
   def<"\\0(e, ...)"> _0 = [&](arg e, va some) {
-    def<"<\\0(e, ...)"> _0 = [&](arg e, va) { return fail(e); };
+    def<"<\\0(e, ...)"> _0 = [&](arg e, va) {
+      return fail(e);
+    };
 
     def<"<\\1(e, atom)">{} = [&](arg e, arg atom) {
       def<"<\\0(e, atom)"> _0 = [&](arg e, arg atom) {
-        def<"<\\0(e, atom)"> _0 = [&](arg e, arg) { return fail(e); };
-        def<"<\\1(e, uint)">{}  = [&](arg, arg uint) {
+        def<"<\\0(e, atom)"> _0 = [&](arg e, arg) {
+          return fail(e);
+        };
+        def<"<\\1(e, uint)">{} = [&](arg, arg uint) {
           return impl::uhex(uhex(uint), "UTUP");
         };
         return pp::call(xcat(utl::slice(_0, -1), detail::is_uint_o(atom)), e, atom);
@@ -75,7 +79,9 @@ decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
     return pp::call(xcat(utl::slice(_0, -1), is_atom(some)), e, some);
   };
 
-  def<"\\1(e, ...)">{} = [](arg, va word) { return word; };
+  def<"\\1(e, ...)">{} = [](arg, va word) {
+    return word;
+  };
 
   return def<"o(e, obj)">{[&](arg e, arg obj) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(obj)), e, obj);

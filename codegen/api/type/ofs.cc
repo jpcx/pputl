@@ -31,7 +31,7 @@ namespace api {
 
 using namespace codegen;
 
-decltype(idx) idx = NIFTY_DEF(idx, [&](va args) {
+decltype(ofs) ofs = NIFTY_DEF(ofs, [&](va args) {
   docs << "[inherits from " + word + "] any word whose absolute value is a valid size."
        << "constructibe from any word type."
        << ""
@@ -48,19 +48,22 @@ decltype(idx) idx = NIFTY_DEF(idx, [&](va args) {
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
-  tests << idx(0)                           = "0" >> docs;
-  tests << idx(1)                           = "1" >> docs;
-  tests << idx("0x" + utl::cat(samp::h7))   = ("0x" + utl::cat(samp::h7)) >> docs;
-  tests << idx("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << idx(conf::size_max - 1)          = std::to_string(conf::size_max - 1) >> docs;
+  tests << ofs(0)                           = "0" >> docs;
+  tests << ofs(1)                           = "1" >> docs;
+  tests << ofs("0x" + utl::cat(samp::h7))   = ("0x" + utl::cat(samp::h7)) >> docs;
+  tests << ofs("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << ofs(conf::size_max - 1)          = std::to_string(conf::size_max - 1) >> docs;
 
   return def<"o(e, w)">{[&](arg e, arg w) {
-    def<"\\0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };
-    def<"\\1(e, w)">{}  = [&](arg, arg w) { return w; };
+    def<"\\0(e, w)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, w)">{} = [&](arg, arg w) {
+      return w;
+    };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_idx_o(w)), e, w);
-  }}(error(idx, "invalid idx; must be within [max(int_min, -size_max), size_max)", args),
-     word(args));
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_ofs_o(w)), e, w);
+  }}(error(ofs, "invalid ofs; absolute value must be a valid size", args), word(args));
 });
 
 } // namespace api

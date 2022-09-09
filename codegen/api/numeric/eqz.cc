@@ -48,7 +48,9 @@ decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
   tests << eqz(uint_max_s)                        = "0" >> docs;
   tests << eqz(int_min_s)                         = "0" >> docs;
 
-  detail::eqz_0u = def{"\\0u"} = [&] { return ""; };
+  detail::eqz_0u = def{"\\0u"} = [&] {
+    return "";
+  };
 
   return is_none(xcat(utl::slice(detail::eqz_0u, -2), udec(args)));
 });

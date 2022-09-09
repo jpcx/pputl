@@ -45,7 +45,9 @@ decltype(sqrt) sqrt = NIFTY_DEF(sqrt, [&](va args) {
   def<"\\0(e, n)"> _0 = [&](arg, arg n) {
     return word(impl::udec(udec(n), "SQRT"), typeof(n));
   };
-  def<"\\1(e, n)">{} = [&](arg e, arg) { return fail(e); };
+  def<"\\1(e, n)">{} = [&](arg e, arg) {
+    return fail(e);
+  };
 
   return pp::call(
       xcat(utl::slice(_0, -1), ltz(args)),

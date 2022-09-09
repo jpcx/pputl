@@ -38,8 +38,12 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
   tests << any()      = "" >> docs;
   tests << any("foo") = "foo" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, obj)">{} = [](arg, arg obj) {
+    return obj;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
                   error(any, "any cannot describe multiple args", args), args);

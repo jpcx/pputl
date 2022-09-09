@@ -55,8 +55,12 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
   tests << size(size_max_s)                = size_max_s >> docs;
 
   return def<"o(e, w)">{[&](arg e, arg w) {
-    def<"\\0(e, w)"> _0 = [&](arg e, arg) { return fail(e); };
-    def<"\\1(e, w)">{}  = [&](arg, arg w) { return w; };
+    def<"\\0(e, w)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, w)">{} = [&](arg, arg w) {
+      return w;
+    };
 
     return pp::call(xcat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
   }}(str(pp::str("[" + size + "] invalid size; must be within 0 and " + size_max + " ("
