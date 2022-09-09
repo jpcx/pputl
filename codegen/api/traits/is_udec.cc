@@ -31,14 +31,10 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_udec_o) is_udec_o = NIFTY_DEF(is_udec_o);
-}
-
 decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
-  docs << "[extends " + is_uint
-              + "] detects if args is an unsigned int in deicmal form (requires 'u' "
-                "suffix).";
+  docs << "[extends " + is_enum + "] detects if args is an enum<0u|1u|...|"
+              + std::to_string(conf::uint_max - 1) + "u|" + std::to_string(conf::uint_max)
+              + "u>.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -51,16 +47,7 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   tests << is_udec(max)            = "0" >> docs;
   tests << is_udec("(), ()")       = "0" >> docs;
 
-  detail::is_udec_o = def{"o(uint)"} = [&](arg uint) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\1">{}  = [&] { return "1"; };
-    return xcat(utl::slice(_0, -1), impl::udec(uint, "IS"));
-  };
-
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_udec_o; };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_uint(args)), args);
+  return detail::is_enum_o(impl::udec_prefix, args);
 });
 
 } // namespace api

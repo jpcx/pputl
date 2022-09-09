@@ -32,10 +32,10 @@ namespace api {
 using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
-  docs << "[inherits from " + obj + "] a union of int|uint|utup."
+  docs << "[union " + int_ + "|" + uint + "] any defined integer representation."
        << "constructibe from any word type."
        << ""
-       << "cannot parse negative decimals; use math.neg instead."
+       << "cannot parse negative decimals; use numeric.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
        << "cast modes:"
@@ -145,30 +145,66 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   tests << uint(pp::tup(samp::hmin), "UHEX") =
       ("0x" + utl::cat(samp::hmin) + "u") >> docs;
 
-  def<"hint_\\IDEC"> hint_idec = [&] { return ""; };
-  def<"hint_\\IHEX">{}         = [&] { return ""; };
-  def<"hint_\\UDEC">{}         = [&] { return ""; };
-  def<"hint_\\UHEX">{}         = [&] { return ""; };
-  def<"hint_\\UTUP">{}         = [&] { return ""; };
-  def<"hint_\\AUTO">{}         = [&] { return ""; };
+  def<"hint_\\IDEC"> hint_idec = [&] {
+    return "";
+  };
+  def<"hint_\\IHEX">{} = [&] {
+    return "";
+  };
+  def<"hint_\\UDEC">{} = [&] {
+    return "";
+  };
+  def<"hint_\\UHEX">{} = [&] {
+    return "";
+  };
+  def<"hint_\\UTUP">{} = [&] {
+    return "";
+  };
+  def<"hint_\\AUTO">{} = [&] {
+    return "";
+  };
 
   def<"mode(e, t, hint)"> mode = [&](arg e, arg t, arg hint) {
     docs << "cast mode selector and error detector";
 
-    def<"\\IDEC"> idec_ = [&] { return ""; };
-    def<"\\IHEX">{}     = [&] { return ""; };
-    def<"\\UDEC">{}     = [&] { return ""; };
-    def<"\\UHEX">{}     = [&] { return ""; };
-    def<"\\UTUP">{}     = [&] { return ""; };
+    def<"\\IDEC"> idec_ = [&] {
+      return "";
+    };
+    def<"\\IHEX">{} = [&] {
+      return "";
+    };
+    def<"\\UDEC">{} = [&] {
+      return "";
+    };
+    def<"\\UHEX">{} = [&] {
+      return "";
+    };
+    def<"\\UTUP">{} = [&] {
+      return "";
+    };
 
-    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) { return fail(e); };
-    def<"\\1(e, t, hint)">{}  = [&](arg, arg t, arg hint) {
-      def<"\\IDEC(t)"> idec_ = [&](arg) { return "IDEC"; };
-      def<"\\IHEX(t)">{}     = [&](arg) { return "IHEX"; };
-      def<"\\UDEC(t)">{}     = [&](arg) { return "UDEC"; };
-      def<"\\UHEX(t)">{}     = [&](arg) { return "UHEX"; };
-      def<"\\UTUP(t)">{}     = [&](arg) { return "UTUP"; };
-      def<"\\AUTO(t)">{}     = [&](arg t) { return t; };
+    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, t, hint)">{} = [&](arg, arg t, arg hint) {
+      def<"\\IDEC(t)"> idec_ = [&](arg) {
+        return "IDEC";
+      };
+      def<"\\IHEX(t)">{} = [&](arg) {
+        return "IHEX";
+      };
+      def<"\\UDEC(t)">{} = [&](arg) {
+        return "UDEC";
+      };
+      def<"\\UHEX(t)">{} = [&](arg) {
+        return "UHEX";
+      };
+      def<"\\UTUP(t)">{} = [&](arg) {
+        return "UTUP";
+      };
+      def<"\\AUTO(t)">{} = [&](arg t) {
+        return t;
+      };
 
       return pp::call(pp::cat(utl::slice(idec_, -4), hint), t);
     };
@@ -183,11 +219,21 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
       v = "_" + v;
     }
 
-  def<"\\IDEC(word)"> idec = [&](arg word) { return int_(word, "IDEC"); };
-  def<"\\IHEX(word)">{}    = [&](arg word) { return int_(word, "IHEX"); };
-  def<"\\UDEC(word)">{}    = [&](arg word) { return uint(word, "UDEC"); };
-  def<"\\UHEX(word)">{}    = [&](arg word) { return uint(word, "UHEX"); };
-  def<"\\UTUP(word)">{}    = [&](arg word) { return utup(word); };
+  def<"\\IDEC(word)"> idec = [&](arg word) {
+    return int_(word, "IDEC");
+  };
+  def<"\\IHEX(word)">{} = [&](arg word) {
+    return ihex(word);
+  };
+  def<"\\UDEC(word)">{} = [&](arg word) {
+    return udec(word);
+  };
+  def<"\\UHEX(word)">{} = [&](arg word) {
+    return uhex(word);
+  };
+  def<"\\UTUP(word)">{} = [&](arg word) {
+    return utup(word);
+  };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
     return pp::call(xcat(utl::slice(idec, -4),

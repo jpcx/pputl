@@ -41,8 +41,12 @@ decltype(abs) abs = NIFTY_DEF(abs, [&](va args) {
   tests << abs(neg(1))  = ("0x" + utl::cat(samp::h1)) >> docs;
   tests << abs(neg(15)) = ("0x" + utl::cat(samp::h15)) >> docs;
 
-  def<"\\0(n)"> _0 = [&](arg n) { return n; };
-  def<"\\1(n)">{}  = [&](arg n) { return neg(n); };
+  def<"\\0(n)"> _0 = [&](arg n) {
+    return n;
+  };
+  def<"\\1(n)">{} = [&](arg n) {
+    return neg(n);
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), ltz(args)), args);
 });

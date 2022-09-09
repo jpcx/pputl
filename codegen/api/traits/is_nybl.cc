@@ -31,12 +31,9 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_nybl_o) is_nybl_o = NIFTY_DEF(is_nybl_o);
-}
-
 decltype(is_nybl) is_nybl = NIFTY_DEF(is_nybl, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args is a 4-bit bool concatenation.";
+  docs << "[extends " + is_enum
+              + "] detects if args is an enum<0000|0001|...|1110|1111>.";
 
   tests << is_nybl()       = "0" >> docs;
   tests << is_nybl(0)      = "0" >> docs;
@@ -45,12 +42,7 @@ decltype(is_nybl) is_nybl = NIFTY_DEF(is_nybl, [&](va args) {
   tests << is_nybl("0000") = "1" >> docs;
   tests << is_nybl("0110") = "1" >> docs;
 
-  detail::is_nybl_o = def{"o(atom)"} = [&](arg atom) { return impl::nybl(atom, "IS"); };
-
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_nybl_o; };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+  return detail::is_enum_o(impl::nybl_prefix, args);
 });
 
 } // namespace api

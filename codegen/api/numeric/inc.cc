@@ -46,37 +46,7 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
     tests << inc("15u") = "0u" >> docs;
   }
 
-  constexpr auto sz = conf::word_size;
-
-  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz), ", ");
-
-  def<"x(...)"> x = [&](va args) { return args; };
-
-  def<"r(...)"> r = [&](va args) {
-    def o = def{"o(" + p + ")"} = [&](pack v) {
-      return utl::cat(
-          std::array{
-              impl::hex(v[sz], pp::cat("INC", v[0])),
-              utl::cat(svect{&v[1], &v[sz]}, ", "),
-          },
-          ", ");
-    };
-    return o(args);
-  };
-
-  def<"res(t, ...)"> res = [&](arg t, va args) {
-    def o = def{"o(" + p + ")"} = [&](pack v) {
-      return pp::tup(svect{&v[1], &v[sz + 1]});
-    };
-
-    return word(o(args), t);
-  };
-
-  return def<"o(v)">{[&](arg v) {
-    auto rlp = utl::cat(svect{conf::word_size, r + "("});
-    auto rrp = utl::cat(svect{conf::word_size, ")"});
-    return res(typeof(v), rlp + "1, " + x(esc + " " + utup(v)) + rrp);
-  }}(args);
+  return word(impl::inc(utup(args)), typeof(args));
 });
 
 } // namespace api

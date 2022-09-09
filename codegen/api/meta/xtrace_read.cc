@@ -44,10 +44,16 @@ decltype(xtrace_read) xtrace_read = NIFTY_DEF(xtrace_read, [&](va args) {
   tests << xtrace_read(x(x(x(xtrace))))                     = "3u" >> docs;
   tests << xtrace_read(xtrace_expected(conf::size_max - 1)) = size_max_s;
 
-  def detect_a = def{"detect_\\" + detail::xtrace_a + "(...)"} = [&] { return ""; };
-  def{"detect_\\" + detail::xtrace_b + "(...)"}                = [&] { return ""; };
+  def detect_a = def{"detect_\\" + detail::xtrace_a + "(...)"} = [&] {
+    return "";
+  };
+  def{"detect_\\" + detail::xtrace_b + "(...)"} = [&] {
+    return "";
+  };
 
-  def<"res(_, ...)"> res = [&](arg, va args) { return sizeof_(args); };
+  def<"res(_, ...)"> res = [&](arg, va args) {
+    return countof(args);
+  };
 
   def a = def{"\\" + detail::xtrace_a + "(_, ...)"} = [&](arg, va args) {
     return res(args + ".");
@@ -56,8 +62,10 @@ decltype(xtrace_read) xtrace_read = NIFTY_DEF(xtrace_read, [&](va args) {
     return res(args + ".");
   };
 
-  def<"\\0(err, ...)"> _0 = [&](arg err, va) { return fail(err); };
-  def<"\\1(err, ...)">{}  = [&](arg, va args) {
+  def<"\\0(err, ...)"> _0 = [&](arg err, va) {
+    return fail(err);
+  };
+  def<"\\1(err, ...)">{} = [&](arg, va args) {
     return pp::cat(utl::slice(a, -((std::string const&)detail::xtrace_a).size()), args);
   };
 

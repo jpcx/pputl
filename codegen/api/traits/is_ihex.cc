@@ -25,6 +25,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include "codegen.h"
 #include "traits.h"
 
 namespace api {
@@ -36,9 +37,10 @@ decltype(is_ihex_o) is_ihex_o = NIFTY_DEF(is_ihex_o);
 }
 
 decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
-  docs << "[extends " + is_int + "] detects if args is a signed int in hex form."
-       << "hex length is fixed at " + word_size + " (" + std::to_string(conf::word_size)
-              + ").";
+  docs << "[extends " + is_enum + "] detects if args is an enum<0x" + utl::cat(samp::hmin)
+              + "|" + "0x" + utl::cat(samp::h1) + "|...|" + "0x"
+              + utl::cat(svect{conf::word_size - 1, "F"}) + "E|" + "0x"
+              + utl::cat(samp::hmax) + ">.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -50,17 +52,20 @@ decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
   tests << is_ihex(max + "u") = "0" >> docs;
   tests << is_ihex("(), ()")  = "0" >> docs;
 
-  detail::is_ihex_o = def{"o(int)"} = [&](arg int_) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\1">{}  = [&] { return "1"; };
-
-    return xcat(utl::slice(_0, -1), impl::uhex(pp::cat(int_, 'u'), "IS"));
+  detail::is_ihex_o = def{"o(atom)"} = [&](arg atom) {
+    return detail::is_enum_oo(impl::uhex_prefix, pp::cat(atom, 'u'));
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_ihex_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_ihex_o;
+  };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

@@ -45,8 +45,12 @@ decltype(prime) prime = NIFTY_DEF(prime, [&](va args) {
   tests << prime(conf::int_max / 2 + 1)                        = "0" >> docs;
   tests << prime(std::to_string(conf::uint_max / 2 + 1) + "u") = "0" >> docs;
 
-  def<"\\0(n)"> _0 = [&](arg n) { return is_none(impl::udec(udec(n), "FACT")); };
-  def<"\\1(n)">{}  = [&](arg) { return "0"; };
+  def<"\\0(n)"> _0 = [&](arg n) {
+    return is_none(impl::udec(udec(n), "FACT"));
+  };
+  def<"\\1(n)">{} = [&](arg) {
+    return "0";
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), lez(dec(args))), args);
 });

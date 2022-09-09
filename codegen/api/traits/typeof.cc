@@ -43,8 +43,10 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << "  | LIST | NONE | UTUP | TUP  | IDEC | IHEX"
-       << "  | UDEC | UHEX | HEX  | NYBL | ATOM";
+       << " | NONE   | LIST | TUP   | UTUP"
+       << " | MAP    | SET  | STACK | QUEUE"
+       << " | PQUEUE | ATOM | HEX   | NYBL"
+       << " | IDEC   | IHEX | UDEC  | UHEX";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -68,137 +70,125 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof(pp::tup(
       utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "UTUP" >> docs;
   tests << typeof()                                                    = "NONE" >> docs;
+  tests << typeof(fwd::map + "()")                                     = "MAP" >> docs;
+  tests << typeof(fwd::set + "()")                                     = "SET" >> docs;
+  tests << typeof(fwd::stack + "()")                                   = "STACK" >> docs;
+  tests << typeof(fwd::queue + "()")                                   = "QUEUE" >> docs;
+  tests << typeof(fwd::pqueue + "()")                                  = "PQUEUE" >> docs;
 
-  // !any
-  def<"\\0(...)"> _0 = [&](va) {
-    docs << "^!any";
-    return "LIST";
-  };
+  // !none
+  def<"\\0(...)"> _0 = [&](va args) {
+    docs << "^!none";
 
-  // any
-  def<"\\1(any)">{} = [&](arg any) {
-    docs << "^!any";
+    // !none → !obj
+    def<"\\0(...)"> _0 = [&](va) {
+      docs << "^!none → !obj";
+      return "LIST";
+    };
 
-    // !none
-    def<"<\\0(obj)"> _0 = [&](arg obj) {
-      docs << "^!any → !none";
+    // !none → obj
+    def<"\\1(obj)">{} = [&](arg obj) {
+      docs << "^!none → obj";
 
-      // !tup
-      def<"<\\0(atom)"> _0 = [&](arg atom_) {
-        docs << "^!any → !none → !tup";
+      // !none → obj → !tup
+      def<"\\0(obj)"> _0 = [&](arg obj) {
+        docs << "^!none → obj → !tup";
 
-        // !int
-        def<"<\\0(atom)"> _0 = [&](arg atom_) {
-          docs << "^!any → !none → !tup → !int";
+        def<"\\00000(atom)"> _00000 = [&](arg atom) {
+          docs << "^!none → obj → !tup → !(map|set|stack|queue|pqueue)";
 
-          // !uint
-          def<"<\\0(atom)"> _0 = [&](arg atom_) {
-            docs << "^!any → !none → !tup → !int → !uint";
-
-            // !hex
-            def<"<\\0(atom)"> _0 = [&](arg atom_) {
-              docs << "^!any → !none → !tup → !int → !uint → !hex";
-
-              // !nybl
-              def<"<\\0(atom)"> _0 = [&](arg) {
-                docs << "^!any → !none → !tup → !int → !uint → !hex → !nybl";
-                return "ATOM";
-              };
-
-              // nybl
-              def<"<1(nybl)">{} = [&](arg) {
-                docs << "^!any → !none → !tup → !int → !uint → !hex → nybl";
-                return "NYBL";
-              };
-
-              return pp::call(xcat(utl::slice(_0, -1), is_nybl(atom_)), atom_);
-            };
-
-            // hex
-            def<"<1(hex)">{} = [&](arg) {
-              docs << "^!any → !none → !tup → !int → !uint → hex";
-              return "HEX";
-            };
-
-            return pp::call(xcat(utl::slice(_0, -1), is_hex(atom_)), atom_);
-          };
-
-          // uint
-          def<"<1(uint)">{} = [&](arg uint) {
-            docs << "^!any → !none → !tup → !int → uint";
-
-            // !udec
-            def<"<\\0(uhex)"> _0 = [&](arg) {
-              docs << "^!any → !none → !tup → !int → uint → !udec";
-              return "UHEX";
-            };
-
-            // udec
-            def<"<1(udec)">{} = [&](arg) {
-              docs << "^!any → !none → !tup → !int → uint → udec";
-              return "UDEC";
-            };
-
-            return pp::call(xcat(utl::slice(_0, -1), detail::is_udec_o(uint)), uint);
-          };
-
-          return pp::call(xcat(utl::slice(_0, -1), detail::is_uint_o(atom_)), atom_);
-        };
-
-        // int
-        def<"<1(int)">{} = [&](arg int_) {
-          docs << "^!any → !none → !tup → int";
-
-          // !idec
-          def<"<\\0(ihex)"> _0 = [&](arg) {
-            docs << "^!any → !none → !tup → int → !idec";
+          def<"\\000000"> _000000 = [&] {
+            return "ATOM";
+          }; // no match
+          def<"\\000001">{} = [&] {
+            return "UHEX";
+          }; // uhex
+          def<"\\000010">{} = [&] {
+            return "UDEC";
+          }; // udec
+          def<"\\000100">{} = [&] {
             return "IHEX";
-          };
-
-          // idec
-          def<"<1(idec)">{} = [&](arg) {
-            docs << "^!any → !none → !tup → int → idec";
+          }; // ihex
+          def<"\\001000">{} = [&] {
             return "IDEC";
-          };
+          }; // hex|bool|idec
+          def<"\\010000">{} = [&] {
+            return "NYBL";
+          }; // nybl
+          if constexpr (conf::int_max >= 1000)
+            def<"\\011000">{} = [&] {
+              return "IDEC";
+            }; // nybl&idec
+          def<"\\100000">{} = [&] {
+            return "HEX";
+          }; // hex
+          def<"\\101000">{} = [&] {
+            return "IDEC";
+          }; // hex&idec
 
-          return pp::call(xcat(utl::slice(_0, -1), detail::is_idec_o(int_)), int_);
+          return xcat(xcat(utl::slice(_000000, -6), xcat(is_hex(atom), is_nybl(atom))),
+                      xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
+                           xcat(is_udec(atom), is_uhex(atom))));
         };
 
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom_)), atom_);
+        def<"\\00001(mem)">{} = [&](arg) {
+          return "PQUEUE";
+        };
+
+        def<"\\00010(mem)">{} = [&](arg) {
+          return "QUEUE";
+        };
+
+        def<"\\00100(mem)">{} = [&](arg) {
+          return "STACK";
+        };
+
+        def<"\\01000(mem)">{} = [&](arg) {
+          return "SET";
+        };
+
+        def<"\\10000(mem)">{} = [&](arg) {
+          return "MAP";
+        };
+
+        return pp::call(xcat(xcat(xcat(utl::slice(_00000, -5), detail::is_map_oo(obj)),
+                                  xcat(detail::is_set_oo(obj), detail::is_stack_oo(obj))),
+                             xcat(detail::is_queue_oo(obj), detail::is_pqueue_oo(obj))),
+                        obj);
       };
 
-      // tup
-      def<"<1(tup)">{} = [&](arg tup_) {
-        docs << "^!any → !none → tup";
+      // !none → obj → tup
+      def<"\\1(tup)">{} = [&](arg tup) {
+        docs << "^!none → obj → tup";
 
-        // !utup
-        def<"<\\0(tup)"> _0 = [&](arg) {
-          docs << "^!any → !none → tup → !utup";
+        // !none → obj → !atom → !utup
+        def<"\\0(tup)"> _0 = [&](arg) {
+          docs << "^!none → obj → tup → !utup";
           return "TUP";
         };
 
-        // utup
-        def<"<1(utup)">{} = [&](arg) {
-          docs << "^!any → !none → tup → utup";
+        // !none → obj → !atom → utup
+        def<"\\1(utup)">{} = [&](arg) {
+          docs << "^!none → obj → tup → utup";
           return "UTUP";
         };
 
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup_)), tup_);
+        return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), tup);
       };
 
       return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
     };
 
-    // none
-    def<"<1(...)">{} = [&](va) {
-      docs << "^!any → none";
-      return "NONE";
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), is_none(any)), any);
+    return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")), args);
+  // none
+  def<"\\1(...)">{} = [&](va) {
+    docs << "^none";
+    return "NONE";
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
 });
 
 } // namespace api

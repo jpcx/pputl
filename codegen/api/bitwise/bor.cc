@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bor) bor = NIFTY_DEF(bor, [&](va args) {
-  docs << "bitwise OR operation."
+  docs << "bitwise OR."
        << "" << impl::arith_rules;
 
   tests << bor(0, 0)                 = "0" >> docs;
@@ -42,7 +42,9 @@ decltype(bor) bor = NIFTY_DEF(bor, [&](va args) {
   tests << bor(int_min_s, int_max_s) = ("0x" + utl::cat(samp::hmax)) >> docs;
 
   if constexpr (conf::word_size > 1) {
-    def<"x(...)"> x = [&](va args) { return args; };
+    def<"x(...)"> x = [&](va args) {
+      return args;
+    };
 
     def<"r(...)"> r = [&](va args) {
       def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")

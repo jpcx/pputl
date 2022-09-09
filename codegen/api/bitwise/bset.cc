@@ -33,8 +33,7 @@ using namespace codegen;
 
 decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
   docs << "sets the ith bit of the word to b, indexed from least to most significant."
-       << "i must be less than " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ").";
+       << "fails on invalid bit index.";
 
   auto zero   = std::vector<std::string>(conf::word_size, "0");
   auto two    = zero;
@@ -54,8 +53,7 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
   tests << bset("0x" + utl::cat(samp::h2), 0, 1) = ("0x" + utl::cat(samp::h3)) >> docs;
   tests << bset("0x" + utl::cat(samp::h3) + "u", 0, 0) =
       ("0x" + utl::cat(samp::h2) + "u") >> docs;
-  tests << bset(pp::tup(samp::hmax), conf::bit_length - 1, 0) =
-      pp::tup(samp::himax) >> docs;
+  tests << bset(pp::tup(samp::hmax), neg(1), 0) = pp::tup(samp::himax) >> docs;
 
   std::vector<std::string> params{"_"};
   std::ranges::copy(utl::alpha_base52_seq(conf::bit_length), std::back_inserter(params));
@@ -69,7 +67,9 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
 
   auto p0 = params;
   std::swap(p0.front(), p0.back());
-  def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) { return pp::tup(res); };
+  def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) {
+    return pp::tup(res);
+  };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
     auto pn = params;
@@ -80,21 +80,11 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
   }
 
   return def<"o(e, v, i, b)">{[&](arg e, arg v, arg i, arg b) {
-    return word(def<"<o(e, i, b, ...)">{[&](arg e, arg i, arg b, va bin) {
-                  return def<"<o(...)">{[&](va args) {
-                    return def<"<o(e, i, b, gelt, ...)">{
-                        [&](arg e, arg i, arg b, arg gelt, va args) {
-                          def<"\\0(e, ...)"> gelt0   = [&](arg e, va) { return fail(e); };
-                          def<"\\1(e, i, b, ...)">{} = [&](arg, arg i, arg b, va args) {
-                            return pp::call(pp::cat(utl::slice(_0, -1), i), b, args);
-                          };
-
-                          return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), e, i, b,
-                                          args);
-                        }}(args);
-                  }}(e, i, b, lt(i, conf::bit_length), bin);
-                }}(e, idec(i), bool_(b), bdump(v)),
-                typeof(v));
+    return word(
+        def<"<o(i, ...)">{[&](arg i, va args) {
+          return pp::call(cat(utl::slice(_0, -1), i), args);
+        }}(idec(impl::index(utup(i), is_int(i), impl::bitlen, e)), bool_(b), bdump(v)),
+        typeof(v));
   }}(str(pp::str("[" + bset + "] invalid index") + " : " + args), args);
 });
 

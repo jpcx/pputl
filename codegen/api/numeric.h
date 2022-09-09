@@ -32,6 +32,10 @@
 #include "logic.h"
 #include "traits.h"
 #include "type.h"
+//
+#include "impl/compare.h"
+#include "impl/math.h"
+#include "impl/numeric.h"
 
 namespace api {
 

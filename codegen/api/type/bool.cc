@@ -32,14 +32,17 @@ namespace api {
 using namespace codegen;
 
 decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
-  docs << "[specializes " + enum_ + "] bool type (enum<0|1>)."
-       << "expands to b if valid, else fails.";
+  docs << "[" + enum_ + "<0|1>] boolean type.";
 
   tests << bool_(0) = "0" >> docs;
   tests << bool_(1) = "1" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, bool)">{} = [](arg, arg bool_) { return bool_; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, bool)">{} = [](arg, arg bool_) {
+    return bool_;
+  };
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(xcat(utl::slice(_0, -1), is_bool(atom)), e, atom);

@@ -37,9 +37,9 @@ decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
 
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   docs << "[extends " + is_obj
-              + "] detects if args is a value that may form an identifier tail."
+              + "] detects if args is a sequence of digit|nondigit tokens."
        << ""
-       << "this function only tests for tuples and multiple values."
+       << "this function only tests for nothing, tuples, and multiple values."
        << ""
        << "while not testable, the true semantics of atom implies"
        << "that its values are able to concatenate with identifiers"
@@ -72,16 +72,34 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   tests << is_atom("(, a, )")        = "0";
   tests << is_atom("(, , a)")        = "0";
 
+  def<"fail(...)"> fail = [&](va) {
+    return "0";
+  };
+
   detail::is_atom_o = def{"o(obj)"} = [&](arg obj) {
-    def<"\\0"> _0 = [] { return "1"; };
-    def<"\\1">{}  = [] { return "0"; };
+    def<"\\0"> _0 = [] {
+      return "1";
+    };
+    def<"\\1">{} = [] {
+      return "0";
+    };
     return xcat(utl::slice(_0, -1), is_none(eat + " " + obj));
   };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_atom_o; };
+  def<"\\0(...)"> _0 = [&] {
+    return fail;
+  };
+  def<"\\01(_, ...)">{} = [&] {
+    def<"\\0"> _0 = [&] {
+      return detail::is_atom_o;
+    };
+    def<"\\01">{} = [&] {
+      return fail;
+    };
+    return pp::cat(_0, pp::va_opt(1));
+  };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+  return pp::call(pp::call(pp::cat(_0, pp::va_opt("1")), args + "."), args);
 });
 
 } // namespace api

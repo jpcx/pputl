@@ -113,6 +113,29 @@ bits(std::size_t i) {
 }
 
 inline std::string
+isize(unsigned n) {
+  return (n <= conf::int_max and n <= conf::size_max) ? "1" : "0";
+}
+
+inline std::string
+usize(unsigned n) {
+  return n <= conf::size_max ? "1" : "0";
+}
+
+inline std::string
+iofs(unsigned n) {
+  return (n <= conf::int_max ? (n <= conf::size_max)
+                             : (n > (conf::uint_max - conf::size_max)))
+           ? "1"
+           : "0";
+}
+
+inline std::string
+uofs(unsigned n) {
+  return n <= conf::size_max ? "1" : "0";
+}
+
+inline std::string
 log2(unsigned n) {
   if (n == 0)
     return "";
@@ -128,8 +151,9 @@ inline std::string
 fact(unsigned n) {
   auto                     facts = utl::prime_factors(n);
   std::vector<std::string> sfacts(facts.size());
-  std::ranges::transform(facts, std::begin(sfacts),
-                         [](auto&& v) { return std::to_string(v); });
+  std::ranges::transform(facts, std::begin(sfacts), [](auto&& v) {
+    return std::to_string(v);
+  });
   return utl::cat(sfacts, ", ");
 }
 

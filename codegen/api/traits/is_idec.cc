@@ -25,6 +25,9 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include <string>
+
+#include "codegen.h"
 #include "traits.h"
 
 namespace api {
@@ -36,9 +39,9 @@ decltype(is_idec_o) is_idec_o = NIFTY_DEF(is_idec_o);
 }
 
 decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
-  docs << "[extends " + is_int + "] detects if args is a signed int in decimal form."
-       << "decimals must be smaller than " + int_max + " (" + int_max_s + ")."
-       << "negative values must be hex; concatenation with '-' is not supported.";
+  docs << "[extends " + is_enum + "] detects if args is an enum<0|1|...|"
+              + std::to_string(conf::int_max - 1) + "|" + std::to_string(conf::int_max)
+              + ">.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -51,19 +54,36 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
   tests << is_idec(max)            = "0" >> docs;
   tests << is_idec("(), ()")       = "0" >> docs;
 
-  detail::is_idec_o = def{"o(int)"} = [&](arg int_) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\1">{}  = [&] { return "1"; };
+  detail::is_idec_o = def{"o(atom)"} = [&](arg atom) {
+    return def<"o(atom)">{[&](arg atom) {
+      def<"\\0(atom)"> _0 = [&](arg) {
+        return "0";
+      };
+      def<"\\1(udec)">{} = [&](arg udec) {
+        def<"\\0"> _0 = [&] {
+          return "1";
+        };
+        def<"\\1">{} = [&] {
+          return "0";
+        };
+        return xcat(utl::slice(_0, -1), impl::uhex(impl::udec(udec, "UHEX"), "ILTZ"));
+      };
 
-    return xcat(utl::slice(_0, -1), impl::udec(pp::cat(int_, 'u'), "IS"));
+      return pp::call(
+          xcat(utl::slice(_0, -1), detail::is_enum_oo(impl::udec_prefix, atom)), atom);
+    }}(pp::cat(atom, 'u'));
   };
 
-  def<"fail(...)"> fail = [&](va) { return "0"; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_idec_o;
+  };
 
-  def<"\\0"> _0 = [&] { return fail; };
-  def<"\\1">{}  = [&] { return detail::is_idec_o; };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

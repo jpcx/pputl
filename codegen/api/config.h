@@ -32,6 +32,8 @@ namespace api {
 
 inline codegen::category<"config"> config;
 
+// TODO: ofs_min, ofs_max
+
 inline std::string const uint_max_s{std::to_string(codegen::conf::uint_max) + "u"};
 inline std::string const int_max_s{std::to_string(codegen::conf::int_max)};
 inline std::string const int_min_s =

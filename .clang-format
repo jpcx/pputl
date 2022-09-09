@@ -14,7 +14,7 @@ AllowShortCaseLabelsOnASingleLine         : false
 AllowShortEnumsOnASingleLine              : true
 AllowShortFunctionsOnASingleLine          : None
 AllowShortIfStatementsOnASingleLine       : Never
-AllowShortLambdasOnASingleLine            : true
+AllowShortLambdasOnASingleLine            : false
 AllowShortLoopsOnASingleLine              : false
 AlwaysBreakAfterReturnType                : AllDefinitions
 AlwaysBreakBeforeMultilineStrings         : false

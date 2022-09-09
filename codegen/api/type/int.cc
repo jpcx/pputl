@@ -32,12 +32,12 @@ namespace api {
 using namespace codegen;
 
 decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
-  docs << "[inherits from " + atom + "] " + std::to_string(conf::word_size * 4)
+  docs << "[union " + idec + "|" + ihex + "] " + std::to_string(conf::word_size * 4)
               + "-bit signed integer type."
        << "constructible from any word type."
        << "instance is either idec or ihex."
        << ""
-       << "cannot parse negative decimals; use math.neg instead."
+       << "cannot parse negative decimals; use numeric.neg instead."
        << "hex length is fixed. cannot parse shorter hex lengths."
        << ""
        << "cast modes:"
@@ -98,36 +98,84 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   // utup → idec | requires IDEC hint and positive result
   tests << int_(pp::tup(samp::himax), "IDEC") = int_max_s >> docs;
 
-  def<"hint_\\IDEC"> hint_idec = [&] { return ""; };
-  def<"hint_\\IHEX">{}         = [&] { return ""; };
-  def<"hint_\\AUTO">{}         = [&] { return ""; };
+  def<"hint_\\IDEC"> hint_idec = [&] {
+    return "";
+  };
+  def<"hint_\\IHEX">{} = [&] {
+    return "";
+  };
+  def<"hint_\\AUTO">{} = [&] {
+    return "";
+  };
 
   def<"mode(e, t, hint)"> mode = [&](arg e, arg t, arg hint) {
     docs << "cast mode selector and error detector";
 
-    def<"\\IDEC"> idec_ = [&] { return ""; };
-    def<"\\IHEX">{}     = [&] { return ""; };
-    def<"\\UDEC">{}     = [&] { return ""; };
-    def<"\\UHEX">{}     = [&] { return ""; };
-    def<"\\UTUP">{}     = [&] { return ""; };
+    def<"\\IDEC"> idec_ = [&] {
+      return "";
+    };
+    def<"\\IHEX">{} = [&] {
+      return "";
+    };
+    def<"\\UDEC">{} = [&] {
+      return "";
+    };
+    def<"\\UHEX">{} = [&] {
+      return "";
+    };
+    def<"\\UTUP">{} = [&] {
+      return "";
+    };
 
-    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) { return fail(e); };
-    def<"\\1(e, t, hint)">{}  = [&](arg, arg t, arg hint) {
-      def<"\\IDECIDEC"> idecidec = [&] { return "ID_ID"; };
-      def<"\\IDECIHEX">{}        = [&] { return "ID_IH"; };
-      def<"\\IDECAUTO">{}        = [&] { return "ID_ID"; };
-      def<"\\IHEXIDEC">{}        = [&] { return "IH_IC"; };
-      def<"\\IHEXIHEX">{}        = [&] { return "IH_IH"; };
-      def<"\\IHEXAUTO">{}        = [&] { return "IH_IH"; };
-      def<"\\UDECIDEC">{}        = [&] { return "UD_IC"; };
-      def<"\\UDECIHEX">{}        = [&] { return "UD_IH"; };
-      def<"\\UDECAUTO">{}        = [&] { return "UD_IC"; };
-      def<"\\UHEXIDEC">{}        = [&] { return "UH_IC"; };
-      def<"\\UHEXIHEX">{}        = [&] { return "UH_IH"; };
-      def<"\\UHEXAUTO">{}        = [&] { return "UH_IH"; };
-      def<"\\UTUPIDEC">{}        = [&] { return "XW_IC"; };
-      def<"\\UTUPIHEX">{}        = [&] { return "XW_IH"; };
-      def<"\\UTUPAUTO">{}        = [&] { return "XW_IH"; };
+    def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) {
+      return fail(e);
+    };
+    def<"\\1(e, t, hint)">{} = [&](arg, arg t, arg hint) {
+      def<"\\IDECIDEC"> idecidec = [&] {
+        return "ID_ID";
+      };
+      def<"\\IDECIHEX">{} = [&] {
+        return "ID_IH";
+      };
+      def<"\\IDECAUTO">{} = [&] {
+        return "ID_ID";
+      };
+      def<"\\IHEXIDEC">{} = [&] {
+        return "IH_IC";
+      };
+      def<"\\IHEXIHEX">{} = [&] {
+        return "IH_IH";
+      };
+      def<"\\IHEXAUTO">{} = [&] {
+        return "IH_IH";
+      };
+      def<"\\UDECIDEC">{} = [&] {
+        return "UD_IC";
+      };
+      def<"\\UDECIHEX">{} = [&] {
+        return "UD_IH";
+      };
+      def<"\\UDECAUTO">{} = [&] {
+        return "UD_IC";
+      };
+      def<"\\UHEXIDEC">{} = [&] {
+        return "UH_IC";
+      };
+      def<"\\UHEXIHEX">{} = [&] {
+        return "UH_IH";
+      };
+      def<"\\UHEXAUTO">{} = [&] {
+        return "UH_IH";
+      };
+      def<"\\UTUPIDEC">{} = [&] {
+        return "XW_IC";
+      };
+      def<"\\UTUPIHEX">{} = [&] {
+        return "XW_IH";
+      };
+      def<"\\UTUPAUTO">{} = [&] {
+        return "XW_IH";
+      };
 
       return pp::cat(utl::slice(idecidec, -8), t, hint);
     };
@@ -142,22 +190,30 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
       v = "_" + v;
     }
 
-  def<"\\ID_ID(idec)"> id_id = [&](arg idec) { return idec; };
-  def<"\\ID_IH(idec)">{}     = [&](arg idec) {
+  def<"\\ID_ID(idec)"> id_id = [&](arg idec) {
+    return idec;
+  };
+  def<"\\ID_IH(idec)">{} = [&](arg idec) {
     return impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "IHEX");
   };
   def<"\\IH_IC(ihex)">{} = [&](arg ihex) {
     return impl::uhex(pp::cat(ihex, 'u'), "ICAST");
   };
-  def<"\\IH_IH(ihex)">{} = [&](arg ihex) { return ihex; };
+  def<"\\IH_IH(ihex)">{} = [&](arg ihex) {
+    return ihex;
+  };
   def<"\\UD_IC(udec)">{} = [&](arg udec) {
     return impl::uhex(impl::udec(udec, "UHEX"), "ICAST");
   };
   def<"\\UD_IH(udec)">{} = [&](arg udec) {
     return impl::uhex(impl::udec(udec, "UHEX"), "IHEX");
   };
-  def<"\\UH_IC(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "ICAST"); };
-  def<"\\UH_IH(uhex)">{} = [&](arg uhex) { return impl::uhex(uhex, "IHEX"); };
+  def<"\\UH_IC(uhex)">{} = [&](arg uhex) {
+    return impl::uhex(uhex, "ICAST");
+  };
+  def<"\\UH_IH(uhex)">{} = [&](arg uhex) {
+    return impl::uhex(uhex, "IHEX");
+  };
   def<"\\XW_IC(utup)">{} = [&](arg utup) {
     def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
       return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "ICAST");
@@ -176,7 +232,7 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
                          mode(e, typeof(v),
                               enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
                     v);
-  }}(str(pp::str("[" + int_ + "] invalid arguments") + " : " + args), args);
+  }}(error(int_, "invalid arguments", args), args);
 });
 
 } // namespace api

@@ -42,17 +42,14 @@ decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
   tests << ltz(int_min_s)      = "1" >> docs;
   tests << ltz(inc(int_max_s)) = "1" >> docs;
 
-  def res = def{"res(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) { //
-    return impl::hexhex(pp::cat(7, args[0]), "LT");
+  def<"0(n)"> _0 = [&](arg) {
+    return "0";
+  };
+  def<"1(n)">{} = [&](arg n) {
+    return impl::ltz(n);
   };
 
-  def<"0(word: uint|utup)"> _0 = [&](arg) { return "0"; };
-  def<"1(int)">{}              = [&](arg w) {
-    return def<"o(...)">{[&](va args) { return args; }}(res + " " + utup(w));
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), word(args));
+  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
 });
 
 } // namespace api

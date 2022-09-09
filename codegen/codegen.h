@@ -142,7 +142,7 @@ constexpr char const project_header[]{
     "//    would otherwise utilize a separate code generation script or require    //\n"
     "//    higly verbose/redundant syntax, such as comprehensive test coverage,    //\n"
     "//    struct reflection, static initialization control, or optimization of    //\n"
-    "//    algorithms that generate template specializations.                      //\n"
+    "//    template specialization algorithms.                                     //\n"
     "//                                                                            //\n"
     "//    ABOUT                                                                   //\n"
     "//    -----                                                                   //\n"
@@ -166,34 +166,48 @@ constexpr char const project_header[]{
     "//           eat  esc  first  xfirst  rest  xrest  trim                       //\n"
     "//       ‐ control flow                                    [lang, control]    //\n"
     "//           default  fail  if  switch                                        //\n"
-    "//       ‐ type casting                            [type; see TERMINOLOGY]    //\n"
-    "//           list  any   none  obj   atom  enum  bool  hex   nybl  int        //\n"
-    "//           idec  ihex  uint  udec  uhex  tup   utup  word  size             //\n"
-    "//       ‐ traits detection                                       [traits]    //\n"
-    "//           is_list  is_any   is_none  is_obj   is_atom  is_enum  is_bool    //\n"
-    "//           is_hex   is_nybl  is_int   is_idec  is_ihex  is_uint  is_udec    //\n"
-    "//           is_uhex  is_tup   is_utup  is_word  is_size  typeof   sizeof     //\n"
+    "//       ‐ type casting                                             [type]    //\n"
+    "//           list   none   obj     atom  enum  bool  hex                      //\n"
+    "//           nybl   idec   ihex    udec  uhex  int   tup                      //\n"
+    "//           utup   uint   word    size  ofs   map   set                      //\n"
+    "//           stack  queue  pqueue  any                                        //\n"
+    "//       ‐ type traits                                      [traits, data]    //\n"
+    "//           is_list    is_none  is_obj   is_atom  is_enum   is_bool          //\n"
+    "//           is_hex     is_nybl  is_idec  is_ihex  is_udec   is_uhex          //\n"
+    "//           is_int     is_tup   is_utup  is_uint  is_word   is_size          //\n"
+    "//           is_ofs     is_any   is_map   is_set   is_stack  is_queue         //\n"
+    "//           is_pqueue  typeof   countof  sizeof   is_empty                   //\n"
     "//       ‐ boolean logic                                           [logic]    //\n"
     "//           not  and  or  xor  nand  nor  xnor                               //\n"
     "//       ‐ paste formatting                                    [lang, fmt]    //\n"
-    "//           str  xstr  cat  xcat  c_int  c_hex  c_bin                        //\n"
+    "//           str  xstr  cat  xcat  c_int  c_bin                               //\n"
     "//     ◆ signed and unsigned integers                                         //\n"
     "//       ‐ arithmetic                                      [numeric, math]    //\n"
-    "//           inc    dec  neg  abs  log2  sqrt  fact                           //\n"
-    "//           prime  add  sub  mul  divr  div   rem                            //\n"
+    "//           inc  dec  neg  abs   log2  sqrt  fact  prime                     //\n"
+    "//           add  sub  mul  divr  div   rem   index                           //\n"
     "//       ‐ comparison                                   [numeric, compare]    //\n"
     "//           eqz  nez  ltz  gtz  lez  gez  lt                                 //\n"
     "//           gt   le   ge   eq   ne   min  max                                //\n"
     "//       ‐ bitwise operations                                    [bitwise]    //\n"
-    "//           bdump  bsll  bsrl   bsra  bnot  band   bor    bxor               //\n"
-    "//           bnand  bnor  bxnor  bget  bset  bflip  brotl  brotr              //\n"
-    "//     ◆ range algorithms                                                     //\n"
-    "//       ‐ element access                                          [range]    //\n"
-    "//           items  bisect  unite  get  set  push  pop  slice                 //\n"
+    "//           bitdump  bitsll   bitsrl   bitsra   bitnot   bitand              //\n"
+    "//           bitor    bitxor   bitnand  bitnor   bitxnor  bitget              //\n"
+    "//           bitset   bitflip  bitrotl  bitrotr                               //\n"
+    "//     ◆ datastructures and algorithms                                        //\n"
+    "//       ‐ tuple manipulation                                        [tup]    //\n"
+    "//           tup_items  tup_bisect  tup_unite   tup_head                      //\n"
+    "//           tup_tail   tup_lpush   tup_rpush   tup_lpop                      //\n"
+    "//           tup_rpop   tup_get     tup_set     tup_front                     //\n"
+    "//           tup_back   tup_slice   tup_splice  tup_insert                    //\n"
+    "//       ‐ specialized data storage                                 [data]    //\n"
+    "//           map_items    map_has      map_get     map_set                    //\n"
+    "//           map_del      set_items    set_has     set_add                    //\n"
+    "//           set_del      stack_items  stack_push  stack_pop                  //\n"
+    "//           queue_items  queue_push   queue_pop   pqueue_items               //\n"
+    "//           pqueue_push  pqueue_pop                                          //\n"
     "//       ‐ generation                                               [algo]    //\n"
     "//           seq  repeat  gen_lp  gen_rp                                      //\n"
     "//       ‐ transformation                                           [algo]    //\n"
-    "//           rev  map_lp  map_rp  shift  rotate                               //\n"
+    "//           rev  transform_lp  transform_rp  shift  rotate                   //\n"
     "//       ‐ reduction                                                [algo]    //\n"
     "//           reduce_lp  reduce_rp                                             //\n"
     "//     ◆ metaprogramming utilities                                            //\n"
@@ -205,7 +219,7 @@ constexpr char const project_header[]{
     "//           recur_lp  recur_rp                                               //\n"
     "//     ◆ configuration details                                    [config]    //\n"
     "//           build    word_size  bit_length  int_min                          //\n"
-    "//           int_max  uint_max   size_max                                     //\n"
+    "//           int_max  uint_max   size_max    ofs_max                          //\n"
     "//                                                                            //\n"
     "//    USAGE                                                                   //\n"
     "//    -----                                                                   //\n"
@@ -254,31 +268,42 @@ constexpr char const project_header[]{
     "//                                                                            //\n"
     "//    pputl makes extensive use of duck-typing  for control flow and error    //\n"
     "//    management.  pputl types are essentially pairs of functions: one for    //\n"
-    "//    traits identification and another for type casting and assertions.      //\n"
+    "//    traits identification and another for construction and assertion.       //\n"
     "//                                                                            //\n"
     "//    API functions are strictly documented using this type system. Inputs    //\n"
-    "//    are verified directly or indirectly by invoking the appropriate type    //\n"
-    "//    constructors or by using some other form of inference.                  //\n"
+    "//    are validated by invoking the associated constructor or through some    //\n"
+    "//    other form of inference. An argument is valid if it can be converted    //\n"
+    "//    to its parameter type; see [type] for constructor documentation.        //\n"
     "//                                                                            //\n"
-    "//     list: __VA_ARGS__; tokens delimited by non-parenthesized commas        //\n"
-    "//      └╴any: <abstract> a list with no separatory commas (0-1 elements)     //\n"
-    "//         ├╴none: nothing; an absence of pp-tokens                           //\n"
-    "//         └╴obj: a non-empty generic value                                   //\n"
-    "//            ├╴atom: an individual value that may form an identifier tail    //\n"
-    "//            │  ├╴enum<v0|v1|...>: an atom that matches a specified union    //\n"
-    "//            │  ├╴bool: a literal `1` or `0`                                 //\n"
-    "//            │  ├╴hex:  a literal uppercase hexadecimal digit [e.g. F]       //\n"
-    "//            │  ├╴nybl: a literal 4-bit bool concatenation [e.g. 0110]       //\n"
-    "//            │  ├╴int: <abstract> a word-sized signed integer                //\n"
-    "//            │  │  ├╴idec: a positive 2s-complement decimal [e.g. 3]         //\n"
-    "//            │  │  └╴ihex: a signed hex integer [e.g. 0x861]                 //\n"
-    "//            │  └╴uint: <abstract> a word-sized unsigned integer             //\n"
-    "//            │     ├╴udec: an unsigned decimal integer [e.g. 42u]            //\n"
-    "//            │     └╴uhex: an unsigned hex integer [e.g. 0x02Au]             //\n"
-    "//            ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b)]              //\n"
-    "//            │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]      //\n"
-    "//            └╴word: <union> int | uint | utup                               //\n"
-    "//               └╴size: a non-negative word capped by the argument limit     //\n"
+    "//    The following schema depicts the pputl type hierarchy, starting with    //\n"
+    "//    \"list\" as the most basic description of any  __VA_ARGS__ expression.    //\n"
+    "//    Examples and descriptions represent the default configuration.          //\n"
+    "//                                                                            //\n"
+    "//     list: tokens potentially delimited by non-parenthesized commas         //\n"
+    "//      ├╴none: nothing; an absence of pp-tokens (an empty list)              //\n"
+    "//      ├╴obj:  a list with exactly one element                               //\n"
+    "//      │  ├╴atom: a sequence of digit|nondigit tokens (/[\\w\\d_]+/)           //\n"
+    "//      │  │  ├╴enum<v0|v1|...>: an atom that matches a specified union       //\n"
+    "//      │  │  │  ├╴bool: enum<0|1>                                            //\n"
+    "//      │  │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>                //\n"
+    "//      │  │  │  ├╴nybl: enum<0000|0001|0010|...|1101|1110|1111>              //\n"
+    "//      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //\n"
+    "//      │  │  │  ├╴ihex: enum<0x000|0x001|...|0xFFE|0xFFF>                    //\n"
+    "//      │  │  │  ├╴udec: enum<0u|1u|2u|...4093u|4094u|4095u>                  //\n"
+    "//      │  │  │  └╴uhex: enum<0x000u|0x001u|...|0xFFEu|0xFFFu>                //\n"
+    "//      │  │  └╴int: <union> idec|ihex; a signed 2s-complement integer        //\n"
+    "//      │  ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b, , )]             //\n"
+    "//      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //\n"
+    "//      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //\n"
+    "//      │  ├╴word: <union> int|uint; any defined integer representation       //\n"
+    "//      │  │  ├╴size: any non-negative word up to size_max (default 255u)     //\n"
+    "//      │  │  └╴ofs:  any word whose absolute value is a valid size           //\n"
+    "//      │  ├╴map:    a mapping of sizes to lists                              //\n"
+    "//      │  ├╴set:    a set of sizes                                           //\n"
+    "//      │  ├╴stack:  a LIFO stack of lists                                    //\n"
+    "//      │  ├╴queue:  a FIFO queue of lists                                    //\n"
+    "//      │  └╴pqueue: a priority queue of lists                                //\n"
+    "//      └╴any: <union> none|obj; a list without separators (an element)       //\n"
     "//                                                                            //\n"
     "//    All pputl traits are fully testable except for atom,  which requires    //\n"
     "//    its values to match  /[\\w\\d_]+/  as they must be able to concatenate    //\n"
@@ -1228,6 +1253,9 @@ class def_base {
   friend class clang_format;
   template<detail::string_literal Name>
     requires(not Name.empty())
+  friend class category_fwd;
+  template<detail::string_literal Name>
+    requires(not Name.empty())
   friend class category;
   template<detail::string_literal Name>
     requires(not Name.empty())
@@ -1333,16 +1361,25 @@ inline class clang_format {
 [[nodiscard]] tests::example_tag operator>>(std::string const& expected,
                                             class docs const&) noexcept;
 
-/// sets the category for all newly constructed defs.
+/// sets a forward-declared category for all newly constructed defs.
 template<detail::string_literal Name>
   requires(not Name.empty())
-class category {
+class category_fwd {
  public:
-  category() {
+  category_fwd() {
     if (not def_base::_cur_category.empty())
       throw std::runtime_error{"cannot start a new category before ending category "
                                + def_base::_cur_category};
     def_base::_cur_category = Name.c_str();
+  }
+};
+
+/// sets the category for all newly constructed defs.
+template<detail::string_literal Name>
+  requires(not Name.empty())
+class category : public category_fwd<Name> {
+ public:
+  category() {
     def_base::_defined_categories.push_back(def_base::_cur_category);
   }
 };

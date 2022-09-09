@@ -60,10 +60,18 @@ decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
   tests << is_tup("(, a, )")        = "1";
   tests << is_tup("(, , a)")        = "1";
 
-  detail::is_tup_o = def{"o(obj)"} = [&](arg obj) { return is_none(eat + " " + obj); };
+  detail::is_tup_o = def{"o(obj)"} = [&](arg obj) {
+    return is_none(eat + " " + obj);
+  };
 
-  def<"\\0"> _0 = [&] { return def<"fail(...)">{[&](va) { return "0"; }}; };
-  def<"\\1">{}  = [&] { return detail::is_tup_o; };
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_tup_o;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });

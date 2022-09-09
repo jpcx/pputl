@@ -40,8 +40,10 @@ decltype(log2) log2 = NIFTY_DEF(log2, [&](va args) {
   tests << log2("0x" + utl::cat(samp::h4)) = ("0x" + utl::cat(samp::h2)) >> docs;
   tests << log2(uint_max_s) = (std::to_string(conf::bit_length - 1) + "u") >> docs;
 
-  def<"\\0(e, n)"> _0 = [&](arg e, arg) { return fail(e); };
-  def<"\\1(e, n)">{}  = [&](arg, arg n) {
+  def<"\\0(e, n)"> _0 = [&](arg e, arg) {
+    return fail(e);
+  };
+  def<"\\1(e, n)">{} = [&](arg, arg n) {
     return word(impl::udec(udec(n), "LOG2"), typeof(n));
   };
 

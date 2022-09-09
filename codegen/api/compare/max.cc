@@ -70,8 +70,12 @@ decltype(max) max = NIFTY_DEF(max, [&](va args) {
   tests << max(to_string(int_max / 2), to_string((int_max / 2) + 1)) =
       to_string((int_max / 2) + 1);
 
-  def<"\\0(a, b)"> _0 = [&](arg, arg b) { return b; };
-  def<"\\1(a, b)">{}  = [&](arg a, arg) { return a; };
+  def<"\\0(a, b)"> _0 = [&](arg, arg b) {
+    return b;
+  };
+  def<"\\1(a, b)">{} = [&](arg a, arg) {
+    return a;
+  };
 
   return pp::call(xcat(utl::slice(_0, -1), gt(args)), args);
 });

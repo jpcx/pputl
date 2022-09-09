@@ -37,6 +37,7 @@ decltype(brotl) brotl = NIFTY_DEF(brotl, [&](va args) {
   docs << "bitwise left rotation by n places.";
 
   tests << brotl("0x" + utl::cat(samp::hmin), 0) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << brotl("0x" + utl::cat(samp::h1))      = ("0x" + utl::cat(samp::h2)) >> docs;
   tests << brotl("0x" + utl::cat(samp::h1), 1)   = ("0x" + utl::cat(samp::h2)) >> docs;
   tests << brotl("0x" + utl::cat(samp::h1), 2)   = ("0x" + utl::cat(samp::h4)) >> docs;
   tests << brotl("0x" + utl::cat(samp::h3), 2)   = ("0x" + utl::cat(samp::h12)) >> docs;
@@ -67,14 +68,14 @@ decltype(brotl) brotl = NIFTY_DEF(brotl, [&](va args) {
     };
   }
 
-  return def<"o(v, n)">{[&](arg v, arg n) {
+  return def<"o(v, ...)">{[&](arg v, va n) {
     return word(
         def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
               xcat(utl::slice(_0, -1),
                    band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
-        }}(n, esc(bdump(v))),
+        }}(size(default_(1, n)), esc(bdump(v))),
         typeof(v));
   }}(args);
 });

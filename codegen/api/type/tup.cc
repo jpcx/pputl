@@ -38,8 +38,12 @@ decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
   tests << tup(pp::tup())     = "()" >> docs;
   tests << tup(pp::tup(1, 2)) = "(1, 2)" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, tup)">{}  = [](arg, arg tup) { return tup; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, tup)">{} = [](arg, arg tup) {
+    return tup;
+  };
 
   return def<"o(e, obj)">{[&](arg e, arg obj) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), e, obj);

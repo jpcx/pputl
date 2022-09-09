@@ -32,12 +32,17 @@ namespace api {
 using namespace codegen;
 
 decltype(none) none = NIFTY_DEF(none, [&](va args) {
-  docs << "[inherits from " + any + "] nothing. fails if something.";
+  docs << "[inherits from " + list
+              + "] nothing; an absence of pp-tokens (an empty list).";
 
   tests << none() = "" >> docs;
 
-  def<"\\0(e)"> _0 = [](arg e) { return fail(e); };
-  def<"\\1(e)">{}  = [](arg) { return ""; };
+  def<"\\0(e)"> _0 = [](arg e) {
+    return fail(e);
+  };
+  def<"\\1(e)">{} = [](arg) {
+    return "";
+  };
 
   return pp::call(
       xcat(utl::slice(_0, -1), is_none(args)),

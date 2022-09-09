@@ -32,14 +32,14 @@ namespace api {
 using namespace codegen;
 
 decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
-  docs << "[inherits from " + atom + "] enum type. describes an atom union."
+  docs << "[inherits from " + atom + "] an atom that matches a specified union."
        << ""
        << "to use this function, define a set of"
        << "macros with the following characteristics:"
        << " ‐ object-like"
        << " ‐ common prefix"
        << " ‐ enum value suffixes"
-       << " ‐ expand to nothing"
+       << " ‐ expand to nothing OR expand to more than one value"
        << "pass the common prefix as chkprefix."
        << ""
        << "example: (asserting an enum<GOOD|BAD>)"
@@ -49,14 +49,19 @@ decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
        << " " + enum_ + "(FOO_, GOOD) // GOOD"
        << " " + enum_ + "(FOO_, ,,,)  // <fail>";
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, enum)">{} = [](arg, arg enum_) { return enum_; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, enum)">{} = [](arg, arg enum_) {
+    return enum_;
+  };
 
-  return def<"o(e, chkatom, vatom)">{[&](arg e, arg chkatom, arg vatom) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_enum_o(chkatom, vatom)), e,
-                    vatom);
-  }}(str(pp::str("[" + enum_ + "] enum validation failure") + " : " + args),
-     atom(first(args)), atom(rest(args)));
+  return def<"o(e, chk, v)">{[&](arg e, arg chk, arg v) {
+    return def<"<o(e, chkatom, vatom)">{[&](arg e, arg chkatom, arg vatom) {
+      return pp::call(xcat(utl::slice(_0, -1), detail::is_enum_oo(chkatom, vatom)), e,
+                      vatom);
+    }}(e, atom(chk), atom(v));
+  }}(str(pp::str("[" + enum_ + "] enum validation failure") + " : " + args), args);
 });
 
 } // namespace api

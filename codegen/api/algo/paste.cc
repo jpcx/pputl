@@ -32,12 +32,12 @@ namespace api {
 using namespace codegen;
 
 /*
-#define PPUTLPASTE_B(expr, ...)             PPUTLPASTE_B##__VA_OPT__(_NOT)##_DONE(expr, __VA_ARGS__)
-#define PPUTLPASTE_B_DONE(expr, ...)        expr
-#define PPUTLPASTE_B_NOT_DONE(expr, _, ...) PPUTLPASTE_A PTL_LP expr _, __VA_ARGS__ PTL_RP
-#define PPUTLPASTE_A(expr, ...)             PPUTLPASTE_A##__VA_OPT__(_NOT)##_DONE(expr, __VA_ARGS__)
-#define PPUTLPASTE_A_DONE(expr, ...)        expr
-#define PPUTLPASTE_A_NOT_DONE(expr, _, ...) PPUTLPASTE_B PTL_LP expr _, __VA_ARGS__ PTL_RP
+#define PPUTLPASTE_B(expr, ...)             PPUTLPASTE_B##__VA_OPT__(_NOT)##_DONE(expr,
+__VA_ARGS__) #define PPUTLPASTE_B_DONE(expr, ...)        expr #define
+PPUTLPASTE_B_NOT_DONE(expr, _, ...) PPUTLPASTE_A PTL_LP expr _, __VA_ARGS__ PTL_RP #define
+PPUTLPASTE_A(expr, ...)             PPUTLPASTE_A##__VA_OPT__(_NOT)##_DONE(expr,
+__VA_ARGS__) #define PPUTLPASTE_A_DONE(expr, ...)        expr #define
+PPUTLPASTE_A_NOT_DONE(expr, _, ...) PPUTLPASTE_B PTL_LP expr _, __VA_ARGS__ PTL_RP
 
 better to design a symmetric algorithm to allow for PASTE(LP, (), RP, ())
 
@@ -50,27 +50,27 @@ PASTE(...) = PASTE(args/2) PASTE(args/2)
 
 */
 
-//decltype(paste) paste = NIFTY_DEF(paste, [&](va args) {
-//  docs << "pastes an expression by separating arguments with spaces.";
+// decltype(paste) paste = NIFTY_DEF(paste, [&](va args) {
+//   docs << "pastes an expression by separating arguments with spaces.";
 //
-//  auto max                      = utl::alpha_base52_seq(conf::uint_max);
-//  tests << paste()              = "" >> docs;
-//  tests << paste('a')           = "a" >> docs;
-//  tests << paste('a', 'b')      = "a b" >> docs;
-//  tests << paste('a', 'b', 'c') = "a b c" >> docs;
-//  tests << paste(max)           = utl::cat(max, " ");
+//   auto max                      = utl::alpha_base52_seq(conf::uint_max);
+//   tests << paste()              = "" >> docs;
+//   tests << paste('a')           = "a" >> docs;
+//   tests << paste('a', 'b')      = "a b" >> docs;
+//   tests << paste('a', 'b', 'c') = "a b c" >> docs;
+//   tests << paste(max)           = utl::cat(max, " ");
 //
-//  def<"a(_, ...)"> a;
-//  def<"b(_, ...)"> b;
+//   def<"a(_, ...)"> a;
+//   def<"b(_, ...)"> b;
 //
-//  a = [&](arg _0, va args) {
-//    return _0 + " " + pp::va_opt(b + " " + lp() + " " + args + " " + rp());
-//  };
-//  b = [&](arg _0, va args) {
-//    return _0 + " " + pp::va_opt(a + " " + lp() + " " + args + " " + rp());
-//  };
+//   a = [&](arg _0, va args) {
+//     return _0 + " " + pp::va_opt(b + " " + lp() + " " + args + " " + rp());
+//   };
+//   b = [&](arg _0, va args) {
+//     return _0 + " " + pp::va_opt(a + " " + lp() + " " + args + " " + rp());
+//   };
 //
-//  return pp::va_opt(items(pp::tup(pp::call(x(size(args)), a(args)))));
-//});
+//   return pp::va_opt(items(pp::tup(pp::call(x(size(args)), a(args)))));
+// });
 
 } // namespace api

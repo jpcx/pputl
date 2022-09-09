@@ -32,19 +32,21 @@ namespace api {
 using namespace codegen;
 
 decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "(none|obj) a potentially-empty, individual macro argument."
+  docs << "[union " + none + "|" + obj + "] a list with no separatory commas."
        << "fails if more than one arg.";
 
   tests << any()      = "" >> docs;
   tests << any("foo") = "foo" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) { return fail(e); };
-  def<"\\1(e, obj)">{}  = [](arg, arg obj) { return obj; };
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\1(e, obj)">{} = [](arg, arg obj) {
+    return obj;
+  };
 
-  return pp::call(
-      xcat(utl::slice(_0, -1), detail::is_any_o(args + ".")),
-      str(pp::str("[" + any + "] any cannot describe multiple args") + " : " + args),
-      args);
+  return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
+                  error(any, "any cannot describe multiple args", args), args);
 });
 
 } // namespace api

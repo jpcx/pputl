@@ -32,25 +32,27 @@ namespace api {
 using namespace codegen;
 
 decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
-  docs << "[inherits from " + atom + "] uppercase hexadeicmal digit."
-       << "constructible from either hex or nybl."
-       << "expands to v if valid, else fails.";
+  docs << "[" + enum_
+              + "<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>] an uppercase hexadecimal digit."
+       << "constructible from either hex or nybl.";
 
   tests << hex(0)      = "0" >> docs;
   tests << hex("F")    = "F" >> docs;
   tests << hex("0110") = "6" >> docs;
   tests << hex("1010") = "A" >> docs;
 
-  def<"\\00(e, ...)"> _00 = [](arg e, va) { return fail(e); };
-  def<"\\01(e, nybl)">{}  = [](arg, arg nybl) { return impl::nybl(nybl, "HEX"); };
-  def<"\\10(e, hex)">{}   = [](arg, arg hex) { return hex; };
+  def<"\\00(e, ...)"> _00 = [](arg e, va) {
+    return fail(e);
+  };
+  def<"\\01(e, nybl)">{} = [](arg, arg nybl) {
+    return impl::nybl(nybl, "HEX");
+  };
+  def<"\\10(e, hex)">{} = [](arg, arg hex) {
+    return hex;
+  };
 
-  return def<"o(e, atom)">{[&](arg e, arg atom) {
-    return pp::call(
-        xcat(utl::slice(_00, -2), xcat(detail::is_hex_o(atom), detail::is_nybl_o(atom))),
-        e, atom);
-  }}(str(pp::str("[" + hex + "] invalid arguments; must be hex or nybl") + " : " + args),
-     atom(args));
+  return pp::call(xcat(utl::slice(_00, -2), xcat(is_hex(args), is_nybl(args))),
+                  error(hex, "invalid arguments; must be hex or nybl", args), args);
 });
 
 } // namespace api

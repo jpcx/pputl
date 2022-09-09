@@ -32,46 +32,116 @@ namespace impl {
 
 using namespace codegen;
 
+decltype(udec_prefix) udec_prefix = NIFTY_DEF(udec_prefix);
+
+constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
+
 decltype(udec) udec = NIFTY_DEF(udec, [&](arg v, arg t) {
   docs << "[internal] udec traits";
 
   std::array<codegen::def<>, codegen::conf::uint_max + 1> udecs;
 
-  {
-    std::size_t i = 0;
-    for (; i < udecs.size() - 1; ++i) {
-      auto bin = detail::binary(i);
-      udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
-        return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
-                                   detail::fact(i)},
-                        ", ");
-      };
-    }
+  if constexpr (size_lt_max) {
     {
-      auto bin = detail::binary(i);
-      udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
-        docs << "UHEX, LOG2, SQRT, FACT";
-        return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
-                                   detail::fact(i)},
-                        ", ");
-      };
+      std::size_t i = 0;
+      for (; i < udecs.size() - 1; ++i) {
+        auto bin = detail::binary(i);
+        udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
+          return utl::cat(std::array{detail::uhex(bin), detail::isize(i),
+                                     detail::usize(i), detail::iofs(i), detail::uofs(i),
+                                     detail::log2(i), detail::sqrt(i), detail::fact(i)},
+                          ", ");
+        };
+      }
+      {
+        auto bin = detail::binary(i);
+        udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
+          docs << "UHEX, ISIZE, USIZE, IOFS, UOFS, LOG2, SQRT, FACT";
+          return utl::cat(std::array{detail::uhex(bin), detail::isize(i),
+                                     detail::usize(i), detail::iofs(i), detail::uofs(i),
+                                     detail::log2(i), detail::sqrt(i), detail::fact(i)},
+                          ", ");
+        };
+      }
     }
+
+    udec_prefix = utl::slice(udecs[0], -2);
+
+    def<"\\UHEX(u, ...) -> uhex"> uhex = [&](pack args) {
+      return args[0];
+    };
+    def<"\\ISIZE(u, is, ...) -> bool">{} = [&](pack args) {
+      return args[1];
+    };
+    def<"\\USIZE(u, is, us, ...) -> bool">{} = [&](pack args) {
+      return args[2];
+    };
+    def<"\\IOFS(u, is, us, ii, ...) -> bool">{} = [&](pack args) {
+      return args[3];
+    };
+    def<"\\UOFS(u, is, us, ii, ui, ...) -> bool">{} = [&](pack args) {
+      return args[4];
+    };
+    def<"\\LOG2(u, is, us, ii, ui, l, ...) -> idec">{} = [&](pack args) {
+      return args[5];
+    };
+    def<"\\SQRT(u, is, us, ii, ui, l, sq, ...) -> idec">{} = [&](pack args) {
+      return args[6];
+    };
+    def<"\\FACT(u, is, us, ii, ui, l, sq, ...) -> idec...">{} = [&](pack args) {
+      return args[7];
+    };
+
+    return def<"o(t, ...)">{[&](arg t, va row) {
+      return pp::call(pp::cat(utl::slice(uhex, -4), t), row);
+    }}(t, xcat(udec_prefix, v));
+  } else {
+    {
+      std::size_t i = 0;
+      for (; i < udecs.size() - 1; ++i) {
+        auto bin = detail::binary(i);
+        udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
+          return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
+                                     detail::fact(i)},
+                          ", ");
+        };
+      }
+      {
+        auto bin = detail::binary(i);
+        udecs[i] = def{std::to_string(i) + "\\u"} = [&] {
+          docs << "UHEX, IOFS, UOFS, LOG2, SQRT, FACT";
+          return utl::cat(std::array{detail::uhex(bin), detail::log2(i), detail::sqrt(i),
+                                     detail::fact(i)},
+                          ", ");
+        };
+      }
+    }
+
+    udec_prefix = utl::slice(udecs[0], -2);
+
+    def<"\\UHEX(u, ...) -> uhex"> uhex = [&](pack args) {
+      return args[0];
+    };
+    def<"\\IOFS(u, ii, ...) -> bool">{} = [&](pack args) {
+      return args[1];
+    };
+    def<"\\UOFS(u, ii, ui, ...) -> bool">{} = [&](pack args) {
+      return args[2];
+    };
+    def<"\\LOG2(u, ii, ui, l, ...) -> idec">{} = [&](pack args) {
+      return args[3];
+    };
+    def<"\\SQRT(u, ii, ui, l, sq, ...) -> idec">{} = [&](pack args) {
+      return args[4];
+    };
+    def<"\\FACT(u, ii, ui, l, sq, ...) -> idec...">{} = [&](pack args) {
+      return args[5];
+    };
+
+    return def<"o(t, ...)">{[&](arg t, va row) {
+      return pp::call(pp::cat(utl::slice(uhex, -4), t), row);
+    }}(t, xcat(udec_prefix, v));
   }
-
-  def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\01">{} = [&] { return "1"; };
-    return pp::cat(_0, pp::va_opt("1"));
-  };
-
-  def<"\\UHEX(u, ...) -> uhex">{}          = [&](pack args) { return args[0]; };
-  def<"\\LOG2(u, l, ...) -> idec">{}       = [&](pack args) { return args[1]; };
-  def<"\\SQRT(u, l, s, ...) -> idec">{}    = [&](pack args) { return args[2]; };
-  def<"\\FACT(u, l, s, ...) -> idec...">{} = [&](pack args) { return args[3]; };
-
-  return def<"o(t, ...)">{[&](arg t, va row) {
-    return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, xcat(utl::slice(udecs[0], -2), v));
 });
 
 } // namespace impl

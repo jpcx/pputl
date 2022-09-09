@@ -69,6 +69,8 @@ to_nybl(std::size_t i) {
   return std::regex_replace(b, comma, "");
 }
 
+decltype(hex_prefix) hex_prefix = NIFTY_DEF(hex_prefix);
+
 decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
   docs << "[internal] hex traits";
 
@@ -90,13 +92,11 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
     };
   }
 
-  def<"\\IS(_, ...) -> bool"> is = [&](arg, va) {
-    def<"\\0"> _0 = [&] { return "0"; };
-    def<"\\01">{} = [&] { return "1"; };
-    return pp::cat(_0, pp::va_opt("1"));
-  };
+  hex_prefix = utl::slice(digits[0], -1);
 
-  def<"\\NOT(n, ...) -> hex">{}                 = [&](pack args) { return args[0]; };
+  def<"\\NOT(n, ...) -> hex"> not_ = [&](pack args) {
+    return args[0];
+  };
   def<"\\DEC0(n, d0c, d0, ...) -> bool, hex">{} = [&](pack args) {
     return args[1] + ", " + args[2];
   };
@@ -107,15 +107,21 @@ decltype(hex) hex = NIFTY_DEF(hex, [&](arg v, arg t) {
     return args[5] + ", " + args[6];
   };
   def<"\\INC1(n, d0c, d0, d1c, d1, i0c, i0, i1c, i1, ...) -> bool, hex">{} =
-      [&](pack args) { return args[7] + ", " + args[8]; };
+      [&](pack args) {
+        return args[7] + ", " + args[8];
+      };
   def<"\\NYBL(n, d0c, d0, d1c, d1, i0c, i0, i1c, i1, ny, ...) -> nybl">{} =
-      [&](pack args) { return args[9]; };
+      [&](pack args) {
+        return args[9];
+      };
   def<"\\BITS(n, d0c, d0, d1c, d1, i0c, i0, i1c, i1, ny, ...) -> ...bool">{} =
-      [&](pack args) { return args[10]; };
+      [&](pack args) {
+        return args[10];
+      };
 
   return def<"o(t, ...)">{[&](arg t, va row) {
-    return pp::call(pp::cat(utl::slice(is, -2), t), row);
-  }}(t, xcat(utl::slice(digits[0], -1), v));
+    return pp::call(pp::cat(utl::slice(not_, -3), t), row);
+  }}(t, xcat(hex_prefix, v));
 });
 
 } // namespace impl

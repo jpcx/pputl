@@ -34,10 +34,10 @@ using namespace codegen;
 decltype(bnot) bnot = NIFTY_DEF(bnot, [&](va args) {
   docs << "bitwise NOT.";
 
-  tests << bnot("0u")                 = uint_max_s >> docs;
-  tests << bnot(0)                    = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bnot(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
-  tests << bnot(pp::tup(samp::himax)) = pp::tup(samp::himin) >> docs;
+  tests << bnot("0u")                        = uint_max_s >> docs;
+  tests << bnot("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << bnot(pp::tup(samp::himax))        = pp::tup(samp::himin) >> docs;
+  tests << bnot(pp::tup(samp::himin))        = pp::tup(samp::himax) >> docs;
 
   return word(impl::uhex(uhex(args), "BNOT"), typeof(args));
 });
