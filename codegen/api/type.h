@@ -35,6 +35,10 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
+// TODO: arr; tup construction from arr; arr construction from tup
+//
+// TODO: mem w/ hint
+
 extern codegen::def<"list(...: list) -> list"> const&                            list;
 extern codegen::def<"none(...: none) -> none"> const&                            none;
 extern codegen::def<"obj(...: obj) -> obj"> const&                               obj;
@@ -60,12 +64,13 @@ extern codegen::def<
     size;
 extern codegen::def<
     "ofs(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> ofs"> const& ofs;
-extern codegen::def<"map(...: map?) -> map"> const&                                 map;
-extern codegen::def<"set(...: set?) -> set"> const&                                 set;
-extern codegen::def<"stack(...: stack?) -> stack"> const&                           stack;
-extern codegen::def<"queue(...: queue?) -> queue"> const&                           queue;
-extern codegen::def<"pqueue(...: pqueue?) -> pqueue"> const& pqueue;
-extern codegen::def<"any(...: any) -> any"> const&           any;
+extern codegen::def<"arr(...: o?: arr|tup) -> arr"> const&                          arr;
+extern codegen::def<"map(...: o?: arr|tup) -> map"> const&                          map;
+extern codegen::def<"set(...: o?: arr|tup) -> set"> const&                          set;
+extern codegen::def<"stack(...: o?: arr|tup) -> stack"> const&                      stack;
+extern codegen::def<"queue(...: o?: arr|tup) -> queue"> const&                      queue;
+extern codegen::def<"pqueue(...: o?: arr|tup) -> pqueue"> const& pqueue;
+extern codegen::def<"any(...: any) -> any"> const&               any;
 
 NIFTY_DECL(list);
 NIFTY_DECL(none);
@@ -86,6 +91,11 @@ NIFTY_DECL(uint);
 NIFTY_DECL(word);
 NIFTY_DECL(size);
 NIFTY_DECL(ofs);
+namespace detail {
+extern codegen::def<>& arr_o;
+NIFTY_DECL(arr_o);
+} // namespace detail
+NIFTY_DECL(arr);
 NIFTY_DECL(map);
 NIFTY_DECL(set);
 NIFTY_DECL(stack);

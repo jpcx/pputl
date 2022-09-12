@@ -43,10 +43,9 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << " | NONE   | LIST | TUP   | UTUP"
-       << " | MAP    | SET  | STACK | QUEUE"
-       << " | PQUEUE | ATOM | HEX   | NYBL"
-       << " | IDEC   | IHEX | UDEC  | UHEX";
+       << " | NONE | LIST  | TUP   | UTUP   | ARR  | MAP"
+       << " | SET  | STACK | QUEUE | PQUEUE | ATOM | HEX"
+       << " | NYBL | IDEC  | IHEX  | UDEC   | UHEX";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -70,6 +69,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof(pp::tup(
       utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "UTUP" >> docs;
   tests << typeof()                                                    = "NONE" >> docs;
+  tests << typeof(fwd::arr + "()")                                     = "ARR" >> docs;
   tests << typeof(fwd::map + "()")                                     = "MAP" >> docs;
   tests << typeof(fwd::set + "()")                                     = "SET" >> docs;
   tests << typeof(fwd::stack + "()")                                   = "STACK" >> docs;
@@ -94,7 +94,7 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       def<"\\0(obj)"> _0 = [&](arg obj) {
         docs << "^!none → obj → !tup";
 
-        def<"\\00000(atom)"> _00000 = [&](arg atom) {
+        def<"\\000000(atom)"> _000000 = [&](arg atom) {
           docs << "^!none → obj → !tup → !(map|set|stack|queue|pqueue)";
 
           def<"\\000000"> _000000 = [&] {
@@ -131,30 +131,36 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
                            xcat(is_udec(atom), is_uhex(atom))));
         };
 
-        def<"\\00001(mem)">{} = [&](arg) {
+        def<"\\000001(mem)">{} = [&](arg) {
           return "PQUEUE";
         };
 
-        def<"\\00010(mem)">{} = [&](arg) {
+        def<"\\000010(mem)">{} = [&](arg) {
           return "QUEUE";
         };
 
-        def<"\\00100(mem)">{} = [&](arg) {
+        def<"\\000100(mem)">{} = [&](arg) {
           return "STACK";
         };
 
-        def<"\\01000(mem)">{} = [&](arg) {
+        def<"\\001000(mem)">{} = [&](arg) {
           return "SET";
         };
 
-        def<"\\10000(mem)">{} = [&](arg) {
+        def<"\\010000(mem)">{} = [&](arg) {
           return "MAP";
         };
 
-        return pp::call(xcat(xcat(xcat(utl::slice(_00000, -5), detail::is_map_oo(obj)),
-                                  xcat(detail::is_set_oo(obj), detail::is_stack_oo(obj))),
-                             xcat(detail::is_queue_oo(obj), detail::is_pqueue_oo(obj))),
-                        obj);
+        def<"\\100000(mem)">{} = [&](arg) {
+          return "ARR";
+        };
+
+        return pp::call(
+            xcat(xcat(utl::slice(_000000, -6),
+                      xcat(detail::is_arr_oo(obj), detail::is_map_oo(obj))),
+                 xcat(xcat(detail::is_set_oo(obj), detail::is_stack_oo(obj)),
+                      xcat(detail::is_queue_oo(obj), detail::is_pqueue_oo(obj)))),
+            obj);
       };
 
       // !none → obj → tup

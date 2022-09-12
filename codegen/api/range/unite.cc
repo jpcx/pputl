@@ -25,7 +25,6 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
 #include "range.h"
 
 namespace api {
@@ -91,7 +90,7 @@ decltype(unite) unite = NIFTY_DEF(unite, [&](va args) {
   tests << unite(bisect("(, )", 1))       = "(, )";
 
   def<"000(head, tail, ...)"> _000 = [&](arg head, arg tail, va) {
-    return pp::tup(items(head) + ", " + items(tail));
+    return pp::tup(itemsof(head) + ", " + itemsof(tail));
   };
   def<"001(head, tail, ...)">{} = [&](arg head, arg, va) {
     return head;
@@ -103,13 +102,13 @@ decltype(unite) unite = NIFTY_DEF(unite, [&](va args) {
     return "()";
   };
   def<"100(head, tail, ...)">{} = [&](arg head, arg tail, va) {
-    return pp::tup(items(head) + ", " + items(tail));
+    return pp::tup(itemsof(head) + ", " + itemsof(tail));
   };
   def<"101(head, tail, ...)">{} = [&](arg head, arg, va) {
-    return pp::tup(items(head) + ", ");
+    return pp::tup(itemsof(head) + ", ");
   };
   def<"110(head, tail, ...)">{} = [&](arg, arg tail, va) {
-    return pp::tup(", " + items(tail));
+    return pp::tup(", " + itemsof(tail));
   };
   def<"111(head, tail, ...)">{} = [&](arg, arg, va) {
     return "(, )";
@@ -117,7 +116,7 @@ decltype(unite) unite = NIFTY_DEF(unite, [&](va args) {
 
   return pp::call(def<"o(head, tail, ...)">{[&](arg head, arg tail, va type) {
                     return xcat(xcat(utl::slice(_000, -3), bool_(default_(0, type))),
-                                xcat(is_none(items(head)), is_none(items(tail))));
+                                xcat(is_none(itemsof(head)), is_none(itemsof(tail))));
                   }}(args),
                   args);
 });

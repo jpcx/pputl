@@ -25,20 +25,48 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "range.h"
+#include "impl/math.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(is_empty) is_empty = NIFTY_DEF(is_empty, [&](va args) {
-  docs << "true if the tuple has no elements.";
+decltype(index) index = NIFTY_DEF(index, [&](arg i, arg sign, arg sz, arg err) {
+  docs << "[internal] translates an idx to a non-negative zero-offset for a given range "
+          "size.";
 
-  tests << is_empty("()")  = "1" >> docs;
-  tests << is_empty("(a)") = "0" >> docs;
-  tests << is_empty("(,)") = "0" >> docs;
+  def<"\\0(i, sz, err)"> sign0 = [&](arg i, arg sz, arg err) {
+    def<"\\0(i, err)"> _0 = [&](arg, arg err) {
+      return fail(err);
+    };
+    def<"\\1(i, err)">{} = [&](arg i, arg) {
+      return i;
+    };
 
-  return is_none(items(args));
+    return pp::call(xcat(utl::slice(_0, -1), lt(i, inc(sz))), i, err);
+  };
+
+  def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
+    def<"\\0(i, sz, err)"> _0 = [&](arg i, arg sz, arg err) {
+      return sign0(i, sz, err);
+    };
+    def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
+      def<"\\0(i, sz, err)"> _0 = [&](arg, arg, arg err) {
+        return fail(err);
+      };
+      def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg) {
+        return add(i, sz);
+      };
+
+      return pp::call(xcat(utl::slice(_0, -1), lt(neg(i), inc(sz))), i, sz, err);
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), ltz(i)), i, sz, err);
+  };
+
+  return pp::call(cat(utl::slice(sign0, -1), sign), i, sz, err);
 });
 
+} // namespace impl
 } // namespace api

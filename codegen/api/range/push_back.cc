@@ -31,25 +31,31 @@ namespace api {
 
 using namespace codegen;
 
-decltype(items) items = NIFTY_DEF(items, [&](va args) {
-  docs << "extracts tuple items.";
+decltype(push_back) push_back = NIFTY_DEF(push_back, [&](va args) {
+  docs << "pushes items to the back of a tuple.";
 
-  tests << items("()")              = "" >> docs;
-  tests << items("(a)")             = "a" >> docs;
-  tests << items("(a, b)")          = "a, b" >> docs;
-  tests << items("(a, b, c)")       = "a, b, c" >> docs;
-  tests << items("((a), (b), (c))") = "(a), (b), (c)";
-  tests << items("(, )")            = ",";
-  tests << items("(, , )")          = ", ,";
-  tests << items("(a, )")           = "a,";
-  tests << items("(a, , )")         = "a, ,";
-  tests << items("(, a)")           = ", a";
-  tests << items("(, a, )")         = ", a,";
-  tests << items("(, , a)")         = ", , a";
+  tests << push_back("()")               = "()" >> docs;
+  tests << push_back("()", 'a')          = "(a)" >> docs;
+  tests << push_back("(a)", 'b')         = "(a, b)" >> docs;
+  tests << push_back("(a, b)", 'c', 'd') = "(a, b, c, d)" >> docs;
+  tests << push_back("(a, b, c, d)")     = "(a, b, c, d)" >> docs;
 
-  return def<"x(...)">{[&](va args) {
-    return esc + " " + args;
-  }}(tup(args));
+  return def<"o(t, ...)">{[&](arg t, va args) {
+    def<"\\00(t, ...)"> _00 = [&](arg t, va args) {
+      return pp::tup(esc + " " + t, args);
+    };
+    def<"\\01(t, ...)">{} = [&](arg t, va) {
+      return t;
+    };
+    def<"\\10(t, ...)">{} = [&](arg, va args) {
+      return pp::tup(args);
+    };
+    def<"\\11(t, ...)">{} = [&](arg, va) {
+      return "()";
+    };
+
+    return pp::call(xcat(utl::slice(_00, -2), xcat(is_empty(t), is_none(args))), t, args);
+  }}(args);
 });
 
 } // namespace api

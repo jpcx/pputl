@@ -64,16 +64,16 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                                             [type]    //
-//           list   none   obj     atom  enum  bool  hex                      //
-//           nybl   idec   ihex    udec  uhex  int   tup                      //
-//           utup   uint   word    size  ofs   map   set                      //
-//           stack  queue  pqueue  any                                        //
-//       ‐ type traits                                      [traits, data]    //
-//           is_list    is_none  is_obj   is_atom  is_enum   is_bool          //
-//           is_hex     is_nybl  is_idec  is_ihex  is_udec   is_uhex          //
-//           is_int     is_tup   is_utup  is_uint  is_word   is_size          //
-//           is_ofs     is_any   is_map   is_set   is_stack  is_queue         //
-//           is_pqueue  typeof   countof  sizeof   is_empty                   //
+//           list    none  object  tuple  atom   enum                         //
+//           bool    idec  ihex    udec   uhex   int                          //
+//           uint    word  size    ofs    array  map                          //
+//           pqueue  set   stack   queue  range  any                          //
+//       ‐ type traits                                     [traits, range]    //
+//           is_list    is_none   is_object  is_tuple  is_atom   is_enum      //
+//           is_bool    is_idec   is_ihex    is_udec   is_uhex   is_int       //
+//           is_uint    is_word   is_size    is_ofs    is_array  is_map       //
+//           is_pqueue  is_set    is_stack   is_queue  is_range  is_any       //
+//           typeof     countof   sizeof     itemsof   is_empty               //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -86,32 +86,23 @@
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
 //       ‐ bitwise operations                                    [bitwise]    //
-//           bitdump  bitsll   bitsrl   bitsra   bitnot   bitand              //
-//           bitor    bitxor   bitnand  bitnor   bitxnor  bitget              //
-//           bitset   bitflip  bitrotl  bitrotr                               //
+//           hexdump  bitdump  bitsll   bitsrl   bitsra   bitnot              //
+//           bitand   bitor    bitxor   bitnand  bitnor   bitxnor             //
+//           bitget   bitset   bitflip  bitrotl  bitrotr                      //
 //     ◆ datastructures and algorithms                                        //
-//       ‐ tuple manipulation                                        [tup]    //
-//           tup_items  tup_bisect  tup_unite   tup_head                      //
-//           tup_tail   tup_lpush   tup_rpush   tup_lpop                      //
-//           tup_rpop   tup_get     tup_set     tup_front                     //
-//           tup_back   tup_slice   tup_splice  tup_insert                    //
-//       ‐ specialized data storage                                 [data]    //
-//           map_items    map_has      map_get     map_set                    //
-//           map_del      set_items    set_has     set_add                    //
-//           set_del      stack_items  stack_push  stack_pop                  //
-//           queue_items  queue_push   queue_pop   pqueue_items               //
-//           pqueue_push  pqueue_pop                                          //
-//       ‐ generation                                               [algo]    //
+//       ‐ range manipulation                                      [range]    //
+//           bisect     unite      head      tail      push_front             //
+//           push_back  pop_front  pop_back  get_item  set_item               //
+//           ins_item   del_item   front     back      slice                  //
+//           splice     push       pop                                        //
+//       ‐ list generation                                          [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
-//       ‐ transformation                                           [algo]    //
-//           rev  transform_lp  transform_rp  shift  rotate                   //
-//       ‐ reduction                                                [algo]    //
-//           reduce_lp  reduce_rp                                             //
+//       ‐ list manipulation                                        [algo]    //
+//           rev     transform_lp  transform_rp  shift                        //
+//           rotate  reduce_lp     reduce_rp                                  //
 //     ◆ metaprogramming utilities                                            //
 //       ‐ expansion control and tracing                            [meta]    //
-//           x  lp  rp  xtrace  xtrace_read                                   //
-//       ‐ mutually recursive stack expansion                       [meta]    //
-//           xx_lp  xx_rp                                                     //
+//           x  xx_lp  xx_rp  lp  rp  xtrace  xtrace_read                     //
 //       ‐ inline recursive stack construction                      [meta]    //
 //           recur_lp  recur_rp                                               //
 //     ◆ configuration details                                    [config]    //
@@ -178,36 +169,28 @@
 //                                                                            //
 //     list: tokens potentially delimited by non-parenthesized commas         //
 //      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
-//      ├╴obj:  a list with exactly one element                               //
-//      │  ├╴atom: a sequence of digit|nondigit tokens (/[\w\d_]+/)           //
-//      │  │  ├╴enum<v0|v1|...>: an atom that matches a specified union       //
+//      ├╴object: a list with exactly one element                             //
+//      │  ├╴tuple: a parenthesized list [e.g ()] [e.g. (a, b, , )]           //
+//      │  ├╴atom:  a non-parenthesized element                               //
+//      │  │  ├╴enum<v0|v1|...>: an atom matching a defined enumeration       //
 //      │  │  │  ├╴bool: enum<0|1>                                            //
-//      │  │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>                //
-//      │  │  │  ├╴nybl: enum<0000|0001|0010|...|1101|1110|1111>              //
 //      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //
 //      │  │  │  ├╴ihex: enum<0x000|0x001|...|0xFFE|0xFFF>                    //
-//      │  │  │  ├╴udec: enum<0u|1u|2u|...4093u|4094u|4095u>                  //
+//      │  │  │  ├╴udec: enum<0u|1u|2u|...|4093u|4094u|4095u>                 //
 //      │  │  │  └╴uhex: enum<0x000u|0x001u|...|0xFFEu|0xFFFu>                //
-//      │  │  └╴int: <union> idec|ihex; a signed 2s-complement integer        //
-//      │  ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b, , )]             //
-//      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //
-//      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //
-//      │  ├╴word: <union> int|uint; any defined integer representation       //
-//      │  │  ├╴size: any non-negative word up to size_max (default 255u)     //
-//      │  │  └╴ofs:  any word whose absolute value is a valid size           //
-//      │  ├╴map:    a mapping of sizes to lists                              //
-//      │  ├╴set:    a set of sizes                                           //
-//      │  ├╴stack:  a LIFO stack of lists                                    //
-//      │  ├╴queue:  a FIFO queue of lists                                    //
-//      │  └╴pqueue: a priority queue of lists                                //
-//      └╴any: <union> none|obj; a list without separators (an element)       //
-//                                                                            //
-//    All pputl traits are fully testable except for atom,  which requires    //
-//    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
-//    with identifiers to create new identifiers. See C++20 [lex.name] for    //
-//    details.  While undetectable, this requirement is crucial for value-    //
-//    based control flow and must be observed by the user where applicable    //
-//    (although atom does perform a tuple test and will fail when it can).    //
+//      │  │  ├╴int:  <union> bool|idec|ihex; a signed 2s-compl integer       //
+//      │  │  ├╴uint: <union> udec|uhex; an unsigned integer                  //
+//      │  │  └╴word: <union> int|uint;  any kind of integer                  //
+//      │  │     ├╴size: any non-negative word up to size_max                 //
+//      │  │     └╴ofs:  any word whose absolute value is a valid size        //
+//      │  ├╴array: an encapsulated, sized sequence of elements               //
+//      │  │  ├╴map: a sorted mapping of words or enums to elements           //
+//      │  │  │  └╴pqueue: a priority queue of elements                       //
+//      │  │  ├╴set:   a set of words or enums                                //
+//      │  │  ├╴stack: a LIFO stack of elements                               //
+//      │  │  └╴queue: a FIFO queue of elements                               //
+//      │  └╴range: <union> tuple|array; a structured range of elements       //
+//      └╴any: <union> none|object; a list without separators (an element)    //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -542,6 +525,10 @@ ASSERT_PP_EQ((PTL_IS_OFS(0xFFF)), (1));
 ASSERT_PP_EQ((PTL_IS_OFS(0xF01)), (1));
 ASSERT_PP_EQ((PTL_IS_OFS(0xF00)), (0));
 
+ASSERT_PP_EQ((PTL_IS_ARR()), (0));
+ASSERT_PP_EQ((PTL_IS_ARR(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_ARR(PTL_ARR())), (1));
+
 ASSERT_PP_EQ((PTL_IS_MAP()), (0));
 ASSERT_PP_EQ((PTL_IS_MAP(1, 2)), (0));
 ASSERT_PP_EQ((PTL_IS_MAP(PTL_MAP())), (1));
@@ -590,6 +577,7 @@ ASSERT_PP_EQ((PTL_TYPEOF((A))), (TUP));
 ASSERT_PP_EQ((PTL_TYPEOF((0, 0, 0))), (UTUP));
 ASSERT_PP_EQ((PTL_TYPEOF((F, F, F))), (UTUP));
 ASSERT_PP_EQ((PTL_TYPEOF()), (NONE));
+ASSERT_PP_EQ((PTL_TYPEOF(PTL_ARR())), (ARR));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_MAP())), (MAP));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_SET())), (SET));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_STACK())), (STACK));
@@ -739,6 +727,12 @@ ASSERT_PP_EQ((PTL_OFS(1)), (1));
 ASSERT_PP_EQ((PTL_OFS(0x007)), (0x007));
 ASSERT_PP_EQ((PTL_OFS(0xFFF)), (0xFFF));
 ASSERT_PP_EQ((PTL_OFS(254)), (254));
+
+ASSERT_PP_EQ((PTL_ARR()), (PTL_ARR(0u, ())));
+ASSERT_PP_EQ((PTL_ARR(a, b)), (PTL_ARR(2u, (a, b))));
+ASSERT_PP_EQ((PTL_ARR(3, (, , ))), (PTL_ARR(3, (, , ))));
+ASSERT_PP_EQ((PTL_ARR((1, 2, 3))), (PTL_ARR(1u, ((1, 2, 3)))));
+ASSERT_PP_EQ((PTL_ARR(PTL_ARR(foo, bar))), (PTL_ARR(2u, (foo, bar))));
 
 ASSERT_PP_EQ((PTL_MAP()), (PTL_MAP()));
 ASSERT_PP_EQ((PTL_MAP(PTL_MAP())), (PTL_MAP()));
@@ -1298,6 +1292,18 @@ ASSERT_PP_EQ((PTL_REM(PTL_NEG(12), PTL_NEG(5))), (PTL_NEG(2)));
 ASSERT_PP_EQ((PTL_REM(PTL_NEG(13), PTL_NEG(5))), (PTL_NEG(3)));
 ASSERT_PP_EQ((PTL_REM(PTL_NEG(14), PTL_NEG(5))), (PTL_NEG(4)));
 
+ASSERT_PP_EQ((PTL_INDEX(5, 0)), (0));
+ASSERT_PP_EQ((PTL_INDEX(5u, 1)), (1u));
+ASSERT_PP_EQ((PTL_INDEX(5, 2)), (2));
+ASSERT_PP_EQ((PTL_INDEX(5, 3)), (3));
+ASSERT_PP_EQ((PTL_INDEX(5, 4)), (4));
+ASSERT_PP_EQ((PTL_INDEX(5, 5)), (5));
+ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(1))), (4));
+ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(2))), (3));
+ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(3))), (2));
+ASSERT_PP_EQ((PTL_INDEX(5u, PTL_NEG(4))), (1u));
+ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(5))), (0));
+
 ASSERT_PP_EQ((PTL_SIZEOF(())), (0u));
 ASSERT_PP_EQ((PTL_SIZEOF((a))), (1u));
 ASSERT_PP_EQ((PTL_SIZEOF((a, b))), (2u));
@@ -1311,34 +1317,22 @@ ASSERT_PP_EQ((PTL_SIZEOF((, a))), (2u));
 ASSERT_PP_EQ((PTL_SIZEOF((, a, ))), (3u));
 ASSERT_PP_EQ((PTL_SIZEOF((, , a))), (3u));
 
-ASSERT_PP_EQ((PTL_ITEMS(())), ());
-ASSERT_PP_EQ((PTL_ITEMS((a))), (a));
-ASSERT_PP_EQ((PTL_ITEMS((a, b))), (a, b));
-ASSERT_PP_EQ((PTL_ITEMS((a, b, c))), (a, b, c));
-ASSERT_PP_EQ((PTL_ITEMS(((a), (b), (c)))), ((a), (b), (c)));
-ASSERT_PP_EQ((PTL_ITEMS((, ))), (,));
-ASSERT_PP_EQ((PTL_ITEMS((, , ))), (, ,));
-ASSERT_PP_EQ((PTL_ITEMS((a, ))), (a,));
-ASSERT_PP_EQ((PTL_ITEMS((a, , ))), (a, ,));
-ASSERT_PP_EQ((PTL_ITEMS((, a))), (, a));
-ASSERT_PP_EQ((PTL_ITEMS((, a, ))), (, a,));
-ASSERT_PP_EQ((PTL_ITEMS((, , a))), (, , a));
+ASSERT_PP_EQ((PTL_ITEMSOF(())), ());
+ASSERT_PP_EQ((PTL_ITEMSOF((a))), (a));
+ASSERT_PP_EQ((PTL_ITEMSOF((a, b))), (a, b));
+ASSERT_PP_EQ((PTL_ITEMSOF((a, b, c))), (a, b, c));
+ASSERT_PP_EQ((PTL_ITEMSOF(((a), (b), (c)))), ((a), (b), (c)));
+ASSERT_PP_EQ((PTL_ITEMSOF((, ))), (,));
+ASSERT_PP_EQ((PTL_ITEMSOF((, , ))), (, ,));
+ASSERT_PP_EQ((PTL_ITEMSOF((a, ))), (a,));
+ASSERT_PP_EQ((PTL_ITEMSOF((a, , ))), (a, ,));
+ASSERT_PP_EQ((PTL_ITEMSOF((, a))), (, a));
+ASSERT_PP_EQ((PTL_ITEMSOF((, a, ))), (, a,));
+ASSERT_PP_EQ((PTL_ITEMSOF((, , a))), (, , a));
 
 ASSERT_PP_EQ((PTL_IS_EMPTY(())), (1));
 ASSERT_PP_EQ((PTL_IS_EMPTY((a))), (0));
 ASSERT_PP_EQ((PTL_IS_EMPTY((,))), (0));
-
-ASSERT_PP_EQ((PTL_INDEX(5, 0)), (0));
-ASSERT_PP_EQ((PTL_INDEX(5u, 1)), (1u));
-ASSERT_PP_EQ((PTL_INDEX(5, 2)), (2));
-ASSERT_PP_EQ((PTL_INDEX(5, 3)), (3));
-ASSERT_PP_EQ((PTL_INDEX(5, 4)), (4));
-ASSERT_PP_EQ((PTL_INDEX(5, 5)), (5));
-ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(1))), (4));
-ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(2))), (3));
-ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(3))), (2));
-ASSERT_PP_EQ((PTL_INDEX(5u, PTL_NEG(4))), (1u));
-ASSERT_PP_EQ((PTL_INDEX(5, PTL_NEG(5))), (0));
 
 ASSERT_PP_EQ((PTL_BISECT((a), 0)), ((), (a), 0));
 ASSERT_PP_EQ((PTL_BISECT((a), 1)), ((a), (), 0));
@@ -1521,69 +1515,69 @@ ASSERT_PP_EQ((PTL_TAIL((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s,
 ASSERT_PP_EQ((PTL_TAIL((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 254)), ((b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU)));
 ASSERT_PP_EQ((PTL_TAIL((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 253)), ((c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU)));
 
-ASSERT_PP_EQ((PTL_LPUSH(())), (()));
-ASSERT_PP_EQ((PTL_LPUSH((), a)), ((a)));
-ASSERT_PP_EQ((PTL_LPUSH((a), b)), ((b, a)));
-ASSERT_PP_EQ((PTL_LPUSH((b, a), c, d)), ((c, d, b, a)));
-ASSERT_PP_EQ((PTL_LPUSH((c, d, b, a))), ((c, d, b, a)));
+ASSERT_PP_EQ((PTL_PUSH_FRONT(())), (()));
+ASSERT_PP_EQ((PTL_PUSH_FRONT((), a)), ((a)));
+ASSERT_PP_EQ((PTL_PUSH_FRONT((a), b)), ((b, a)));
+ASSERT_PP_EQ((PTL_PUSH_FRONT((b, a), c, d)), ((c, d, b, a)));
+ASSERT_PP_EQ((PTL_PUSH_FRONT((c, d, b, a))), ((c, d, b, a)));
 
-ASSERT_PP_EQ((PTL_RPUSH(())), (()));
-ASSERT_PP_EQ((PTL_RPUSH((), a)), ((a)));
-ASSERT_PP_EQ((PTL_RPUSH((a), b)), ((a, b)));
-ASSERT_PP_EQ((PTL_RPUSH((a, b), c, d)), ((a, b, c, d)));
-ASSERT_PP_EQ((PTL_RPUSH((a, b, c, d))), ((a, b, c, d)));
+ASSERT_PP_EQ((PTL_PUSH_BACK(())), (()));
+ASSERT_PP_EQ((PTL_PUSH_BACK((), a)), ((a)));
+ASSERT_PP_EQ((PTL_PUSH_BACK((a), b)), ((a, b)));
+ASSERT_PP_EQ((PTL_PUSH_BACK((a, b), c, d)), ((a, b, c, d)));
+ASSERT_PP_EQ((PTL_PUSH_BACK((a, b, c, d))), ((a, b, c, d)));
 
-ASSERT_PP_EQ((PTL_LPOP((), 0)), (()));
-ASSERT_PP_EQ((PTL_LPOP((a), 0)), ((a)));
-ASSERT_PP_EQ((PTL_LPOP((a), 1)), (()));
-ASSERT_PP_EQ((PTL_LPOP((a, b))), ((b)));
-ASSERT_PP_EQ((PTL_LPOP((a, b), 1)), ((b)));
-ASSERT_PP_EQ((PTL_LPOP((a, b), 2)), (()));
-ASSERT_PP_EQ((PTL_LPOP((a, b, c), 2)), ((c)));
-ASSERT_PP_EQ((PTL_LPOP((a, b), 0)), ((a, b)));
-ASSERT_PP_EQ((PTL_LPOP((a, b, c), 0)), ((a, b, c)));
-ASSERT_PP_EQ((PTL_LPOP((a, b, c), 1)), ((b, c)));
-ASSERT_PP_EQ((PTL_LPOP((a, b, c), 3)), (()));
+ASSERT_PP_EQ((PTL_POP_FRONT((), 0)), (()));
+ASSERT_PP_EQ((PTL_POP_FRONT((a), 0)), ((a)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a), 1)), (()));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b))), ((b)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b), 1)), ((b)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b), 2)), (()));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b, c), 2)), ((c)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b), 0)), ((a, b)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b, c), 0)), ((a, b, c)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b, c), 1)), ((b, c)));
+ASSERT_PP_EQ((PTL_POP_FRONT((a, b, c), 3)), (()));
 
-ASSERT_PP_EQ((PTL_RPOP((), 0)), (()));
-ASSERT_PP_EQ((PTL_RPOP((a), 0)), ((a)));
-ASSERT_PP_EQ((PTL_RPOP((a), 1)), (()));
-ASSERT_PP_EQ((PTL_RPOP((a, b))), ((a)));
-ASSERT_PP_EQ((PTL_RPOP((a, b), 1)), ((a)));
-ASSERT_PP_EQ((PTL_RPOP((a, b), 2)), (()));
-ASSERT_PP_EQ((PTL_RPOP((a, b, c), 2)), ((a)));
-ASSERT_PP_EQ((PTL_RPOP((a, b), 0)), ((a, b)));
-ASSERT_PP_EQ((PTL_RPOP((a, b, c), 0)), ((a, b, c)));
-ASSERT_PP_EQ((PTL_RPOP((a, b, c), 1)), ((a, b)));
-ASSERT_PP_EQ((PTL_RPOP((a, b, c), 3)), (()));
+ASSERT_PP_EQ((PTL_POP_BACK((), 0)), (()));
+ASSERT_PP_EQ((PTL_POP_BACK((a), 0)), ((a)));
+ASSERT_PP_EQ((PTL_POP_BACK((a), 1)), (()));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b))), ((a)));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b), 1)), ((a)));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b), 2)), (()));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b, c), 2)), ((a)));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b), 0)), ((a, b)));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b, c), 0)), ((a, b, c)));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b, c), 1)), ((a, b)));
+ASSERT_PP_EQ((PTL_POP_BACK((a, b, c), 3)), (()));
 
-ASSERT_PP_EQ((PTL_TUP_GET((a), 0)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b), 0)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b), 1)), (b));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b, c), PTL_NEG(2))), (b));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b, c), PTL_NEG(3))), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((1, 2, 3), 1)), (2));
-ASSERT_PP_EQ((PTL_TUP_GET((1, 2, 3), 2)), (3));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 0)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 1)), (b));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 253)), (eT));
-ASSERT_PP_EQ((PTL_TUP_GET((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 254)), (eU));
-ASSERT_PP_EQ((PTL_TUP_GET((, ), 0)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, , ), 0)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, ), 1)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, , ), 1)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, , ), 2)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((a, ), 0)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((a, , ), 0)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((a, ), 1)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((a, , ), 1)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((a, , ), 2)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, a), 0)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, a, ), 0)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, a), 1)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((, a, ), 1)), (a));
-ASSERT_PP_EQ((PTL_TUP_GET((, a, ), 2)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, , a), 0)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, , a), 1)), ());
-ASSERT_PP_EQ((PTL_TUP_GET((, , a), 2)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((a), 0)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b), 0)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b), 1)), (b));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b, c), PTL_NEG(2))), (b));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b, c), PTL_NEG(3))), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((1, 2, 3), 1)), (2));
+ASSERT_PP_EQ((PTL_GET_ITEM((1, 2, 3), 2)), (3));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 0)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 1)), (b));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 253)), (eT));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, bw, bx, by, bz, bA, bB, bC, bD, bE, bF, bG, bH, bI, bJ, bK, bL, bM, bN, bO, bP, bQ, bR, bS, bT, bU, bV, bW, bX, bY, bZ, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, cA, cB, cC, cD, cE, cF, cG, cH, cI, cJ, cK, cL, cM, cN, cO, cP, cQ, cR, cS, cT, cU, cV, cW, cX, cY, cZ, da, db, dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, ds, dt, du, dv, dw, dx, dy, dz, dA, dB, dC, dD, dE, dF, dG, dH, dI, dJ, dK, dL, dM, dN, dO, dP, dQ, dR, dS, dT, dU, dV, dW, dX, dY, dZ, ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, ey, ez, eA, eB, eC, eD, eE, eF, eG, eH, eI, eJ, eK, eL, eM, eN, eO, eP, eQ, eR, eS, eT, eU), 254)), (eU));
+ASSERT_PP_EQ((PTL_GET_ITEM((, ), 0)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, , ), 0)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, ), 1)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, , ), 1)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, , ), 2)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((a, ), 0)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, , ), 0)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((a, ), 1)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((a, , ), 1)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((a, , ), 2)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, a), 0)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, a, ), 0)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, a), 1)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((, a, ), 1)), (a));
+ASSERT_PP_EQ((PTL_GET_ITEM((, a, ), 2)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, , a), 0)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, , a), 1)), ());
+ASSERT_PP_EQ((PTL_GET_ITEM((, , a), 2)), (a));
 // clang-format on

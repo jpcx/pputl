@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(set) set = NIFTY_DEF(set, [&](va args) {
-  docs << "[inherits from " + obj + "] a set of sizes."
+  docs << "[inherits from " + obj + "] a set of words."
        << "optionally provide arguments to make a type assertion."
        << ""
        << "note: does not parse contained items during validity check.";

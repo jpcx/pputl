@@ -30,6 +30,9 @@
 #include "config.h"
 #include "lang.h"
 //
+#include "impl/compare.h"
+#include "impl/math.h"
+#include "impl/numeric.h"
 #include "impl/traits.h"
 
 namespace api {
@@ -39,9 +42,12 @@ inline codegen::category<"impl.math"> math;
 
 extern codegen::def<"add(a, b: utup, utup) -> utup"> const& add;
 extern codegen::def<"sub(a, b: utup, utup) -> utup"> const& sub;
+extern codegen::def<"index(i, sign, sz, err: utup, bool, utup, obj) -> utup"> const&
+    index;
 
 NIFTY_DECL(add);
 NIFTY_DECL(sub);
+NIFTY_DECL(index);
 
 inline codegen::end_category<"impl.math"> math_end;
 

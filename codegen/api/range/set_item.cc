@@ -31,7 +31,7 @@ namespace api {
 
 using namespace codegen;
 
-decltype(tup_set) tup_set = NIFTY_DEF(tup_set, [&](va args) {
+decltype(set_item) set_item = NIFTY_DEF(set_item, [&](va args) {
   docs << "set a tuple item to a new value. index must be within [-size, size).";
 
   // auto bigargs = utl::alpha_base52_seq(conf::size_max);

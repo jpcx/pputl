@@ -50,6 +50,7 @@ extern codegen::def<"mul(...: word, word) -> word"> const&        mul;
 extern codegen::def<"divr(...: word, word) -> word, word"> const& divr;
 extern codegen::def<"div(...: word, word) -> word"> const&        div;
 extern codegen::def<"rem(...: word, word) -> word"> const&        rem;
+extern codegen::def<"index(...: size, ofs) -> size"> const&       index;
 
 NIFTY_DECL(add);
 NIFTY_DECL(sub);
@@ -57,6 +58,7 @@ NIFTY_DECL(mul);
 NIFTY_DECL(divr);
 NIFTY_DECL(div);
 NIFTY_DECL(rem);
+NIFTY_DECL(index);
 
 inline codegen::end_category<"math"> math_end;
 

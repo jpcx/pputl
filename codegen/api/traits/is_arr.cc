@@ -25,36 +25,57 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "range.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(index) index = NIFTY_DEF(index, [&](va args) {
-  docs << "translates an ofs to a non-negative zero-offset for a given range size."
-       << "positive indices return unchanged, negative indices return added to the size."
-       << ""
-       << "fails if input is out of bounds: [-size, size];"
-       << "allows one-past-the-end indexing."
-       << ""
-       << "casts to typeof input size";
+namespace detail {
+decltype(is_arr_o)  is_arr_o  = NIFTY_DEF(is_arr_o);
+decltype(is_arr_oo) is_arr_oo = NIFTY_DEF(is_arr_oo);
+} // namespace detail
 
-  tests << index(5, 0)         = "0" >> docs;
-  tests << index("5u", 1)      = "1u" >> docs;
-  tests << index(5, 2)         = "2" >> docs;
-  tests << index(5, 3)         = "3" >> docs;
-  tests << index(5, 4)         = "4" >> docs;
-  tests << index(5, 5)         = "5" >> docs;
-  tests << index(5, neg(1))    = "4" >> docs;
-  tests << index(5, neg(2))    = "3" >> docs;
-  tests << index(5, neg(3))    = "2" >> docs;
-  tests << index("5u", neg(4)) = "1u" >> docs;
-  tests << index(5, neg(5))    = "0" >> docs;
+decltype(is_arr) is_arr = NIFTY_DEF(is_arr, [&](va args) {
+  docs << "[extends " + is_obj + "] detects if args is a pputl array object."
+       << "note: does not parse contained items during validity check.";
 
-  return def<"o(e, sz, i)">{[&](arg e, arg sz, arg i) {
-    return ofs(impl::index(utup(i), is_int(i), utup(sz), e), typeof(sz));
-  }}(error(index, "index out of bounds", args), args);
+  tests << is_arr()                = "0" >> docs;
+  tests << is_arr("1, 2")          = "0" >> docs;
+  tests << is_arr(fwd::arr + "()") = "1" >> docs;
+
+  def chk = def{"chk_\\" + fwd::arr + "(...)"} = [&](va) {
+    return "";
+  };
+
+  detail::is_arr_o = def{"o(obj)"} = [&](arg obj) {
+    detail::is_arr_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
+      return is_none(
+          pp::cat(utl::slice(chk, -(((std::string const&)fwd::arr).size())), obj));
+    };
+
+    def<"\\0"> _0 = [&] {
+      return detail::is_arr_oo;
+    };
+    def<"\\1">{} = [&] {
+      return def<"fail(...)">{[&](va) {
+        return "0";
+      }};
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
+  };
+
+  def<"\\0"> _0 = [&] {
+    return def<"fail(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_arr_o;
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
 });
 
 } // namespace api

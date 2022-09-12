@@ -37,7 +37,7 @@ decltype(is_enum_oo) is_enum_oo = NIFTY_DEF(is_enum_oo);
 } // namespace detail
 
 decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args matches a specified atom union."
+  docs << "[extends " + is_atom + "] detects if args matches a defined enumeration."
        << "fails if chkprefix is not an atom."
        << ""
        << "to use this function, define a set of"
@@ -45,12 +45,12 @@ decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
        << " ‐ object-like"
        << " ‐ common prefix"
        << " ‐ enum value suffixes"
-       << " ‐ expand to nothing OR expand to more than one value"
+       << " ‐ expansion contains a unique word as its first element"
        << "pass the common prefix as chkprefix."
        << ""
        << "example: (identifying an enum<GOOD|BAD>)"
-       << " #define FOO_GOOD"
-       << " #define FOO_BAD"
+       << " #define FOO_GOOD 0"
+       << " #define FOO_BAD  1"
        << " " + is_enum + "(FOO_, BLEH) // 0"
        << " " + is_enum + "(FOO_, GOOD) // 1"
        << " " + is_enum + "(FOO_, ,,,)  // 0";

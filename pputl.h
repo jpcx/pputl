@@ -66,16 +66,16 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                                             [type]    //
-//           list   none   obj     atom  enum  bool  hex                      //
-//           nybl   idec   ihex    udec  uhex  int   tup                      //
-//           utup   uint   word    size  ofs   map   set                      //
-//           stack  queue  pqueue  any                                        //
-//       ‐ type traits                                      [traits, data]    //
-//           is_list    is_none  is_obj   is_atom  is_enum   is_bool          //
-//           is_hex     is_nybl  is_idec  is_ihex  is_udec   is_uhex          //
-//           is_int     is_tup   is_utup  is_uint  is_word   is_size          //
-//           is_ofs     is_any   is_map   is_set   is_stack  is_queue         //
-//           is_pqueue  typeof   countof  sizeof   is_empty                   //
+//           list    none  object  tuple  atom   enum                         //
+//           bool    idec  ihex    udec   uhex   int                          //
+//           uint    word  size    ofs    array  map                          //
+//           pqueue  set   stack   queue  range  any                          //
+//       ‐ type traits                                     [traits, range]    //
+//           is_list    is_none   is_object  is_tuple  is_atom   is_enum      //
+//           is_bool    is_idec   is_ihex    is_udec   is_uhex   is_int       //
+//           is_uint    is_word   is_size    is_ofs    is_array  is_map       //
+//           is_pqueue  is_set    is_stack   is_queue  is_range  is_any       //
+//           typeof     countof   sizeof     itemsof   is_empty               //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -88,32 +88,23 @@
 //           eqz  nez  ltz  gtz  lez  gez  lt                                 //
 //           gt   le   ge   eq   ne   min  max                                //
 //       ‐ bitwise operations                                    [bitwise]    //
-//           bitdump  bitsll   bitsrl   bitsra   bitnot   bitand              //
-//           bitor    bitxor   bitnand  bitnor   bitxnor  bitget              //
-//           bitset   bitflip  bitrotl  bitrotr                               //
+//           hexdump  bitdump  bitsll   bitsrl   bitsra   bitnot              //
+//           bitand   bitor    bitxor   bitnand  bitnor   bitxnor             //
+//           bitget   bitset   bitflip  bitrotl  bitrotr                      //
 //     ◆ datastructures and algorithms                                        //
-//       ‐ tuple manipulation                                        [tup]    //
-//           tup_items  tup_bisect  tup_unite   tup_head                      //
-//           tup_tail   tup_lpush   tup_rpush   tup_lpop                      //
-//           tup_rpop   tup_get     tup_set     tup_front                     //
-//           tup_back   tup_slice   tup_splice  tup_insert                    //
-//       ‐ specialized data storage                                 [data]    //
-//           map_items    map_has      map_get     map_set                    //
-//           map_del      set_items    set_has     set_add                    //
-//           set_del      stack_items  stack_push  stack_pop                  //
-//           queue_items  queue_push   queue_pop   pqueue_items               //
-//           pqueue_push  pqueue_pop                                          //
-//       ‐ generation                                               [algo]    //
+//       ‐ range manipulation                                      [range]    //
+//           bisect     unite      head      tail      push_front             //
+//           push_back  pop_front  pop_back  get_item  set_item               //
+//           ins_item   del_item   front     back      slice                  //
+//           splice     push       pop                                        //
+//       ‐ list generation                                          [algo]    //
 //           seq  repeat  gen_lp  gen_rp                                      //
-//       ‐ transformation                                           [algo]    //
-//           rev  transform_lp  transform_rp  shift  rotate                   //
-//       ‐ reduction                                                [algo]    //
-//           reduce_lp  reduce_rp                                             //
+//       ‐ list manipulation                                        [algo]    //
+//           rev     transform_lp  transform_rp  shift                        //
+//           rotate  reduce_lp     reduce_rp                                  //
 //     ◆ metaprogramming utilities                                            //
 //       ‐ expansion control and tracing                            [meta]    //
-//           x  lp  rp  xtrace  xtrace_read                                   //
-//       ‐ mutually recursive stack expansion                       [meta]    //
-//           xx_lp  xx_rp                                                     //
+//           x  xx_lp  xx_rp  lp  rp  xtrace  xtrace_read                     //
 //       ‐ inline recursive stack construction                      [meta]    //
 //           recur_lp  recur_rp                                               //
 //     ◆ configuration details                                    [config]    //
@@ -180,36 +171,28 @@
 //                                                                            //
 //     list: tokens potentially delimited by non-parenthesized commas         //
 //      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
-//      ├╴obj:  a list with exactly one element                               //
-//      │  ├╴atom: a sequence of digit|nondigit tokens (/[\w\d_]+/)           //
-//      │  │  ├╴enum<v0|v1|...>: an atom that matches a specified union       //
+//      ├╴object: a list with exactly one element                             //
+//      │  ├╴tuple: a parenthesized list [e.g ()] [e.g. (a, b, , )]           //
+//      │  ├╴atom:  a non-parenthesized element                               //
+//      │  │  ├╴enum<v0|v1|...>: an atom matching a defined enumeration       //
 //      │  │  │  ├╴bool: enum<0|1>                                            //
-//      │  │  │  ├╴hex:  enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>                //
-//      │  │  │  ├╴nybl: enum<0000|0001|0010|...|1101|1110|1111>              //
 //      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //
 //      │  │  │  ├╴ihex: enum<0x000|0x001|...|0xFFE|0xFFF>                    //
-//      │  │  │  ├╴udec: enum<0u|1u|2u|...4093u|4094u|4095u>                  //
+//      │  │  │  ├╴udec: enum<0u|1u|2u|...|4093u|4094u|4095u>                 //
 //      │  │  │  └╴uhex: enum<0x000u|0x001u|...|0xFFEu|0xFFFu>                //
-//      │  │  └╴int: <union> idec|ihex; a signed 2s-complement integer        //
-//      │  ├╴tup: a parenthesized list [e.g ()] [e.g. (a, b, , )]             //
-//      │  │  └╴utup: an unsigned word-sized hex tup [e.g. (6, D, 2)]         //
-//      │  ├╴uint: <union> udec|uhex|utup; an unsigned integer                //
-//      │  ├╴word: <union> int|uint; any defined integer representation       //
-//      │  │  ├╴size: any non-negative word up to size_max (default 255u)     //
-//      │  │  └╴ofs:  any word whose absolute value is a valid size           //
-//      │  ├╴map:    a mapping of sizes to lists                              //
-//      │  ├╴set:    a set of sizes                                           //
-//      │  ├╴stack:  a LIFO stack of lists                                    //
-//      │  ├╴queue:  a FIFO queue of lists                                    //
-//      │  └╴pqueue: a priority queue of lists                                //
-//      └╴any: <union> none|obj; a list without separators (an element)       //
-//                                                                            //
-//    All pputl traits are fully testable except for atom,  which requires    //
-//    its values to match  /[\w\d_]+/  as they must be able to concatenate    //
-//    with identifiers to create new identifiers. See C++20 [lex.name] for    //
-//    details.  While undetectable, this requirement is crucial for value-    //
-//    based control flow and must be observed by the user where applicable    //
-//    (although atom does perform a tuple test and will fail when it can).    //
+//      │  │  ├╴int:  <union> bool|idec|ihex; a signed 2s-compl integer       //
+//      │  │  ├╴uint: <union> udec|uhex; an unsigned integer                  //
+//      │  │  └╴word: <union> int|uint;  any kind of integer                  //
+//      │  │     ├╴size: any non-negative word up to size_max                 //
+//      │  │     └╴ofs:  any word whose absolute value is a valid size        //
+//      │  ├╴array: an encapsulated, sized sequence of elements               //
+//      │  │  ├╴map: a sorted mapping of words or enums to elements           //
+//      │  │  │  └╴pqueue: a priority queue of elements                       //
+//      │  │  ├╴set:   a set of words or enums                                //
+//      │  │  ├╴stack: a LIFO stack of elements                               //
+//      │  │  └╴queue: a FIFO queue of elements                               //
+//      │  └╴range: <union> tuple|array; a structured range of elements       //
+//      └╴any: <union> none|object; a list without separators (an element)    //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -235,7 +218,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (ISO8601).
-#define PTL_BUILD /* -> <c++ int> */ 20220909
+#define PTL_BUILD /* -> <c++ int> */ 20220912
 
 /// [config.word_size]
 /// ------------------
@@ -9168,7 +9151,7 @@
 
 /// [traits.is_enum]
 /// ----------------
-/// [extends PTL_IS_ATOM] detects if args matches a specified atom union.
+/// [extends PTL_IS_ATOM] detects if args matches a defined enumeration.
 /// fails if chkprefix is not an atom.
 ///
 /// to use this function, define a set of
@@ -9176,12 +9159,12 @@
 ///  ‐ object-like
 ///  ‐ common prefix
 ///  ‐ enum value suffixes
-///  ‐ expand to nothing OR expand to more than one value
+///  ‐ expansion contains a unique word as its first element
 /// pass the common prefix as chkprefix.
 ///
 /// example: (identifying an enum<GOOD|BAD>)
-///  #define FOO_GOOD
-///  #define FOO_BAD
+///  #define FOO_GOOD 0
+///  #define FOO_BAD  1
 ///  PTL_IS_ENUM(FOO_, BLEH) // 0
 ///  PTL_IS_ENUM(FOO_, GOOD) // 1
 ///  PTL_IS_ENUM(FOO_, ,,,)  // 0
@@ -9568,6 +9551,31 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [traits.is_arr]
+/// ---------------
+/// [extends PTL_IS_OBJ] detects if args is a pputl array object.
+/// note: does not parse contained items during validity check.
+///
+/// PTL_IS_ARR()          // 0
+/// PTL_IS_ARR(1, 2)      // 0
+/// PTL_IS_ARR(PTL_ARR()) // 1
+#define PTL_IS_ARR(/* list */...) /* -> bool */ \
+  PTL_XCAT(PPUTLIS_ARR_, PTL_IS_OBJ(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIS_ARR_1                         PPUTLIS_ARR_o
+#define PPUTLIS_ARR_0                         PPUTLIS_ARR_0_fail
+#define PPUTLIS_ARR_0_fail(...)               0
+#define PPUTLIS_ARR_o(obj)                    PTL_XCAT(PPUTLIS_ARR_o_, PPUTLIS_TUP_o(obj))(obj)
+#define PPUTLIS_ARR_o_1                       PPUTLIS_ARR_o_1_fail
+#define PPUTLIS_ARR_o_1_fail(...)             0
+#define PPUTLIS_ARR_o_0                       PPUTLIS_ARR_oo
+#define PPUTLIS_ARR_oo(/* <non tuple> */ obj) PTL_IS_NONE(PPUTLIS_ARR_CHK_##obj)
+#define PPUTLIS_ARR_CHK_PTL_ARR(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_map]
 /// ---------------
 /// [extends PTL_IS_OBJ] detects if args is a pputl map object.
@@ -9629,12 +9637,10 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_STACK_1           PPUTLIS_STACK_o
-#define PPUTLIS_STACK_0           PPUTLIS_STACK_0_fail
-#define PPUTLIS_STACK_0_fail(...) 0
-
-#define PPUTLIS_STACK_o(obj) PTL_XCAT(PPUTLIS_STACK_o_, PPUTLIS_TUP_o(obj))(obj)
-
+#define PPUTLIS_STACK_1                         PPUTLIS_STACK_o
+#define PPUTLIS_STACK_0                         PPUTLIS_STACK_0_fail
+#define PPUTLIS_STACK_0_fail(...)               0
+#define PPUTLIS_STACK_o(obj)                    PTL_XCAT(PPUTLIS_STACK_o_, PPUTLIS_TUP_o(obj))(obj)
 #define PPUTLIS_STACK_o_1                       PPUTLIS_STACK_o_1_fail
 #define PPUTLIS_STACK_o_1_fail(...)             0
 #define PPUTLIS_STACK_o_0                       PPUTLIS_STACK_oo
@@ -9655,12 +9661,10 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIS_QUEUE_1           PPUTLIS_QUEUE_o
-#define PPUTLIS_QUEUE_0           PPUTLIS_QUEUE_0_fail
-#define PPUTLIS_QUEUE_0_fail(...) 0
-
-#define PPUTLIS_QUEUE_o(obj) PTL_XCAT(PPUTLIS_QUEUE_o_, PPUTLIS_TUP_o(obj))(obj)
-
+#define PPUTLIS_QUEUE_1                         PPUTLIS_QUEUE_o
+#define PPUTLIS_QUEUE_0                         PPUTLIS_QUEUE_0_fail
+#define PPUTLIS_QUEUE_0_fail(...)               0
+#define PPUTLIS_QUEUE_o(obj)                    PTL_XCAT(PPUTLIS_QUEUE_o_, PPUTLIS_TUP_o(obj))(obj)
 #define PPUTLIS_QUEUE_o_1                       PPUTLIS_QUEUE_o_1_fail
 #define PPUTLIS_QUEUE_o_1_fail(...)             0
 #define PPUTLIS_QUEUE_o_0                       PPUTLIS_QUEUE_oo
@@ -9725,10 +9729,9 @@
 ///
 /// returns one of:
 ///
-///  | NONE   | LIST | TUP   | UTUP
-///  | MAP    | SET  | STACK | QUEUE
-///  | PQUEUE | ATOM | HEX   | NYBL
-///  | IDEC   | IHEX | UDEC  | UHEX
+///  | NONE | LIST  | TUP   | UTUP   | ARR  | MAP
+///  | SET  | STACK | QUEUE | PQUEUE | ATOM | HEX
+///  | NYBL | IDEC  | IHEX  | UDEC   | UHEX
 ///
 /// PTL_TYPEOF((foo))        // TUP
 /// PTL_TYPEOF(0)            // IDEC
@@ -9746,16 +9749,17 @@
 /// PTL_TYPEOF((0, 0, 0))    // UTUP
 /// PTL_TYPEOF((F, F, F))    // UTUP
 /// PTL_TYPEOF()             // NONE
+/// PTL_TYPEOF(PTL_ARR())    // ARR
 /// PTL_TYPEOF(PTL_MAP())    // MAP
 /// PTL_TYPEOF(PTL_SET())    // SET
 /// PTL_TYPEOF(PTL_STACK())  // STACK
 /// PTL_TYPEOF(PTL_QUEUE())  // QUEUE
 /// PTL_TYPEOF(PTL_PQUEUE()) // PQUEUE
-#define PTL_TYPEOF(                                                                                  \
-    /* list */                                                                                       \
-    ...)    /* ->                                                                                    \
-               enum<NONE|LIST|TUP|UTUP|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|IDEC|IHEX|UDEC|UHEX> \
-             */                                                                                      \
+#define PTL_TYPEOF(                                                                                      \
+    /* list */                                                                                           \
+    ...)    /* ->                                                                                        \
+               enum<NONE|LIST|TUP|UTUP|ARR|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|IDEC|IHEX|UDEC|UHEX> \
+             */                                                                                          \
   PTL_XCAT(PPUTLTYPEOF_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -9773,33 +9777,35 @@
 /// !none → obj → tup → !utup
 #define PPUTLTYPEOF_0_1_1_0(tup)  TUP
 /// !none → obj → !tup
-#define PPUTLTYPEOF_0_1_0(obj)                                             \
-  PTL_XCAT(PTL_XCAT(PTL_XCAT(PPUTLTYPEOF_0_1_0_, PPUTLIS_MAP_oo(obj)),     \
-                    PTL_XCAT(PPUTLIS_SET_oo(obj), PPUTLIS_STACK_oo(obj))), \
-           PTL_XCAT(PPUTLIS_QUEUE_oo(obj), PPUTLIS_PQUEUE_oo(obj)))        \
+#define PPUTLTYPEOF_0_1_0(obj)                                                          \
+  PTL_XCAT(                                                                             \
+      PTL_XCAT(PPUTLTYPEOF_0_1_0_, PTL_XCAT(PPUTLIS_ARR_oo(obj), PPUTLIS_MAP_oo(obj))), \
+      PTL_XCAT(PTL_XCAT(PPUTLIS_SET_oo(obj), PPUTLIS_STACK_oo(obj)),                    \
+               PTL_XCAT(PPUTLIS_QUEUE_oo(obj), PPUTLIS_PQUEUE_oo(obj))))                \
   (obj)
-#define PPUTLTYPEOF_0_1_0_10000(mem) MAP
-#define PPUTLTYPEOF_0_1_0_01000(mem) SET
-#define PPUTLTYPEOF_0_1_0_00100(mem) STACK
-#define PPUTLTYPEOF_0_1_0_00010(mem) QUEUE
-#define PPUTLTYPEOF_0_1_0_00001(mem) PQUEUE
+#define PPUTLTYPEOF_0_1_0_100000(mem) ARR
+#define PPUTLTYPEOF_0_1_0_010000(mem) MAP
+#define PPUTLTYPEOF_0_1_0_001000(mem) SET
+#define PPUTLTYPEOF_0_1_0_000100(mem) STACK
+#define PPUTLTYPEOF_0_1_0_000010(mem) QUEUE
+#define PPUTLTYPEOF_0_1_0_000001(mem) PQUEUE
 /// !none → obj → !tup → !(map|set|stack|queue|pqueue)
-#define PPUTLTYPEOF_0_1_0_00000(atom)                                                    \
-  PTL_XCAT(                                                                              \
-      PTL_XCAT(PPUTLTYPEOF_0_1_0_00000_, PTL_XCAT(PTL_IS_HEX(atom), PTL_IS_NYBL(atom))), \
-      PTL_XCAT(PTL_XCAT(PPUTLIS_IDEC_o(atom), PPUTLIS_IHEX_o(atom)),                     \
-               PTL_XCAT(PTL_IS_UDEC(atom), PTL_IS_UHEX(atom))))
-#define PPUTLTYPEOF_0_1_0_00000_101000 IDEC
-#define PPUTLTYPEOF_0_1_0_00000_100000 HEX
-#define PPUTLTYPEOF_0_1_0_00000_011000 IDEC
-#define PPUTLTYPEOF_0_1_0_00000_010000 NYBL
-#define PPUTLTYPEOF_0_1_0_00000_001000 IDEC
-#define PPUTLTYPEOF_0_1_0_00000_000100 IHEX
-#define PPUTLTYPEOF_0_1_0_00000_000010 UDEC
-#define PPUTLTYPEOF_0_1_0_00000_000001 UHEX
-#define PPUTLTYPEOF_0_1_0_00000_000000 ATOM
+#define PPUTLTYPEOF_0_1_0_000000(atom)                                    \
+  PTL_XCAT(PTL_XCAT(PPUTLTYPEOF_0_1_0_000000_,                            \
+                    PTL_XCAT(PTL_IS_HEX(atom), PTL_IS_NYBL(atom))),       \
+           PTL_XCAT(PTL_XCAT(PPUTLIS_IDEC_o(atom), PPUTLIS_IHEX_o(atom)), \
+                    PTL_XCAT(PTL_IS_UDEC(atom), PTL_IS_UHEX(atom))))
+#define PPUTLTYPEOF_0_1_0_000000_101000 IDEC
+#define PPUTLTYPEOF_0_1_0_000000_100000 HEX
+#define PPUTLTYPEOF_0_1_0_000000_011000 IDEC
+#define PPUTLTYPEOF_0_1_0_000000_010000 NYBL
+#define PPUTLTYPEOF_0_1_0_000000_001000 IDEC
+#define PPUTLTYPEOF_0_1_0_000000_000100 IHEX
+#define PPUTLTYPEOF_0_1_0_000000_000010 UDEC
+#define PPUTLTYPEOF_0_1_0_000000_000001 UHEX
+#define PPUTLTYPEOF_0_1_0_000000_000000 ATOM
 /// !none → !obj
-#define PPUTLTYPEOF_0_0(...)           LIST
+#define PPUTLTYPEOF_0_0(...)            LIST
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -10869,18 +10875,79 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [type.arr]
+/// ----------
+/// [inherits from PTL_OBJ] a sized sequence of elements.
+/// construction from derived array type casts to base.
+///
+/// resultant object is an expansion-terminated self-reference.
+///
+/// note: constructor never fails. construction from existing array type
+///       assumes that the contained structure is valid, construction from
+///       explicit size assumes size is valid, and any inputs that do not
+///       match any other constructor fallback to list construction.
+///
+/// PTL_ARR()                  // PTL_ARR(0u, ())
+/// PTL_ARR(a, b)              // PTL_ARR(2u, (a, b))
+/// PTL_ARR(3, (, , ))         // PTL_ARR(3, (, , ))
+/// PTL_ARR((1, 2, 3))         // PTL_ARR(1u, ((1, 2, 3)))
+/// PTL_ARR(PTL_ARR(foo, bar)) // PTL_ARR(2u, (foo, bar))
+#define PTL_ARR(/* o?: arr|tup */...) /* -> arr */ PTL_ARR(PPUTLARR_o(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+/// base array construction. returns array contents without type wrapper.
+#define PPUTLARR_o(...) PTL_XCAT(PPUTLARR_o_, PTL_IS_NONE(__VA_ARGS__))(__VA_ARGS__)
+
+#define PPUTLARR_o_1(...) 0u, ()
+
+#define PPUTLARR_o_0(...) PTL_XCAT(PPUTLARR_o_0_, PTL_IS_OBJ(__VA_ARGS__))(__VA_ARGS__)
+
+#define PPUTLARR_o_0_1(obj)              PTL_XCAT(PPUTLARR_o_0_1_, PPUTLIS_ARR_o(obj))(obj)
+#define PPUTLARR_o_0_1_1(arr)            PPUTLARR_o_0_1_1_##arr
+#define PPUTLARR_o_0_1_1_PTL_PQUEUE(...) __VA_ARGS__
+#define PPUTLARR_o_0_1_1_PTL_QUEUE(...)  __VA_ARGS__
+#define PPUTLARR_o_0_1_1_PTL_STACK(...)  __VA_ARGS__
+#define PPUTLARR_o_0_1_1_PTL_SET(...)    __VA_ARGS__
+#define PPUTLARR_o_0_1_1_PTL_MAP(...)    __VA_ARGS__
+#define PPUTLARR_o_0_1_1_PTL_ARR(...)    __VA_ARGS__
+#define PPUTLARR_o_0_1_0(obj)            1u, (obj)
+#define PPUTLARR_o_0_0(_, ...)                                                \
+  PTL_XCAT(PPUTLARR_o_0_0_, PTL_XCAT(PTL_IS_OBJ(_), PTL_IS_OBJ(__VA_ARGS__))) \
+  (_, __VA_ARGS__)
+#define PPUTLARR_o_0_0_11(obj_a, obj_b)                                               \
+  PTL_XCAT(PPUTLARR_o_0_0_11_, PTL_XCAT(PPUTLIS_SIZE_o(obj_a), PPUTLIS_TUP_o(obj_b))) \
+  (obj_a, obj_b)
+#define PPUTLARR_o_0_0_11_11(size, tup)          size, tup
+#define PPUTLARR_o_0_0_11_10(/* size, obj */...) 2u, (__VA_ARGS__)
+#define PPUTLARR_o_0_0_11_01(/* obj, tup */...)  2u, (__VA_ARGS__)
+#define PPUTLARR_o_0_0_11_00(/* obj, obj */...)  2u, (__VA_ARGS__)
+#define PPUTLARR_o_0_0_10(/* obj, list */...)    PTL_COUNTOF(__VA_ARGS__), (__VA_ARGS__)
+#define PPUTLARR_o_0_0_01(/* none, obj */...)    2u, (__VA_ARGS__)
+#define PPUTLARR_o_0_0_00(/* none, list */...)   PTL_ARR(__VA_ARGS__), (__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [type.map]
 /// ----------
-/// [inherits from PTL_OBJ] a mapping of sizes to lists.
-/// optionally provide arguments to make a type assertion.
+/// [inherits from PTL_ARR] a sorted mapping of words to elements.
+/// overloads: map(arr), map(size, tup), map(tup...).
 ///
-/// note: does not parse contained items during validity check.
+/// elements are stored as key/value pairs in sorted order; construction from
+/// list or tuple assumes the inputs are valid (word, any) pairs in sorted order.
+///
+/// resultant object is an expansion-terminated self-reference.
+///
+/// note: constructor never fails. construction from existing array type
+///       assumes that the contained structure is valid, construction from
+///       explicit size assumes size is valid, and any inputs that do not
+///       match any other constructor fallback to list construction.
 ///
 /// PTL_MAP()          // PTL_MAP()
 /// PTL_MAP(PTL_MAP()) // PTL_MAP()
-#define PTL_MAP(/* map? */...) /* -> map */   \
-  PPUTLMAP_o(PTL_STR("invalid map"            \
-                     : PTL_MAP(__VA_ARGS__)), \
+#define PTL_MAP(/* o?: arr|tup */...) /* -> map */ \
+  PPUTLMAP_o(PTL_STR("invalid map"                 \
+                     : PTL_MAP(__VA_ARGS__)),      \
              PTL_OBJ(PTL_DEFAULT(PTL_MAP(), __VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -10893,16 +10960,16 @@
 
 /// [type.set]
 /// ----------
-/// [inherits from PTL_OBJ] a set of sizes.
+/// [inherits from PTL_OBJ] a set of words.
 /// optionally provide arguments to make a type assertion.
 ///
 /// note: does not parse contained items during validity check.
 ///
 /// PTL_SET()          // PTL_SET()
 /// PTL_SET(PTL_SET()) // PTL_SET()
-#define PTL_SET(/* set? */...) /* -> set */   \
-  PPUTLSET_o(PTL_STR("invalid set"            \
-                     : PTL_SET(__VA_ARGS__)), \
+#define PTL_SET(/* o?: arr|tup */...) /* -> set */ \
+  PPUTLSET_o(PTL_STR("invalid set"                 \
+                     : PTL_SET(__VA_ARGS__)),      \
              PTL_OBJ(PTL_DEFAULT(PTL_SET(), __VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -10922,9 +10989,9 @@
 ///
 /// PTL_STACK()            // PTL_STACK()
 /// PTL_STACK(PTL_STACK()) // PTL_STACK()
-#define PTL_STACK(/* stack? */...) /* -> stack */ \
-  PPUTLSTACK_o(PTL_STR("invalid stack"            \
-                       : PTL_STACK(__VA_ARGS__)), \
+#define PTL_STACK(/* o?: arr|tup */...) /* -> stack */ \
+  PPUTLSTACK_o(PTL_STR("invalid stack"                 \
+                       : PTL_STACK(__VA_ARGS__)),      \
                PTL_OBJ(PTL_DEFAULT(PTL_STACK(), __VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -10944,9 +11011,9 @@
 ///
 /// PTL_QUEUE()            // PTL_QUEUE()
 /// PTL_QUEUE(PTL_QUEUE()) // PTL_QUEUE()
-#define PTL_QUEUE(/* queue? */...) /* -> queue */ \
-  PPUTLQUEUE_o(PTL_STR("invalid queue"            \
-                       : PTL_QUEUE(__VA_ARGS__)), \
+#define PTL_QUEUE(/* o?: arr|tup */...) /* -> queue */ \
+  PPUTLQUEUE_o(PTL_STR("invalid queue"                 \
+                       : PTL_QUEUE(__VA_ARGS__)),      \
                PTL_OBJ(PTL_DEFAULT(PTL_QUEUE(), __VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -10966,9 +11033,9 @@
 ///
 /// PTL_PQUEUE()             // PTL_PQUEUE()
 /// PTL_PQUEUE(PTL_PQUEUE()) // PTL_PQUEUE()
-#define PTL_PQUEUE(/* pqueue? */...) /* -> pqueue */ \
-  PPUTLPQUEUE_o(PTL_STR("invalid pqueue"             \
-                        : PTL_PQUEUE(__VA_ARGS__)),  \
+#define PTL_PQUEUE(/* o?: arr|tup */...) /* -> pqueue */ \
+  PPUTLPQUEUE_o(PTL_STR("invalid pqueue"                 \
+                        : PTL_PQUEUE(__VA_ARGS__)),      \
                 PTL_OBJ(PTL_DEFAULT(PTL_PQUEUE(), __VA_ARGS__)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -11344,42 +11411,6 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-/// [impl.math.add]
-/// ---------------
-/// [internal] addition with overflow.
-#define PPUTLIMPL_ADD(/* utup, utup */ a, b) /* -> utup */ \
-  PPUTLIMPL_ADD_RES(PPUTLIMPL_ADD_R(                       \
-      PPUTLIMPL_ADD_R(PPUTLIMPL_ADD_R(0, PPUTLIMPL_ADD_X(PTL_ESC a, PTL_ESC b)))))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_ADD_RES(...)                   PPUTLIMPL_ADD_RES_o(__VA_ARGS__)
-#define PPUTLIMPL_ADD_RES_o(_, a, b, c, d, e, f) (a, b, c)
-#define PPUTLIMPL_ADD_R(...)                     PPUTLIMPL_ADD_R_o(__VA_ARGS__)
-#define PPUTLIMPL_ADD_R_o(_, a, b, c, d, e, f) \
-  PPUTLIMPL_HEXHEX(c##f, ADD##_), a, b, f, d, e
-#define PPUTLIMPL_ADD_X(...) __VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [impl.math.sub]
-/// ---------------
-/// [internal] subtraction with underflow.
-#define PPUTLIMPL_SUB(/* utup, utup */ a, b) /* -> utup */ \
-  PPUTLIMPL_SUB_RES(PPUTLIMPL_SUB_R(                       \
-      PPUTLIMPL_SUB_R(PPUTLIMPL_SUB_R(0, PPUTLIMPL_SUB_X(PTL_ESC a, PTL_ESC b)))))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_SUB_RES(...)                   PPUTLIMPL_SUB_RES_o(__VA_ARGS__)
-#define PPUTLIMPL_SUB_RES_o(_, a, b, c, d, e, f) (a, b, c)
-#define PPUTLIMPL_SUB_R(...)                     PPUTLIMPL_SUB_R_o(__VA_ARGS__)
-#define PPUTLIMPL_SUB_R_o(_, a, b, c, d, e, f) \
-  PPUTLIMPL_HEXHEX(c##f, SUB##_), a, b, f, d, e
-#define PPUTLIMPL_SUB_X(...) __VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [impl.numeric.inc]
 /// ------------------
 /// [internal] numeric increment w/ overflow.
@@ -11437,6 +11468,65 @@
 
 #define PPUTLIMPL_LTZ_RES(a, b, c) PPUTLIMPL_HEXHEX(7##a, LT)
 #define PPUTLIMPL_LTZ_X(...)       __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [impl.math.add]
+/// ---------------
+/// [internal] addition with overflow.
+#define PPUTLIMPL_ADD(/* utup, utup */ a, b) /* -> utup */ \
+  PPUTLIMPL_ADD_RES(PPUTLIMPL_ADD_R(                       \
+      PPUTLIMPL_ADD_R(PPUTLIMPL_ADD_R(0, PPUTLIMPL_ADD_X(PTL_ESC a, PTL_ESC b)))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_ADD_RES(...)                   PPUTLIMPL_ADD_RES_o(__VA_ARGS__)
+#define PPUTLIMPL_ADD_RES_o(_, a, b, c, d, e, f) (a, b, c)
+#define PPUTLIMPL_ADD_R(...)                     PPUTLIMPL_ADD_R_o(__VA_ARGS__)
+#define PPUTLIMPL_ADD_R_o(_, a, b, c, d, e, f) \
+  PPUTLIMPL_HEXHEX(c##f, ADD##_), a, b, f, d, e
+#define PPUTLIMPL_ADD_X(...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [impl.math.sub]
+/// ---------------
+/// [internal] subtraction with underflow.
+#define PPUTLIMPL_SUB(/* utup, utup */ a, b) /* -> utup */ \
+  PPUTLIMPL_SUB_RES(PPUTLIMPL_SUB_R(                       \
+      PPUTLIMPL_SUB_R(PPUTLIMPL_SUB_R(0, PPUTLIMPL_SUB_X(PTL_ESC a, PTL_ESC b)))))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_SUB_RES(...)                   PPUTLIMPL_SUB_RES_o(__VA_ARGS__)
+#define PPUTLIMPL_SUB_RES_o(_, a, b, c, d, e, f) (a, b, c)
+#define PPUTLIMPL_SUB_R(...)                     PPUTLIMPL_SUB_R_o(__VA_ARGS__)
+#define PPUTLIMPL_SUB_R_o(_, a, b, c, d, e, f) \
+  PPUTLIMPL_HEXHEX(c##f, SUB##_), a, b, f, d, e
+#define PPUTLIMPL_SUB_X(...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [impl.math.index]
+/// -----------------
+/// [internal] translates an idx to a non-negative zero-offset for a given range size.
+#define PPUTLIMPL_INDEX(/* utup, bool, utup, obj */ i, sign, sz, err) /* -> utup */ \
+  PTL_CAT(PPUTLIMPL_INDEX_, sign)(i, sz, err)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_INDEX_1(i, sz, err) \
+  PTL_XCAT(PPUTLIMPL_INDEX_1_, PPUTLIMPL_LTZ(i))(i, sz, err)
+#define PPUTLIMPL_INDEX_1_1(i, sz, err)                                             \
+  PTL_XCAT(PPUTLIMPL_INDEX_1_1_, PPUTLIMPL_LT(PPUTLIMPL_NEG(i), PPUTLIMPL_INC(sz))) \
+  (i, sz, err)
+#define PPUTLIMPL_INDEX_1_1_1(i, sz, err) PPUTLIMPL_ADD(i, sz)
+#define PPUTLIMPL_INDEX_1_1_0(i, sz, err) PTL_FAIL(err)
+#define PPUTLIMPL_INDEX_1_0(i, sz, err)   PPUTLIMPL_INDEX_0(i, sz, err)
+#define PPUTLIMPL_INDEX_0(i, sz, err) \
+  PTL_XCAT(PPUTLIMPL_INDEX_0_, PPUTLIMPL_LT(i, PPUTLIMPL_INC(sz)))(i, err)
+#define PPUTLIMPL_INDEX_0_1(i, err) i
+#define PPUTLIMPL_INDEX_0_0(i, err) PTL_FAIL(err)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -11692,33 +11782,6 @@
 
 #define PPUTLPRIME_1(n) 0
 #define PPUTLPRIME_0(n) PTL_IS_NONE(PPUTLIMPL_UDEC(PTL_UDEC(n), FACT))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-/// [impl.range.index]
-/// ------------------
-/// [internal] translates an idx to a non-negative zero-offset for a given range size.
-#define PPUTLIMPL_INDEX(/* utup, bool, utup, obj */ i, sign, sz, err) /* -> utup */ \
-  PTL_CAT(PPUTLIMPL_INDEX_, sign)(i, sz, err)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_INDEX_1(i, sz, err) \
-  PTL_XCAT(PPUTLIMPL_INDEX_1_, PPUTLIMPL_LTZ(i))(i, sz, err)
-#define PPUTLIMPL_INDEX_1_1(i, sz, err)                                             \
-  PTL_XCAT(PPUTLIMPL_INDEX_1_1_, PPUTLIMPL_LT(PPUTLIMPL_NEG(i), PPUTLIMPL_INC(sz))) \
-  (i, sz, err)
-#define PPUTLIMPL_INDEX_1_1_1(i, sz, err) PPUTLIMPL_ADD(i, sz)
-#define PPUTLIMPL_INDEX_1_1_0(i, sz, err) PTL_FAIL(err)
-#define PPUTLIMPL_INDEX_1_0(i, sz, err)   PPUTLIMPL_INDEX_0(i, sz, err)
-#define PPUTLIMPL_INDEX_0(i, sz, err) \
-  PTL_XCAT(PPUTLIMPL_INDEX_0_, PPUTLIMPL_LT(i, PPUTLIMPL_INC(sz)))(i, err)
-#define PPUTLIMPL_INDEX_0_1(i, err) i
-#define PPUTLIMPL_INDEX_0_0(i, err) PTL_FAIL(err)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -12978,52 +13041,15 @@
 /// PTL_REM(PTL_NEG(14), PTL_NEG(5)) // PTL_NEG(4)
 #define PTL_REM(/* word, word */...) /* -> word */ PTL_XREST(PTL_DIVR(__VA_ARGS__))
 
-/// [range.sizeof]
-/// --------------
-/// counts the number of tuple items.
-/// fails if larger than PTL_SIZE_MAX (255u)
-///
-/// PTL_SIZEOF(())     // 0u
-/// PTL_SIZEOF((a))    // 1u
-/// PTL_SIZEOF((a, b)) // 2u
-/// PTL_SIZEOF((, ))   // 2u
-#define PTL_SIZEOF(/* tup */...) /* -> udec&size */ \
-  PTL_ESC(PTL_COUNTOF PTL_TUP(__VA_ARGS__))
-
-/// [range.items]
-/// -------------
-/// extracts tuple items.
-///
-/// PTL_ITEMS(())        // <nothing>
-/// PTL_ITEMS((a))       // a
-/// PTL_ITEMS((a, b))    // a, b
-/// PTL_ITEMS((a, b, c)) // a, b, c
-#define PTL_ITEMS(/* tup */...) /* -> any... */ PPUTLITEMS_X(PTL_TUP(__VA_ARGS__))
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLITEMS_X(...) PTL_ESC __VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [range.is_empty]
-/// ----------------
-/// true if the tuple has no elements.
-///
-/// PTL_IS_EMPTY(())  // 1
-/// PTL_IS_EMPTY((a)) // 0
-/// PTL_IS_EMPTY((,)) // 0
-#define PTL_IS_EMPTY(/* tup */...) /* -> bool */ PTL_IS_NONE(PTL_ITEMS(__VA_ARGS__))
-
-/// [range.index]
-/// -------------
+/// [math.index]
+/// ------------
 /// translates an ofs to a non-negative zero-offset for a given range size.
 /// positive indices return unchanged, negative indices return added to the size.
 ///
 /// fails if input is out of bounds: [-size, size];
 /// allows one-past-the-end indexing.
 ///
-/// casts to typeof input size
+/// casts to typeof input size.
 ///
 /// PTL_INDEX(5, 0)           // 0
 /// PTL_INDEX(5u, 1)          // 1u
@@ -13045,6 +13071,45 @@
   PTL_OFS(PPUTLIMPL_INDEX(PTL_UTUP(i), PTL_IS_INT(i), PTL_UTUP(sz), e), PTL_TYPEOF(sz))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [range.sizeof]
+/// --------------
+/// detects number of items. compatible with tup and all other pputl datastructures.
+/// fails if size is larger than PTL_SIZE_MAX (255u)
+///
+/// note: complexity is O(size) for tup and O(1) for other pputl datastructures.
+///
+/// PTL_SIZEOF(())     // 0u
+/// PTL_SIZEOF((a))    // 1u
+/// PTL_SIZEOF((a, b)) // 2u
+/// PTL_SIZEOF((, ))   // 2u
+#define PTL_SIZEOF(/* mem */...) /* -> udec&size */ \
+  PTL_ESC(PTL_COUNTOF PTL_TUP(__VA_ARGS__))
+
+/// [range.itemsof]
+/// ---------------
+/// extracts item from a tuple or array.
+///
+/// PTL_ITEMSOF(())        // <nothing>
+/// PTL_ITEMSOF((a))       // a
+/// PTL_ITEMSOF((a, b))    // a, b
+/// PTL_ITEMSOF((a, b, c)) // a, b, c
+#define PTL_ITEMSOF(/* mem */...) /* -> list */ PPUTLITEMSOF_X(PTL_TUP(__VA_ARGS__))
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLITEMSOF_X(...) PTL_ESC __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [range.is_empty]
+/// ----------------
+/// true if the tuple has no elements.
+///
+/// PTL_IS_EMPTY(())  // 1
+/// PTL_IS_EMPTY((a)) // 0
+/// PTL_IS_EMPTY((,)) // 0
+#define PTL_IS_EMPTY(/* mem */...) /* -> bool */ PTL_IS_NONE(PTL_ITEMSOF(__VA_ARGS__))
 
 /// [range.bisect]
 /// --------------
@@ -13070,11 +13135,11 @@
 /// PTL_BISECT((, ), 1)               // (), (), 1
 /// PTL_BISECT((, ), 2)               // (,), (), 0
 /// PTL_BISECT((, , ), 2)             // (,), (), 1
-#define PTL_BISECT(/* tup, ofs */...) /* -> tup, tup, bool */ PPUTLBISECT_o(__VA_ARGS__)
+#define PTL_BISECT(/* mem, ofs */...) /* -> mem, mem, bool */ PPUTLBISECT_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBISECT_o(t, i) PPUTLBISECT_oo(i, PTL_ITEMS(t))
+#define PPUTLBISECT_o(t, i) PPUTLBISECT_oo(i, PTL_ITEMSOF(t))
 #define PPUTLBISECT_oo(i, ...) \
   PPUTLBISECT_ooo(PTL_INDEX(PTL_COUNTOF(__VA_ARGS__), i), __VA_ARGS__)
 #define PPUTLBISECT_ooo(n, ...) \
@@ -13114,22 +13179,22 @@
 /// PTL_UNITE((), (), 1)           // (, )
 /// PTL_UNITE(PTL_BISECT((), 0))   // ()
 /// PTL_UNITE(PTL_BISECT((, ), 1)) // (, )
-#define PTL_UNITE(/* tup, tup, bool=0 */...) /* -> tup */ \
+#define PTL_UNITE(/* mem, mem, bool=0 */...) /* -> mem */ \
   PPUTLUNITE_o(__VA_ARGS__)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLUNITE_o(head, tail, ...)                                    \
   PTL_XCAT(PTL_XCAT(PPUTLUNITE_, PTL_BOOL(PTL_DEFAULT(0, __VA_ARGS__))), \
-           PTL_XCAT(PTL_IS_NONE(PTL_ITEMS(head)), PTL_IS_NONE(PTL_ITEMS(tail))))
+           PTL_XCAT(PTL_IS_NONE(PTL_ITEMSOF(head)), PTL_IS_NONE(PTL_ITEMSOF(tail))))
 #define PPUTLUNITE_111(head, tail, ...) (, )
-#define PPUTLUNITE_110(head, tail, ...) (, PTL_ITEMS(tail))
-#define PPUTLUNITE_101(head, tail, ...) (PTL_ITEMS(head), )
-#define PPUTLUNITE_100(head, tail, ...) (PTL_ITEMS(head), PTL_ITEMS(tail))
+#define PPUTLUNITE_110(head, tail, ...) (, PTL_ITEMSOF(tail))
+#define PPUTLUNITE_101(head, tail, ...) (PTL_ITEMSOF(head), )
+#define PPUTLUNITE_100(head, tail, ...) (PTL_ITEMSOF(head), PTL_ITEMSOF(tail))
 #define PPUTLUNITE_011(head, tail, ...) ()
 #define PPUTLUNITE_010(head, tail, ...) tail
 #define PPUTLUNITE_001(head, tail, ...) head
-#define PPUTLUNITE_000(head, tail, ...) (PTL_ITEMS(head), PTL_ITEMS(tail))
+#define PPUTLUNITE_000(head, tail, ...) (PTL_ITEMSOF(head), PTL_ITEMSOF(tail))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -13149,7 +13214,7 @@
 /// PTL_HEAD((, ), 1)      // ()
 /// PTL_HEAD((, ), 2)      // (,)
 /// PTL_HEAD((, , ), 2)    // (,)
-#define PTL_HEAD(/* tup, size=1 */...) /* -> tup */ PPUTLHEAD_o(__VA_ARGS__)
+#define PTL_HEAD(/* mem, size=1 */...) /* -> mem */ PPUTLHEAD_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
@@ -13174,139 +13239,140 @@
 /// PTL_TAIL((, ), 1)      // ()
 /// PTL_TAIL((, ), 2)      // (,)
 /// PTL_TAIL((, , ), 2)    // (,)
-#define PTL_TAIL(/* tup, size=1 */...) /* -> tup */ PPUTLTAIL_o(__VA_ARGS__)
+#define PTL_TAIL(/* mem, size=1 */...) /* -> mem */ PPUTLTAIL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLTAIL_o(t, ...) \
-  PPUTLTAIL_oo(             \
-      PTL_BISECT(t, PTL_SIZE(PTL_SUB(PTL_SIZEOF(t), PTL_DEFAULT(1, __VA_ARGS__)))))
+  PPUTLTAIL_oo(PTL_BISECT(  \
+      t, PTL_SIZE(PTL_SUB(PTL_COUNTOF(PTL_ITEMSOF(t)), PTL_DEFAULT(1, __VA_ARGS__)))))
 #define PPUTLTAIL_oo(...)               PPUTLTAIL_ooo(__VA_ARGS__)
 #define PPUTLTAIL_ooo(head, tail, type) tail
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [range.lpush]
-/// -------------
+/// [range.push_front]
+/// ------------------
 /// pushes items to the front of a tuple.
 ///
-/// PTL_LPUSH(())           // ()
-/// PTL_LPUSH((), a)        // (a)
-/// PTL_LPUSH((a), b)       // (b, a)
-/// PTL_LPUSH((b, a), c, d) // (c, d, b, a)
-/// PTL_LPUSH((c, d, b, a)) // (c, d, b, a)
-#define PTL_LPUSH(/* tup, any... */...) /* -> tup */ PPUTLLPUSH_o(__VA_ARGS__)
+/// PTL_PUSH_FRONT(())           // ()
+/// PTL_PUSH_FRONT((), a)        // (a)
+/// PTL_PUSH_FRONT((a), b)       // (b, a)
+/// PTL_PUSH_FRONT((b, a), c, d) // (c, d, b, a)
+/// PTL_PUSH_FRONT((c, d, b, a)) // (c, d, b, a)
+#define PTL_PUSH_FRONT(/* mem, any */...) /* -> mem */ PPUTLPUSH_FRONT_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLLPUSH_o(t, ...)                                                   \
-  PTL_XCAT(PPUTLLPUSH_o_, PTL_XCAT(PTL_IS_EMPTY(t), PTL_IS_NONE(__VA_ARGS__))) \
+#define PPUTLPUSH_FRONT_o(t, ...)                                                   \
+  PTL_XCAT(PPUTLPUSH_FRONT_o_, PTL_XCAT(PTL_IS_EMPTY(t), PTL_IS_NONE(__VA_ARGS__))) \
   (t, __VA_ARGS__)
-#define PPUTLLPUSH_o_11(t, ...) ()
-#define PPUTLLPUSH_o_10(t, ...) (__VA_ARGS__)
-#define PPUTLLPUSH_o_01(t, ...) t
-#define PPUTLLPUSH_o_00(t, ...) (__VA_ARGS__, PTL_ESC t)
+#define PPUTLPUSH_FRONT_o_11(t, ...) ()
+#define PPUTLPUSH_FRONT_o_10(t, ...) (__VA_ARGS__)
+#define PPUTLPUSH_FRONT_o_01(t, ...) t
+#define PPUTLPUSH_FRONT_o_00(t, ...) (__VA_ARGS__, PTL_ESC t)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [range.rpush]
-/// -------------
+/// [range.push_back]
+/// -----------------
 /// pushes items to the back of a tuple.
 ///
-/// PTL_RPUSH(())           // ()
-/// PTL_RPUSH((), a)        // (a)
-/// PTL_RPUSH((a), b)       // (a, b)
-/// PTL_RPUSH((a, b), c, d) // (a, b, c, d)
-/// PTL_RPUSH((a, b, c, d)) // (a, b, c, d)
-#define PTL_RPUSH(/* tup, any... */...) /* -> tup */ PPUTLRPUSH_o(__VA_ARGS__)
+/// PTL_PUSH_BACK(())           // ()
+/// PTL_PUSH_BACK((), a)        // (a)
+/// PTL_PUSH_BACK((a), b)       // (a, b)
+/// PTL_PUSH_BACK((a, b), c, d) // (a, b, c, d)
+/// PTL_PUSH_BACK((a, b, c, d)) // (a, b, c, d)
+#define PTL_PUSH_BACK(/* mem, any */...) /* -> mem */ PPUTLPUSH_BACK_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLRPUSH_o(t, ...)                                                   \
-  PTL_XCAT(PPUTLRPUSH_o_, PTL_XCAT(PTL_IS_EMPTY(t), PTL_IS_NONE(__VA_ARGS__))) \
+#define PPUTLPUSH_BACK_o(t, ...)                                                   \
+  PTL_XCAT(PPUTLPUSH_BACK_o_, PTL_XCAT(PTL_IS_EMPTY(t), PTL_IS_NONE(__VA_ARGS__))) \
   (t, __VA_ARGS__)
-#define PPUTLRPUSH_o_11(t, ...) ()
-#define PPUTLRPUSH_o_10(t, ...) (__VA_ARGS__)
-#define PPUTLRPUSH_o_01(t, ...) t
-#define PPUTLRPUSH_o_00(t, ...) (PTL_ESC t, __VA_ARGS__)
+#define PPUTLPUSH_BACK_o_11(t, ...) ()
+#define PPUTLPUSH_BACK_o_10(t, ...) (__VA_ARGS__)
+#define PPUTLPUSH_BACK_o_01(t, ...) t
+#define PPUTLPUSH_BACK_o_00(t, ...) (PTL_ESC t, __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [range.lpop]
-/// ------------
+/// [range.pop_front]
+/// -----------------
 /// removes the first n items from a tuple.
 /// n must be less than or equal to the tuple size.
 ///
-/// PTL_LPOP((), 0)        // ()
-/// PTL_LPOP((a), 0)       // (a)
-/// PTL_LPOP((a), 1)       // ()
-/// PTL_LPOP((a, b))       // (b)
-/// PTL_LPOP((a, b), 1)    // (b)
-/// PTL_LPOP((a, b), 2)    // ()
-/// PTL_LPOP((a, b, c), 2) // (c)
-#define PTL_LPOP(/* tup, size=1 */...) /* -> tup */ PPUTLLPOP_o(__VA_ARGS__)
+/// PTL_POP_FRONT((), 0)        // ()
+/// PTL_POP_FRONT((a), 0)       // (a)
+/// PTL_POP_FRONT((a), 1)       // ()
+/// PTL_POP_FRONT((a, b))       // (b)
+/// PTL_POP_FRONT((a, b), 1)    // (b)
+/// PTL_POP_FRONT((a, b), 2)    // ()
+/// PTL_POP_FRONT((a, b, c), 2) // (c)
+#define PTL_POP_FRONT(/* mem, size=1 */...) /* -> tup */ PPUTLPOP_FRONT_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLLPOP_o(t, ...) PPUTLLPOP_oo(PTL_BISECT(t, PTL_DEFAULT(1, __VA_ARGS__)))
-
-#define PPUTLLPOP_oo(...)               PPUTLLPOP_ooo(__VA_ARGS__)
-#define PPUTLLPOP_ooo(head, tail, type) tail
+#define PPUTLPOP_FRONT_o(t, ...) \
+  PPUTLPOP_FRONT_oo(PTL_BISECT(t, PTL_DEFAULT(1, __VA_ARGS__)))
+#define PPUTLPOP_FRONT_oo(...)               PPUTLPOP_FRONT_ooo(__VA_ARGS__)
+#define PPUTLPOP_FRONT_ooo(head, tail, type) tail
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [range.rpop]
-/// ------------
+/// [range.pop_back]
+/// ----------------
 /// removes the last n items from a tuple.
 /// n must be less than or equal to the tuple size.
 ///
-/// PTL_RPOP((), 0)        // ()
-/// PTL_RPOP((a), 0)       // (a)
-/// PTL_RPOP((a), 1)       // ()
-/// PTL_RPOP((a, b))       // (a)
-/// PTL_RPOP((a, b), 1)    // (a)
-/// PTL_RPOP((a, b), 2)    // ()
-/// PTL_RPOP((a, b, c), 2) // (a)
-#define PTL_RPOP(/* tup, size=1 */...) /* -> tup */ PPUTLRPOP_o(__VA_ARGS__)
+/// PTL_POP_BACK((), 0)        // ()
+/// PTL_POP_BACK((a), 0)       // (a)
+/// PTL_POP_BACK((a), 1)       // ()
+/// PTL_POP_BACK((a, b))       // (a)
+/// PTL_POP_BACK((a, b), 1)    // (a)
+/// PTL_POP_BACK((a, b), 2)    // ()
+/// PTL_POP_BACK((a, b, c), 2) // (a)
+#define PTL_POP_BACK(/* mem, size=1 */...) /* -> tup */ PPUTLPOP_BACK_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLRPOP_o(t, ...) \
-  PTL_XFIRST(PTL_BISECT(t, PTL_SIZE(PTL_SUB(PTL_SIZEOF(t), PTL_DEFAULT(1, __VA_ARGS__)))))
+#define PPUTLPOP_BACK_o(t, ...) \
+  PTL_XFIRST(PTL_BISECT(        \
+      t, PTL_SIZE(PTL_SUB(PTL_COUNTOF(PTL_ITEMSOF(t)), PTL_DEFAULT(1, __VA_ARGS__)))))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [range.tup_get]
-/// ---------------
+/// [range.get_item]
+/// ----------------
 /// get a tuple item. index must be within [-size, size).
 ///
-/// PTL_TUP_GET((a), 0)                // a
-/// PTL_TUP_GET((a, b), 0)             // a
-/// PTL_TUP_GET((a, b), 1)             // b
-/// PTL_TUP_GET((a, b, c), PTL_NEG(2)) // b
-/// PTL_TUP_GET((a, b, c), PTL_NEG(3)) // a
-#define PTL_TUP_GET(/* tup, ofs */...) /* -> any */   \
-  PPUTLTUP_GET_o(PTL_STR("invalid index"              \
-                         : PTL_TUP_GET(__VA_ARGS__)), \
-                 PTL_BISECT(__VA_ARGS__))
+/// PTL_GET_ITEM((a), 0)                // a
+/// PTL_GET_ITEM((a, b), 0)             // a
+/// PTL_GET_ITEM((a, b), 1)             // b
+/// PTL_GET_ITEM((a, b, c), PTL_NEG(2)) // b
+/// PTL_GET_ITEM((a, b, c), PTL_NEG(3)) // a
+#define PTL_GET_ITEM(/* mem, k: ofs|any */...) /* -> any */ \
+  PPUTLGET_ITEM_o(PTL_STR("invalid index"                   \
+                          : PTL_GET_ITEM(__VA_ARGS__)),     \
+                  PTL_BISECT(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLTUP_GET_o(...)                  PPUTLTUP_GET_oo(__VA_ARGS__)
-#define PPUTLTUP_GET_oo(e, head, tail, type) PPUTLTUP_GET_CHK(e, type, PTL_ESC tail)
-#define PPUTLTUP_GET_CHK(e, type, ...)                                        \
-  PTL_IF(PTL_AND(PTL_IS_NONE(__VA_ARGS__), PTL_NOT(type)), PPUTLTUP_GET_FAIL, \
-         PPUTLTUP_GET_PASS)                                                   \
+#define PPUTLGET_ITEM_o(...)                  PPUTLGET_ITEM_oo(__VA_ARGS__)
+#define PPUTLGET_ITEM_oo(e, head, tail, type) PPUTLGET_ITEM_CHK(e, type, PTL_ESC tail)
+#define PPUTLGET_ITEM_CHK(e, type, ...)                                        \
+  PTL_IF(PTL_AND(PTL_IS_NONE(__VA_ARGS__), PTL_NOT(type)), PPUTLGET_ITEM_FAIL, \
+         PPUTLGET_ITEM_PASS)                                                   \
   (e, __VA_ARGS__)
-#define PPUTLTUP_GET_FAIL(e, ...)    PTL_FAIL(e)
-#define PPUTLTUP_GET_PASS(e, _, ...) _
+#define PPUTLGET_ITEM_FAIL(e, ...)    PTL_FAIL(e)
+#define PPUTLGET_ITEM_PASS(e, _, ...) _
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [range.tup_set]
-/// ---------------
+/// [range.set_item]
+/// ----------------
 /// set a tuple item to a new value. index must be within [-size, size).
-#define PTL_TUP_SET(/* tup, ofs, any */...) /* -> tup */ __VA_ARGS__
+#define PTL_SET_ITEM(/* mem, k: ofs|any, v: any */...) /* -> mem */ __VA_ARGS__
 
 // vim: fdm=marker:fmr={{{,}}}
 

@@ -37,6 +37,8 @@ namespace api {
 
 inline codegen::category<"traits"> traits;
 
+// TODO: is_arr must return true for map, set, etc.
+
 extern codegen::def<"is_list(...: list) -> enum<1>"> const&               is_list;
 extern codegen::def<"is_none(...: list) -> bool"> const&                  is_none;
 extern codegen::def<"is_obj(...: list) -> bool"> const&                   is_obj;
@@ -56,15 +58,17 @@ extern codegen::def<"is_uint(...: list) -> bool"> const&                  is_uin
 extern codegen::def<"is_word(...: list) -> bool"> const&                  is_word;
 extern codegen::def<"is_size(...: list) -> bool"> const&                  is_size;
 extern codegen::def<"is_ofs(...: list) -> bool"> const&                   is_ofs;
+extern codegen::def<"is_arr(...: list) -> bool"> const&                   is_arr;
 extern codegen::def<"is_map(...: list) -> bool"> const&                   is_map;
 extern codegen::def<"is_set(...: list) -> bool"> const&                   is_set;
 extern codegen::def<"is_stack(...: list) -> bool"> const&                 is_stack;
 extern codegen::def<"is_queue(...: list) -> bool"> const&                 is_queue;
 extern codegen::def<"is_pqueue(...: list) -> bool"> const&                is_pqueue;
 extern codegen::def<"is_any(...: list) -> bool"> const&                   is_any;
-extern codegen::def<"typeof(...: list) -> "
-                    "enum<NONE|LIST|TUP|UTUP|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|"
-                    "IDEC|IHEX|UDEC|UHEX>"> const& typeof;
+extern codegen::def<
+    "typeof(...: list) -> "
+    "enum<NONE|LIST|TUP|UTUP|ARR|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|"
+    "IDEC|IHEX|UDEC|UHEX>"> const& typeof;
 extern codegen::def<"countof(...: list) -> udec&size"> const& countof;
 
 namespace detail {
@@ -80,6 +84,8 @@ extern codegen::def<>& is_uint_o;
 extern codegen::def<>& is_word_o;
 extern codegen::def<>& is_size_o;
 extern codegen::def<>& is_ofs_o;
+extern codegen::def<>& is_arr_o;
+extern codegen::def<>& is_arr_oo;
 extern codegen::def<>& is_map_o;
 extern codegen::def<>& is_map_oo;
 extern codegen::def<>& is_set_o;
@@ -102,6 +108,8 @@ NIFTY_DECL(is_uint_o);
 NIFTY_DECL(is_word_o);
 NIFTY_DECL(is_size_o);
 NIFTY_DECL(is_ofs_o);
+NIFTY_DECL(is_arr_o);
+NIFTY_DECL(is_arr_oo);
 NIFTY_DECL(is_map_o);
 NIFTY_DECL(is_map_oo);
 NIFTY_DECL(is_set_o);
@@ -133,6 +141,7 @@ NIFTY_DECL(is_uint);
 NIFTY_DECL(is_word);
 NIFTY_DECL(is_size);
 NIFTY_DECL(is_ofs);
+NIFTY_DECL(is_arr);
 NIFTY_DECL(is_map);
 NIFTY_DECL(is_set);
 NIFTY_DECL(is_stack);

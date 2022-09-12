@@ -32,10 +32,18 @@ namespace api {
 using namespace codegen;
 
 decltype(map) map = NIFTY_DEF(map, [&](va args) {
-  docs << "[inherits from " + obj + "] a mapping of sizes to lists."
-       << "optionally provide arguments to make a type assertion."
+  docs << "[inherits from " + arr + "] a sorted mapping of words to elements."
+       << "overloads: map(arr), map(size, tup), map(tup...)."
        << ""
-       << "note: does not parse contained items during validity check.";
+       << "elements are stored as key/value pairs in sorted order; construction from"
+       << "list or tuple assumes the inputs are valid (word, any) pairs in sorted order."
+       << ""
+       << "resultant object is an expansion-terminated self-reference."
+       << ""
+       << "note: constructor never fails. construction from existing array type"
+       << "      assumes that the contained structure is valid, construction from"
+       << "      explicit size assumes size is valid, and any inputs that do not"
+       << "      match any other constructor fallback to list construction.";
 
   tests << map()      = map() >> docs;
   tests << map(map()) = map() >> docs;
@@ -43,6 +51,7 @@ decltype(map) map = NIFTY_DEF(map, [&](va args) {
   def<"\\0(e, ...)"> _0 = [](arg e, va) {
     return fail(e);
   };
+
   def<"\\1(e, map)">{} = [](arg, arg map) {
     return map;
   };

@@ -31,14 +31,14 @@ namespace api {
 
 using namespace codegen;
 
-decltype(lpush) lpush = NIFTY_DEF(lpush, [&](va args) {
+decltype(push_front) push_front = NIFTY_DEF(push_front, [&](va args) {
   docs << "pushes items to the front of a tuple.";
 
-  tests << lpush("()")               = "()" >> docs;
-  tests << lpush("()", 'a')          = "(a)" >> docs;
-  tests << lpush("(a)", 'b')         = "(b, a)" >> docs;
-  tests << lpush("(b, a)", 'c', 'd') = "(c, d, b, a)" >> docs;
-  tests << lpush("(c, d, b, a)")     = "(c, d, b, a)" >> docs;
+  tests << push_front("()")               = "()" >> docs;
+  tests << push_front("()", 'a')          = "(a)" >> docs;
+  tests << push_front("(a)", 'b')         = "(b, a)" >> docs;
+  tests << push_front("(b, a)", 'c', 'd') = "(c, d, b, a)" >> docs;
+  tests << push_front("(c, d, b, a)")     = "(c, d, b, a)" >> docs;
 
   return def<"o(t, ...)">{[&](arg t, va args) {
     def<"\\00(t, ...)"> _00 = [&](arg t, va args) {

@@ -32,8 +32,11 @@ namespace api {
 using namespace codegen;
 
 decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
-  docs << "counts the number of tuple items."
-       << "fails if larger than " + size_max + " (" + size_max_s + ")";
+  docs << "detects number of items. compatible with tup and all other pputl "
+          "datastructures."
+       << "fails if size is larger than " + size_max + " (" + size_max_s + ")"
+       << ""
+       << "note: complexity is O(size) for tup and O(1) for other pputl datastructures.";
 
   tests << sizeof_("()")        = "0u" >> docs;
   tests << sizeof_("(a)")       = "1u" >> docs;

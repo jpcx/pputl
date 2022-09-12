@@ -25,48 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "impl/range.h"
+#include "math.h"
 
 namespace api {
-namespace impl {
 
 using namespace codegen;
 
-decltype(index) index = NIFTY_DEF(index, [&](arg i, arg sign, arg sz, arg err) {
-  docs << "[internal] translates an idx to a non-negative zero-offset for a given range "
-          "size.";
+decltype(index) index = NIFTY_DEF(index, [&](va args) {
+  docs << "translates an ofs to a non-negative zero-offset for a given range size."
+       << "positive indices return unchanged, negative indices return added to the size."
+       << ""
+       << "fails if input is out of bounds: [-size, size];"
+       << "allows one-past-the-end indexing."
+       << ""
+       << "casts to typeof input size.";
 
-  def<"\\0(i, sz, err)"> sign0 = [&](arg i, arg sz, arg err) {
-    def<"\\0(i, err)"> _0 = [&](arg, arg err) {
-      return fail(err);
-    };
-    def<"\\1(i, err)">{} = [&](arg i, arg) {
-      return i;
-    };
+  tests << index(5, 0)         = "0" >> docs;
+  tests << index("5u", 1)      = "1u" >> docs;
+  tests << index(5, 2)         = "2" >> docs;
+  tests << index(5, 3)         = "3" >> docs;
+  tests << index(5, 4)         = "4" >> docs;
+  tests << index(5, 5)         = "5" >> docs;
+  tests << index(5, neg(1))    = "4" >> docs;
+  tests << index(5, neg(2))    = "3" >> docs;
+  tests << index(5, neg(3))    = "2" >> docs;
+  tests << index("5u", neg(4)) = "1u" >> docs;
+  tests << index(5, neg(5))    = "0" >> docs;
 
-    return pp::call(xcat(utl::slice(_0, -1), lt(i, inc(sz))), i, err);
-  };
-
-  def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
-    def<"\\0(i, sz, err)"> _0 = [&](arg i, arg sz, arg err) {
-      return sign0(i, sz, err);
-    };
-    def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg err) {
-      def<"\\0(i, sz, err)"> _0 = [&](arg, arg, arg err) {
-        return fail(err);
-      };
-      def<"\\1(i, sz, err)">{} = [&](arg i, arg sz, arg) {
-        return add(i, sz);
-      };
-
-      return pp::call(xcat(utl::slice(_0, -1), lt(neg(i), inc(sz))), i, sz, err);
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), ltz(i)), i, sz, err);
-  };
-
-  return pp::call(cat(utl::slice(sign0, -1), sign), i, sz, err);
+  return def<"o(e, sz, i)">{[&](arg e, arg sz, arg i) {
+    return ofs(impl::index(utup(i), is_int(i), utup(sz), e), typeof(sz));
+  }}(error(index, "index out of bounds", args), args);
 });
 
-} // namespace impl
 } // namespace api

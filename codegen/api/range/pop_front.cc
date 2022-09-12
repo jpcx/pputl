@@ -31,30 +31,28 @@ namespace api {
 
 using namespace codegen;
 
-decltype(rpush) rpush = NIFTY_DEF(rpush, [&](va args) {
-  docs << "pushes items to the back of a tuple.";
+decltype(pop_front) pop_front = NIFTY_DEF(pop_front, [&](va args) {
+  docs << "removes the first n items from a tuple."
+       << "n must be less than or equal to the tuple size.";
 
-  tests << rpush("()")               = "()" >> docs;
-  tests << rpush("()", 'a')          = "(a)" >> docs;
-  tests << rpush("(a)", 'b')         = "(a, b)" >> docs;
-  tests << rpush("(a, b)", 'c', 'd') = "(a, b, c, d)" >> docs;
-  tests << rpush("(a, b, c, d)")     = "(a, b, c, d)" >> docs;
+  tests << pop_front("()", 0)        = "()" >> docs;
+  tests << pop_front("(a)", 0)       = "(a)" >> docs;
+  tests << pop_front("(a)", 1)       = "()" >> docs;
+  tests << pop_front("(a, b)")       = "(b)" >> docs;
+  tests << pop_front("(a, b)", 0)    = "(a, b)";
+  tests << pop_front("(a, b)", 1)    = "(b)" >> docs;
+  tests << pop_front("(a, b)", 2)    = "()" >> docs;
+  tests << pop_front("(a, b, c)", 0) = "(a, b, c)";
+  tests << pop_front("(a, b, c)", 1) = "(b, c)";
+  tests << pop_front("(a, b, c)", 2) = "(c)" >> docs;
+  tests << pop_front("(a, b, c)", 3) = "()";
 
-  return def<"o(t, ...)">{[&](arg t, va args) {
-    def<"\\00(t, ...)"> _00 = [&](arg t, va args) {
-      return pp::tup(esc + " " + t, args);
-    };
-    def<"\\01(t, ...)">{} = [&](arg t, va) {
-      return t;
-    };
-    def<"\\10(t, ...)">{} = [&](arg, va args) {
-      return pp::tup(args);
-    };
-    def<"\\11(t, ...)">{} = [&](arg, va) {
-      return "()";
-    };
-
-    return pp::call(xcat(utl::slice(_00, -2), xcat(is_empty(t), is_none(args))), t, args);
+  return def<"o(t, ...)">{[&](arg t, va sz) {
+    return def<"<o(...)">{[&](va args) {
+      return def<"<o(head, tail, type)">{[&](arg, arg tail, arg) {
+        return tail;
+      }}(args);
+    }}(bisect(t, default_(1, sz)));
   }}(args);
 });
 

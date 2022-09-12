@@ -80,12 +80,12 @@ main() {
         iss >> col_lim;
       } else {
         std::cout << "warn: clang-format ColumnLimit not found\n";
-        col_lim = 85;
+        col_lim = 90;
       }
     }
 
     // allow some freedom
-    col_lim += 5;
+    col_lim += 10;
 
     { // fix bad alignment with newlines
       std::ifstream lin{conf::lib_output, std::ios::in | std::ios::binary};

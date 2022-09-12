@@ -33,6 +33,7 @@ namespace fwd {
 
 inline codegen::category_fwd<"type"> type;
 
+inline codegen::def<"arr">    arr;
 inline codegen::def<"map">    map;
 inline codegen::def<"set">    set;
 inline codegen::def<"stack">  stack;

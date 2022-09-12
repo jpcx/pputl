@@ -134,7 +134,7 @@ decltype(bisect) bisect = NIFTY_DEF(bisect, [&](va args) {
       return def<"<o(n, ...)">{[&](arg n, va range) {
         return pp::call(if_(eqz(n), eq, ne), n, range);
       }}(index(countof(range), i), range);
-    }}(i, items(t));
+    }}(i, itemsof(t));
   }}(args);
 });
 

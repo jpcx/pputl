@@ -31,28 +31,24 @@ namespace api {
 
 using namespace codegen;
 
-decltype(lpop) lpop = NIFTY_DEF(lpop, [&](va args) {
-  docs << "removes the first n items from a tuple."
+decltype(pop_back) pop_back = NIFTY_DEF(pop_back, [&](va args) {
+  docs << "removes the last n items from a tuple."
        << "n must be less than or equal to the tuple size.";
 
-  tests << lpop("()", 0)        = "()" >> docs;
-  tests << lpop("(a)", 0)       = "(a)" >> docs;
-  tests << lpop("(a)", 1)       = "()" >> docs;
-  tests << lpop("(a, b)")       = "(b)" >> docs;
-  tests << lpop("(a, b)", 0)    = "(a, b)";
-  tests << lpop("(a, b)", 1)    = "(b)" >> docs;
-  tests << lpop("(a, b)", 2)    = "()" >> docs;
-  tests << lpop("(a, b, c)", 0) = "(a, b, c)";
-  tests << lpop("(a, b, c)", 1) = "(b, c)";
-  tests << lpop("(a, b, c)", 2) = "(c)" >> docs;
-  tests << lpop("(a, b, c)", 3) = "()";
+  tests << pop_back("()", 0)        = "()" >> docs;
+  tests << pop_back("(a)", 0)       = "(a)" >> docs;
+  tests << pop_back("(a)", 1)       = "()" >> docs;
+  tests << pop_back("(a, b)")       = "(a)" >> docs;
+  tests << pop_back("(a, b)", 0)    = "(a, b)";
+  tests << pop_back("(a, b)", 1)    = "(a)" >> docs;
+  tests << pop_back("(a, b)", 2)    = "()" >> docs;
+  tests << pop_back("(a, b, c)", 0) = "(a, b, c)";
+  tests << pop_back("(a, b, c)", 1) = "(a, b)";
+  tests << pop_back("(a, b, c)", 2) = "(a)" >> docs;
+  tests << pop_back("(a, b, c)", 3) = "()";
 
   return def<"o(t, ...)">{[&](arg t, va sz) {
-    return def<"<o(...)">{[&](va args) {
-      return def<"<o(head, tail, type)">{[&](arg, arg tail, arg) {
-        return tail;
-      }}(args);
-    }}(bisect(t, default_(1, sz)));
+    return xfirst(bisect(t, size(sub(countof(itemsof(t)), default_(1, sz)))));
   }}(args);
 });
 

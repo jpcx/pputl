@@ -88,7 +88,7 @@ decltype(tail) tail = NIFTY_DEF(tail, [&](va args) {
       return def<"<o(head, tail, type)">{[&](arg, arg tail, arg) {
         return tail;
       }}(args);
-    }}(bisect(t, size(sub(sizeof_(t), default_(1, sz)))));
+    }}(bisect(t, size(sub(countof(itemsof(t)), default_(1, sz)))));
   }}(args);
 });
 

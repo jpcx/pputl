@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,25 +25,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
-#include "config.h"
-#include "lang.h"
-//
-#include "impl/compare.h"
-#include "impl/math.h"
-#include "impl/numeric.h"
+#include "range.h"
 
 namespace api {
-namespace impl {
 
-inline codegen::category<"impl.range"> range;
+using namespace codegen;
 
-extern codegen::def<"index(i, sign, sz, err: utup, bool, utup, obj) -> utup"> const&
-    index;
+decltype(is_empty) is_empty = NIFTY_DEF(is_empty, [&](va args) {
+  docs << "true if the tuple has no elements.";
 
-NIFTY_DECL(index);
+  tests << is_empty("()")  = "1" >> docs;
+  tests << is_empty("(a)") = "0" >> docs;
+  tests << is_empty("(,)") = "0" >> docs;
 
-inline codegen::end_category<"impl.range"> range_end;
+  return is_none(itemsof(args));
+});
 
-} // namespace impl
 } // namespace api

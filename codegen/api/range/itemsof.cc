@@ -31,25 +31,25 @@ namespace api {
 
 using namespace codegen;
 
-decltype(rpop) rpop = NIFTY_DEF(rpop, [&](va args) {
-  docs << "removes the last n items from a tuple."
-       << "n must be less than or equal to the tuple size.";
+decltype(itemsof) itemsof = NIFTY_DEF(itemsof, [&](va args) {
+  docs << "extracts item from a tuple or array.";
 
-  tests << rpop("()", 0)        = "()" >> docs;
-  tests << rpop("(a)", 0)       = "(a)" >> docs;
-  tests << rpop("(a)", 1)       = "()" >> docs;
-  tests << rpop("(a, b)")       = "(a)" >> docs;
-  tests << rpop("(a, b)", 0)    = "(a, b)";
-  tests << rpop("(a, b)", 1)    = "(a)" >> docs;
-  tests << rpop("(a, b)", 2)    = "()" >> docs;
-  tests << rpop("(a, b, c)", 0) = "(a, b, c)";
-  tests << rpop("(a, b, c)", 1) = "(a, b)";
-  tests << rpop("(a, b, c)", 2) = "(a)" >> docs;
-  tests << rpop("(a, b, c)", 3) = "()";
+  tests << itemsof("()")              = "" >> docs;
+  tests << itemsof("(a)")             = "a" >> docs;
+  tests << itemsof("(a, b)")          = "a, b" >> docs;
+  tests << itemsof("(a, b, c)")       = "a, b, c" >> docs;
+  tests << itemsof("((a), (b), (c))") = "(a), (b), (c)";
+  tests << itemsof("(, )")            = ",";
+  tests << itemsof("(, , )")          = ", ,";
+  tests << itemsof("(a, )")           = "a,";
+  tests << itemsof("(a, , )")         = "a, ,";
+  tests << itemsof("(, a)")           = ", a";
+  tests << itemsof("(, a, )")         = ", a,";
+  tests << itemsof("(, , a)")         = ", , a";
 
-  return def<"o(t, ...)">{[&](arg t, va sz) {
-    return xfirst(bisect(t, size(sub(sizeof_(t), default_(1, sz)))));
-  }}(args);
+  return def<"x(...)">{[&](va args) {
+    return esc + " " + args;
+  }}(tup(args));
 });
 
 } // namespace api

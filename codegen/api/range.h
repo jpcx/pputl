@@ -38,56 +38,51 @@
 #include "numeric.h"
 #include "traits.h"
 #include "type.h"
-//
-#include "impl/range.h"
 
 namespace api {
 
-inline codegen::category<"range"> range;
+inline codegen::category<"range"> range_;
 
-// TODO: push_* -> lpush, rpush
-// TODO: pop_*  -> lpop,  rpop
+// TODO: arr overloads
 
-extern codegen::def<"sizeof(...: tup) -> udec&size"> const&           sizeof_;
-extern codegen::def<"items(...: tup) -> any..."> const&               items;
-extern codegen::def<"is_empty(...: tup) -> bool"> const&              is_empty;
-extern codegen::def<"index(...: size, ofs) -> size"> const&           index;
-extern codegen::def<"bisect(...: tup, ofs) -> tup, tup, bool"> const& bisect;
-extern codegen::def<"unite(...: tup, tup, bool=0) -> tup"> const&     unite;
-extern codegen::def<"head(...: tup, size=1) -> tup"> const&           head;
-extern codegen::def<"tail(...: tup, size=1) -> tup"> const&           tail;
-extern codegen::def<"lpush(...: tup, any...) -> tup"> const&          lpush;
-extern codegen::def<"rpush(...: tup, any...) -> tup"> const&          rpush;
-extern codegen::def<"lpop(...: tup, size=1) -> tup"> const&           lpop;
-extern codegen::def<"rpop(...: tup, size=1) -> tup"> const&           rpop;
-extern codegen::def<"tup_get(...: tup, ofs) -> any"> const&           tup_get;
-extern codegen::def<"tup_set(...: tup, ofs, any) -> tup"> const&      tup_set;
+extern codegen::def<"sizeof(...: mem) -> udec&size"> const&                 sizeof_;
+extern codegen::def<"itemsof(...: mem) -> list"> const&                     itemsof;
+extern codegen::def<"is_empty(...: mem) -> bool"> const&                    is_empty;
+extern codegen::def<"bisect(...: mem, ofs) -> mem, mem, bool"> const&       bisect;
+extern codegen::def<"unite(...: mem, mem, bool=0) -> mem"> const&           unite;
+extern codegen::def<"head(...: mem, size=1) -> mem"> const&                 head;
+extern codegen::def<"tail(...: mem, size=1) -> mem"> const&                 tail;
+extern codegen::def<"push_front(...: mem, any) -> mem"> const&              push_front;
+extern codegen::def<"push_back(...: mem, any) -> mem"> const&               push_back;
+extern codegen::def<"pop_front(...: mem, size=1) -> tup"> const&            pop_front;
+extern codegen::def<"pop_back(...: mem, size=1) -> tup"> const&             pop_back;
+extern codegen::def<"get_item(...: mem, k: ofs|any) -> any"> const&         get_item;
+extern codegen::def<"set_item(...: mem, k: ofs|any, v: any) -> mem"> const& set_item;
+/* extern codegen::def<"ins_item(...: tup, ofs, any) -> tup"> const&      ins_item; */
+/* extern codegen::def<"del_item(...: tup, ofs, any) -> tup"> const&      del_item; */
 /* extern codegen::def<"front(...: tup) -> any"> const&                  front; */
 /* extern codegen::def<"back(...: tup) -> any"> const&                   back; */
 /* extern codegen::def<"slice(...: tup, ofs, ofs) -> tup"> const&          slice; */
 /* extern codegen::def<"splice(...: tup, ofs, ins: tup, del: size=0) -> tup"> const&
  * splice; */
-/* extern codegen::def<"insert(...: tup, ofs, any) -> tup"> const&      insert; */
+/* extern codegen::def<"push(...: {m: stack|queue, v: any}|{m: pqueue, pri: word, v: any})
+ * -> typeof(m)"> const&          push; */
+/* extern codegen::def<"pop(...: m: stack|queue|pqueue) -> typeof(m)"> const& pop;
+ */
 
 NIFTY_DECL(sizeof_);
-NIFTY_DECL(items);
+NIFTY_DECL(itemsof);
 NIFTY_DECL(is_empty);
-NIFTY_DECL(index);
 NIFTY_DECL(bisect);
 NIFTY_DECL(unite);
 NIFTY_DECL(head);
 NIFTY_DECL(tail);
-NIFTY_DECL(lpush);
-NIFTY_DECL(rpush);
-NIFTY_DECL(lpop);
-NIFTY_DECL(rpop);
-NIFTY_DECL(tup_get);
-NIFTY_DECL(tup_set);
-/* NIFTY_DECL(front); */
-/* NIFTY_DECL(back); */
-/* NIFTY_DECL(slice); */
-/* NIFTY_DECL(splice); */
-/* NIFTY_DECL(insert); */
+NIFTY_DECL(push_front);
+NIFTY_DECL(push_back);
+NIFTY_DECL(pop_front);
+NIFTY_DECL(pop_back);
+NIFTY_DECL(get_item);
+NIFTY_DECL(set_item);
 
 inline codegen::end_category<"range"> range_end;
 

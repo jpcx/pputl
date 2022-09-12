@@ -31,41 +31,41 @@ namespace api {
 
 using namespace codegen;
 
-decltype(tup_get) tup_get = NIFTY_DEF(tup_get, [&](va args) {
+decltype(get_item) get_item = NIFTY_DEF(get_item, [&](va args) {
   docs << "get a tuple item. index must be within [-size, size).";
 
   auto bigargs   = utl::alpha_base52_seq(conf::size_max);
   auto bigargs_s = pp::tup(bigargs);
 
-  tests << tup_get("(a)", 0)                      = "a" >> docs;
-  tests << tup_get("(a, b)", 0)                   = "a" >> docs;
-  tests << tup_get("(a, b)", 1)                   = "b" >> docs;
-  tests << tup_get("(1, 2, 3)", 1)                = "2";
-  tests << tup_get("(1, 2, 3)", 2)                = "3";
-  tests << tup_get("(a, b, c)", neg(2))           = "b" >> docs;
-  tests << tup_get("(a, b, c)", neg(3))           = "a" >> docs;
-  tests << tup_get(bigargs_s, 0)                  = bigargs[0];
-  tests << tup_get(bigargs_s, 1)                  = bigargs[1];
-  tests << tup_get(bigargs_s, conf::size_max - 2) = bigargs[conf::size_max - 2];
-  tests << tup_get(bigargs_s, conf::size_max - 1) = bigargs[conf::size_max - 1];
-  tests << tup_get("(, )", 0)                     = "";
-  tests << tup_get("(, , )", 0)                   = "";
-  tests << tup_get("(, )", 1)                     = "";
-  tests << tup_get("(, , )", 1)                   = "";
-  tests << tup_get("(, , )", 2)                   = "";
-  tests << tup_get("(a, )", 0)                    = "a";
-  tests << tup_get("(a, , )", 0)                  = "a";
-  tests << tup_get("(a, )", 1)                    = "";
-  tests << tup_get("(a, , )", 1)                  = "";
-  tests << tup_get("(a, , )", 2)                  = "";
-  tests << tup_get("(, a)", 0)                    = "";
-  tests << tup_get("(, a, )", 0)                  = "";
-  tests << tup_get("(, a)", 1)                    = "a";
-  tests << tup_get("(, a, )", 1)                  = "a";
-  tests << tup_get("(, a, )", 2)                  = "";
-  tests << tup_get("(, , a)", 0)                  = "";
-  tests << tup_get("(, , a)", 1)                  = "";
-  tests << tup_get("(, , a)", 2)                  = "a";
+  tests << get_item("(a)", 0)                      = "a" >> docs;
+  tests << get_item("(a, b)", 0)                   = "a" >> docs;
+  tests << get_item("(a, b)", 1)                   = "b" >> docs;
+  tests << get_item("(1, 2, 3)", 1)                = "2";
+  tests << get_item("(1, 2, 3)", 2)                = "3";
+  tests << get_item("(a, b, c)", neg(2))           = "b" >> docs;
+  tests << get_item("(a, b, c)", neg(3))           = "a" >> docs;
+  tests << get_item(bigargs_s, 0)                  = bigargs[0];
+  tests << get_item(bigargs_s, 1)                  = bigargs[1];
+  tests << get_item(bigargs_s, conf::size_max - 2) = bigargs[conf::size_max - 2];
+  tests << get_item(bigargs_s, conf::size_max - 1) = bigargs[conf::size_max - 1];
+  tests << get_item("(, )", 0)                     = "";
+  tests << get_item("(, , )", 0)                   = "";
+  tests << get_item("(, )", 1)                     = "";
+  tests << get_item("(, , )", 1)                   = "";
+  tests << get_item("(, , )", 2)                   = "";
+  tests << get_item("(a, )", 0)                    = "a";
+  tests << get_item("(a, , )", 0)                  = "a";
+  tests << get_item("(a, )", 1)                    = "";
+  tests << get_item("(a, , )", 1)                  = "";
+  tests << get_item("(a, , )", 2)                  = "";
+  tests << get_item("(, a)", 0)                    = "";
+  tests << get_item("(, a, )", 0)                  = "";
+  tests << get_item("(, a)", 1)                    = "a";
+  tests << get_item("(, a, )", 1)                  = "a";
+  tests << get_item("(, a, )", 2)                  = "";
+  tests << get_item("(, , a)", 0)                  = "";
+  tests << get_item("(, , a)", 1)                  = "";
+  tests << get_item("(, , a)", 2)                  = "a";
 
   def<"pass(e, _, ...)"> pass = [&](arg, arg first, va) {
     return first;
@@ -83,7 +83,7 @@ decltype(tup_get) tup_get = NIFTY_DEF(tup_get, [&](va args) {
     return def<"<o(e, head, tail, type)">{[&](arg e, arg, arg tail, arg type) {
       return chk(e, type, esc + " " + tail);
     }}(args);
-  }}(error(tup_get, "invalid index", args), bisect(args));
+  }}(error(get_item, "invalid index", args), bisect(args));
 });
 
 } // namespace api
