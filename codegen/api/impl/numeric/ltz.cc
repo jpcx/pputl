@@ -35,16 +35,15 @@ using namespace codegen;
 decltype(ltz) ltz = NIFTY_DEF(ltz, [&](arg n) {
   docs << "[internal] numeric less-than-zero detection.";
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
-
-  def res = def{"res(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
+  def<"res(...)"> res = [&](va args) {
+    def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
                 + ")"} = [&](pack args) { //
-    return impl::hexhex(pp::cat(7, args[0]), "LT");
+      return impl::hexhex(pp::cat(7, args[0]), "LT");
+    };
+    return o(args);
   };
 
-  return x(res + " " + n);
+  return res(uhex(n, "HDUMP"));
 });
 
 } // namespace impl

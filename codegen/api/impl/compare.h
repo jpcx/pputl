@@ -38,7 +38,7 @@ namespace impl {
 inline codegen::category<"impl.compare"> compare;
 
 extern codegen::def<>&                                     lt_ucmp;
-extern codegen::def<"lt(a, b: utup, utup) -> bool"> const& lt;
+extern codegen::def<"lt(a, b: uhex, uhex) -> bool"> const& lt;
 
 NIFTY_DECL(lt_ucmp);
 NIFTY_DECL(lt);

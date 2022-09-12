@@ -188,14 +188,6 @@ uhex(std::array<std::string, conf::word_size * 4> const& bin) {
 }
 
 inline std::string
-utup(std::array<std::string, conf::word_size * 4> const& bin) {
-  std::vector<std::string> res{};
-  for (std::size_t ofs = 0; ofs < bin.size(); ofs += 4)
-    res.push_back(hex(bin[ofs + 0], bin[ofs + 1], bin[ofs + 2], bin[ofs + 3]));
-  return pp::tup(utl::cat(res, ", "));
-}
-
-inline std::string
 icast(std::array<std::string, conf::word_size * 4> const& bin, unsigned n) {
   auto mod = (conf::uint_max + 1) / 2;
   if (n < mod)
@@ -215,6 +207,14 @@ bnot(std::array<std::string, conf::word_size * 4> const& n) {
 inline std::string
 iltz(std::size_t n) {
   return n >= ((conf::uint_max + 1) / 2) ? "1" : "0";
+}
+
+inline std::string
+hdump(std::array<std::string, conf::word_size * 4> const& bin) {
+  std::vector<std::string> res{};
+  for (std::size_t ofs = 0; ofs < bin.size(); ofs += 4)
+    res.push_back(hex(bin[ofs + 0], bin[ofs + 1], bin[ofs + 2], bin[ofs + 3]));
+  return utl::cat(res, ", ");
 }
 
 } // namespace detail

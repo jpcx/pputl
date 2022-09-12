@@ -48,7 +48,7 @@ decltype(sub) sub = NIFTY_DEF(sub, [&](va args) {
   tests << sub("0u", int_min_s) = (std::to_string(conf::int_max + 1) + "u") >> docs;
 
   return def<"o(a, b)">{[&](arg a, arg b) {
-    return word(impl::sub(utup(a), utup(b)),
+    return word(impl::sub(uhex(a), uhex(b)),
                 impl::xarithhint(typeof(word(a)), typeof(word(b))));
   }}(args);
 });

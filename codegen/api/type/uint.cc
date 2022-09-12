@@ -228,7 +228,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return impl::udec(pp::cat(idec, 'u'), "UHEX");
   };
   def<"\\ID_UT(idec)">{} = [&](arg idec) {
-    return impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "UTUP");
+    return pp::tup(impl::uhex(impl::udec(pp::cat(idec, 'u'), "UHEX"), "HDUMP"));
   };
   def<"\\IH_UD(ihex)">{} = [&](arg ihex) {
     return impl::uhex(pp::cat(ihex, 'u'), "UDEC");
@@ -237,7 +237,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return pp::cat(ihex, 'u');
   };
   def<"\\IH_UT(ihex)">{} = [&](arg ihex) {
-    return impl::uhex(pp::cat(ihex, 'u'), "UTUP");
+    return pp::tup(impl::uhex(pp::cat(ihex, 'u'), "HDUMP"));
   };
   def<"\\UD_UD(udec)">{} = [&](arg udec) {
     return udec;
@@ -246,7 +246,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return impl::udec(udec, "UHEX");
   };
   def<"\\UD_UT(udec)">{} = [&](arg udec) {
-    return impl::uhex(impl::udec(udec, "UHEX"), "UTUP");
+    return pp::tup(impl::uhex(impl::udec(udec, "UHEX"), "HDUMP"));
   };
   def<"\\UH_UD(uhex)">{} = [&](arg uhex) {
     return impl::uhex(uhex, "UDEC");
@@ -255,7 +255,7 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
     return uhex;
   };
   def<"\\UH_UT(uhex)">{} = [&](arg uhex) {
-    return impl::uhex(uhex, "UTUP");
+    return pp::tup(impl::uhex(uhex, "HDUMP"));
   };
   def<"\\UT_UD(utup)">{} = [&](arg utup) {
     def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {

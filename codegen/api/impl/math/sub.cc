@@ -37,11 +37,13 @@ decltype(sub) sub = NIFTY_DEF(sub, [&](arg a, arg b) {
 
   constexpr auto sz = conf::word_size;
 
-  auto p = "_, " + utl::cat(utl::alpha_base52_seq(sz * 2), ", ");
-
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
+  auto ps = utl::alpha_base52_seq(sz * 2);
+  for (auto&& v : ps)
+    if (v == "u") {
+      v = "_u";
+      break;
+    }
+  auto p = "_, " + utl::cat(ps, ", ");
 
   def<"r(...)"> r = [&](va args) {
     def o = def{"o(" + p + ")"} = [&](pack v) {
@@ -59,15 +61,14 @@ decltype(sub) sub = NIFTY_DEF(sub, [&](arg a, arg b) {
 
   def<"res(...)"> res = [&](va args) {
     def o = def{"o(" + p + ")"} = [&](pack v) {
-      return pp::tup(svect{&v[1], &v[sz + 1]});
+      return pp::cat("0x", pp::cat(svect{&v[1], &v[sz + 1]}), "u");
     };
-
     return o(args);
   };
 
   auto rlp = utl::cat(svect{conf::word_size, r + "("});
   auto rrp = utl::cat(svect{conf::word_size, ")"});
-  return res(rlp + "0, " + x(esc + " " + a, esc + " " + b) + rrp);
+  return res(rlp + "0, " + uhex(a, "HDUMP") + ", " + uhex(b, "HDUMP") + rrp);
 });
 
 } // namespace impl

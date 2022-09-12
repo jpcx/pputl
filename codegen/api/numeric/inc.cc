@@ -46,7 +46,7 @@ decltype(inc) inc = NIFTY_DEF(inc, [&](va args) {
     tests << inc("15u") = "0u" >> docs;
   }
 
-  return word(impl::inc(utup(args)), typeof(args));
+  return word(impl::inc(uhex(args)), typeof(args));
 });
 
 } // namespace api

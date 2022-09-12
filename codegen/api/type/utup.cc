@@ -64,13 +64,13 @@ decltype(utup) utup = NIFTY_DEF(utup, [&](va args) {
           return fail(e);
         };
         def<"<\\1(e, uint)">{} = [&](arg, arg uint) {
-          return impl::uhex(uhex(uint), "UTUP");
+          return pp::tup(impl::uhex(uhex(uint), "HDUMP"));
         };
         return pp::call(xcat(utl::slice(_0, -1), detail::is_uint_o(atom)), e, atom);
       };
 
       def<"<\\1(e, int)">{} = [&](arg, arg int_) {
-        return impl::uhex(uhex(int_), "UTUP");
+        return pp::tup(impl::uhex(uhex(int_), "HDUMP"));
       };
 
       return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), e, atom);

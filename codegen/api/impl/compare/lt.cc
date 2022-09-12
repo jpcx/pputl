@@ -35,7 +35,7 @@ using namespace codegen;
 decltype(lt_ucmp) lt_ucmp = NIFTY_DEF(lt_ucmp);
 
 decltype(lt) lt = NIFTY_DEF(lt, [&](arg a, arg b) {
-  docs << "[internal] utup less-than comparison.";
+  docs << "[internal] unsigned less-than comparison.";
 
   using std::to_string;
   using conf::uint_max;
@@ -94,7 +94,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](arg a, arg b) {
                   + utl::cat(svect(conf::word_size, ")")));
   };
 
-  return lt_ucmp(esc + " " + a, esc + " " + b);
+  return lt_ucmp(uhex(a, "HDUMP"), uhex(b, "HDUMP"));
 });
 
 } // namespace impl

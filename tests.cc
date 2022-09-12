@@ -181,8 +181,8 @@
 //      │  │  ├╴int:  <union> bool|idec|ihex; a signed 2s-compl integer       //
 //      │  │  ├╴uint: <union> udec|uhex; an unsigned integer                  //
 //      │  │  └╴word: <union> int|uint;  any kind of integer                  //
-//      │  │     ├╴size: any non-negative word up to size_max                 //
-//      │  │     └╴ofs:  any word whose absolute value is a valid size        //
+//      │  │     ├╴size:   any non-negative word up to size_max               //
+//      │  │     └╴offset: any word whose absolute value is a valid size      //
 //      │  ├╴array: an encapsulated, sized sequence of elements               //
 //      │  │  ├╴map: a sorted mapping of words or enums to elements           //
 //      │  │  │  └╴pqueue: a priority queue of elements                       //

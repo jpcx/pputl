@@ -49,13 +49,13 @@ inline std::string bitlen = codegen::utl::ii << [] {
   for (std::size_t i = 0; i < res.size(); ++i)
     res[i] = std::string{hex[i]};
 
-  return codegen::pp::tup(res);
+  return "0x" + codegen::utl::cat(res) + "u";
 };
 
-extern codegen::def<"inc(n: utup) -> utup"> const& inc;
-extern codegen::def<"dec(n: utup) -> utup"> const& dec;
-extern codegen::def<"neg(n: utup) -> utup"> const& neg;
-extern codegen::def<"ltz(n: utup) -> bool"> const& ltz;
+extern codegen::def<"inc(n: uhex) -> uhex"> const& inc;
+extern codegen::def<"dec(n: uhex) -> uhex"> const& dec;
+extern codegen::def<"neg(n: uhex) -> uhex"> const& neg;
+extern codegen::def<"ltz(n: uhex) -> bool"> const& ltz;
 
 NIFTY_DECL(inc);
 NIFTY_DECL(dec);

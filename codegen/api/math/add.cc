@@ -52,7 +52,7 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
       (std::to_string(conf::int_max + 1) + "u") >> docs;
 
   return def<"o(a, b)">{[&](arg a, arg b) {
-    return word(impl::add(utup(a), utup(b)),
+    return word(impl::add(uhex(a), uhex(b)),
                 impl::xarithhint(typeof(word(a)), typeof(word(b))));
   }}(args);
 });

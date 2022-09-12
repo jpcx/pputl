@@ -44,19 +44,19 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](arg v, arg t) {
     for (; i < uhexs.size() - 1; ++i) {
       auto bin = detail::binary(i);
       uhexs[i] = def{"\\" + detail::uhex(bin)} = [&] {
-        return utl::cat(std::array{detail::udec(i), detail::utup(bin), detail::ihex(bin),
+        return utl::cat(std::array{detail::udec(i), detail::ihex(bin),
                                    detail::icast(bin, i), detail::iltz(i),
-                                   detail::bnot(bin)},
+                                   detail::bnot(bin), detail::hdump(bin)},
                         ", ");
       };
     }
     {
       auto bin = detail::binary(i);
       uhexs[i] = def{"\\" + detail::uhex(bin)} = [&] {
-        docs << "UDEC, UTUP, IHEX, ICAST, ILTZ, BNOT";
-        return utl::cat(std::array{detail::udec(i), detail::utup(bin), detail::ihex(bin),
+        docs << "UDEC, IHEX, ICAST, ILTZ, BNOT, HDUMP...";
+        return utl::cat(std::array{detail::udec(i), detail::ihex(bin),
                                    detail::icast(bin, i), detail::iltz(i),
-                                   detail::bnot(bin)},
+                                   detail::bnot(bin), detail::hdump(bin)},
                         ", ");
       };
     }
@@ -67,19 +67,19 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](arg v, arg t) {
   def<"\\UDEC(u, ...) -> udec"> udec = [&](pack args) {
     return args[0];
   };
-  def<"\\UTUP(u, x, ...) -> utup">{} = [&](pack args) {
+  def<"\\IHEX(u, h, ...) -> ihex">{} = [&](pack args) {
     return args[1];
   };
-  def<"\\IHEX(u, x, h, ...) -> ihex">{} = [&](pack args) {
+  def<"\\ICAST(u, h, i, ...) -> idec|ihex">{} = [&](pack args) {
     return args[2];
   };
-  def<"\\ICAST(u, x, h, i, ...) -> idec|ihex">{} = [&](pack args) {
+  def<"\\ILTZ(u, h, i, z, ...) -> bool">{} = [&](pack args) {
     return args[3];
   };
-  def<"\\ILTZ(u, x, h, i, z, ...) -> bool">{} = [&](pack args) {
+  def<"\\BNOT(u, h, i, z, b, ...) -> uhex">{} = [&](pack args) {
     return args[4];
   };
-  def<"\\BNOT(u, x, h, i, z, b) -> uhex">{} = [&](pack args) {
+  def<"\\HDUMP(u, h, i, z, b, ...) -> enum<0|1|...|E|F>...">{} = [&](pack args) {
     return args[5];
   };
 

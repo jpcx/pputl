@@ -121,7 +121,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
           return fail(e);
         };
         def<"\\UU(e, l, r)">{} = [&](arg, arg l, arg r) {
-          return impl::lt(utup(l), utup(r));
+          return impl::lt(uhex(l), uhex(r));
         };
 
         return xcat(utl::slice(intint, -2), xcat(signof(word(l)), signof(word(r))));

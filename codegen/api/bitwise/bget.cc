@@ -62,7 +62,7 @@ decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
   return def<"o(e, v, i)">{[&](arg e, arg v, arg i) {
     return def<"<o(i, ...)">{[&](arg i, va bin) {
       return pp::call(cat(utl::slice(_0, -1), i), bin);
-    }}(idec(impl::index(utup(i), is_int(i), impl::bitlen, e)), bdump(v));
+    }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bdump(v));
   }}(str(pp::str("[" + bget + "] invalid index") + " : " + args), args);
 });
 

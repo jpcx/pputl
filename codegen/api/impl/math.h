@@ -40,9 +40,9 @@ namespace impl {
 
 inline codegen::category<"impl.math"> math;
 
-extern codegen::def<"add(a, b: utup, utup) -> utup"> const& add;
-extern codegen::def<"sub(a, b: utup, utup) -> utup"> const& sub;
-extern codegen::def<"index(i, sign, sz, err: utup, bool, utup, obj) -> utup"> const&
+extern codegen::def<"add(a, b: uhex, uhex) -> uhex"> const& add;
+extern codegen::def<"sub(a, b: uhex, uhex) -> uhex"> const& sub;
+extern codegen::def<"index(i, sign, sz, err: uhex, bool, uhex, obj) -> utup"> const&
     index;
 
 NIFTY_DECL(add);

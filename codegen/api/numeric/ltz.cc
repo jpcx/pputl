@@ -49,7 +49,7 @@ decltype(ltz) ltz = NIFTY_DEF(ltz, [&](va args) {
     return impl::ltz(n);
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), utup(args));
+  return pp::call(xcat(utl::slice(_0, -1), is_int(args)), uhex(args));
 });
 
 } // namespace api

@@ -83,7 +83,7 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
     return word(
         def<"<o(i, ...)">{[&](arg i, va args) {
           return pp::call(cat(utl::slice(_0, -1), i), args);
-        }}(idec(impl::index(utup(i), is_int(i), impl::bitlen, e)), bool_(b), bdump(v)),
+        }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bool_(b), bdump(v)),
         typeof(v));
   }}(str(pp::str("[" + bset + "] invalid index") + " : " + args), args);
 });

@@ -36,10 +36,6 @@ using namespace codegen;
 decltype(neg) neg = NIFTY_DEF(neg, [&](arg n) {
   docs << "[internal] integral negation.";
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
-
   auto p = utl::alpha_base52_seq(conf::word_size);
   for (auto&& v : p)
     if (v == "u") {
@@ -47,11 +43,7 @@ decltype(neg) neg = NIFTY_DEF(neg, [&](arg n) {
       break;
     }
 
-  def uhex = def{"uhex(" + utl::cat(p, ", ") + ")"} = [&](pack args) {
-    return pp::cat("0x", pp::cat(args), "u");
-  };
-
-  return inc(impl::uhex(impl::uhex(x(uhex + " " + n), "BNOT"), "UTUP"));
+  return inc(uhex(n, "BNOT"));
 });
 
 } // namespace impl

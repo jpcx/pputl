@@ -39,7 +39,7 @@ decltype(neg) neg = NIFTY_DEF(neg, [&](va args) {
   tests << neg("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::h1)) >> docs;
   tests << neg("1u")                        = uint_max_s >> docs;
 
-  return word(impl::neg(utup(args)), typeof(args));
+  return word(impl::neg(uhex(args)), typeof(args));
 });
 
 } // namespace api

@@ -44,7 +44,7 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](va args) {
 
   tests << dec("0u") = uint_max_s >> docs;
 
-  return word(impl::dec(utup(args)), typeof(args));
+  return word(impl::dec(uhex(args)), typeof(args));
 });
 
 } // namespace api

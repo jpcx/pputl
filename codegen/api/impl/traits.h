@@ -60,7 +60,7 @@ extern std::conditional_t<
         "udec(v, t: enum<0u|1u|...>, enum<UHEX|ISIZE|USIZE|IOFS|UOFS|LOG2|SQRT|FACT>)">,
     codegen::def<
         "udec(v, t: enum<0u|1u|...>, enum<UHEX|IOFS|UOFS|LOG2|SQRT|FACT>)">> const& udec;
-extern codegen::def<"uhex(v, t: enum<...>, enum<UDEC|UTUP|IHEX|ICAST|ILTZ|BNOT>)"> const&
+extern codegen::def<"uhex(v, t: enum<...>, enum<UDEC|IHEX|ICAST|ILTZ|BNOT|HDUMP>)"> const&
                                                               uhex;
 extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "
                     "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const& arithhint;
