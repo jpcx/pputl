@@ -32,9 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(max) max = NIFTY_DEF(max, [&](va args) {
-  docs << "word maximum operation."
-       << "prohibits comparison of different signedness."
-       << "utups are interpreted as (and are comparable with) unsigned.";
+  docs << "integral maximum operation."
+       << "prohibits comparison of different signedness.";
 
   using std::to_string;
   using conf::uint_max;

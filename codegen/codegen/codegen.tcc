@@ -27,6 +27,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
+#include <type_traits>
 #ifndef CODEGEN_H_INCLUDED
 #  include "codegen.h"
 #endif
@@ -60,6 +61,19 @@ cat(Strs&& strs, std::string const& delim) {
     res += *it + delim;
   res += *it;
   return res;
+}
+
+template<detail::forward_iterable_for<std::string const> Strs>
+  requires(not std::is_const_v<Strs>)
+auto
+replace(Strs&& strs, std::vector<std::pair<std::string, std::string>> const& repl) {
+  for (auto&& v : strs) {
+    for (auto&& [t, r] : repl) {
+      if (v == t)
+        v = r;
+    }
+  }
+  return strs;
 }
 
 template<std::unsigned_integral Int>

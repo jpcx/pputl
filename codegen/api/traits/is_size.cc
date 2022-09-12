@@ -56,7 +56,6 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     tests << is_size(uint_max_s)                        = "1" >> docs;
     tests << is_size("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
   }
-  tests << is_size(pp::tup(samp::h8)) = "1" >> docs;
 
   def<"x(...)"> x = [&](va args) {
     return args;

@@ -32,9 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(eq) eq = NIFTY_DEF(eq, [&](va args) {
-  docs << "word equal-to comparison."
-       << "prohibits comparison of different signedness."
-       << "utups are interpreted as (and are comparable with) unsigned.";
+  docs << "integral equal-to comparison."
+       << "prohibits comparison of different signedness.";
 
   using std::to_string;
   using conf::uint_max;

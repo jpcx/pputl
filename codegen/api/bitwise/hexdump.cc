@@ -31,26 +31,16 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bdump) bdump = NIFTY_DEF(bdump, [&](va args) {
-  docs << "dumps the bits of a word."
-       << "returns exactly " + bit_length + " (" + std::to_string(conf::bit_length)
-              + ") bools.";
+decltype(hexdump) hexdump = NIFTY_DEF(hexdump, [&](va args) {
+  docs << "dumps the hexadecimal digits of a word."
+       << "returns exactly " + word_size + " (" + std::to_string(conf::word_size)
+              + ") uppercase hex digits.";
 
-  tests << bdump("0") = utl::cat(svect(conf::bit_length, "0"), ", ") >> docs;
-  tests << bdump("0x" + utl::cat(samp::himin)) =
-      ("1, " + utl::cat(svect(conf::bit_length - 1, "0"), ", ")) >> docs;
+  tests << hexdump("0") = utl::cat(svect(conf::word_size, "0"), ", ") >> docs;
+  tests << hexdump("0x" + utl::cat(samp::himin)) =
+      ("8, " + utl::cat(svect(conf::word_size - 1, "0"), ", ")) >> docs;
 
-  return def<"o(...)">{[&](va args) {
-    def o = def{"<o(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")
-                + ")"} = [&](pack args) {
-      std::vector<std::string> res{};
-      std::ranges::transform(args, std::back_inserter(res), [&](auto&& v) {
-        return impl::hex(v, "BITS");
-      });
-      return utl::cat(res, ", ");
-    };
-    return o(args);
-  }}(hexdump(args));
+  return impl::uhex(uhex(args), "HDUMP");
 });
 
 } // namespace api

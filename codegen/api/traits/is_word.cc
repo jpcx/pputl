@@ -46,7 +46,6 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
   tests << is_word(int_min_s)                         = "1" >> docs;
   tests << is_word(uint_max_s)                        = "1" >> docs;
   tests << is_word("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
-  tests << is_word(pp::tup(samp::h8))                 = "1" >> docs;
 
   detail::is_word_o = def{"o(obj)"} = [&](arg obj) {
     def<"\\0(atom)"> _0 = [&](arg atom) {

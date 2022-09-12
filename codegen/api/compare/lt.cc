@@ -32,9 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
-  docs << "word less-than comparison."
-       << "prohibits comparison of different signedness."
-       << "utups are interpreted as (and are comparable with) unsigned.";
+  docs << "integral less-than comparison."
+       << "prohibits comparison of different signedness.";
 
   using std::to_string;
   using conf::uint_max;
@@ -112,7 +111,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   return pp::call(
       def<"o(l, r)">{[&](arg l, arg r) {
         def<"\\II(e, l, r)"> intint = [&](arg, arg l, arg r) {
-          return icmp(esc + " " + utup(l), esc + " " + utup(r));
+          return icmp(impl::uhex(uhex(l), "HDUMP"), impl::uhex(uhex(r), "HDUMP"));
         };
         def<"\\IU(e, l, r)">{} = [&](arg e, arg, arg) {
           return fail(e);

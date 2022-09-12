@@ -45,10 +45,6 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
       ("0x" + utl::cat(samp::himax)) >> docs;
 
   if constexpr (conf::word_size > 1) {
-    def<"x(...)"> x = [&](va args) {
-      return args;
-    };
-
     def<"r(...)"> r = [&](va args) {
       def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
                   + ")"} = [&](pack args) {
@@ -67,10 +63,13 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
     };
 
     def<"res(...)"> res = [&](va args) {
-      def o = def{"o(_type, " + utl::cat(utl::alpha_base52_seq(conf::word_size * 2), ", ")
+      def o = def{"o(_type, "
+                  + utl::cat(utl::replace(utl::alpha_base52_seq(conf::word_size * 2),
+                                          {{"u", "_u"}}),
+                             ", ")
                   + ")"} = [&](pack args) { //
         auto res = svect{next(args.begin()), std::prev(args.end(), conf::word_size)};
-        return word(pp::tup(res), args.front());
+        return word(pp::cat("0x", pp::cat(res), "u"), args.front());
       };
       return o(args);
     };
@@ -78,15 +77,15 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
     return def<"o(a, b)">{[&](arg a, arg b) {
       return res(impl::xarithhint(typeof(a), typeof(b)),
                  utl::cat(svect(conf::word_size, r + "(")) + " "
-                     + x(esc + " " + utup(a), esc + " " + utup(b)) + " "
-                     + utl::cat(svect(conf::word_size, ")")));
+                     + impl::uhex(uhex(a), "HDUMP") + ", " + impl::uhex(uhex(b), "HDUMP")
+                     + " " + utl::cat(svect(conf::word_size, ")")));
     }}(args);
   } else {
     return def<"o(a, b)">{[&](arg a, arg b) {
-      return word(pp::tup(def<"<o(a, b)">{[&](arg a, arg b) {
-                    return impl::hexhex(cat(a, b), "XOR");
-                  }}(esc + " " + utup(a), esc + " " + utup(b))),
-                  impl::xarithhint(typeof(a), typeof(b)));
+      return word(
+          impl::hexhex(xcat(impl::uhex(uhex(a), "HDUMP"), impl::uhex(uhex(b), "HDUMP")),
+                       "XOR"),
+          impl::xarithhint(typeof(a), typeof(b)));
     }}(args);
   }
 });

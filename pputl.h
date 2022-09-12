@@ -11233,9 +11233,8 @@
 
 /// [compare.lt]
 /// ------------
-/// word less-than comparison.
+/// integral less-than comparison.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_LT(0, 0)                  // 0
 /// PTL_LT(0, 1)                  // 1
@@ -11261,7 +11260,8 @@
 #define PPUTLLT_o_UU(e, l, r) PPUTLIMPL_LT(PTL_UHEX(l), PTL_UHEX(r))
 #define PPUTLLT_o_UI(e, l, r) PTL_FAIL(e)
 #define PPUTLLT_o_IU(e, l, r) PTL_FAIL(e)
-#define PPUTLLT_o_II(e, l, r) PPUTLLT_ICMP(PTL_ESC PTL_UTUP(l), PTL_ESC PTL_UTUP(r))
+#define PPUTLLT_o_II(e, l, r) \
+  PPUTLLT_ICMP(PPUTLIMPL_UHEX(PTL_UHEX(l), HDUMP), PPUTLIMPL_UHEX(PTL_UHEX(r), HDUMP))
 #define PPUTLLT_SIGNOF(word)  PTL_XCAT(PPUTLLT_SIGNOF_, PPUTLIS_TUP_o(word))(word)
 #define PPUTLLT_SIGNOF_1(tup) U
 #define PPUTLLT_SIGNOF_0(atom) \
@@ -11283,9 +11283,8 @@
 
 /// [compare.gt]
 /// ------------
-/// word greater-than comparison.
+/// integral greater-than comparison.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_GT(0, 0)                  // 0
 /// PTL_GT(0, 1)                  // 0
@@ -11304,9 +11303,8 @@
 
 /// [compare.le]
 /// ------------
-/// word less-than-or-equal-to comparison.
+/// integral less-than-or-equal-to comparison.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_LE(0, 0)                  // 1
 /// PTL_LE(0, 1)                  // 1
@@ -11319,9 +11317,8 @@
 
 /// [compare.ge]
 /// ------------
-/// word greater-than-or-equal-to comparison.
+/// integral greater-than-or-equal-to comparison.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_GE(0, 0)                  // 1
 /// PTL_GE(0, 1)                  // 0
@@ -11334,9 +11331,8 @@
 
 /// [compare.eq]
 /// ------------
-/// word equal-to comparison.
+/// integral equal-to comparison.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_EQ(0, 0)                  // 1
 /// PTL_EQ(0, 1)                  // 0
@@ -11350,9 +11346,8 @@
 
 /// [compare.ne]
 /// ------------
-/// word not-equal-to comparison.
+/// integral not-equal-to comparison.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_NE(0, 0)                  // 0
 /// PTL_NE(0, 1)                  // 1
@@ -11365,9 +11360,8 @@
 
 /// [compare.min]
 /// -------------
-/// word minimum operation.
+/// integral minimum operation.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_MIN(0, 0)                  // 0
 /// PTL_MIN(0, 1)                  // 0
@@ -11388,9 +11382,8 @@
 
 /// [compare.max]
 /// -------------
-/// word maximum operation.
+/// integral maximum operation.
 /// prohibits comparison of different signedness.
-/// utups are interpreted as (and are comparable with) unsigned.
 ///
 /// PTL_MAX(0, 0)                  // 0
 /// PTL_MAX(0, 1)                  // 1
@@ -11450,7 +11443,7 @@
 
 /// [impl.numeric.ltz]
 /// ------------------
-/// [internal] numeric less-than-zero detection.
+/// [internal] numeric less-than-zero detection (if interpreted as signed).
 #define PPUTLIMPL_LTZ(/* uhex */ n) /* -> bool */ \
   PPUTLIMPL_LTZ_RES(PPUTLIMPL_UHEX(n, HDUMP))
 
@@ -11773,6 +11766,16 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [bitwise.hexdump]
+/// -----------------
+/// dumps the hexadecimal digits of a word.
+/// returns exactly PTL_WORD_SIZE (3) uppercase hex digits.
+///
+/// PTL_HEXDUMP(0)     // 0, 0, 0
+/// PTL_HEXDUMP(0x800) // 8, 0, 0
+#define PTL_HEXDUMP(/* word */...) /* -> enum<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>... */ \
+  PPUTLIMPL_UHEX(PTL_UHEX(__VA_ARGS__), HDUMP)
+
 /// [bitwise.bdump]
 /// ---------------
 /// dumps the bits of a word.
@@ -11780,13 +11783,12 @@
 ///
 /// PTL_BDUMP(0)     // 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 /// PTL_BDUMP(0x800) // 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-#define PTL_BDUMP(/* word */...) /* -> bool... */ \
-  PPUTLBDUMP_o(PPUTLBDUMP_BITS PTL_UTUP(__VA_ARGS__))
+#define PTL_BDUMP(/* word */...) /* -> bool... */ PPUTLBDUMP_o(PTL_HEXDUMP(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBDUMP_o(...) __VA_ARGS__
-#define PPUTLBDUMP_BITS(a, b, c) \
+#define PPUTLBDUMP_o(...) PPUTLBDUMP_oo(__VA_ARGS__)
+#define PPUTLBDUMP_oo(a, b, c) \
   PPUTLIMPL_HEX(a, BITS), PPUTLIMPL_HEX(b, BITS), PPUTLIMPL_HEX(c, BITS)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
@@ -11995,15 +11997,15 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBAND_o(a, b)                                           \
-  PPUTLBAND_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)), \
-                PPUTLBAND_R(PPUTLBAND_R(PPUTLBAND_R(                \
-                    PPUTLBAND_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
+#define PPUTLBAND_o(a, b)                                                     \
+  PPUTLBAND_RES(                                                              \
+      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                     \
+      PPUTLBAND_R(PPUTLBAND_R(PPUTLBAND_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
+                                          PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
 #define PPUTLBAND_RES(...)                       PPUTLBAND_RES_o(__VA_ARGS__)
-#define PPUTLBAND_RES_o(_hint, a, b, c, d, e, f) PTL_WORD((a, b, c), _hint)
+#define PPUTLBAND_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
 #define PPUTLBAND_R(...)                         PPUTLBAND_R_o(__VA_ARGS__)
 #define PPUTLBAND_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, AND), a, b, f, d, e
-#define PPUTLBAND_X(...)                         __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -12024,15 +12026,14 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBOR_o(a, b)                                           \
-  PPUTLBOR_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)), \
-               PPUTLBOR_R(PPUTLBOR_R(                              \
-                   PPUTLBOR_R(PPUTLBOR_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
+#define PPUTLBOR_o(a, b)                                                            \
+  PPUTLBOR_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                  \
+               PPUTLBOR_R(PPUTLBOR_R(PPUTLBOR_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
+                                                PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
 #define PPUTLBOR_RES(...)                       PPUTLBOR_RES_o(__VA_ARGS__)
-#define PPUTLBOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD((a, b, c), _type)
+#define PPUTLBOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
 #define PPUTLBOR_R(...)                         PPUTLBOR_R_o(__VA_ARGS__)
 #define PPUTLBOR_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, OR), a, b, f, d, e
-#define PPUTLBOR_X(...)                         __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -12055,15 +12056,15 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBXOR_o(a, b)                                           \
-  PPUTLBXOR_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)), \
-                PPUTLBXOR_R(PPUTLBXOR_R(PPUTLBXOR_R(                \
-                    PPUTLBXOR_X(PTL_ESC PTL_UTUP(a), PTL_ESC PTL_UTUP(b))))))
+#define PPUTLBXOR_o(a, b)                                                     \
+  PPUTLBXOR_RES(                                                              \
+      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                     \
+      PPUTLBXOR_R(PPUTLBXOR_R(PPUTLBXOR_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
+                                          PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
 #define PPUTLBXOR_RES(...)                       PPUTLBXOR_RES_o(__VA_ARGS__)
-#define PPUTLBXOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD((a, b, c), _type)
+#define PPUTLBXOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
 #define PPUTLBXOR_R(...)                         PPUTLBXOR_R_o(__VA_ARGS__)
 #define PPUTLBXOR_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, XOR), a, b, f, d, e
-#define PPUTLBXOR_X(...)                         __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

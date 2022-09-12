@@ -33,7 +33,7 @@ namespace impl {
 using namespace codegen;
 
 decltype(ltz) ltz = NIFTY_DEF(ltz, [&](arg n) {
-  docs << "[internal] numeric less-than-zero detection.";
+  docs << "[internal] numeric less-than-zero detection (if interpreted as signed).";
 
   def<"res(...)"> res = [&](va args) {
     def o = def{"o(" + utl::cat(utl::alpha_base52_seq(conf::word_size), ", ")

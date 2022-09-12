@@ -32,9 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(min) min = NIFTY_DEF(min, [&](va args) {
-  docs << "word minimum operation."
-       << "prohibits comparison of different signedness."
-       << "utups are interpreted as (and are comparable with) unsigned.";
+  docs << "integral minimum operation."
+       << "prohibits comparison of different signedness.";
 
   using std::to_string;
   using conf::uint_max;

@@ -506,7 +506,11 @@ template<string_representable T>
 [[nodiscard]] std::vector<std::string> split(std::string const& target,
                                              std::regex const&  delim);
 template<detail::forward_iterable_for<std::string const> Strs>
-[[nodiscard]] std::string              cat(Strs&& strs, std::string const& delim = "");
+[[nodiscard]] std::string cat(Strs&& strs, std::string const& delim = "");
+template<detail::forward_iterable_for<std::string const> Strs>
+  requires(not std::is_const_v<Strs>)
+[[nodiscard]] auto                     replace(Strs&&                                                  strs,
+                                               std::vector<std::pair<std::string, std::string>> const& repl);
 [[nodiscard]] std::string              alpha_base52(std::size_t num); // a-zA-Z
 [[nodiscard]] std::vector<std::string> base10_seq(std::size_t size,
                                                   std::string begin = "0"); // 0-9
