@@ -40,7 +40,6 @@ decltype(bflip) bflip = NIFTY_DEF(bflip, [&](va args) {
   tests << bflip("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h6)) >> docs;
   tests << bflip("0x" + utl::cat(samp::h3) + "u", 3) =
       ("0x" + utl::cat(samp::h11) + "u") >> docs;
-  tests << bflip(pp::tup(samp::hmax), neg(1)) = pp::tup(samp::himax) >> docs;
 
   return bset(args, not_(bget(args)));
 });

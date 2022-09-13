@@ -53,7 +53,6 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
   tests << bset("0x" + utl::cat(samp::h2), 0, 1) = ("0x" + utl::cat(samp::h3)) >> docs;
   tests << bset("0x" + utl::cat(samp::h3) + "u", 0, 0) =
       ("0x" + utl::cat(samp::h2) + "u") >> docs;
-  tests << bset(pp::tup(samp::hmax), neg(1), 0) = pp::tup(samp::himax) >> docs;
 
   std::vector<std::string> params{"_"};
   std::ranges::copy(utl::alpha_base52_seq(conf::bit_length), std::back_inserter(params));
@@ -68,22 +67,22 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
   auto p0 = params;
   std::swap(p0.front(), p0.back());
   def _0 = def{"0(" + utl::cat(p0, ", ") + ")"} = [&](pack) {
-    return pp::tup(res);
+    return utl::cat(res, ", ");
   };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
     auto pn = params;
     std::swap(pn[0], pn[conf::bit_length - i]);
     def{"" + std::to_string(i) + "(" + utl::cat(pn, ", ") + ")"} = [&](pack) {
-      return pp::tup(res);
+      return utl::cat(res, ", ");
     };
   }
 
   return def<"o(e, v, i, b)">{[&](arg e, arg v, arg i, arg b) {
     return word(
-        def<"<o(i, ...)">{[&](arg i, va args) {
+        impl::hex_cat(def<"<o(i, ...)">{[&](arg i, va args) {
           return pp::call(cat(utl::slice(_0, -1), i), args);
-        }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bool_(b), bdump(v)),
+        }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bool_(b), bdump(v))),
         typeof(v));
   }}(str(pp::str("[" + bset + "] invalid index") + " : " + args), args);
 });

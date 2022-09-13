@@ -54,9 +54,6 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
        << "  uhex → ihex | [default]; fallback for failed uhex → idec"
        << "  uhex → idec | requires IDEC hint and positive result"
        << ""
-       << "  utup → ihex | [default]; fallback for failed utup → idec"
-       << "  utup → idec | requires IDEC hint and positive result"
-       << ""
        << "attempts to preserve hex/decimal representation by default, but"
        << "will output hex if casting the input yields a negative number."
        << "hint is ignored only if the result is negative and the hint is IDEC."
@@ -92,12 +89,6 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   // uhex  → idec | requires IDEC hint and positive result
   tests << int_("0x" + utl::cat(samp::h5) + "u", "IDEC") = "5" >> docs;
 
-  // utup → ihex | [default]; fallback for failed utup → idec
-  tests << int_(pp::tup(samp::hmin))          = ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << int_(pp::tup(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
-  // utup → idec | requires IDEC hint and positive result
-  tests << int_(pp::tup(samp::himax), "IDEC") = int_max_s >> docs;
-
   def<"hint_\\IDEC"> hint_idec = [&] {
     return "";
   };
@@ -121,9 +112,6 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
       return "";
     };
     def<"\\UHEX">{} = [&] {
-      return "";
-    };
-    def<"\\UTUP">{} = [&] {
       return "";
     };
 
@@ -167,15 +155,6 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
       def<"\\UHEXAUTO">{} = [&] {
         return "UH_IH";
       };
-      def<"\\UTUPIDEC">{} = [&] {
-        return "XW_IC";
-      };
-      def<"\\UTUPIHEX">{} = [&] {
-        return "XW_IH";
-      };
-      def<"\\UTUPAUTO">{} = [&] {
-        return "XW_IH";
-      };
 
       return pp::cat(utl::slice(idecidec, -8), t, hint);
     };
@@ -183,12 +162,6 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
     return pp::call(xcat(utl::slice(_0, -1), is_none(xcat(utl::slice(idec_, -4), t))), e,
                     t, hint);
   };
-
-  auto utup_params = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : utup_params)
-    if (v == "u" or v == "x") {
-      v = "_" + v;
-    }
 
   def<"\\ID_ID(idec)"> id_id = [&](arg idec) {
     return idec;
@@ -213,18 +186,6 @@ decltype(int_) int_ = NIFTY_DEF(int_, [&](va args) {
   };
   def<"\\UH_IH(uhex)">{} = [&](arg uhex) {
     return impl::uhex(uhex, "IHEX");
-  };
-  def<"\\XW_IC(utup)">{} = [&](arg utup) {
-    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
-      return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "ICAST");
-    };
-    return o + " " + utup;
-  };
-  def<"\\XW_IH(utup)">{} = [&](arg utup) {
-    def o = def{"o(" + utl::cat(utup_params, ", ") + ")"} = [&](pack args) {
-      return impl::uhex(pp::cat("0x", pp::cat(args), "u"), "IHEX");
-    };
-    return o + " " + utup;
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {

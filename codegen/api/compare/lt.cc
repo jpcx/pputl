@@ -56,12 +56,6 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
   tests << lt(to_string(int_max / 2), to_string((int_max / 2) - 1))               = "0";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2)))                   = "0";
   tests << lt(to_string(int_max / 2), to_string((int_max / 2) + 1))               = "1";
-  tests << lt(pp::tup(samp::hmax), pp::tup(samp::hmin)) = "0" >> docs;
-  tests << lt(pp::tup(samp::hmin), pp::tup(samp::hmax)) = "1" >> docs;
-  tests << lt(pp::tup(samp::himax), std::to_string(conf::int_max + 1) + "u") =
-      "1" >> docs;
-  tests << lt(std::to_string(conf::int_max + 1) + "u", pp::tup(samp::himax)) =
-      "0" >> docs;
 
   def<"icmp(...)"> icmp = [&](va args) {
     return def<"o(...)">{[&](va args) {

@@ -48,8 +48,6 @@ decltype(add) add = NIFTY_DEF(add, [&](va args) {
   tests << add(uint_max_s, uint_max_s) =
       (std::to_string(conf::uint_max - 1) + "u") >> docs;
   tests << add(int_max_s, 1) = int_min_s >> docs;
-  tests << add(int_max_s, pp::tup(samp::h1)) =
-      (std::to_string(conf::int_max + 1) + "u") >> docs;
 
   return def<"o(a, b)">{[&](arg a, arg b) {
     return word(impl::add(uhex(a), uhex(b)),

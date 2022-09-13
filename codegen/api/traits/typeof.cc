@@ -43,9 +43,8 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
        << ""
        << "returns one of:"
        << ""
-       << " | NONE | LIST  | TUP   | UTUP   | ARR  | MAP"
-       << " | SET  | STACK | QUEUE | PQUEUE | ATOM | HEX"
-       << " | NYBL | IDEC  | IHEX  | UDEC   | UHEX";
+       << " | NONE   | LIST  | TUP  | ARR  | MAP  | SET  | STACK | QUEUE"
+       << " | PQUEUE | ATOM  | HEX  | NYBL | IDEC | IHEX | UDEC  | UHEX";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -64,17 +63,13 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof("foo, bar")     = "LIST" >> docs;
   if constexpr (conf::word_size > 1)
     tests << typeof("(A)") = "TUP" >> docs;
-  tests << typeof(pp::tup(
-      utl::cat(std::vector<std::string>(conf::word_size, "0"), ", "))) = "UTUP" >> docs;
-  tests << typeof(pp::tup(
-      utl::cat(std::vector<std::string>(conf::word_size, "F"), ", "))) = "UTUP" >> docs;
-  tests << typeof()                                                    = "NONE" >> docs;
-  tests << typeof(fwd::arr + "()")                                     = "ARR" >> docs;
-  tests << typeof(fwd::map + "()")                                     = "MAP" >> docs;
-  tests << typeof(fwd::set + "()")                                     = "SET" >> docs;
-  tests << typeof(fwd::stack + "()")                                   = "STACK" >> docs;
-  tests << typeof(fwd::queue + "()")                                   = "QUEUE" >> docs;
-  tests << typeof(fwd::pqueue + "()")                                  = "PQUEUE" >> docs;
+  tests << typeof()                   = "NONE" >> docs;
+  tests << typeof(fwd::arr + "()")    = "ARR" >> docs;
+  tests << typeof(fwd::map + "()")    = "MAP" >> docs;
+  tests << typeof(fwd::set + "()")    = "SET" >> docs;
+  tests << typeof(fwd::stack + "()")  = "STACK" >> docs;
+  tests << typeof(fwd::queue + "()")  = "QUEUE" >> docs;
+  tests << typeof(fwd::pqueue + "()") = "PQUEUE" >> docs;
 
   // !none
   def<"\\0(...)"> _0 = [&](va args) {
@@ -164,22 +159,10 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       };
 
       // !none → obj → tup
-      def<"\\1(tup)">{} = [&](arg tup) {
+      def<"\\1(tup)">{} = [&](arg) {
         docs << "^!none → obj → tup";
 
-        // !none → obj → !atom → !utup
-        def<"\\0(tup)"> _0 = [&](arg) {
-          docs << "^!none → obj → tup → !utup";
-          return "TUP";
-        };
-
-        // !none → obj → !atom → utup
-        def<"\\1(utup)">{} = [&](arg) {
-          docs << "^!none → obj → tup → utup";
-          return "UTUP";
-        };
-
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), tup);
+        return "TUP";
       };
 
       return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);

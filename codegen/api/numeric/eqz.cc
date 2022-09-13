@@ -42,7 +42,6 @@ decltype(eqz) eqz = NIFTY_DEF(eqz, [&](va args) {
   tests << eqz("0u")                              = "1" >> docs;
   tests << eqz("0x" + utl::cat(samp::hmin))       = "1" >> docs;
   tests << eqz("0x" + utl::cat(samp::hmin) + "u") = "1" >> docs;
-  tests << eqz(pp::tup(samp::hmin))               = "1" >> docs;
   tests << eqz("1u")                              = "0" >> docs;
   tests << eqz("2")                               = "0" >> docs;
   tests << eqz(uint_max_s)                        = "0" >> docs;

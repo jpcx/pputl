@@ -53,7 +53,6 @@ extern codegen::def<"is_udec(...: list) -> bool"> const&                  is_ude
 extern codegen::def<"is_uhex(...: list) -> bool"> const&                  is_uhex;
 extern codegen::def<"is_int(...: list) -> bool"> const&                   is_int;
 extern codegen::def<"is_tup(...: list) -> bool"> const&                   is_tup;
-extern codegen::def<"is_utup(...: list) -> bool"> const&                  is_utup;
 extern codegen::def<"is_uint(...: list) -> bool"> const&                  is_uint;
 extern codegen::def<"is_word(...: list) -> bool"> const&                  is_word;
 extern codegen::def<"is_size(...: list) -> bool"> const&                  is_size;
@@ -65,10 +64,9 @@ extern codegen::def<"is_stack(...: list) -> bool"> const&                 is_sta
 extern codegen::def<"is_queue(...: list) -> bool"> const&                 is_queue;
 extern codegen::def<"is_pqueue(...: list) -> bool"> const&                is_pqueue;
 extern codegen::def<"is_any(...: list) -> bool"> const&                   is_any;
-extern codegen::def<
-    "typeof(...: list) -> "
-    "enum<NONE|LIST|TUP|UTUP|ARR|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|"
-    "IDEC|IHEX|UDEC|UHEX>"> const& typeof;
+extern codegen::def<"typeof(...: list) -> "
+                    "enum<NONE|LIST|TUP|ARR|MAP|SET|STACK|QUEUE|PQUEUE|ATOM|HEX|NYBL|"
+                    "IDEC|IHEX|UDEC|UHEX>"> const& typeof;
 extern codegen::def<"countof(...: list) -> udec&size"> const& countof;
 
 namespace detail {
@@ -79,7 +77,6 @@ extern codegen::def<>& is_idec_o;
 extern codegen::def<>& is_ihex_o;
 extern codegen::def<>& is_int_o;
 extern codegen::def<>& is_tup_o;
-extern codegen::def<>& is_utup_o;
 extern codegen::def<>& is_uint_o;
 extern codegen::def<>& is_word_o;
 extern codegen::def<>& is_size_o;
@@ -103,7 +100,6 @@ NIFTY_DECL(is_idec_o);
 NIFTY_DECL(is_ihex_o);
 NIFTY_DECL(is_int_o);
 NIFTY_DECL(is_tup_o);
-NIFTY_DECL(is_utup_o);
 NIFTY_DECL(is_uint_o);
 NIFTY_DECL(is_word_o);
 NIFTY_DECL(is_size_o);
@@ -136,7 +132,6 @@ NIFTY_DECL(is_udec);
 NIFTY_DECL(is_uhex);
 NIFTY_DECL(is_int);
 NIFTY_DECL(is_tup);
-NIFTY_DECL(is_utup);
 NIFTY_DECL(is_uint);
 NIFTY_DECL(is_word);
 NIFTY_DECL(is_size);

@@ -48,66 +48,29 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   tests << udec(max)  = uint_max_s >> docs;
   tests << udec(in1)  = uint_max_s >> docs;
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
-
-  auto utparams = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : utparams)
-    if (v == "u") {
-      v = "_" + v;
-      break;
-    }
-
-  def ut_hex = def{"ut_hex(" + utl::cat(utparams, ", ") + ")"} = [&](pack args) {
-    return pp::cat("0x", pp::cat(args), "u");
-  };
-
-  def<"\\0(e, obj)"> _0 = [&](arg e, arg obj) {
-    def<"\\0(e, obj)"> _0 = [&](arg e, arg) {
+  return def<"o(e, atom)">{[&](arg e, arg atom) {
+    def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) {
       return fail(e);
     };
-    def<"\\1(e, atom)">{} = [&](arg e, arg atom) {
-      def<"\\0000(e, atom)"> _0000 = [&](arg e, arg) {
-        return fail(e);
-      };
-      def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) {
-        return impl::uhex(uhex, "UDEC");
-      };
-      def<"\\0010(e, udec)">{} = [&](arg, arg udec) {
-        return udec;
-      };
-      def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) {
-        return impl::uhex(pp::cat(ihex, 'u'), "UDEC");
-      };
-      def<"\\1000(e, idec)">{} = [&](arg, arg idec) {
-        return pp::cat(idec, 'u');
-      };
-
-      return pp::call(xcat(utl::slice(_0000, -4),
-                           xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
-                                xcat(detail::is_enum_oo(impl::udec_prefix, atom),
-                                     detail::is_enum_oo(impl::uhex_prefix, atom)))),
-                      e, atom);
+    def<"\\0001(e, uhex)">{} = [&](arg, arg uhex) {
+      return impl::uhex(uhex, "UDEC");
+    };
+    def<"\\0010(e, udec)">{} = [&](arg, arg udec) {
+      return udec;
+    };
+    def<"\\0100(e, ihex)">{} = [&](arg, arg ihex) {
+      return impl::uhex(pp::cat(ihex, 'u'), "UDEC");
+    };
+    def<"\\1000(e, idec)">{} = [&](arg, arg idec) {
+      return pp::cat(idec, 'u');
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_atom_o(obj)), e, obj);
-  };
-
-  def<"\\1(e, tup)">{} = [&](arg e, arg tup) {
-    def<"\\0(e, tup)"> _0 = [&](arg e, arg) {
-      return fail(e);
-    };
-    def<"\\1(e, utup)">{} = [&](arg, arg utup) {
-      return impl::uhex(x(ut_hex + " " + utup), "UDEC");
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), e, tup);
-  };
-
-  return def<"o(e, obj)">{[&](arg e, arg obj) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), e, obj);
-  }}(error(udec, "invalid word", args), obj(args));
+    return pp::call(xcat(utl::slice(_0000, -4),
+                         xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
+                              xcat(detail::is_enum_oo(impl::udec_prefix, atom),
+                                   detail::is_enum_oo(impl::uhex_prefix, atom)))),
+                    e, atom);
+  }}(error(udec, "invalid word", args), atom(args));
 });
 
 } // namespace api

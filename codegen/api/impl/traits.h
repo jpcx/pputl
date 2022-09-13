@@ -37,10 +37,9 @@ namespace impl {
 
 inline codegen::category<"impl.traits"> traits;
 
-inline std::string const arith_rules{
-    "returns unsigned if either operand is unsigned, decimal if\n"
-    "either operand is decimal (and the result is non-negative),\n"
-    "utup if both operands are utup, and hex otherwise."};
+inline std::string const arith_rules{"returns unsigned if either operand is unsigned,\n"
+                                     "decimal if either operand is decimal (and the\n"
+                                     "result is non-negative), and hex otherwise."};
 
 extern std::string& hex_prefix;
 extern std::string& nybl_prefix;
@@ -61,11 +60,12 @@ extern std::conditional_t<
     codegen::def<
         "udec(v, t: enum<0u|1u|...>, enum<UHEX|IOFS|UOFS|LOG2|SQRT|FACT>)">> const& udec;
 extern codegen::def<"uhex(v, t: enum<...>, enum<UDEC|IHEX|ICAST|ILTZ|BNOT|HDUMP>)"> const&
-                                                              uhex;
-extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "
-                    "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const& arithhint;
-extern codegen::def<"xarithhint(...: enum<IDEC|IHEX|UDEC|UHEX|UTUP>, "
-                    "enum<IDEC|IHEX|UDEC|UHEX|UTUP>)"> const& xarithhint;
+                                                                         uhex;
+extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX>, "
+                    "enum<IDEC|IHEX|UDEC|UHEX>)"> const&                 arithhint;
+extern codegen::def<"xarithhint(...: enum<IDEC|IHEX|UDEC|UHEX>, "
+                    "enum<IDEC|IHEX|UDEC|UHEX>)"> const&                 xarithhint;
+extern codegen::def<"hex_cat(...: enum<0|1|...|E|F>...) -> uhex"> const& hex_cat;
 
 NIFTY_DECL(hex_prefix);
 NIFTY_DECL(nybl_prefix);
@@ -78,6 +78,7 @@ NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
 NIFTY_DECL(arithhint);
 NIFTY_DECL(xarithhint);
+NIFTY_DECL(hex_cat);
 
 inline codegen::end_category<"impl.traits"> traits_end;
 

@@ -37,13 +37,7 @@ decltype(dec) dec = NIFTY_DEF(dec, [&](arg n) {
 
   constexpr auto sz = conf::word_size;
 
-  auto ps = utl::alpha_base52_seq(sz);
-  for (auto&& v : ps)
-    if (v == "u") {
-      v = "_u";
-      break;
-    }
-  auto p = "_, " + utl::cat(ps, ", ");
+  auto p = "_, " + utl::cat(utl::replace(utl::alpha_base52_seq(sz), {{"u", "_u"}}), ", ");
 
   def<"r(...)"> r = [&](va args) {
     def o = def{"o(" + p + ")"} = [&](pack v) {

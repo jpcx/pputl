@@ -51,7 +51,7 @@ decltype(brotl) brotl = NIFTY_DEF(brotl, [&](va args) {
                                   args[(i * 4) + 3]),
                           "HEX");
 
-    return pp::tup(res);
+    return utl::cat(res, ", ");
   };
 
   for (std::size_t i = 1; i < utl::next_ge_pow2(conf::bit_length); ++i) {
@@ -64,18 +64,18 @@ decltype(brotl) brotl = NIFTY_DEF(brotl, [&](va args) {
                                     rot[(j * 4) + 3]),
                             "HEX");
 
-      return pp::tup(res);
+      return utl::cat(res, ", ");
     };
   }
 
   return def<"o(v, ...)">{[&](arg v, va n) {
     return word(
-        def<"<o(n, ...)">{[&](arg n, va bin) {
+        impl::hex_cat(def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
               xcat(utl::slice(_0, -1),
                    band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
-        }}(size(default_(1, n)), esc(bdump(v))),
+        }}(size(default_(1, n)), esc(bdump(v)))),
         typeof(v));
   }}(args);
 });

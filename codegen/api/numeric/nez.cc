@@ -38,7 +38,6 @@ decltype(nez) nez = NIFTY_DEF(nez, [&](va args) {
   tests << nez("0u")                              = "0" >> docs;
   tests << nez("0x" + utl::cat(samp::hmin))       = "0" >> docs;
   tests << nez("0x" + utl::cat(samp::hmin) + "u") = "0" >> docs;
-  tests << nez(pp::tup(samp::hmin))               = "0" >> docs;
   tests << nez("1u")                              = "1" >> docs;
   tests << nez("2")                               = "1" >> docs;
   tests << nez(uint_max_s)                        = "1" >> docs;

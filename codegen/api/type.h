@@ -53,24 +53,21 @@ extern codegen::def<"udec(...: word) -> udec"> const&                           
 extern codegen::def<"uhex(...: word) -> uhex"> const&                            uhex;
 extern codegen::def<"int(...: word, hint=AUTO: enum<IDEC|IHEX|AUTO>) -> int"> const& int_;
 extern codegen::def<"tup(...: tup) -> tup"> const&                                   tup;
-extern codegen::def<"utup(...: word) -> utup"> const&                                utup;
+extern codegen::def<"uint(...: word, hint=AUTO: enum<UDEC|UHEX|AUTO>) -> uint"> const&
+    uint;
 extern codegen::def<
-    "uint(...: word, hint=AUTO: enum<UDEC|UHEX|UTUP|AUTO>) -> uint"> const& uint;
+    "word(...: word, hint=AUTO: enum<IDEC|IHEX|UDEC|UHEX|AUTO>) -> word"> const& word;
 extern codegen::def<
-    "word(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> word"> const&
-    word;
+    "size(...: word, hint=AUTO: enum<IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const& size;
 extern codegen::def<
-    "size(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const&
-    size;
-extern codegen::def<
-    "ofs(...: word, hint=AUTO: enum<UTUP|IDEC|IHEX|UDEC|UHEX|AUTO>) -> ofs"> const& ofs;
-extern codegen::def<"arr(...: o?: arr|tup) -> arr"> const&                          arr;
-extern codegen::def<"map(...: o?: arr|tup) -> map"> const&                          map;
-extern codegen::def<"set(...: o?: arr|tup) -> set"> const&                          set;
-extern codegen::def<"stack(...: o?: arr|tup) -> stack"> const&                      stack;
-extern codegen::def<"queue(...: o?: arr|tup) -> queue"> const&                      queue;
-extern codegen::def<"pqueue(...: o?: arr|tup) -> pqueue"> const& pqueue;
-extern codegen::def<"any(...: any) -> any"> const&               any;
+    "ofs(...: word, hint=AUTO: enum<IDEC|IHEX|UDEC|UHEX|AUTO>) -> ofs"> const& ofs;
+extern codegen::def<"arr(...: o?: arr|tup) -> arr"> const&                     arr;
+extern codegen::def<"map(...: o?: arr|tup) -> map"> const&                     map;
+extern codegen::def<"set(...: o?: arr|tup) -> set"> const&                     set;
+extern codegen::def<"stack(...: o?: arr|tup) -> stack"> const&                 stack;
+extern codegen::def<"queue(...: o?: arr|tup) -> queue"> const&                 queue;
+extern codegen::def<"pqueue(...: o?: arr|tup) -> pqueue"> const&               pqueue;
+extern codegen::def<"any(...: any) -> any"> const&                             any;
 
 NIFTY_DECL(list);
 NIFTY_DECL(none);
@@ -86,7 +83,6 @@ NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
 NIFTY_DECL(int_);
 NIFTY_DECL(tup);
-NIFTY_DECL(utup);
 NIFTY_DECL(uint);
 NIFTY_DECL(word);
 NIFTY_DECL(size);

@@ -42,7 +42,7 @@ inline codegen::category<"impl.math"> math;
 
 extern codegen::def<"add(a, b: uhex, uhex) -> uhex"> const& add;
 extern codegen::def<"sub(a, b: uhex, uhex) -> uhex"> const& sub;
-extern codegen::def<"index(i, sign, sz, err: uhex, bool, uhex, obj) -> utup"> const&
+extern codegen::def<"index(i, sign, sz, err: uhex, bool, uhex, obj) -> uhex"> const&
     index;
 
 NIFTY_DECL(add);

@@ -37,8 +37,6 @@ decltype(bnand) bnand = NIFTY_DEF(bnand, [&](va args) {
 
   tests << bnand(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
   tests << bnand(5, 7) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "A") >> docs;
-  tests << bnand(pp::tup(samp::himax), pp::tup(samp::hmax)) =
-      pp::tup(samp::himin) >> docs;
 
   return def<"o(a, b)">{[&](arg a, arg b) {
     return word(impl::uhex(uhex(band(a, b)), "BNOT"),

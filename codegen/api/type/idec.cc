@@ -49,84 +49,37 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
   tests << idec(max)           = int_max_s >> docs;
   tests << idec(conf::int_max) = int_max_s >> docs;
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
-
-  auto utparams = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : utparams)
-    if (v == "u") {
-      v = "_" + v;
-      break;
-    }
-
-  def ut_hex = def{"ut_hex(" + utl::cat(utparams, ", ") + ")"} = [&](pack args) {
-    return pp::cat("0x", pp::cat(args), "u");
-  };
-
-  def<"\\0(e0, e1, obj)"> _0 = [&](arg e0, arg e1, arg obj) {
-    def<"\\0(e0, e1, obj)"> _0 = [&](arg e0, arg, arg) {
+  return def<"o(e0, e1, atom)">{[&](arg e0, arg e1, arg atom) {
+    def<"\\0000(e0, e1, atom)"> _0000 = [&](arg e0, arg, arg) {
       return fail(e0);
     };
-    def<"\\1(e0, e1, atom)">{} = [&](arg e0, arg e1, arg atom) {
-      def<"\\0000(e0, e1, atom)"> _0000 = [&](arg e0, arg, arg) {
-        return fail(e0);
+    def<"\\0001(e0, e1, uhex)"> _0001 = [&](arg, arg e1, arg uhex) {
+      def<"\\0(e1, uhex)"> _0 = [&](arg, arg uhex) {
+        return impl::uhex(uhex, "ICAST");
       };
-      def<"\\0001(e0, e1, uhex)"> _0001 = [&](arg, arg e1, arg uhex) {
-        def<"\\0(e1, uhex)"> _0 = [&](arg, arg uhex) {
-          return impl::uhex(uhex, "ICAST");
-        };
-        def<"\\1(e1, uhex)">{} = [&](arg e1, arg) {
-          return fail(e1);
-        };
-
-        return pp::call(xcat(utl::slice(_0, -1), impl::uhex(uhex, "ILTZ")), e1, uhex);
-      };
-      def<"\\0010(e0, e1, udec)">{} = [&](arg e0, arg e1, arg udec) {
-        return _0001(e0, e1, impl::udec(udec, "UHEX"));
-      };
-      def<"\\0100(e0, e1, ihex)">{} = [&](arg e0, arg e1, arg ihex) {
-        return _0001(e0, e1, pp::cat(ihex, 'u'));
-      };
-      def<"\\1000(e0, e1, idec)">{} = [&](arg, arg, arg idec) {
-        return idec;
+      def<"\\1(e1, uhex)">{} = [&](arg e1, arg) {
+        return fail(e1);
       };
 
-      return pp::call(xcat(utl::slice(_0000, -4),
-                           xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
-                                xcat(detail::is_enum_oo(impl::udec_prefix, atom),
-                                     detail::is_enum_oo(impl::uhex_prefix, atom)))),
-                      e0, e1, atom);
+      return pp::call(xcat(utl::slice(_0, -1), impl::uhex(uhex, "ILTZ")), e1, uhex);
+    };
+    def<"\\0010(e0, e1, udec)">{} = [&](arg e0, arg e1, arg udec) {
+      return _0001(e0, e1, impl::udec(udec, "UHEX"));
+    };
+    def<"\\0100(e0, e1, ihex)">{} = [&](arg e0, arg e1, arg ihex) {
+      return _0001(e0, e1, pp::cat(ihex, 'u'));
+    };
+    def<"\\1000(e0, e1, idec)">{} = [&](arg, arg, arg idec) {
+      return idec;
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_atom_o(obj)), e0, e1, obj);
-  };
-
-  def<"\\1(e0, e1, tup)">{} = [&](arg e0, arg e1, arg tup) {
-    def<"\\0(e0, e1, tup)"> _0 = [&](arg e0, arg, arg) {
-      return fail(e0);
-    };
-    def<"\\1(e0, e1, utup)">{} = [&](arg, arg e1, arg utup) {
-      def<"res(e1, uhex)"> res = [&](arg e1, arg uhex) {
-        def<"\\0(e1, uhex)"> _0 = [&](arg, arg uhex) {
-          return impl::uhex(uhex, "ICAST");
-        };
-        def<"\\1(e1, uhex)">{} = [&](arg e1, arg) {
-          return fail(e1);
-        };
-        return pp::call(xcat(utl::slice(_0, -1), impl::uhex(uhex, "ILTZ")), e1, uhex);
-      };
-
-      return res(e1, x(ut_hex + " " + utup));
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), e0, e1, tup);
-  };
-
-  return def<"o(e0, e1, obj)">{[&](arg e0, arg e1, arg obj) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), e0, e1, obj);
+    return pp::call(xcat(utl::slice(_0000, -4),
+                         xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
+                              xcat(detail::is_enum_oo(impl::udec_prefix, atom),
+                                   detail::is_enum_oo(impl::uhex_prefix, atom)))),
+                    e0, e1, atom);
   }}(error(idec, "invalid word", args),
-     error(idec, "idec cannot represent negative words", args), obj(args));
+     error(idec, "idec cannot represent negative words", args), atom(args));
 });
 
 } // namespace api

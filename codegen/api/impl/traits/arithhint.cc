@@ -37,9 +37,9 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
        << ""
        << "immediately concatenates args."
        << ""
-       << "returns UDEC|UHEX if either operand is UDEC|UHEX|UTUP,"
-       << "UDEC|IDEC if either operand is UDEC|IDEC, UTUP if"
-       << "both operands are UTUP, and UHEX|IHEX otherwise.";
+       << "returns UDEC|UHEX if either operand is"
+       << "UDEC|UHEX, UDEC|IDEC if either operand"
+       << "is UDEC|IDEC, and UHEX|IHEX otherwise.";
 
   def<"\\IDECIDEC"> idecidec = [&] {
     return "IDEC";
@@ -51,9 +51,6 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
     return "UDEC";
   };
   def<"\\IDECUHEX">{} = [&] {
-    return "UDEC";
-  };
-  def<"\\IDECUTUP">{} = [&] {
     return "UDEC";
   };
   def<"\\IHEXIDEC">{} = [&] {
@@ -68,9 +65,6 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
   def<"\\IHEXUHEX">{} = [&] {
     return "UHEX";
   };
-  def<"\\IHEXUTUP">{} = [&] {
-    return "UHEX";
-  };
   def<"\\UDECIDEC">{} = [&] {
     return "UDEC";
   };
@@ -81,9 +75,6 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
     return "UDEC";
   };
   def<"\\UDECUHEX">{} = [&] {
-    return "UDEC";
-  };
-  def<"\\UDECUTUP">{} = [&] {
     return "UDEC";
   };
   def<"\\UHEXIDEC">{} = [&] {
@@ -97,24 +88,6 @@ decltype(arithhint) arithhint = NIFTY_DEF(arithhint, [&](arg a, arg b) {
   };
   def<"\\UHEXUHEX">{} = [&] {
     return "UHEX";
-  };
-  def<"\\UHEXUTUP">{} = [&] {
-    return "UHEX";
-  };
-  def<"\\UTUPIDEC">{} = [&] {
-    return "UDEC";
-  };
-  def<"\\UTUPIHEX">{} = [&] {
-    return "UHEX";
-  };
-  def<"\\UTUPUDEC">{} = [&] {
-    return "UDEC";
-  };
-  def<"\\UTUPUHEX">{} = [&] {
-    return "UHEX";
-  };
-  def<"\\UTUPUTUP">{} = [&] {
-    return "UTUP";
   };
 
   return pp::cat(utl::slice(idecidec, -8), a, b);

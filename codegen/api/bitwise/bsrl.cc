@@ -54,7 +54,7 @@ decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
           pp::cat(utl::alpha_base52_seq(4, std::string{static_cast<char>('a' + i * 4)})),
           "HEX");
     }
-    return pp::tup(res);
+    return utl::cat(res, ", ");
   };
 
   for (std::size_t i = 1; i < conf::bit_length; ++i) {
@@ -80,7 +80,7 @@ decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
         else
           v = "0";
       }
-      return pp::tup(res);
+      return utl::cat(res, ", ");
     };
   }
 
@@ -92,7 +92,8 @@ decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
                         return "0";
                       };
                       def<"\\1(i, ...)">{} = [&](arg i, va args) {
-                        return pp::call(pp::cat(utl::slice(_0, -1), i), args);
+                        return impl::hex_cat(
+                            pp::call(pp::cat(utl::slice(_0, -1), i), args));
                       };
 
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);

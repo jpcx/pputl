@@ -88,9 +88,10 @@ decltype(arr) arr = NIFTY_DEF(arr, [&](va args) {
             return size + ", " + tup;
           };
 
-          return pp::call(xcat(utl::slice(_00, -2),
-                               xcat(detail::is_size_o(obj_a), detail::is_tup_o(obj_b))),
-                          obj_a, obj_b);
+          // TODO
+          return pp::call(
+              xcat(utl::slice(_00, -2), xcat(is_size(obj_a), detail::is_tup_o(obj_b))),
+              obj_a, obj_b);
         };
 
         return pp::call(xcat(utl::slice(_00, -2), xcat(is_obj(first), is_obj(rest))),

@@ -35,9 +35,9 @@ using namespace codegen;
 decltype(xarithhint) xarithhint = NIFTY_DEF(xarithhint, [&](va args) {
   docs << "[internal] two-operand arithmetic cast hint."
        << ""
-       << "returns UDEC|UHEX if either operand is UDEC|UHEX|UTUP,"
-       << "UDEC|IDEC if either operand is UDEC|IDEC, UTUP if"
-       << "both operands are UTUP, and UHEX|IHEX otherwise.";
+       << "returns UDEC|UHEX if either operand is"
+       << "UDEC|UHEX, UDEC|IDEC if either operand"
+       << "is UDEC|IDEC, and UHEX|IHEX otherwise.";
 
   return arithhint(args);
 });

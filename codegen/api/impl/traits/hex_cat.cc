@@ -25,44 +25,25 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "bitwise.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(bget) bget = NIFTY_DEF(bget, [&](va args) {
-  docs << "gets the ith bit from the word, indexed from least to most significant."
-       << "fails on invalid bit index.";
+decltype(hex_cat) hex_cat = NIFTY_DEF(hex_cat, [&](va args) {
+  docs << "[internal] concatenates hexadecimal digits to a uhex expression.";
 
-  auto maxless1 =
-      "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "F")) + "E";
-
-  tests << bget(2, 2)              = "0" >> docs;
-  tests << bget(2, 1)              = "1" >> docs;
-  tests << bget(2, 0)              = "0" >> docs;
-  tests << bget("5u", 2)           = "1" >> docs;
-  tests << bget(maxless1, 1)       = "1" >> docs;
-  tests << bget(maxless1 + "u", 0) = "0" >> docs;
-  tests << bget(int_min_s, neg(1)) = "1" >> docs;
-
-  auto bitparams = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
-
-  def _0 = def{"0(" + bitparams + ")"} = [&](pack args) {
-    return args.back();
-  };
-
-  for (std::size_t i = 1; i < conf::bit_length; ++i) {
-    def{"" + std::to_string(i) + "(" + bitparams + ")"} = [&](pack args) {
-      return args[conf::bit_length - 1 - i];
-    };
-  }
-
-  return def<"o(e, v, i)">{[&](arg e, arg v, arg i) {
-    return def<"<o(i, ...)">{[&](arg i, va bin) {
-      return pp::call(cat(utl::slice(_0, -1), i), bin);
-    }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bdump(v));
-  }}(str(pp::str("[" + bget + "] invalid index") + " : " + args), args);
+  def o =
+      def{"o("
+          + utl::cat(utl::replace(utl::alpha_base52_seq(conf::word_size), {{"u", "_u"}}),
+                     ", ")
+          + ")"} = [&](pack args) {
+        return pp::cat("0x", pp::cat(args), "u");
+      };
+  return o(args);
 });
 
+} // namespace impl
 } // namespace api

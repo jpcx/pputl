@@ -57,60 +57,31 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     tests << is_size("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
   }
 
-  def<"x(...)"> x = [&](va args) {
-    return args;
-  };
-
-  auto utparams = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : utparams)
-    if (v == "u") {
-      v = "_" + v;
-      break;
-    }
-
-  def ut_hex = def{"ut_hex(" + utl::cat(utparams, ", ") + ")"} = [&](pack args) {
-    return pp::cat("0x", pp::cat(args), "u");
-  };
-
-  detail::is_size_o = def{"o(obj)"} = [&](arg obj) {
+  detail::is_size_o = def{"o(atom)"} = [&](arg atom) {
     if constexpr (size_lt_max) {
-      def<"\\0(atom)"> _0 = [&](arg atom) {
-        def<"\\0000(atom)"> _0000 = [&](arg) {
-          return "0";
-        };
-        def<"\\0001(uhex)">{} = [&](arg uhex) {
-          return impl::udec(impl::uhex(uhex, "UDEC"), "USIZE");
-        };
-        def<"\\0010(udec)">{} = [&](arg udec) { //
-          return impl::udec(udec, "USIZE");
-        };
-        def<"\\0100(ihex)">{} = [&](arg ihex) {
-          return impl::udec(impl::uhex(pp::cat(ihex, 'u'), "UDEC"), "ISIZE");
-        };
-        def<"\\1000(idec)">{} = [&](arg idec) { //
-          return impl::udec(pp::cat(idec, 'u'), "ISIZE");
-        };
-
-        return pp::call(xcat(utl::slice(_0000, -4),
-                             xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
-                                  xcat(detail::is_enum_oo(impl::udec_prefix, atom),
-                                       detail::is_enum_oo(impl::uhex_prefix, atom)))),
-                        atom);
+      def<"\\0000(atom)"> _0000 = [&](arg) {
+        return "0";
+      };
+      def<"\\0001(uhex)">{} = [&](arg uhex) {
+        return impl::udec(impl::uhex(uhex, "UDEC"), "USIZE");
+      };
+      def<"\\0010(udec)">{} = [&](arg udec) { //
+        return impl::udec(udec, "USIZE");
+      };
+      def<"\\0100(ihex)">{} = [&](arg ihex) {
+        return impl::udec(impl::uhex(pp::cat(ihex, 'u'), "UDEC"), "ISIZE");
+      };
+      def<"\\1000(idec)">{} = [&](arg idec) { //
+        return impl::udec(pp::cat(idec, 'u'), "ISIZE");
       };
 
-      def<"\\1(tup)">{} = [&](arg tup) {
-        def<"\\0(tup)"> _0 = [&](arg) {
-          return "0";
-        };
-        def<"\\1(utup)">{} = [&](arg utup) {
-          return impl::udec(impl::uhex(x(ut_hex + " " + utup), "UDEC"), "USIZE");
-        };
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_utup_o(tup)), tup);
-      };
-
-      return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
+      return pp::call(xcat(utl::slice(_0000, -4),
+                           xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
+                                xcat(detail::is_enum_oo(impl::udec_prefix, atom),
+                                     detail::is_enum_oo(impl::uhex_prefix, atom)))),
+                      atom);
     } else {
-      return detail::is_word_o(obj);
+      return detail::is_word_o(atom);
     }
   };
 
@@ -123,7 +94,7 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     return detail::is_size_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

@@ -44,31 +44,21 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
        << "  idec → ihex | requires IHEX hint"
        << "  idec → udec | requires UDEC hint"
        << "  idec → uhex | requires UHEX hint"
-       << "  idec → utup | requires UTUP hint"
        << ""
        << "  ihex → ihex | [default]; failback for failed ihex → idec"
        << "  ihex → idec | requires IDEC hint and positive result"
        << "  ihex → udec | requires UDEC hint"
        << "  ihex → uhex | requires UHEX hint"
-       << "  ihex → utup | requires UTUP hint"
        << ""
        << "  udec → udec | [default]"
        << "  udec → idec | requires IDEC hint and positive result"
        << "  udec → ihex | requires IHEX hint or udec → idec failure"
        << "  udec → uhex | requires UHEX hint"
-       << "  udec → utup | requires UTUP hint"
        << ""
        << "  uhex → uhex | [default]"
        << "  uhex → idec | requires IDEC hint and positive result"
        << "  uhex → ihex | requires IHEX hint or uhex → idec failure"
        << "  uhex → udec | requires UDEC hint"
-       << "  uhex → utup | requires UTUP hint"
-       << ""
-       << "  utup → utup | [default]"
-       << "  utup → idec | requires IDEC hint and positive result"
-       << "  utup → ihex | requires IHEX hint or utup → idec failure"
-       << "  utup → udec | requires UDEC hint"
-       << "  utup → uhex | requires UHEX hint"
        << ""
        << "attempts to preserve hex/decimal representation by default, but"
        << "will output hex if casting the input yields a negative number."
@@ -88,8 +78,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   tests << word(2, "UDEC") = "2u" >> docs;
   // idec  → uhex  | requires UHEX hint
   tests << word(3, "UHEX") = ("0x" + utl::cat(samp::h3) + "u") >> docs;
-  // idec  → utup | requires UTUP hint
-  tests << word(4, "UTUP") = pp::tup(samp::h4) >> docs;
 
   // ihex  → ihex  | [default]; failback for failed ihex → idec
   tests << word("0x" + utl::cat(samp::h2)) = ("0x" + utl::cat(samp::h2)) >> docs;
@@ -102,8 +90,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   // ihex  → uhex  | requires UHEX hint
   tests << word("0x" + utl::cat(samp::h7), "UHEX") =
       ("0x" + utl::cat(samp::h7) + "u") >> docs;
-  // ihex  → utup | requires UTUP hint
-  tests << word("0x" + utl::cat(samp::h8), "UTUP") = pp::tup(samp::h8) >> docs;
 
   // udec  → udec  | [default]
   tests << word("8u")               = "8u" >> docs;
@@ -114,8 +100,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   tests << word(uint_max_s, "IDEC") = ("0x" + utl::cat(samp::hmax)) >> docs;
   // udec  → uhex  | requires UHEX hint
   tests << word("6u", "UHEX")       = ("0x" + utl::cat(samp::h6) + "u") >> docs;
-  // udec  → utup | requires UTUP hint
-  tests << word("4u", "UTUP")       = pp::tup(samp::h4) >> docs;
 
   // uhex  → uhex  | [default]
   tests << word("0x" + utl::cat(samp::h5) + "u") =
@@ -128,22 +112,7 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   tests << word("0x" + utl::cat(samp::hmax) + "u", "IDEC") =
       ("0x" + utl::cat(samp::hmax)) >> docs;
   // uhex  → udec  | requires UDEC hint
-  tests << word("0x" + utl::cat(samp::h4) + "u", "UDEC")  = "4u" >> docs;
-  // uhex  → utup | requires UTUP hint
-  tests << word("0x" + utl::cat(samp::h15) + "u", "UTUP") = pp::tup(samp::h15) >> docs;
-
-  // utup → utup | [default]
-  tests << word(pp::tup(samp::h3))            = pp::tup(samp::h3) >> docs;
-  // utup → idec  | requires IDEC hint and positive result
-  tests << word(pp::tup(samp::himax), "IDEC") = int_max_s >> docs;
-  // utup → ihex  | requires IHEX hint or utup → idec failure
-  tests << word(pp::tup(samp::hmin), "IHEX")  = ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << word(pp::tup(samp::himin), "IDEC") = ("0x" + utl::cat(samp::himin)) >> docs;
-  // utup → udec  | requires UDEC hint
-  tests << word(pp::tup(samp::hmax), "UDEC")  = uint_max_s >> docs;
-  // utup → uhex  | requires UHEX hint
-  tests << uint(pp::tup(samp::hmin), "UHEX") =
-      ("0x" + utl::cat(samp::hmin) + "u") >> docs;
+  tests << word("0x" + utl::cat(samp::h4) + "u", "UDEC") = "4u" >> docs;
 
   def<"hint_\\IDEC"> hint_idec = [&] {
     return "";
@@ -155,9 +124,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
     return "";
   };
   def<"hint_\\UHEX">{} = [&] {
-    return "";
-  };
-  def<"hint_\\UTUP">{} = [&] {
     return "";
   };
   def<"hint_\\AUTO">{} = [&] {
@@ -179,9 +145,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
     def<"\\UHEX">{} = [&] {
       return "";
     };
-    def<"\\UTUP">{} = [&] {
-      return "";
-    };
 
     def<"\\0(e, t, hint)"> _0 = [&](arg e, arg, arg) {
       return fail(e);
@@ -199,9 +162,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
       def<"\\UHEX(t)">{} = [&](arg) {
         return "UHEX";
       };
-      def<"\\UTUP(t)">{} = [&](arg) {
-        return "UTUP";
-      };
       def<"\\AUTO(t)">{} = [&](arg t) {
         return t;
       };
@@ -212,12 +172,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
     return pp::call(xcat(utl::slice(_0, -1), is_none(xcat(utl::slice(idec_, -4), t))), e,
                     t, hint);
   };
-
-  auto utup_params = utl::alpha_base52_seq(conf::word_size);
-  for (auto&& v : utup_params)
-    if (v == "u" or v == "x") {
-      v = "_" + v;
-    }
 
   def<"\\IDEC(word)"> idec = [&](arg word) {
     return int_(word, "IDEC");
@@ -230,9 +184,6 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   };
   def<"\\UHEX(word)">{} = [&](arg word) {
     return uhex(word);
-  };
-  def<"\\UTUP(word)">{} = [&](arg word) {
-    return utup(word);
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
