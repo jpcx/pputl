@@ -32,33 +32,54 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_set_o)  is_set_o  = NIFTY_DEF(is_set_o);
-decltype(is_set_oo) is_set_oo = NIFTY_DEF(is_set_oo);
+decltype(is_array_o)  is_array_o  = NIFTY_DEF(is_array_o);
+decltype(is_array_oo) is_array_oo = NIFTY_DEF(is_array_oo);
 } // namespace detail
 
-decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
-  docs << "[extends " + is_object + "] detects if args is a pputl set object.";
+decltype(is_array) is_array = NIFTY_DEF(is_array, [&](va args) {
+  docs << "[extends " + is_object + "] detects if args is a pputl array object."
+       << "note: does not parse contained items during validity check.";
 
-  tests << is_set()                = "0" >> docs;
-  tests << is_set("1, 2")          = "0" >> docs;
-  tests << is_set(fwd::set + "()") = "1" >> docs;
-
-  def chk = def{"chk_\\" + fwd::set + "(...)"} = [&](va) {
-    return "";
-  };
+  tests << is_array()                   = "0" >> docs;
+  tests << is_array("1, 2")             = "0" >> docs;
+  tests << is_array("(a, b)")           = "0" >> docs;
+  tests << is_array(fwd::arr + "()")    = "1" >> docs;
+  tests << is_array(fwd::map + "()")    = "1" >> docs;
+  tests << is_array(fwd::pqueue + "()") = "1" >> docs;
+  tests << is_array(fwd::set + "()")    = "1" >> docs;
+  tests << is_array(fwd::stack + "()")  = "1" >> docs;
+  tests << is_array(fwd::queue + "()")  = "1" >> docs;
 
   def<"fail(...)"> fail{[&](va) {
     return "0";
   }};
 
-  detail::is_set_o = def{"o(obj)"} = [&](arg obj) {
-    detail::is_set_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
+  detail::is_array_o = def{"o(obj)"} = [&](arg obj) {
+    detail::is_array_oo = def{"<o(atom)"} = [&](arg atom) {
+      def arr = def{"\\" + fwd::arr + "(...)"} = [&](va) {
+        return "";
+      };
+      def{"\\" + fwd::map + "(...)"} = [&](va) {
+        return "";
+      };
+      def{"\\" + fwd::pqueue + "(...)"} = [&](va) {
+        return "";
+      };
+      def{"\\" + fwd::set + "(...)"} = [&](va) {
+        return "";
+      };
+      def{"\\" + fwd::stack + "(...)"} = [&](va) {
+        return "";
+      };
+      def{"\\" + fwd::queue + "(...)"} = [&](va) {
+        return "";
+      };
       return is_none(
-          pp::cat(utl::slice(chk, -(((std::string const&)fwd::set).size())), obj));
+          pp::cat(utl::slice(arr, -(((std::string const&)fwd::arr).size())), atom));
     };
 
     def<"\\0"> _0 = [&] {
-      return detail::is_set_oo;
+      return detail::is_array_oo;
     };
     def<"\\1">{} = [&] {
       return fail;
@@ -71,7 +92,7 @@ decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
     return fail;
   };
   def<"\\1">{} = [&] {
-    return detail::is_set_o;
+    return detail::is_array_o;
   };
 
   return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);

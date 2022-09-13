@@ -31,6 +31,10 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_udec_o) is_udec_o = NIFTY_DEF(is_udec_o);
+}
+
 decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   docs << "[extends " + is_enum + "] detects if args is an enum<0u|1u|...|"
               + std::to_string(conf::uint_max - 1) + "u|" + std::to_string(conf::uint_max)
@@ -47,7 +51,21 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   tests << is_udec(max)            = "0" >> docs;
   tests << is_udec("(), ()")       = "0" >> docs;
 
-  return detail::is_enum_o(impl::udec_prefix, args);
+  detail::is_udec_o = def{"o(atom)"} = [&](arg atom) {
+    return detail::is_enum_oo(impl::udec_prefix, atom);
+  };
+
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_udec_o;
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

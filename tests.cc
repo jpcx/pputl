@@ -64,16 +64,16 @@
 //       ‐ control flow                                    [lang, control]    //
 //           default  fail  if  switch                                        //
 //       ‐ type casting                                             [type]    //
-//           list    none  object  tuple  atom   enum                         //
-//           bool    idec  ihex    udec   uhex   int                          //
-//           uint    word  size    ofs    array  map                          //
-//           pqueue  set   stack   queue  range  any                          //
+//           list    none  object  tuple   atom   enum                        //
+//           idec    bool  ihex    udec    uhex   int                         //
+//           uint    word  size    offset  array  map                         //
+//           pqueue  set   stack   queue   range  any                         //
 //       ‐ type traits                                     [traits, range]    //
-//           is_list    is_none   is_object  is_tuple  is_atom   is_enum      //
-//           is_bool    is_idec   is_ihex    is_udec   is_uhex   is_int       //
-//           is_uint    is_word   is_size    is_ofs    is_array  is_map       //
-//           is_pqueue  is_set    is_stack   is_queue  is_range  is_any       //
-//           typeof     countof   sizeof     itemsof   is_empty               //
+//           is_list    is_none   is_object  is_tuple   is_atom   is_enum     //
+//           is_idec    is_bool   is_ihex    is_udec    is_uhex   is_int      //
+//           is_uint    is_word   is_size    is_offset  is_array  is_map      //
+//           is_pqueue  is_set    is_stack   is_queue   is_range  is_any      //
+//           typeof     countof   sizeof     itemsof    is_empty              //
 //       ‐ boolean logic                                           [logic]    //
 //           not  and  or  xor  nand  nor  xnor                               //
 //       ‐ paste formatting                                    [lang, fmt]    //
@@ -173,22 +173,22 @@
 //      │  ├╴tuple: a parenthesized list [e.g ()] [e.g. (a, b, , )]           //
 //      │  ├╴atom:  a non-parenthesized object                                //
 //      │  │  ├╴enum<v0|v1|...>: an atom matching a defined enumeration       //
-//      │  │  │  ├╴bool: enum<0|1>                                            //
 //      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //
+//      │  │  │  │  └╴bool: enum<0|1>                                         //
 //      │  │  │  ├╴ihex: enum<0x000|0x001|...|0xFFE|0xFFF>                    //
 //      │  │  │  ├╴udec: enum<0u|1u|2u|...|4093u|4094u|4095u>                 //
 //      │  │  │  └╴uhex: enum<0x000u|0x001u|...|0xFFEu|0xFFFu>                //
-//      │  │  ├╴int:  <union> bool|idec|ihex; a signed 2s-compl integer       //
+//      │  │  ├╴int:  <union> idec|ihex; a signed 2s-compl integer            //
 //      │  │  ├╴uint: <union> udec|uhex; an unsigned integer                  //
-//      │  │  └╴word: <union> int|uint;  any kind of integer                  //
-//      │  │     ├╴size:   any non-negative word up to size_max               //
-//      │  │     └╴offset: any word whose absolute value is a valid size      //
-//      │  ├╴array: an encapsulated, sized sequence of any                    //
-//      │  │  ├╴map: a sorted mapping of words or enums to any                //
-//      │  │  │  └╴pqueue: a priority queue of any                            //
-//      │  │  ├╴set:   a set of words or enums                                //
-//      │  │  ├╴stack: a LIFO stack of any                                    //
-//      │  │  └╴queue: a FIFO queue of any                                    //
+//      │  │  ├╴word: <union> int|uint;  any kind of integer                  //
+//      │  │  │  ├╴size:   any non-negative word up to size_max               //
+//      │  │  │  └╴offset: any word whose absolute value is a valid size      //
+//      │  │  └╴array: an encapsulated, sized sequence of any                 //
+//      │  │     ├╴map: a sorted mapping of words or enums to any             //
+//      │  │     │  └╴pqueue: a priority queue of any                         //
+//      │  │     ├╴set:   a set of words or enums                             //
+//      │  │     ├╴stack: a LIFO stack of any                                 //
+//      │  │     └╴queue: a FIFO queue of any                                 //
 //      │  └╴range: <union> tuple|array; a structured range of any            //
 //      └╴any: <union> none|object; nothing or exactly one thing (any arg)    //
 //                                                                            //
@@ -349,12 +349,34 @@ ASSERT_PP_EQ((PTL_IS_NONE(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_NONE(, , a)), (0));
 
-ASSERT_PP_EQ((PTL_IS_OBJ()), (0));
-ASSERT_PP_EQ((PTL_IS_OBJ(,)), (0));
-ASSERT_PP_EQ((PTL_IS_OBJ(foo,)), (0));
-ASSERT_PP_EQ((PTL_IS_OBJ(foo, bar)), (0));
-ASSERT_PP_EQ((PTL_IS_OBJ(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_OBJ((42))), (1));
+ASSERT_PP_EQ((PTL_IS_OBJECT()), (0));
+ASSERT_PP_EQ((PTL_IS_OBJECT(,)), (0));
+ASSERT_PP_EQ((PTL_IS_OBJECT(foo,)), (0));
+ASSERT_PP_EQ((PTL_IS_OBJECT(foo, bar)), (0));
+ASSERT_PP_EQ((PTL_IS_OBJECT(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_OBJECT((42))), (1));
+
+ASSERT_PP_EQ((PTL_IS_TUPLE()), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(())), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((1, 2))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(PTL_ESC(()))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE(PTL_ESC((1, 2)))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE(, , a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((a, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, a))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUPLE((, , a))), (1));
 
 ASSERT_PP_EQ((PTL_IS_ATOM()), (0));
 ASSERT_PP_EQ((PTL_IS_ATOM(foo)), (1));
@@ -380,6 +402,14 @@ ASSERT_PP_EQ((PTL_IS_ATOM((, a))), (0));
 ASSERT_PP_EQ((PTL_IS_ATOM((, a, ))), (0));
 ASSERT_PP_EQ((PTL_IS_ATOM((, , a))), (0));
 
+ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(2047)), (1));
+ASSERT_PP_EQ((PTL_IS_IDEC(4095)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0x000u)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC(0xFFF)), (0));
+ASSERT_PP_EQ((PTL_IS_IDEC((), ())), (0));
+
 ASSERT_PP_EQ((PTL_IS_BOOL()), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(0)), (1));
 ASSERT_PP_EQ((PTL_IS_BOOL(1)), (1));
@@ -397,29 +427,6 @@ ASSERT_PP_EQ((PTL_IS_BOOL(a, , )), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_BOOL(, , a)), (0));
-
-ASSERT_PP_EQ((PTL_IS_HEX()), (0));
-ASSERT_PP_EQ((PTL_IS_HEX(0)), (1));
-ASSERT_PP_EQ((PTL_IS_HEX(Q)), (0));
-ASSERT_PP_EQ((PTL_IS_HEX(foo)), (0));
-ASSERT_PP_EQ((PTL_IS_HEX(B)), (1));
-ASSERT_PP_EQ((PTL_IS_HEX(b)), (0));
-ASSERT_PP_EQ((PTL_IS_HEX(F)), (1));
-
-ASSERT_PP_EQ((PTL_IS_NYBL()), (0));
-ASSERT_PP_EQ((PTL_IS_NYBL(0)), (0));
-ASSERT_PP_EQ((PTL_IS_NYBL(B)), (0));
-ASSERT_PP_EQ((PTL_IS_NYBL(000)), (0));
-ASSERT_PP_EQ((PTL_IS_NYBL(0000)), (1));
-ASSERT_PP_EQ((PTL_IS_NYBL(0110)), (1));
-
-ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
-ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(2047)), (1));
-ASSERT_PP_EQ((PTL_IS_IDEC(4095)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(0x000u)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(0xFFF)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC((), ())), (0));
 
 ASSERT_PP_EQ((PTL_IS_IHEX(1)), (0));
 ASSERT_PP_EQ((PTL_IS_IHEX(1u)), (0));
@@ -452,28 +459,6 @@ ASSERT_PP_EQ((PTL_IS_INT(0xFFF)), (1));
 ASSERT_PP_EQ((PTL_IS_INT(0xF)), (0));
 ASSERT_PP_EQ((PTL_IS_INT((), ())), (0));
 
-ASSERT_PP_EQ((PTL_IS_TUP()), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(())), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((1, 2))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC(()))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC((1, 2)))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP((, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (1));
-
 ASSERT_PP_EQ((PTL_IS_UINT()), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(foo)), (0));
 ASSERT_PP_EQ((PTL_IS_UINT(0)), (0));
@@ -504,21 +489,31 @@ ASSERT_PP_EQ((PTL_IS_SIZE(4095u)), (0));
 ASSERT_PP_EQ((PTL_IS_SIZE(0xFFFu)), (0));
 ASSERT_PP_EQ((PTL_IS_SIZE(255u)), (1));
 
-ASSERT_PP_EQ((PTL_IS_OFS(0)), (1));
-ASSERT_PP_EQ((PTL_IS_OFS(254)), (1));
-ASSERT_PP_EQ((PTL_IS_OFS(255u)), (1));
-ASSERT_PP_EQ((PTL_IS_OFS(256u)), (0));
-ASSERT_PP_EQ((PTL_IS_OFS(0xFFF)), (1));
-ASSERT_PP_EQ((PTL_IS_OFS(0xF01)), (1));
-ASSERT_PP_EQ((PTL_IS_OFS(0xF00)), (0));
+ASSERT_PP_EQ((PTL_IS_OFFSET(0)), (1));
+ASSERT_PP_EQ((PTL_IS_OFFSET(254)), (1));
+ASSERT_PP_EQ((PTL_IS_OFFSET(255u)), (1));
+ASSERT_PP_EQ((PTL_IS_OFFSET(256u)), (0));
+ASSERT_PP_EQ((PTL_IS_OFFSET(0xFFF)), (1));
+ASSERT_PP_EQ((PTL_IS_OFFSET(0xF01)), (1));
+ASSERT_PP_EQ((PTL_IS_OFFSET(0xF00)), (0));
 
-ASSERT_PP_EQ((PTL_IS_ARR()), (0));
-ASSERT_PP_EQ((PTL_IS_ARR(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_ARR(PTL_ARR())), (1));
+ASSERT_PP_EQ((PTL_IS_ARRAY()), (0));
+ASSERT_PP_EQ((PTL_IS_ARRAY(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_ARRAY((a, b))), (0));
+ASSERT_PP_EQ((PTL_IS_ARRAY(PTL_ARR())), (1));
+ASSERT_PP_EQ((PTL_IS_ARRAY(PTL_MAP())), (1));
+ASSERT_PP_EQ((PTL_IS_ARRAY(PTL_PQUEUE())), (1));
+ASSERT_PP_EQ((PTL_IS_ARRAY(PTL_SET())), (1));
+ASSERT_PP_EQ((PTL_IS_ARRAY(PTL_STACK())), (1));
+ASSERT_PP_EQ((PTL_IS_ARRAY(PTL_QUEUE())), (1));
 
 ASSERT_PP_EQ((PTL_IS_MAP()), (0));
 ASSERT_PP_EQ((PTL_IS_MAP(1, 2)), (0));
 ASSERT_PP_EQ((PTL_IS_MAP(PTL_MAP())), (1));
+
+ASSERT_PP_EQ((PTL_IS_PQUEUE()), (0));
+ASSERT_PP_EQ((PTL_IS_PQUEUE(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_PQUEUE(PTL_PQUEUE())), (1));
 
 ASSERT_PP_EQ((PTL_IS_SET()), (0));
 ASSERT_PP_EQ((PTL_IS_SET(1, 2)), (0));
@@ -532,9 +527,15 @@ ASSERT_PP_EQ((PTL_IS_QUEUE()), (0));
 ASSERT_PP_EQ((PTL_IS_QUEUE(1, 2)), (0));
 ASSERT_PP_EQ((PTL_IS_QUEUE(PTL_QUEUE())), (1));
 
-ASSERT_PP_EQ((PTL_IS_PQUEUE()), (0));
-ASSERT_PP_EQ((PTL_IS_PQUEUE(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_PQUEUE(PTL_PQUEUE())), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE()), (0));
+ASSERT_PP_EQ((PTL_IS_RANGE(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_RANGE((foo))), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE(PTL_ARR())), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE(PTL_MAP())), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE(PTL_PQUEUE())), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE(PTL_SET())), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE(PTL_STACK())), (1));
+ASSERT_PP_EQ((PTL_IS_RANGE(PTL_QUEUE())), (1));
 
 ASSERT_PP_EQ((PTL_IS_ANY()), (1));
 ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
@@ -548,26 +549,23 @@ ASSERT_PP_EQ((PTL_IS_ANY(, a)), (0));
 ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (0));
 ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (0));
 
-ASSERT_PP_EQ((PTL_TYPEOF((foo))), (TUP));
+ASSERT_PP_EQ((PTL_TYPEOF((foo))), (TUPLE));
 ASSERT_PP_EQ((PTL_TYPEOF(0)), (IDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0u)), (UDEC));
-ASSERT_PP_EQ((PTL_TYPEOF(D)), (HEX));
 ASSERT_PP_EQ((PTL_TYPEOF(4095)), (ATOM));
 ASSERT_PP_EQ((PTL_TYPEOF(4095u)), (UDEC));
 ASSERT_PP_EQ((PTL_TYPEOF(0xFFF)), (IHEX));
 ASSERT_PP_EQ((PTL_TYPEOF(0xFFFu)), (UHEX));
 ASSERT_PP_EQ((PTL_TYPEOF(foo)), (ATOM));
 ASSERT_PP_EQ((PTL_TYPEOF(001)), (ATOM));
-ASSERT_PP_EQ((PTL_TYPEOF(0010)), (NYBL));
 ASSERT_PP_EQ((PTL_TYPEOF(foo, bar)), (LIST));
-ASSERT_PP_EQ((PTL_TYPEOF((A))), (TUP));
 ASSERT_PP_EQ((PTL_TYPEOF()), (NONE));
-ASSERT_PP_EQ((PTL_TYPEOF(PTL_ARR())), (ARR));
+ASSERT_PP_EQ((PTL_TYPEOF(PTL_ARR())), (ARRAY));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_MAP())), (MAP));
+ASSERT_PP_EQ((PTL_TYPEOF(PTL_PQUEUE())), (PQUEUE));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_SET())), (SET));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_STACK())), (STACK));
 ASSERT_PP_EQ((PTL_TYPEOF(PTL_QUEUE())), (QUEUE));
-ASSERT_PP_EQ((PTL_TYPEOF(PTL_PQUEUE())), (PQUEUE));
 
 ASSERT_PP_EQ((PTL_COUNTOF()), (0u));
 ASSERT_PP_EQ((PTL_COUNTOF(a)), (1u));
@@ -594,16 +592,6 @@ ASSERT_PP_EQ((PTL_ATOM(foo)), (foo));
 
 ASSERT_PP_EQ((PTL_BOOL(0)), (0));
 ASSERT_PP_EQ((PTL_BOOL(1)), (1));
-
-ASSERT_PP_EQ((PTL_HEX(0)), (0));
-ASSERT_PP_EQ((PTL_HEX(F)), (F));
-ASSERT_PP_EQ((PTL_HEX(0110)), (6));
-ASSERT_PP_EQ((PTL_HEX(1010)), (A));
-
-ASSERT_PP_EQ((PTL_NYBL(0000)), (0000));
-ASSERT_PP_EQ((PTL_NYBL(0110)), (0110));
-ASSERT_PP_EQ((PTL_NYBL(5)), (0101));
-ASSERT_PP_EQ((PTL_NYBL(A)), (1010));
 
 ASSERT_PP_EQ((PTL_IDEC(0x000)), (0));
 ASSERT_PP_EQ((PTL_IDEC(0x001)), (1));

@@ -90,11 +90,11 @@ decltype(arr) arr = NIFTY_DEF(arr, [&](va args) {
 
           // TODO
           return pp::call(
-              xcat(utl::slice(_00, -2), xcat(is_size(obj_a), detail::is_tup_o(obj_b))),
+              xcat(utl::slice(_00, -2), xcat(is_size(obj_a), detail::is_tuple_o(obj_b))),
               obj_a, obj_b);
         };
 
-        return pp::call(xcat(utl::slice(_00, -2), xcat(is_obj(first), is_obj(rest))),
+        return pp::call(xcat(utl::slice(_00, -2), xcat(is_object(first), is_object(rest))),
                         first, rest);
       };
 
@@ -126,10 +126,10 @@ decltype(arr) arr = NIFTY_DEF(arr, [&](va args) {
           return pp::cat(utl::slice(items_arr, -((std::string const&)arr).size()), arr_);
         };
 
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_arr_o(obj)), obj);
+        return pp::call(xcat(utl::slice(_0, -1), detail::is_array_o(obj)), obj);
       };
 
-      return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+      return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
     };
 
     def<"\\1(...)">{} = [](va) {

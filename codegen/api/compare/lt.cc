@@ -99,7 +99,7 @@ decltype(lt) lt = NIFTY_DEF(lt, [&](va args) {
     def<"\\1(tup)">{} = [&](arg) {
       return "U";
     };
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(word)), word);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(word)), word);
   };
 
   return pp::call(

@@ -85,10 +85,11 @@ decltype(is_size) is_size = NIFTY_DEF(is_size, [&](va args) {
     }
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_size_o;

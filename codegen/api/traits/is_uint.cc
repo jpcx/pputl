@@ -68,10 +68,11 @@ decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
                                           detail::is_enum_oo(impl::uhex_prefix, atom)));
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_uint_o;

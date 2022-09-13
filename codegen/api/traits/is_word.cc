@@ -69,10 +69,11 @@ decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
     return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_word_o;

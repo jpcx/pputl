@@ -45,8 +45,6 @@ extern codegen::def<"obj(...: obj) -> obj"> const&                              
 extern codegen::def<"atom(...: obj) -> atom"> const&                             atom;
 extern codegen::def<"enum(...: chkprefix: atom, enum<...>) -> enum<...>"> const& enum_;
 extern codegen::def<"bool(...: bool) -> bool"> const&                            bool_;
-extern codegen::def<"hex(...: hex|nybl) -> hex"> const&                          hex;
-extern codegen::def<"nybl(...: hex|nybl) -> nybl"> const&                        nybl;
 extern codegen::def<"idec(...: word) -> idec"> const&                            idec;
 extern codegen::def<"ihex(...: word) -> ihex"> const&                            ihex;
 extern codegen::def<"udec(...: word) -> udec"> const&                            udec;
@@ -75,8 +73,6 @@ NIFTY_DECL(obj);
 NIFTY_DECL(atom);
 NIFTY_DECL(enum_);
 NIFTY_DECL(bool_);
-NIFTY_DECL(hex);
-NIFTY_DECL(nybl);
 NIFTY_DECL(idec);
 NIFTY_DECL(ihex);
 NIFTY_DECL(udec);

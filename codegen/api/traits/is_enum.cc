@@ -67,7 +67,7 @@ decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
       def<"\\1">{} = [&] {
         return "0";
       };
-      return xcat(utl::slice(_0, -1), is_obj(xcat(chk_atom, atom)));
+      return xcat(utl::slice(_0, -1), is_object(xcat(chk_atom, atom)));
     };
 
     def<"\\0"> _0 = [&] {

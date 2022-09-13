@@ -25,34 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(hex) hex = NIFTY_DEF(hex, [&](va args) {
-  docs << "[" + enum_
-              + "<0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F>] an uppercase hexadecimal digit."
-       << "constructible from either hex or nybl.";
+decltype(is_object) is_object = NIFTY_DEF(is_object, [&](va args) {
+  docs << "[extends " + is_list + "] detects if args has exactly one element.";
 
-  tests << hex(0)      = "0" >> docs;
-  tests << hex("F")    = "F" >> docs;
-  tests << hex("0110") = "6" >> docs;
-  tests << hex("1010") = "A" >> docs;
+  tests << is_object("")         = "0" >> docs;
+  tests << is_object(",")        = "0" >> docs;
+  tests << is_object("foo,")     = "0" >> docs;
+  tests << is_object("foo, bar") = "0" >> docs;
+  tests << is_object("foo")      = "1" >> docs;
+  tests << is_object("(42)")     = "1" >> docs;
 
-  def<"\\00(e, ...)"> _00 = [](arg e, va) {
-    return fail(e);
+  def<"\\0(...)"> _0 = [] {
+    return "0";
   };
-  def<"\\01(e, nybl)">{} = [](arg, arg nybl) {
-    return impl::nybl(nybl, "HEX");
-  };
-  def<"\\10(e, hex)">{} = [](arg, arg hex) {
-    return hex;
+  def<"\\01(_, ...)">{} = [] {
+    def<"\\0"> _0 = [&] {
+      return "1";
+    };
+    def<"\\01">{} = [&] {
+      return "0";
+    };
+    return pp::cat(_0, pp::va_opt(1));
   };
 
-  return pp::call(xcat(utl::slice(_00, -2), xcat(is_hex(args), is_nybl(args))),
-                  error(hex, "invalid arguments; must be hex or nybl", args), args);
+  return pp::call(pp::cat(_0, pp::va_opt("1")), args + ".");
 });
 
 } // namespace api

@@ -31,30 +31,47 @@ namespace api {
 
 using namespace codegen;
 
-decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va args) {
-  docs << "[extends " + is_list + "] detects if args has exactly one element.";
+namespace detail {
+decltype(is_range_o) is_range_o = NIFTY_DEF(is_range_o);
+}
 
-  tests << is_obj("")         = "0" >> docs;
-  tests << is_obj(",")        = "0" >> docs;
-  tests << is_obj("foo,")     = "0" >> docs;
-  tests << is_obj("foo, bar") = "0" >> docs;
-  tests << is_obj("foo")      = "1" >> docs;
-  tests << is_obj("(42)")     = "1" >> docs;
+decltype(is_range) is_range = NIFTY_DEF(is_range, [&](va args) {
+  docs << "[extends " + is_tuple + "|" + is_array
+              + "] detects if args is a structured range of any.";
 
-  def<"\\0(...)"> _0 = [] {
-    return "0";
-  };
-  def<"\\01(_, ...)">{} = [] {
-    def<"\\0"> _0 = [&] {
+  tests << is_range()                   = "0" >> docs;
+  tests << is_range("foo")              = "0" >> docs;
+  tests << is_range("(foo)")            = "1" >> docs;
+  tests << is_range(fwd::arr + "()")    = "1" >> docs;
+  tests << is_range(fwd::map + "()")    = "1" >> docs;
+  tests << is_range(fwd::pqueue + "()") = "1" >> docs;
+  tests << is_range(fwd::set + "()")    = "1" >> docs;
+  tests << is_range(fwd::stack + "()")  = "1" >> docs;
+  tests << is_range(fwd::queue + "()")  = "1" >> docs;
+
+  detail::is_range_o = def{"o(object)"} = [&](arg object) {
+    def<"\\0(atom)"> _0 = [&](arg atom) {
+      return detail::is_array_oo(atom);
+    };
+
+    def<"\\1(tuple)">{} = [&](arg) {
       return "1";
     };
-    def<"\\01">{} = [&] {
-      return "0";
-    };
-    return pp::cat(_0, pp::va_opt(1));
+
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), object);
   };
 
-  return pp::call(pp::cat(_0, pp::va_opt("1")), args + ".");
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0"> _0 = [&] {
+    return fail;
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_range_o;
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
 });
 
 } // namespace api

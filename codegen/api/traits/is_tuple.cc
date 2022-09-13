@@ -32,48 +32,49 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_tup_o) is_tup_o = NIFTY_DEF(is_tup_o);
+decltype(is_tuple_o) is_tuple_o = NIFTY_DEF(is_tuple_o);
 }
 
-decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
-  docs << "[extends " + is_obj + "] detects if args is a tuple (parenthesized list).";
+decltype(is_tuple) is_tuple = NIFTY_DEF(is_tuple, [&](va args) {
+  docs << "[extends " + is_object + "] detects if args is a tuple (parenthesized list).";
 
-  tests << is_tup()                 = "0" >> docs;
-  tests << is_tup("1, 2")           = "0" >> docs;
-  tests << is_tup("()")             = "1" >> docs;
-  tests << is_tup("(1, 2)")         = "1" >> docs;
-  tests << is_tup("(), ()")         = "0";
-  tests << is_tup(esc + "(())")     = "1";
-  tests << is_tup(esc + "((1, 2))") = "1";
-  tests << is_tup(", ")             = "0";
-  tests << is_tup(", , ")           = "0";
-  tests << is_tup("a, ")            = "0";
-  tests << is_tup("a, , ")          = "0";
-  tests << is_tup(", a")            = "0";
-  tests << is_tup(", a, ")          = "0";
-  tests << is_tup(", , a")          = "0";
-  tests << is_tup("(, )")           = "1";
-  tests << is_tup("(, , )")         = "1";
-  tests << is_tup("(a, )")          = "1";
-  tests << is_tup("(a, , )")        = "1";
-  tests << is_tup("(, a)")          = "1";
-  tests << is_tup("(, a, )")        = "1";
-  tests << is_tup("(, , a)")        = "1";
+  tests << is_tuple()                 = "0" >> docs;
+  tests << is_tuple("1, 2")           = "0" >> docs;
+  tests << is_tuple("()")             = "1" >> docs;
+  tests << is_tuple("(1, 2)")         = "1" >> docs;
+  tests << is_tuple("(), ()")         = "0";
+  tests << is_tuple(esc + "(())")     = "1";
+  tests << is_tuple(esc + "((1, 2))") = "1";
+  tests << is_tuple(", ")             = "0";
+  tests << is_tuple(", , ")           = "0";
+  tests << is_tuple("a, ")            = "0";
+  tests << is_tuple("a, , ")          = "0";
+  tests << is_tuple(", a")            = "0";
+  tests << is_tuple(", a, ")          = "0";
+  tests << is_tuple(", , a")          = "0";
+  tests << is_tuple("(, )")           = "1";
+  tests << is_tuple("(, , )")         = "1";
+  tests << is_tuple("(a, )")          = "1";
+  tests << is_tuple("(a, , )")        = "1";
+  tests << is_tuple("(, a)")          = "1";
+  tests << is_tuple("(, a, )")        = "1";
+  tests << is_tuple("(, , a)")        = "1";
 
-  detail::is_tup_o = def{"o(obj)"} = [&](arg obj) {
+  detail::is_tuple_o = def{"o(obj)"} = [&](arg obj) {
     return is_none(eat + " " + obj);
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
-    return detail::is_tup_o;
+    return detail::is_tuple_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
 });
 
 } // namespace api

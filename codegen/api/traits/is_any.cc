@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(is_any) is_any = NIFTY_DEF(is_any, [&](va args) {
-  docs << "[extends " + is_none + "|" + is_obj
+  docs << "[extends " + is_none + "|" + is_object
               + "] detects if args is a list with no separatory commas.";
 
   tests << is_any()         = "1" >> docs;

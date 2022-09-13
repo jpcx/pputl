@@ -33,28 +33,28 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_ofs_o) is_ofs_o = NIFTY_DEF(is_ofs_o);
+decltype(is_offset_o) is_offset_o = NIFTY_DEF(is_offset_o);
 }
 
-decltype(is_ofs) is_ofs = NIFTY_DEF(is_ofs, [&](va args) {
+decltype(is_offset) is_offset = NIFTY_DEF(is_offset, [&](va args) {
   docs << "[extends " + is_word
               + "] detects if args is any word whose abs is a valid size.";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
 
-  tests << is_ofs("0")                = "1" >> docs;
-  tests << is_ofs(conf::size_max - 1) = "1" >> docs;
-  tests << is_ofs(size_max_s)         = "1" >> docs;
+  tests << is_offset("0")                = "1" >> docs;
+  tests << is_offset(conf::size_max - 1) = "1" >> docs;
+  tests << is_offset(size_max_s)         = "1" >> docs;
   if constexpr (size_lt_max and conf::word_size > 2)
-    tests << is_ofs(std::to_string(conf::size_max + 1) + "u") = "0" >> docs;
-  tests << is_ofs("0x" + utl::cat(samp::hmax)) = "1" >> docs;
+    tests << is_offset(std::to_string(conf::size_max + 1) + "u") = "0" >> docs;
+  tests << is_offset("0x" + utl::cat(samp::hmax)) = "1" >> docs;
   if constexpr (conf::word_size > 2)
-    tests << is_ofs("0xF" + utl::cat(svect{conf::word_size - 2, "0"}) + "1") =
+    tests << is_offset("0xF" + utl::cat(svect{conf::word_size - 2, "0"}) + "1") =
         "1" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << is_ofs("0xF" + utl::cat(svect{conf::word_size - 1, "0"})) = "0" >> docs;
+    tests << is_offset("0xF" + utl::cat(svect{conf::word_size - 1, "0"})) = "0" >> docs;
 
-  detail::is_ofs_o = def{"o(atom)"} = [&](arg atom) {
+  detail::is_offset_o = def{"o(atom)"} = [&](arg atom) {
     if constexpr (size_lt_max) {
       def<"\\0000(atom)"> _0000 = [&](arg) {
         return "0";
@@ -82,13 +82,14 @@ decltype(is_ofs) is_ofs = NIFTY_DEF(is_ofs, [&](va args) {
     }
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
-    return detail::is_ofs_o;
+    return detail::is_offset_o;
   };
 
   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);

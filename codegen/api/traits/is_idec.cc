@@ -74,10 +74,11 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
     }}(pp::cat(atom, 'u'));
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_idec_o;

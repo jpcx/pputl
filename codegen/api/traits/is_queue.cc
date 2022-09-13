@@ -37,7 +37,7 @@ decltype(is_queue_oo) is_queue_oo = NIFTY_DEF(is_queue_oo);
 } // namespace detail
 
 decltype(is_queue) is_queue = NIFTY_DEF(is_queue, [&](va args) {
-  docs << "[extends " + is_obj + "] detects if args is a pputl queue object.";
+  docs << "[extends " + is_object + "] detects if args is a pputl queue object.";
 
   tests << is_queue()                  = "0" >> docs;
   tests << is_queue("1, 2")            = "0" >> docs;
@@ -46,6 +46,10 @@ decltype(is_queue) is_queue = NIFTY_DEF(is_queue, [&](va args) {
   def chk = def{"chk_\\" + fwd::queue + "(...)"} = [&](va) {
     return "";
   };
+
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
 
   detail::is_queue_o = def{"o(obj)"} = [&](arg obj) {
     detail::is_queue_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
@@ -57,24 +61,20 @@ decltype(is_queue) is_queue = NIFTY_DEF(is_queue, [&](va args) {
       return detail::is_queue_oo;
     };
     def<"\\1">{} = [&] {
-      return def<"fail(...)">{[&](va) {
-        return "0";
-      }};
+      return fail;
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
   };
 
   def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_queue_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
 });
 
 } // namespace api

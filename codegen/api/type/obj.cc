@@ -43,7 +43,7 @@ decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
     return obj;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)),
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)),
                   error(obj, "obj must describe exactly one element", args), args);
 });
 

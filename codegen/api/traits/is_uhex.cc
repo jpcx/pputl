@@ -31,6 +31,10 @@ namespace api {
 
 using namespace codegen;
 
+namespace detail {
+decltype(is_uhex_o) is_uhex_o = NIFTY_DEF(is_uhex_o);
+}
+
 decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
   docs << "[extends " + is_enum + "] detects if args is an enum<" + "0x"
               + utl::cat(samp::hmin) + "u|" + "0x" + utl::cat(samp::h1) + "u|...|" + "0x"
@@ -46,7 +50,21 @@ decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
   tests << is_uhex(max)       = "0" >> docs;
   tests << is_uhex("(), ()")  = "0" >> docs;
 
-  return detail::is_enum_o(impl::uhex_prefix, args);
+  detail::is_uhex_o = def{"o(atom)"} = [&](arg atom) {
+    return detail::is_enum_oo(impl::uhex_prefix, atom);
+  };
+
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_uhex_o;
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

@@ -56,10 +56,11 @@ decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](va args) {
     return detail::is_enum_oo(impl::uhex_prefix, pp::cat(atom, 'u'));
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_ihex_o;

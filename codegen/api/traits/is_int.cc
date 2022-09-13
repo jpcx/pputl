@@ -68,10 +68,11 @@ decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
                 xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)));
   };
 
-  def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+  def<"\\0">       _0 = [&] {
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_int_o;

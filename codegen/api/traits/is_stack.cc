@@ -37,7 +37,7 @@ decltype(is_stack_oo) is_stack_oo = NIFTY_DEF(is_stack_oo);
 } // namespace detail
 
 decltype(is_stack) is_stack = NIFTY_DEF(is_stack, [&](va args) {
-  docs << "[extends " + is_obj + "] detects if args is a pputl stack object.";
+  docs << "[extends " + is_object + "] detects if args is a pputl stack object.";
 
   tests << is_stack()                  = "0" >> docs;
   tests << is_stack("1, 2")            = "0" >> docs;
@@ -46,6 +46,10 @@ decltype(is_stack) is_stack = NIFTY_DEF(is_stack, [&](va args) {
   def chk = def{"chk_\\" + fwd::stack + "(...)"} = [&](va) {
     return "";
   };
+
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
 
   detail::is_stack_o = def{"o(obj)"} = [&](arg obj) {
     detail::is_stack_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
@@ -57,24 +61,20 @@ decltype(is_stack) is_stack = NIFTY_DEF(is_stack, [&](va args) {
       return detail::is_stack_oo;
     };
     def<"\\1">{} = [&] {
-      return def<"fail(...)">{[&](va) {
-        return "0";
-      }};
+      return fail;
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
   };
 
   def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_stack_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
 });
 
 } // namespace api

@@ -37,7 +37,7 @@ decltype(is_map_oo) is_map_oo = NIFTY_DEF(is_map_oo);
 } // namespace detail
 
 decltype(is_map) is_map = NIFTY_DEF(is_map, [&](va args) {
-  docs << "[extends " + is_obj + "] detects if args is a pputl map object."
+  docs << "[extends " + is_object + "] detects if args is a pputl map object."
        << "note: does not parse contained items during validity check.";
 
   tests << is_map()                = "0" >> docs;
@@ -47,6 +47,10 @@ decltype(is_map) is_map = NIFTY_DEF(is_map, [&](va args) {
   def chk = def{"chk_\\" + fwd::map + "(...)"} = [&](va) {
     return "";
   };
+
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
 
   detail::is_map_o = def{"o(obj)"} = [&](arg obj) {
     detail::is_map_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
@@ -58,24 +62,20 @@ decltype(is_map) is_map = NIFTY_DEF(is_map, [&](va args) {
       return detail::is_map_oo;
     };
     def<"\\1">{} = [&] {
-      return def<"fail(...)">{[&](va) {
-        return "0";
-      }};
+      return fail;
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tup_o(obj)), obj);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
   };
 
   def<"\\0"> _0 = [&] {
-    return def<"fail(...)">{[&](va) {
-      return "0";
-    }};
+    return fail;
   };
   def<"\\1">{} = [&] {
     return detail::is_map_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_obj(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
 });
 
 } // namespace api

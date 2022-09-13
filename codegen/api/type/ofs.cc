@@ -62,7 +62,7 @@ decltype(ofs) ofs = NIFTY_DEF(ofs, [&](va args) {
       return w;
     };
 
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_ofs_o(w)), e, w);
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_offset_o(w)), e, w);
   }}(error(ofs, "invalid ofs; absolute value must be a valid size", args), word(args));
 });
 
