@@ -31,17 +31,17 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bflip) bflip = NIFTY_DEF(bflip, [&](va args) {
+decltype(bitflip) bitflip = NIFTY_DEF(bitflip, [&](va args) {
   docs << "flips the ith bit in the uint. indexed from least to most significant."
        << "fails on invalid bit index.";
 
-  tests << bflip(0, 0)                         = "1" >> docs;
-  tests << bflip("1u", 1)                      = "3u" >> docs;
-  tests << bflip("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h6)) >> docs;
-  tests << bflip("0x" + utl::cat(samp::h3) + "u", 3) =
+  tests << bitflip(0, 0)                         = "1" >> docs;
+  tests << bitflip("1u", 1)                      = "3u" >> docs;
+  tests << bitflip("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h6)) >> docs;
+  tests << bitflip("0x" + utl::cat(samp::h3) + "u", 3) =
       ("0x" + utl::cat(samp::h11) + "u") >> docs;
 
-  return bset(args, not_(bget(args)));
+  return bitset(args, not_(bitget(args)));
 });
 
 } // namespace api

@@ -31,18 +31,15 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
-  docs << "bitwise XOR."
+decltype(bitor_) bitor_ = NIFTY_DEF(bitor_, [&](va args) {
+  docs << "bitwise OR."
        << "" << impl::arith_rules;
 
-  tests << bxor(0, 0) = "0" >> docs;
-  tests << bxor(0, 1) = "1" >> docs;
-  tests << bxor(2, 1) = "3" >> docs;
-  tests << bxor(2, 3) = "1" >> docs;
-  tests << bxor(3, 4) = "7" >> docs;
-  tests << bxor(5, 6) = "3" >> docs;
-  tests << bxor(int_min_s, ("0x" + utl::cat(samp::hmax))) =
-      ("0x" + utl::cat(samp::himax)) >> docs;
+  tests << bitor_(0, 0)                 = "0" >> docs;
+  tests << bitor_(0, 1)                 = "1" >> docs;
+  tests << bitor_(3, 4)                 = "7" >> docs;
+  tests << bitor_(5, 6)                 = "7" >> docs;
+  tests << bitor_(int_min_s, int_max_s) = ("0x" + utl::cat(samp::hmax)) >> docs;
 
   if constexpr (conf::word_size > 1) {
     def<"r(...)"> r = [&](va args) {
@@ -50,7 +47,7 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
                   + ")"} = [&](pack args) {
         std::array<std::string, conf::word_size * 2> res{};
         res[0] = impl::hexhex(
-            pp::cat(args[conf::word_size - 1], args[conf::word_size * 2 - 1]), "XOR");
+            pp::cat(args[conf::word_size - 1], args[conf::word_size * 2 - 1]), "OR");
         for (std::size_t i = 1; i < res.size() / 2; ++i)
           res[i] = args[i - 1];
         res[res.size() / 2] = args.back();
@@ -84,7 +81,7 @@ decltype(bxor) bxor = NIFTY_DEF(bxor, [&](va args) {
     return def<"o(a, b)">{[&](arg a, arg b) {
       return word(
           impl::hexhex(xcat(impl::uhex(uhex(a), "HDUMP"), impl::uhex(uhex(b), "HDUMP")),
-                       "XOR"),
+                       "OR"),
           impl::xarithhint(typeof(a), typeof(b)));
     }}(args);
   }

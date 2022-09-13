@@ -168,10 +168,10 @@
 //    Examples and descriptions represent the default configuration.          //
 //                                                                            //
 //     list: tokens potentially delimited by non-parenthesized commas         //
-//      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
-//      ├╴object: a list with exactly one element                             //
+//      ├╴none:   nothing; an absence of pp-tokens (an empty list)            //
+//      ├╴object: a non-empty list without separators (exactly one thing)     //
 //      │  ├╴tuple: a parenthesized list [e.g ()] [e.g. (a, b, , )]           //
-//      │  ├╴atom:  a non-parenthesized element                               //
+//      │  ├╴atom:  a non-parenthesized object                                //
 //      │  │  ├╴enum<v0|v1|...>: an atom matching a defined enumeration       //
 //      │  │  │  ├╴bool: enum<0|1>                                            //
 //      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //
@@ -183,14 +183,14 @@
 //      │  │  └╴word: <union> int|uint;  any kind of integer                  //
 //      │  │     ├╴size:   any non-negative word up to size_max               //
 //      │  │     └╴offset: any word whose absolute value is a valid size      //
-//      │  ├╴array: an encapsulated, sized sequence of elements               //
-//      │  │  ├╴map: a sorted mapping of words or enums to elements           //
-//      │  │  │  └╴pqueue: a priority queue of elements                       //
+//      │  ├╴array: an encapsulated, sized sequence of any                    //
+//      │  │  ├╴map: a sorted mapping of words or enums to any                //
+//      │  │  │  └╴pqueue: a priority queue of any                            //
 //      │  │  ├╴set:   a set of words or enums                                //
-//      │  │  ├╴stack: a LIFO stack of elements                               //
-//      │  │  └╴queue: a FIFO queue of elements                               //
-//      │  └╴range: <union> tuple|array; a structured range of elements       //
-//      └╴any: <union> none|object; a list without separators (an element)    //
+//      │  │  ├╴stack: a LIFO stack of any                                    //
+//      │  │  └╴queue: a FIFO queue of any                                    //
+//      │  └╴range: <union> tuple|array; a structured range of any            //
+//      └╴any: <union> none|object; nothing or exactly one thing (any arg)    //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -990,105 +990,105 @@ ASSERT_PP_EQ((PTL_PRIME(2048u)), (0));
 ASSERT_PP_EQ((PTL_HEXDUMP(0)), (0, 0, 0));
 ASSERT_PP_EQ((PTL_HEXDUMP(0x800)), (8, 0, 0));
 
-ASSERT_PP_EQ((PTL_BDUMP(0)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-ASSERT_PP_EQ((PTL_BDUMP(0x800)), (1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+ASSERT_PP_EQ((PTL_BITDUMP(0)), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+ASSERT_PP_EQ((PTL_BITDUMP(0x800)), (1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 
-ASSERT_PP_EQ((PTL_BSLL(0, 1)), (0));
-ASSERT_PP_EQ((PTL_BSLL(1u, 1)), (2u));
-ASSERT_PP_EQ((PTL_BSLL(0x002, 2)), (0x008));
-ASSERT_PP_EQ((PTL_BSLL(0x002, 3)), (0x010));
-ASSERT_PP_EQ((PTL_BSLL(4095u, 3)), (4088u));
-ASSERT_PP_EQ((PTL_BSLL(1, 10)), (1024));
-ASSERT_PP_EQ((PTL_BSLL(1, 11)), (0x800));
-ASSERT_PP_EQ((PTL_BSLL(1, 12)), (0));
-ASSERT_PP_EQ((PTL_BSLL(1, 13)), (0));
+ASSERT_PP_EQ((PTL_BITSLL(0, 1)), (0));
+ASSERT_PP_EQ((PTL_BITSLL(1u, 1)), (2u));
+ASSERT_PP_EQ((PTL_BITSLL(0x002, 2)), (0x008));
+ASSERT_PP_EQ((PTL_BITSLL(0x002, 3)), (0x010));
+ASSERT_PP_EQ((PTL_BITSLL(4095u, 3)), (4088u));
+ASSERT_PP_EQ((PTL_BITSLL(1, 10)), (1024));
+ASSERT_PP_EQ((PTL_BITSLL(1, 11)), (0x800));
+ASSERT_PP_EQ((PTL_BITSLL(1, 12)), (0));
+ASSERT_PP_EQ((PTL_BITSLL(1, 13)), (0));
 
-ASSERT_PP_EQ((PTL_BSRL(0, 1)), (0));
-ASSERT_PP_EQ((PTL_BSRL(2, 1)), (1));
-ASSERT_PP_EQ((PTL_BSRL(4, 1)), (2));
-ASSERT_PP_EQ((PTL_BSRL(4, 2)), (1));
-ASSERT_PP_EQ((PTL_BSRL(0x800, 11)), (0x001));
-ASSERT_PP_EQ((PTL_BSRL(0x800, 12)), (0x000));
-ASSERT_PP_EQ((PTL_BSRL(1, 1)), (0));
-ASSERT_PP_EQ((PTL_BSRL(3, 1)), (1));
+ASSERT_PP_EQ((PTL_BITSRL(0, 1)), (0));
+ASSERT_PP_EQ((PTL_BITSRL(2, 1)), (1));
+ASSERT_PP_EQ((PTL_BITSRL(4, 1)), (2));
+ASSERT_PP_EQ((PTL_BITSRL(4, 2)), (1));
+ASSERT_PP_EQ((PTL_BITSRL(0x800, 11)), (0x001));
+ASSERT_PP_EQ((PTL_BITSRL(0x800, 12)), (0x000));
+ASSERT_PP_EQ((PTL_BITSRL(1, 1)), (0));
+ASSERT_PP_EQ((PTL_BITSRL(3, 1)), (1));
 
-ASSERT_PP_EQ((PTL_BSRA(0, 1)), (0));
-ASSERT_PP_EQ((PTL_BSRA(2, 1)), (1));
-ASSERT_PP_EQ((PTL_BSRA(0x800, 1)), (0xC00));
-ASSERT_PP_EQ((PTL_BSRA(0x800, 2)), (0xE00));
-ASSERT_PP_EQ((PTL_BSRA(0x800, 3)), (0xF00));
-ASSERT_PP_EQ((PTL_BSRA(0x800, 4)), (0xF80));
-ASSERT_PP_EQ((PTL_BSRA(1, 1)), (0));
-ASSERT_PP_EQ((PTL_BSRA(3, 1)), (1));
-ASSERT_PP_EQ((PTL_BSRA(4, 1)), (2));
-ASSERT_PP_EQ((PTL_BSRA(4, 2)), (1));
+ASSERT_PP_EQ((PTL_BITSRA(0, 1)), (0));
+ASSERT_PP_EQ((PTL_BITSRA(2, 1)), (1));
+ASSERT_PP_EQ((PTL_BITSRA(0x800, 1)), (0xC00));
+ASSERT_PP_EQ((PTL_BITSRA(0x800, 2)), (0xE00));
+ASSERT_PP_EQ((PTL_BITSRA(0x800, 3)), (0xF00));
+ASSERT_PP_EQ((PTL_BITSRA(0x800, 4)), (0xF80));
+ASSERT_PP_EQ((PTL_BITSRA(1, 1)), (0));
+ASSERT_PP_EQ((PTL_BITSRA(3, 1)), (1));
+ASSERT_PP_EQ((PTL_BITSRA(4, 1)), (2));
+ASSERT_PP_EQ((PTL_BITSRA(4, 2)), (1));
 
-ASSERT_PP_EQ((PTL_BNOT(0u)), (4095u));
-ASSERT_PP_EQ((PTL_BNOT(0xFFF)), (0x000));
+ASSERT_PP_EQ((PTL_BITNOT(0u)), (4095u));
+ASSERT_PP_EQ((PTL_BITNOT(0xFFF)), (0x000));
 
-ASSERT_PP_EQ((PTL_BAND(0, 0)), (0));
-ASSERT_PP_EQ((PTL_BAND(0, 1)), (0));
-ASSERT_PP_EQ((PTL_BAND(3, 2)), (2));
-ASSERT_PP_EQ((PTL_BAND(5, 6)), (4));
-ASSERT_PP_EQ((PTL_BAND(0x800, 0xFFF)), (0x800));
+ASSERT_PP_EQ((PTL_BITAND(0, 0)), (0));
+ASSERT_PP_EQ((PTL_BITAND(0, 1)), (0));
+ASSERT_PP_EQ((PTL_BITAND(3, 2)), (2));
+ASSERT_PP_EQ((PTL_BITAND(5, 6)), (4));
+ASSERT_PP_EQ((PTL_BITAND(0x800, 0xFFF)), (0x800));
 
-ASSERT_PP_EQ((PTL_BOR(0, 0)), (0));
-ASSERT_PP_EQ((PTL_BOR(0, 1)), (1));
-ASSERT_PP_EQ((PTL_BOR(3, 4)), (7));
-ASSERT_PP_EQ((PTL_BOR(5, 6)), (7));
-ASSERT_PP_EQ((PTL_BOR(0x800, 2047)), (0xFFF));
+ASSERT_PP_EQ((PTL_BITOR(0, 0)), (0));
+ASSERT_PP_EQ((PTL_BITOR(0, 1)), (1));
+ASSERT_PP_EQ((PTL_BITOR(3, 4)), (7));
+ASSERT_PP_EQ((PTL_BITOR(5, 6)), (7));
+ASSERT_PP_EQ((PTL_BITOR(0x800, 2047)), (0xFFF));
 
-ASSERT_PP_EQ((PTL_BXOR(0, 0)), (0));
-ASSERT_PP_EQ((PTL_BXOR(0, 1)), (1));
-ASSERT_PP_EQ((PTL_BXOR(2, 1)), (3));
-ASSERT_PP_EQ((PTL_BXOR(2, 3)), (1));
-ASSERT_PP_EQ((PTL_BXOR(3, 4)), (7));
-ASSERT_PP_EQ((PTL_BXOR(5, 6)), (3));
-ASSERT_PP_EQ((PTL_BXOR(0x800, 0xFFF)), (0x7FF));
+ASSERT_PP_EQ((PTL_BITXOR(0, 0)), (0));
+ASSERT_PP_EQ((PTL_BITXOR(0, 1)), (1));
+ASSERT_PP_EQ((PTL_BITXOR(2, 1)), (3));
+ASSERT_PP_EQ((PTL_BITXOR(2, 3)), (1));
+ASSERT_PP_EQ((PTL_BITXOR(3, 4)), (7));
+ASSERT_PP_EQ((PTL_BITXOR(5, 6)), (3));
+ASSERT_PP_EQ((PTL_BITXOR(0x800, 0xFFF)), (0x7FF));
 
-ASSERT_PP_EQ((PTL_BNAND(0, 0)), (0xFFF));
-ASSERT_PP_EQ((PTL_BNAND(5, 7)), (0xFFA));
+ASSERT_PP_EQ((PTL_BITNAND(0, 0)), (0xFFF));
+ASSERT_PP_EQ((PTL_BITNAND(5, 7)), (0xFFA));
 
-ASSERT_PP_EQ((PTL_BNOR(0, 0)), (0xFFF));
-ASSERT_PP_EQ((PTL_BNOR(0, 1)), (0xFFE));
-ASSERT_PP_EQ((PTL_BNOR(5, 7)), (0xFF8));
-ASSERT_PP_EQ((PTL_BNOR(7, 8)), (0xFF0));
+ASSERT_PP_EQ((PTL_BITNOR(0, 0)), (0xFFF));
+ASSERT_PP_EQ((PTL_BITNOR(0, 1)), (0xFFE));
+ASSERT_PP_EQ((PTL_BITNOR(5, 7)), (0xFF8));
+ASSERT_PP_EQ((PTL_BITNOR(7, 8)), (0xFF0));
 
-ASSERT_PP_EQ((PTL_BXNOR(0, 0)), (0xFFF));
-ASSERT_PP_EQ((PTL_BXNOR(0, 1)), (0xFFE));
-ASSERT_PP_EQ((PTL_BXNOR(5, 7)), (0xFFD));
-ASSERT_PP_EQ((PTL_BXNOR(15, 8)), (0xFF8));
+ASSERT_PP_EQ((PTL_BITXNOR(0, 0)), (0xFFF));
+ASSERT_PP_EQ((PTL_BITXNOR(0, 1)), (0xFFE));
+ASSERT_PP_EQ((PTL_BITXNOR(5, 7)), (0xFFD));
+ASSERT_PP_EQ((PTL_BITXNOR(15, 8)), (0xFF8));
 
-ASSERT_PP_EQ((PTL_BGET(2, 2)), (0));
-ASSERT_PP_EQ((PTL_BGET(2, 1)), (1));
-ASSERT_PP_EQ((PTL_BGET(2, 0)), (0));
-ASSERT_PP_EQ((PTL_BGET(5u, 2)), (1));
-ASSERT_PP_EQ((PTL_BGET(0xFFE, 1)), (1));
-ASSERT_PP_EQ((PTL_BGET(0xFFEu, 0)), (0));
-ASSERT_PP_EQ((PTL_BGET(0x800, PTL_NEG(1))), (1));
+ASSERT_PP_EQ((PTL_BITGET(2, 2)), (0));
+ASSERT_PP_EQ((PTL_BITGET(2, 1)), (1));
+ASSERT_PP_EQ((PTL_BITGET(2, 0)), (0));
+ASSERT_PP_EQ((PTL_BITGET(5u, 2)), (1));
+ASSERT_PP_EQ((PTL_BITGET(0xFFE, 1)), (1));
+ASSERT_PP_EQ((PTL_BITGET(0xFFEu, 0)), (0));
+ASSERT_PP_EQ((PTL_BITGET(0x800, PTL_NEG(1))), (1));
 
-ASSERT_PP_EQ((PTL_BSET(0, 1, 1)), (2));
-ASSERT_PP_EQ((PTL_BSET(1u, 2, 1)), (5u));
-ASSERT_PP_EQ((PTL_BSET(5, 4, 1)), (21));
-ASSERT_PP_EQ((PTL_BSET(0x002, 0, 1)), (0x003));
-ASSERT_PP_EQ((PTL_BSET(0x003u, 0, 0)), (0x002u));
+ASSERT_PP_EQ((PTL_BITSET(0, 1, 1)), (2));
+ASSERT_PP_EQ((PTL_BITSET(1u, 2, 1)), (5u));
+ASSERT_PP_EQ((PTL_BITSET(5, 4, 1)), (21));
+ASSERT_PP_EQ((PTL_BITSET(0x002, 0, 1)), (0x003));
+ASSERT_PP_EQ((PTL_BITSET(0x003u, 0, 0)), (0x002u));
 
-ASSERT_PP_EQ((PTL_BFLIP(0, 0)), (1));
-ASSERT_PP_EQ((PTL_BFLIP(1u, 1)), (3u));
-ASSERT_PP_EQ((PTL_BFLIP(0x002, 2)), (0x006));
-ASSERT_PP_EQ((PTL_BFLIP(0x003u, 3)), (0x00Bu));
+ASSERT_PP_EQ((PTL_BITFLIP(0, 0)), (1));
+ASSERT_PP_EQ((PTL_BITFLIP(1u, 1)), (3u));
+ASSERT_PP_EQ((PTL_BITFLIP(0x002, 2)), (0x006));
+ASSERT_PP_EQ((PTL_BITFLIP(0x003u, 3)), (0x00Bu));
 
-ASSERT_PP_EQ((PTL_BROTL(0x000, 0)), (0x000));
-ASSERT_PP_EQ((PTL_BROTL(0x001)), (0x002));
-ASSERT_PP_EQ((PTL_BROTL(0x001, 1)), (0x002));
-ASSERT_PP_EQ((PTL_BROTL(0x001, 2)), (0x004));
-ASSERT_PP_EQ((PTL_BROTL(0x003, 2)), (0x00C));
+ASSERT_PP_EQ((PTL_BITROTL(0x000, 0)), (0x000));
+ASSERT_PP_EQ((PTL_BITROTL(0x001)), (0x002));
+ASSERT_PP_EQ((PTL_BITROTL(0x001, 1)), (0x002));
+ASSERT_PP_EQ((PTL_BITROTL(0x001, 2)), (0x004));
+ASSERT_PP_EQ((PTL_BITROTL(0x003, 2)), (0x00C));
 
-ASSERT_PP_EQ((PTL_BROTR(0x000, 0)), (0x000));
-ASSERT_PP_EQ((PTL_BROTR(0x001)), (0x800));
-ASSERT_PP_EQ((PTL_BROTR(0x001, 1)), (0x800));
-ASSERT_PP_EQ((PTL_BROTR(0x002, 1)), (0x001));
-ASSERT_PP_EQ((PTL_BROTR(0x7FF, 2)), (0xDFF));
+ASSERT_PP_EQ((PTL_BITROTR(0x000, 0)), (0x000));
+ASSERT_PP_EQ((PTL_BITROTR(0x001)), (0x800));
+ASSERT_PP_EQ((PTL_BITROTR(0x001, 1)), (0x800));
+ASSERT_PP_EQ((PTL_BITROTR(0x002, 1)), (0x001));
+ASSERT_PP_EQ((PTL_BITROTR(0x7FF, 2)), (0xDFF));
 
 ASSERT_PP_EQ((PTL_LP() PTL_RP()), (( )));
 

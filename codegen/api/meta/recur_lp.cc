@@ -126,7 +126,8 @@ decltype(recur_lp) recur_lp = NIFTY_DEF(recur_lp, [&](va args) {
         return f + " " + lp() + " " + f + " " + lp() + " " + f + " " + lp() + " "
              + pp::call(xcat(utl::slice(n[0], -1), n_), f);
       };
-      return pp::call(xcat(utl::slice(_0u, -2), band(n_, 0b11)), idec(bsrl(n_, 2)), f);
+      return pp::call(xcat(utl::slice(_0u, -2), bitand_(n_, 0b11)), idec(bitsrl(n_, 2)),
+                      f);
     }}(size(n_, "UDEC"), f);
   }}(args);
 });

@@ -31,15 +31,15 @@ namespace api {
 
 using namespace codegen;
 
-decltype(band) band = NIFTY_DEF(band, [&](va args) {
+decltype(bitand_) bitand_ = NIFTY_DEF(bitand_, [&](va args) {
   docs << "bitwise AND."
        << "" << impl::arith_rules;
 
-  tests << band(0, 0)                                     = "0" >> docs;
-  tests << band(0, 1)                                     = "0" >> docs;
-  tests << band(3, 2)                                     = "2" >> docs;
-  tests << band(5, 6)                                     = "4" >> docs;
-  tests << band(int_min_s, ("0x" + utl::cat(samp::hmax))) = int_min_s >> docs;
+  tests << bitand_(0, 0)                                     = "0" >> docs;
+  tests << bitand_(0, 1)                                     = "0" >> docs;
+  tests << bitand_(3, 2)                                     = "2" >> docs;
+  tests << bitand_(5, 6)                                     = "4" >> docs;
+  tests << bitand_(int_min_s, ("0x" + utl::cat(samp::hmax))) = int_min_s >> docs;
 
   if constexpr (conf::word_size > 1) {
     def<"r(...)"> r = [&](va args) {

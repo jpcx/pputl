@@ -31,7 +31,7 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
+decltype(bitset) bitset = NIFTY_DEF(bitset, [&](va args) {
   docs << "sets the ith bit of the word to b, indexed from least to most significant."
        << "fails on invalid bit index.";
 
@@ -46,12 +46,12 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
     *(_21.rbegin() + 0) = "5";
   }
 
-  tests << bset(0, 1, 1)    = "2" >> docs;
-  tests << bset("1u", 2, 1) = "5u" >> docs;
+  tests << bitset(0, 1, 1)    = "2" >> docs;
+  tests << bitset("1u", 2, 1) = "5u" >> docs;
   if constexpr (conf::word_size > 1)
-    tests << bset(5, 4, 1) = "21" >> docs;
-  tests << bset("0x" + utl::cat(samp::h2), 0, 1) = ("0x" + utl::cat(samp::h3)) >> docs;
-  tests << bset("0x" + utl::cat(samp::h3) + "u", 0, 0) =
+    tests << bitset(5, 4, 1) = "21" >> docs;
+  tests << bitset("0x" + utl::cat(samp::h2), 0, 1) = ("0x" + utl::cat(samp::h3)) >> docs;
+  tests << bitset("0x" + utl::cat(samp::h3) + "u", 0, 0) =
       ("0x" + utl::cat(samp::h2) + "u") >> docs;
 
   std::vector<std::string> params{"_"};
@@ -82,9 +82,9 @@ decltype(bset) bset = NIFTY_DEF(bset, [&](va args) {
     return word(
         impl::hex_cat(def<"<o(i, ...)">{[&](arg i, va args) {
           return pp::call(cat(utl::slice(_0, -1), i), args);
-        }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bool_(b), bdump(v))),
+        }}(idec(impl::index(uhex(i), is_int(i), impl::bitlen, e)), bool_(b), bitdump(v))),
         typeof(v));
-  }}(str(pp::str("[" + bset + "] invalid index") + " : " + args), args);
+  }}(str(pp::str("[" + bitset + "] invalid index") + " : " + args), args);
 });
 
 } // namespace api

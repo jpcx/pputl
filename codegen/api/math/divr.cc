@@ -70,14 +70,14 @@ decltype(divr) divr = NIFTY_DEF(divr, [&](va args) {
       return q + ", " + r;
     };
     def<"rem(i, q, r, b)"> rem = [&](arg i, arg q, arg r, arg b) {
-      return bset(q, i, 1) + ", " + sub(r, b);
+      return bitset(q, i, 1) + ", " + sub(r, b);
     };
 
     return def<"o(i, q, r, a, b)">{[&](arg i, arg q, arg r, arg a, arg b) {
       return def<"<o(i, q, r, a, b)">{[&](arg i, arg q, arg r, arg a, arg b) {
         return dec(i) + ", " + pp::call(if_(ge(r, b), rem, norem), i, q, r, b) + ", " + a
              + ", " + b;
-      }}(i, q, bset(bsll(r), 0, bget(a, i)), a, b);
+      }}(i, q, bitset(bitsll(r), 0, bitget(a, i)), a, b);
     }}(args);
   };
 

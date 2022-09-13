@@ -31,13 +31,13 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bdump) bdump = NIFTY_DEF(bdump, [&](va args) {
+decltype(bitdump) bitdump = NIFTY_DEF(bitdump, [&](va args) {
   docs << "dumps the bits of a word."
        << "returns exactly " + bit_length + " (" + std::to_string(conf::bit_length)
               + ") bools.";
 
-  tests << bdump("0") = utl::cat(svect(conf::bit_length, "0"), ", ") >> docs;
-  tests << bdump("0x" + utl::cat(samp::himin)) =
+  tests << bitdump("0") = utl::cat(svect(conf::bit_length, "0"), ", ") >> docs;
+  tests << bitdump("0x" + utl::cat(samp::himin)) =
       ("1, " + utl::cat(svect(conf::bit_length - 1, "0"), ", ")) >> docs;
 
   return def<"o(...)">{[&](va args) {

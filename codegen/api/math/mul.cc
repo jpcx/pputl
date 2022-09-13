@@ -69,8 +69,8 @@ decltype(mul) mul = NIFTY_DEF(mul, [&](va args) {
     };
 
     return def<"o(a, b, s)">{[&](arg a, arg b, arg s) {
-      return bsll(a) + ", " + bsra(b) + ", "
-           + pp::call(if_(bget(b, 0), recr, base), s, a);
+      return bitsll(a) + ", " + bitsra(b) + ", "
+           + pp::call(if_(bitget(b, 0), recr, base), s, a);
     }}(args);
   };
 

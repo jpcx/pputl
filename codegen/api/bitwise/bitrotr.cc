@@ -33,14 +33,15 @@ namespace api {
 
 using namespace codegen;
 
-decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
+decltype(bitrotr) bitrotr = NIFTY_DEF(bitrotr, [&](va args) {
   docs << "bitwise right rotation by n places.";
 
-  tests << brotr("0x" + utl::cat(samp::hmin), 0) = ("0x" + utl::cat(samp::hmin)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h1))      = ("0x" + utl::cat(samp::himin)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h1), 1)   = ("0x" + utl::cat(samp::himin)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::h2), 1)   = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << brotr("0x" + utl::cat(samp::himax), 2) =
+  tests << bitrotr("0x" + utl::cat(samp::hmin), 0) =
+      ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << bitrotr("0x" + utl::cat(samp::h1))    = ("0x" + utl::cat(samp::himin)) >> docs;
+  tests << bitrotr("0x" + utl::cat(samp::h1), 1) = ("0x" + utl::cat(samp::himin)) >> docs;
+  tests << bitrotr("0x" + utl::cat(samp::h2), 1) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << bitrotr("0x" + utl::cat(samp::himax), 2) =
       ("0xD" + utl::cat(svect(conf::word_size - 1, "F"))) >> docs;
 
   auto params{utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ")};
@@ -74,9 +75,9 @@ decltype(brotr) brotr = NIFTY_DEF(brotr, [&](va args) {
         impl::hex_cat(def<"<o(n, ...)">{[&](arg n, va bin) {
           return pp::call(
               xcat(utl::slice(_0, -1),
-                   band(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
+                   bitand_(n, "0x" + utl::cat(svect(conf::word_size - 1, "0")) + "F")),
               bin);
-        }}(size(default_(1, n)), bdump(v))),
+        }}(size(default_(1, n)), bitdump(v))),
         typeof(v));
   }}(args);
 });

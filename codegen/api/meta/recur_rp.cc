@@ -141,7 +141,7 @@ decltype(recur_rp) recur_rp = NIFTY_DEF(recur_rp, [&](va args) {
     def<"\\3u(n)">{} = [&](arg n_) {
       return xcat(utl::slice(n[0], -1), n_) + " " + rp() + " " + rp() + " " + rp();
     };
-    return pp::call(xcat(utl::slice(_0u, -2), band(n_, 0b11)), idec(bsrl(n_, 2)));
+    return pp::call(xcat(utl::slice(_0u, -2), bitand_(n_, 0b11)), idec(bitsrl(n_, 2)));
   }}(size(args, "UDEC"));
 });
 

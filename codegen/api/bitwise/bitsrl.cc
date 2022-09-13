@@ -33,17 +33,18 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
+decltype(bitsrl) bitsrl = NIFTY_DEF(bitsrl, [&](va args) {
   docs << "performs a logical bitwise right shift by n places.";
 
-  tests << bsrl(0, 1)                            = "0" >> docs;
-  tests << bsrl(1, 1)                            = "0";
-  tests << bsrl(2, 1)                            = "1" >> docs;
-  tests << bsrl(3, 1)                            = "1";
-  tests << bsrl(4, 1)                            = "2" >> docs;
-  tests << bsrl(4, 2)                            = "1" >> docs;
-  tests << bsrl(int_min_s, conf::bit_length - 1) = ("0x" + utl::cat(samp::h1)) >> docs;
-  tests << bsrl(int_min_s, conf::bit_length - 0) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << bitsrl(0, 1)                            = "0" >> docs;
+  tests << bitsrl(1, 1)                            = "0";
+  tests << bitsrl(2, 1)                            = "1" >> docs;
+  tests << bitsrl(3, 1)                            = "1";
+  tests << bitsrl(4, 1)                            = "2" >> docs;
+  tests << bitsrl(4, 2)                            = "1" >> docs;
+  tests << bitsrl(int_min_s, conf::bit_length - 1) = ("0x" + utl::cat(samp::h1)) >> docs;
+  tests << bitsrl(int_min_s, conf::bit_length - 0) =
+      ("0x" + utl::cat(samp::hmin)) >> docs;
 
   auto params = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -99,7 +100,7 @@ decltype(bsrl) bsrl = NIFTY_DEF(bsrl, [&](va args) {
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);
                     }}(args);
                   }}(i, lt(i, conf::bit_length), bin);
-                }}(idec(default_(1, n)), bdump(v)),
+                }}(idec(default_(1, n)), bitdump(v)),
                 typeof(v));
   }}(args);
 });

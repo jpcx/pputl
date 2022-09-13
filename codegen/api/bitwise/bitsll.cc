@@ -33,31 +33,31 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bsll) bsll = NIFTY_DEF(bsll, [&](va args) {
+decltype(bitsll) bitsll = NIFTY_DEF(bitsll, [&](va args) {
   docs << "performs a logical bitwise left shift by n places.";
 
-  tests << bsll(0, 1)                         = "0" >> docs;
-  tests << bsll("1u", 1)                      = "2u" >> docs;
-  tests << bsll("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h8)) >> docs;
+  tests << bitsll(0, 1)                         = "0" >> docs;
+  tests << bitsll("1u", 1)                      = "2u" >> docs;
+  tests << bitsll("0x" + utl::cat(samp::h2), 2) = ("0x" + utl::cat(samp::h8)) >> docs;
 
   if constexpr (conf::word_size > 1) {
-    tests << bsll("0x" + utl::cat(samp::h2), 3) = ("0x" + utl::cat(samp::h16)) >> docs;
+    tests << bitsll("0x" + utl::cat(samp::h2), 3) = ("0x" + utl::cat(samp::h16)) >> docs;
     if constexpr (conf::word_size > 2)
-      tests << bsll(uint_max_s, 3) =
+      tests << bitsll(uint_max_s, 3) =
           (std::to_string((conf::uint_max << 3) xor 0x7000) + "u") >> docs;
     else
-      tests << bsll(uint_max_s, 3) =
+      tests << bitsll(uint_max_s, 3) =
           (std::to_string((conf::uint_max << 3) xor 0x700) + "u") >> docs;
   } else {
-    tests << bsll(uint_max_s, 3) = "8u" >> docs;
+    tests << bitsll(uint_max_s, 3) = "8u" >> docs;
   }
 
   if constexpr (conf::word_size > 2)
-    tests << bsll(1, conf::bit_length - 2) = "1024" >> docs;
+    tests << bitsll(1, conf::bit_length - 2) = "1024" >> docs;
 
-  tests << bsll(1, conf::bit_length - 1) = int_min_s >> docs;
-  tests << bsll(1, conf::bit_length)     = "0" >> docs;
-  tests << bsll(1, conf::bit_length + 1) = "0" >> docs;
+  tests << bitsll(1, conf::bit_length - 1) = int_min_s >> docs;
+  tests << bitsll(1, conf::bit_length)     = "0" >> docs;
+  tests << bitsll(1, conf::bit_length + 1) = "0" >> docs;
 
   auto params = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -113,7 +113,7 @@ decltype(bsll) bsll = NIFTY_DEF(bsll, [&](va args) {
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);
                     }}(args);
                   }}(i, lt(i, conf::bit_length), bin);
-                }}(idec(default_(1, n)), bdump(v)),
+                }}(idec(default_(1, n)), bitdump(v)),
                 typeof(v));
   }}(args);
 });

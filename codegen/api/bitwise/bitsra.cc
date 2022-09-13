@@ -33,24 +33,24 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bsra) bsra = NIFTY_DEF(bsra, [&](va args) {
+decltype(bitsra) bitsra = NIFTY_DEF(bitsra, [&](va args) {
   docs << "performs an arithmetic bitwise right shift by n places.";
 
-  tests << bsra(0, 1) = "0" >> docs;
-  tests << bsra(1, 1) = "0";
-  tests << bsra(2, 1) = "1" >> docs;
-  tests << bsra(int_min_s, 1) =
+  tests << bitsra(0, 1) = "0" >> docs;
+  tests << bitsra(1, 1) = "0";
+  tests << bitsra(2, 1) = "1" >> docs;
+  tests << bitsra(int_min_s, 1) =
       ("0xC" + utl::cat(svect(conf::word_size - 1, "0"))) >> docs;
-  tests << bsra(int_min_s, 2) =
+  tests << bitsra(int_min_s, 2) =
       ("0xE" + utl::cat(svect(conf::word_size - 1, "0"))) >> docs;
-  tests << bsra(int_min_s, 3) =
+  tests << bitsra(int_min_s, 3) =
       ("0xF" + utl::cat(svect(conf::word_size - 1, "0"))) >> docs;
   if constexpr (conf::word_size > 1)
-    tests << bsra(int_min_s, 4) =
+    tests << bitsra(int_min_s, 4) =
         ("0xF8" + utl::cat(svect(conf::word_size - 2, "0"))) >> docs;
-  tests << bsra(3, 1) = "1";
-  tests << bsra(4, 1) = "2";
-  tests << bsra(4, 2) = "1";
+  tests << bitsra(3, 1) = "1";
+  tests << bitsra(4, 1) = "2";
+  tests << bitsra(4, 2) = "1";
 
   auto params = utl::cat(utl::alpha_base52_seq(conf::bit_length), ", ");
 
@@ -98,7 +98,7 @@ decltype(bsra) bsra = NIFTY_DEF(bsra, [&](va args) {
                       return pp::call(pp::cat(utl::slice(gelt0, -1), gelt), i, args);
                     }}(args);
                   }}(i, lt(i, conf::bit_length), bin);
-                }}(idec(default_(1, n)), bdump(word(v))),
+                }}(idec(default_(1, n)), bitdump(word(v))),
                 typeof(v));
   }}(args);
 });

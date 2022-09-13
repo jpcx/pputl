@@ -31,19 +31,21 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bnor) bnor = NIFTY_DEF(bnor, [&](va args) {
+decltype(bitnor) bitnor = NIFTY_DEF(bitnor, [&](va args) {
   docs << "bitwise NOR."
        << "" << impl::arith_rules;
 
-  tests << bnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << bnor(0, 1) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
-  tests << bnor(5, 7) = ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
+  tests << bitnor(0, 0) = ("0x" + utl::cat(samp::hmax)) >> docs;
+  tests << bitnor(0, 1) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "E") >> docs;
+  tests << bitnor(5, 7) =
+      ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "8") >> docs;
   if constexpr (conf::word_size > 1)
-    tests << bnor(7, 8) =
+    tests << bitnor(7, 8) =
         ("0x" + utl::cat(svect(conf::word_size - 1, "F")) + "0") >> docs;
 
   return def<"o(a, b)">{[&](arg a, arg b) {
-    return word(impl::uhex(uhex(bor(a, b)), "BNOT"),
+    return word(impl::uhex(uhex(bitor_(a, b)), "BNOT"),
                 impl::xarithhint(typeof(a), typeof(b)));
   }}(args);
 });

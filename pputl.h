@@ -170,10 +170,10 @@
 //    Examples and descriptions represent the default configuration.          //
 //                                                                            //
 //     list: tokens potentially delimited by non-parenthesized commas         //
-//      ├╴none: nothing; an absence of pp-tokens (an empty list)              //
-//      ├╴object: a list with exactly one element                             //
+//      ├╴none:   nothing; an absence of pp-tokens (an empty list)            //
+//      ├╴object: a non-empty list without separators (exactly one thing)     //
 //      │  ├╴tuple: a parenthesized list [e.g ()] [e.g. (a, b, , )]           //
-//      │  ├╴atom:  a non-parenthesized element                               //
+//      │  ├╴atom:  a non-parenthesized object                                //
 //      │  │  ├╴enum<v0|v1|...>: an atom matching a defined enumeration       //
 //      │  │  │  ├╴bool: enum<0|1>                                            //
 //      │  │  │  ├╴idec: enum<0|1|2|...|2045|2046|2047>                       //
@@ -185,14 +185,14 @@
 //      │  │  └╴word: <union> int|uint;  any kind of integer                  //
 //      │  │     ├╴size:   any non-negative word up to size_max               //
 //      │  │     └╴offset: any word whose absolute value is a valid size      //
-//      │  ├╴array: an encapsulated, sized sequence of elements               //
-//      │  │  ├╴map: a sorted mapping of words or enums to elements           //
-//      │  │  │  └╴pqueue: a priority queue of elements                       //
+//      │  ├╴array: an encapsulated, sized sequence of any                    //
+//      │  │  ├╴map: a sorted mapping of words or enums to any                //
+//      │  │  │  └╴pqueue: a priority queue of any                            //
 //      │  │  ├╴set:   a set of words or enums                                //
-//      │  │  ├╴stack: a LIFO stack of elements                               //
-//      │  │  └╴queue: a FIFO queue of elements                               //
-//      │  └╴range: <union> tuple|array; a structured range of elements       //
-//      └╴any: <union> none|object; a list without separators (an element)    //
+//      │  │  ├╴stack: a LIFO stack of any                                    //
+//      │  │  └╴queue: a FIFO queue of any                                    //
+//      │  └╴range: <union> tuple|array; a structured range of any            //
+//      └╴any: <union> none|object; nothing or exactly one thing (any arg)    //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -11562,599 +11562,604 @@
 #define PTL_HEXDUMP(/* word */...) /* -> enum<0|1|2|...|D|E|F>... */ \
   PPUTLIMPL_UHEX(PTL_UHEX(__VA_ARGS__), HDUMP)
 
-/// [bitwise.bdump]
-/// ---------------
+/// [bitwise.bitdump]
+/// -----------------
 /// dumps the bits of a word.
 /// returns exactly PTL_BIT_LENGTH (12) bools.
 ///
-/// PTL_BDUMP(0)     // 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-/// PTL_BDUMP(0x800) // 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-#define PTL_BDUMP(/* word */...) /* -> bool... */ PPUTLBDUMP_o(PTL_HEXDUMP(__VA_ARGS__))
+/// PTL_BITDUMP(0)     // 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+/// PTL_BITDUMP(0x800) // 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+#define PTL_BITDUMP(/* word */...) /* -> bool... */ \
+  PPUTLBITDUMP_o(PTL_HEXDUMP(__VA_ARGS__))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBDUMP_o(...) PPUTLBDUMP_oo(__VA_ARGS__)
-#define PPUTLBDUMP_oo(a, b, c) \
+#define PPUTLBITDUMP_o(...) PPUTLBITDUMP_oo(__VA_ARGS__)
+#define PPUTLBITDUMP_oo(a, b, c) \
   PPUTLIMPL_HEX(a, BITS), PPUTLIMPL_HEX(b, BITS), PPUTLIMPL_HEX(c, BITS)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bsll]
-/// --------------
+/// [bitwise.bitsll]
+/// ----------------
 /// performs a logical bitwise left shift by n places.
 ///
-/// PTL_BSLL(0, 1)     // 0
-/// PTL_BSLL(1u, 1)    // 2u
-/// PTL_BSLL(0x002, 2) // 0x008
-/// PTL_BSLL(0x002, 3) // 0x010
-/// PTL_BSLL(4095u, 3) // 4088u
-/// PTL_BSLL(1, 10)    // 1024
-/// PTL_BSLL(1, 11)    // 0x800
-/// PTL_BSLL(1, 12)    // 0
-/// PTL_BSLL(1, 13)    // 0
-#define PTL_BSLL(/* word, size=1 */...) /* -> word */ PPUTLBSLL_o(__VA_ARGS__)
+/// PTL_BITSLL(0, 1)     // 0
+/// PTL_BITSLL(1u, 1)    // 2u
+/// PTL_BITSLL(0x002, 2) // 0x008
+/// PTL_BITSLL(0x002, 3) // 0x010
+/// PTL_BITSLL(4095u, 3) // 4088u
+/// PTL_BITSLL(1, 10)    // 1024
+/// PTL_BITSLL(1, 11)    // 0x800
+/// PTL_BITSLL(1, 12)    // 0
+/// PTL_BITSLL(1, 13)    // 0
+#define PTL_BITSLL(/* word, size=1 */...) /* -> word */ PPUTLBITSLL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBSLL_o(v, ...)                                                   \
-  PTL_WORD(PPUTLBSLL_oo(PTL_IDEC(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BDUMP(v)), \
+#define PPUTLBITSLL_o(v, ...)                                                     \
+  PTL_WORD(PPUTLBITSLL_oo(PTL_IDEC(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BITDUMP(v)), \
            PTL_TYPEOF(v))
-#define PPUTLBSLL_oo(i, ...)         PPUTLBSLL_ooo(i, PTL_LT(i, 12), __VA_ARGS__)
-#define PPUTLBSLL_ooo(...)           PPUTLBSLL_oooo(__VA_ARGS__)
-#define PPUTLBSLL_oooo(i, gelt, ...) PPUTLBSLL_oooo_##gelt(i, __VA_ARGS__)
-#define PPUTLBSLL_oooo_1(i, ...)     PPUTLIMPL_HEX_CAT(PPUTLBSLL_##i(__VA_ARGS__))
-#define PPUTLBSLL_oooo_0(...)        0
+#define PPUTLBITSLL_oo(i, ...)         PPUTLBITSLL_ooo(i, PTL_LT(i, 12), __VA_ARGS__)
+#define PPUTLBITSLL_ooo(...)           PPUTLBITSLL_oooo(__VA_ARGS__)
+#define PPUTLBITSLL_oooo(i, gelt, ...) PPUTLBITSLL_oooo_##gelt(i, __VA_ARGS__)
+#define PPUTLBITSLL_oooo_1(i, ...)     PPUTLIMPL_HEX_CAT(PPUTLBITSLL_##i(__VA_ARGS__))
+#define PPUTLBITSLL_oooo_0(...)        0
 
 /// bit shifts
-#define PPUTLBSLL_11(a, b, c, d, e, f, g, h, i, j, k, l) PPUTLIMPL_NYBL(l##000, HEX), 0, 0
-#define PPUTLBSLL_10(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_11(a, b, c, d, e, f, g, h, i, j, k, l) \
+  PPUTLIMPL_NYBL(l##000, HEX), 0, 0
+#define PPUTLBITSLL_10(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(k##l##00, HEX), 0, 0
-#define PPUTLBSLL_9(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_9(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(j##k##l##0, HEX), 0, 0
-#define PPUTLBSLL_8(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_8(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(i##j##k##l, HEX), 0, 0
-#define PPUTLBSLL_7(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_7(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(h##i##j##k, HEX), PPUTLIMPL_NYBL(l##000, HEX), 0
-#define PPUTLBSLL_6(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_6(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(g##h##i##j, HEX), PPUTLIMPL_NYBL(k##l##00, HEX), 0
-#define PPUTLBSLL_5(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_5(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(f##g##h##i, HEX), PPUTLIMPL_NYBL(j##k##l##0, HEX), 0
-#define PPUTLBSLL_4(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSLL_4(a, b, c, d, e, f, g, h, i, j, k, l) \
   PPUTLIMPL_NYBL(e##f##g##h, HEX), PPUTLIMPL_NYBL(i##j##k##l, HEX), 0
-#define PPUTLBSLL_3(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSLL_3(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
       PPUTLIMPL_NYBL(l##000, HEX)
-#define PPUTLBSLL_2(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSLL_2(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
       PPUTLIMPL_NYBL(k##l##00, HEX)
-#define PPUTLBSLL_1(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSLL_1(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
       PPUTLIMPL_NYBL(j##k##l##0, HEX)
-#define PPUTLBSLL_0(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSLL_0(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bsrl]
-/// --------------
+/// [bitwise.bitsrl]
+/// ----------------
 /// performs a logical bitwise right shift by n places.
 ///
-/// PTL_BSRL(0, 1)      // 0
-/// PTL_BSRL(2, 1)      // 1
-/// PTL_BSRL(4, 1)      // 2
-/// PTL_BSRL(4, 2)      // 1
-/// PTL_BSRL(0x800, 11) // 0x001
-/// PTL_BSRL(0x800, 12) // 0x000
-#define PTL_BSRL(/* word, size=1 */...) /* -> word */ PPUTLBSRL_o(__VA_ARGS__)
+/// PTL_BITSRL(0, 1)      // 0
+/// PTL_BITSRL(2, 1)      // 1
+/// PTL_BITSRL(4, 1)      // 2
+/// PTL_BITSRL(4, 2)      // 1
+/// PTL_BITSRL(0x800, 11) // 0x001
+/// PTL_BITSRL(0x800, 12) // 0x000
+#define PTL_BITSRL(/* word, size=1 */...) /* -> word */ PPUTLBITSRL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBSRL_o(v, ...)                                                   \
-  PTL_WORD(PPUTLBSRL_oo(PTL_IDEC(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BDUMP(v)), \
+#define PPUTLBITSRL_o(v, ...)                                                     \
+  PTL_WORD(PPUTLBITSRL_oo(PTL_IDEC(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BITDUMP(v)), \
            PTL_TYPEOF(v))
-#define PPUTLBSRL_oo(i, ...)         PPUTLBSRL_ooo(i, PTL_LT(i, 12), __VA_ARGS__)
-#define PPUTLBSRL_ooo(...)           PPUTLBSRL_oooo(__VA_ARGS__)
-#define PPUTLBSRL_oooo(i, gelt, ...) PPUTLBSRL_oooo_##gelt(i, __VA_ARGS__)
-#define PPUTLBSRL_oooo_1(i, ...)     PPUTLIMPL_HEX_CAT(PPUTLBSRL_##i(__VA_ARGS__))
-#define PPUTLBSRL_oooo_0(...)        0
+#define PPUTLBITSRL_oo(i, ...)         PPUTLBITSRL_ooo(i, PTL_LT(i, 12), __VA_ARGS__)
+#define PPUTLBITSRL_ooo(...)           PPUTLBITSRL_oooo(__VA_ARGS__)
+#define PPUTLBITSRL_oooo(i, gelt, ...) PPUTLBITSRL_oooo_##gelt(i, __VA_ARGS__)
+#define PPUTLBITSRL_oooo_1(i, ...)     PPUTLIMPL_HEX_CAT(PPUTLBITSRL_##i(__VA_ARGS__))
+#define PPUTLBITSRL_oooo_0(...)        0
 
 /// bit shifts
-#define PPUTLBSRL_11(a, b, c, d, e, f, g, h, i, j, k, l) 0, 0, PPUTLIMPL_NYBL(000##a, HEX)
-#define PPUTLBSRL_10(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_11(a, b, c, d, e, f, g, h, i, j, k, l) \
+  0, 0, PPUTLIMPL_NYBL(000##a, HEX)
+#define PPUTLBITSRL_10(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, 0, PPUTLIMPL_NYBL(00##a##b, HEX)
-#define PPUTLBSRL_9(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_9(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, 0, PPUTLIMPL_NYBL(0##a##b##c, HEX)
-#define PPUTLBSRL_8(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_8(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, 0, PPUTLIMPL_NYBL(a##b##c##d, HEX)
-#define PPUTLBSRL_7(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_7(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, PPUTLIMPL_NYBL(000##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX)
-#define PPUTLBSRL_6(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_6(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, PPUTLIMPL_NYBL(00##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX)
-#define PPUTLBSRL_5(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_5(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, PPUTLIMPL_NYBL(0##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX)
-#define PPUTLBSRL_4(a, b, c, d, e, f, g, h, i, j, k, l) \
+#define PPUTLBITSRL_4(a, b, c, d, e, f, g, h, i, j, k, l) \
   0, PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX)
-#define PPUTLBSRL_3(a, b, c, d, e, f, g, h, i, j, k, l)         \
+#define PPUTLBITSRL_3(a, b, c, d, e, f, g, h, i, j, k, l)       \
   PPUTLIMPL_NYBL(000##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
       PPUTLIMPL_NYBL(f##g##h##i, HEX)
-#define PPUTLBSRL_2(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITSRL_2(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(00##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
       PPUTLIMPL_NYBL(g##h##i##j, HEX)
-#define PPUTLBSRL_1(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRL_1(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(0##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
       PPUTLIMPL_NYBL(h##i##j##k, HEX)
-#define PPUTLBSRL_0(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRL_0(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bsra]
-/// --------------
+/// [bitwise.bitsra]
+/// ----------------
 /// performs an arithmetic bitwise right shift by n places.
 ///
-/// PTL_BSRA(0, 1)     // 0
-/// PTL_BSRA(2, 1)     // 1
-/// PTL_BSRA(0x800, 1) // 0xC00
-/// PTL_BSRA(0x800, 2) // 0xE00
-/// PTL_BSRA(0x800, 3) // 0xF00
-/// PTL_BSRA(0x800, 4) // 0xF80
-#define PTL_BSRA(/* word, size=1 */...) /* -> word */ PPUTLBSRA_o(__VA_ARGS__)
+/// PTL_BITSRA(0, 1)     // 0
+/// PTL_BITSRA(2, 1)     // 1
+/// PTL_BITSRA(0x800, 1) // 0xC00
+/// PTL_BITSRA(0x800, 2) // 0xE00
+/// PTL_BITSRA(0x800, 3) // 0xF00
+/// PTL_BITSRA(0x800, 4) // 0xF80
+#define PTL_BITSRA(/* word, size=1 */...) /* -> word */ PPUTLBITSRA_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBSRA_o(v, ...)                                                             \
-  PTL_WORD(PPUTLBSRA_oo(PTL_IDEC(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BDUMP(PTL_WORD(v))), \
-           PTL_TYPEOF(v))
-#define PPUTLBSRA_oo(i, ...)         PPUTLBSRA_ooo(i, PTL_LT(i, 12), __VA_ARGS__)
-#define PPUTLBSRA_ooo(...)           PPUTLBSRA_oooo(__VA_ARGS__)
-#define PPUTLBSRA_oooo(i, gelt, ...) PPUTLBSRA_oooo_##gelt(i, __VA_ARGS__)
-#define PPUTLBSRA_oooo_1(i, ...)     PPUTLIMPL_HEX_CAT(PPUTLBSRA_##i(__VA_ARGS__))
-#define PPUTLBSRA_oooo_0(...)        0
+#define PPUTLBITSRA_o(v, ...)                                                          \
+  PTL_WORD(                                                                            \
+      PPUTLBITSRA_oo(PTL_IDEC(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BITDUMP(PTL_WORD(v))), \
+      PTL_TYPEOF(v))
+#define PPUTLBITSRA_oo(i, ...)         PPUTLBITSRA_ooo(i, PTL_LT(i, 12), __VA_ARGS__)
+#define PPUTLBITSRA_ooo(...)           PPUTLBITSRA_oooo(__VA_ARGS__)
+#define PPUTLBITSRA_oooo(i, gelt, ...) PPUTLBITSRA_oooo_##gelt(i, __VA_ARGS__)
+#define PPUTLBITSRA_oooo_1(i, ...)     PPUTLIMPL_HEX_CAT(PPUTLBITSRA_##i(__VA_ARGS__))
+#define PPUTLBITSRA_oooo_0(...)        0
 
 /// bit shifts
-#define PPUTLBSRA_11(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITSRA_11(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##a##a, HEX), \
       PPUTLIMPL_NYBL(a##a##a##a, HEX)
-#define PPUTLBSRA_10(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITSRA_10(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##a##a, HEX), \
       PPUTLIMPL_NYBL(a##a##a##b, HEX)
-#define PPUTLBSRA_9(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_9(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##a##a, HEX), \
       PPUTLIMPL_NYBL(a##a##b##c, HEX)
-#define PPUTLBSRA_8(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_8(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##a##a, HEX), \
       PPUTLIMPL_NYBL(a##b##c##d, HEX)
-#define PPUTLBSRA_7(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_7(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##a##a, HEX), \
       PPUTLIMPL_NYBL(b##c##d##e, HEX)
-#define PPUTLBSRA_6(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_6(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##a##b, HEX), \
       PPUTLIMPL_NYBL(c##d##e##f, HEX)
-#define PPUTLBSRA_5(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_5(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##a##b##c, HEX), \
       PPUTLIMPL_NYBL(d##e##f##g, HEX)
-#define PPUTLBSRA_4(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_4(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(a##b##c##d, HEX), \
       PPUTLIMPL_NYBL(e##f##g##h, HEX)
-#define PPUTLBSRA_3(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_3(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
       PPUTLIMPL_NYBL(f##g##h##i, HEX)
-#define PPUTLBSRA_2(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_2(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
       PPUTLIMPL_NYBL(g##h##i##j, HEX)
-#define PPUTLBSRA_1(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_1(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
       PPUTLIMPL_NYBL(h##i##j##k, HEX)
-#define PPUTLBSRA_0(a, b, c, d, e, f, g, h, i, j, k, l)             \
+#define PPUTLBITSRA_0(a, b, c, d, e, f, g, h, i, j, k, l)           \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bnot]
-/// --------------
+/// [bitwise.bitnot]
+/// ----------------
 /// bitwise NOT.
 ///
-/// PTL_BNOT(0u)    // 4095u
-/// PTL_BNOT(0xFFF) // 0x000
-#define PTL_BNOT(/* word */...) /* -> word */ \
+/// PTL_BITNOT(0u)    // 4095u
+/// PTL_BITNOT(0xFFF) // 0x000
+#define PTL_BITNOT(/* word */...) /* -> word */ \
   PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(__VA_ARGS__), BNOT), PTL_TYPEOF(__VA_ARGS__))
 
-/// [bitwise.band]
-/// --------------
+/// [bitwise.bitand]
+/// ----------------
 /// bitwise AND.
 ///
 /// returns unsigned if either operand is unsigned,
 /// decimal if either operand is decimal (and the
 /// result is non-negative), and hex otherwise.
 ///
-/// PTL_BAND(0, 0)         // 0
-/// PTL_BAND(0, 1)         // 0
-/// PTL_BAND(3, 2)         // 2
-/// PTL_BAND(5, 6)         // 4
-/// PTL_BAND(0x800, 0xFFF) // 0x800
-#define PTL_BAND(/* word, word */...) /* -> word */ PPUTLBAND_o(__VA_ARGS__)
+/// PTL_BITAND(0, 0)         // 0
+/// PTL_BITAND(0, 1)         // 0
+/// PTL_BITAND(3, 2)         // 2
+/// PTL_BITAND(5, 6)         // 4
+/// PTL_BITAND(0x800, 0xFFF) // 0x800
+#define PTL_BITAND(/* word, word */...) /* -> word */ PPUTLBITAND_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBAND_o(a, b)                                                     \
-  PPUTLBAND_RES(                                                              \
-      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                     \
-      PPUTLBAND_R(PPUTLBAND_R(PPUTLBAND_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
-                                          PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
-#define PPUTLBAND_RES(...)                       PPUTLBAND_RES_o(__VA_ARGS__)
-#define PPUTLBAND_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
-#define PPUTLBAND_R(...)                         PPUTLBAND_R_o(__VA_ARGS__)
-#define PPUTLBAND_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, AND), a, b, f, d, e
+#define PPUTLBITAND_o(a, b)                                                         \
+  PPUTLBITAND_RES(                                                                  \
+      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                           \
+      PPUTLBITAND_R(PPUTLBITAND_R(PPUTLBITAND_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
+                                                PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
+#define PPUTLBITAND_RES(...)                       PPUTLBITAND_RES_o(__VA_ARGS__)
+#define PPUTLBITAND_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
+#define PPUTLBITAND_R(...)                         PPUTLBITAND_R_o(__VA_ARGS__)
+#define PPUTLBITAND_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, AND), a, b, f, d, e
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bor]
-/// -------------
+/// [bitwise.bitor]
+/// ---------------
 /// bitwise OR.
 ///
 /// returns unsigned if either operand is unsigned,
 /// decimal if either operand is decimal (and the
 /// result is non-negative), and hex otherwise.
 ///
-/// PTL_BOR(0, 0)        // 0
-/// PTL_BOR(0, 1)        // 1
-/// PTL_BOR(3, 4)        // 7
-/// PTL_BOR(5, 6)        // 7
-/// PTL_BOR(0x800, 2047) // 0xFFF
-#define PTL_BOR(/* word, word */...) /* -> word */ PPUTLBOR_o(__VA_ARGS__)
+/// PTL_BITOR(0, 0)        // 0
+/// PTL_BITOR(0, 1)        // 1
+/// PTL_BITOR(3, 4)        // 7
+/// PTL_BITOR(5, 6)        // 7
+/// PTL_BITOR(0x800, 2047) // 0xFFF
+#define PTL_BITOR(/* word, word */...) /* -> word */ PPUTLBITOR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBOR_o(a, b)                                                            \
-  PPUTLBOR_RES(PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                  \
-               PPUTLBOR_R(PPUTLBOR_R(PPUTLBOR_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
-                                                PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
-#define PPUTLBOR_RES(...)                       PPUTLBOR_RES_o(__VA_ARGS__)
-#define PPUTLBOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
-#define PPUTLBOR_R(...)                         PPUTLBOR_R_o(__VA_ARGS__)
-#define PPUTLBOR_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, OR), a, b, f, d, e
+#define PPUTLBITOR_o(a, b)                                                       \
+  PPUTLBITOR_RES(                                                                \
+      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                        \
+      PPUTLBITOR_R(PPUTLBITOR_R(PPUTLBITOR_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
+                                             PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
+#define PPUTLBITOR_RES(...)                       PPUTLBITOR_RES_o(__VA_ARGS__)
+#define PPUTLBITOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
+#define PPUTLBITOR_R(...)                         PPUTLBITOR_R_o(__VA_ARGS__)
+#define PPUTLBITOR_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, OR), a, b, f, d, e
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bxor]
-/// --------------
+/// [bitwise.bitxor]
+/// ----------------
 /// bitwise XOR.
 ///
 /// returns unsigned if either operand is unsigned,
 /// decimal if either operand is decimal (and the
 /// result is non-negative), and hex otherwise.
 ///
-/// PTL_BXOR(0, 0)         // 0
-/// PTL_BXOR(0, 1)         // 1
-/// PTL_BXOR(2, 1)         // 3
-/// PTL_BXOR(2, 3)         // 1
-/// PTL_BXOR(3, 4)         // 7
-/// PTL_BXOR(5, 6)         // 3
-/// PTL_BXOR(0x800, 0xFFF) // 0x7FF
-#define PTL_BXOR(/* word, word */...) /* -> word */ PPUTLBXOR_o(__VA_ARGS__)
+/// PTL_BITXOR(0, 0)         // 0
+/// PTL_BITXOR(0, 1)         // 1
+/// PTL_BITXOR(2, 1)         // 3
+/// PTL_BITXOR(2, 3)         // 1
+/// PTL_BITXOR(3, 4)         // 7
+/// PTL_BITXOR(5, 6)         // 3
+/// PTL_BITXOR(0x800, 0xFFF) // 0x7FF
+#define PTL_BITXOR(/* word, word */...) /* -> word */ PPUTLBITXOR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBXOR_o(a, b)                                                     \
-  PPUTLBXOR_RES(                                                              \
-      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                     \
-      PPUTLBXOR_R(PPUTLBXOR_R(PPUTLBXOR_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
-                                          PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
-#define PPUTLBXOR_RES(...)                       PPUTLBXOR_RES_o(__VA_ARGS__)
-#define PPUTLBXOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
-#define PPUTLBXOR_R(...)                         PPUTLBXOR_R_o(__VA_ARGS__)
-#define PPUTLBXOR_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, XOR), a, b, f, d, e
+#define PPUTLBITXOR_o(a, b)                                                         \
+  PPUTLBITXOR_RES(                                                                  \
+      PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)),                           \
+      PPUTLBITXOR_R(PPUTLBITXOR_R(PPUTLBITXOR_R(PPUTLIMPL_UHEX(PTL_UHEX(a), HDUMP), \
+                                                PPUTLIMPL_UHEX(PTL_UHEX(b), HDUMP)))))
+#define PPUTLBITXOR_RES(...)                       PPUTLBITXOR_RES_o(__VA_ARGS__)
+#define PPUTLBITXOR_RES_o(_type, a, b, c, d, e, f) PTL_WORD(0x##a##b##c##u, _type)
+#define PPUTLBITXOR_R(...)                         PPUTLBITXOR_R_o(__VA_ARGS__)
+#define PPUTLBITXOR_R_o(a, b, c, d, e, f)          PPUTLIMPL_HEXHEX(c##f, XOR), a, b, f, d, e
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bnand]
-/// ---------------
+/// [bitwise.bitnand]
+/// -----------------
 /// bitwise NAND.
 ///
 /// returns unsigned if either operand is unsigned,
 /// decimal if either operand is decimal (and the
 /// result is non-negative), and hex otherwise.
 ///
-/// PTL_BNAND(0, 0) // 0xFFF
-/// PTL_BNAND(5, 7) // 0xFFA
-#define PTL_BNAND(/* word, word */...) /* -> word */ PPUTLBNAND_o(__VA_ARGS__)
+/// PTL_BITNAND(0, 0) // 0xFFF
+/// PTL_BITNAND(5, 7) // 0xFFA
+#define PTL_BITNAND(/* word, word */...) /* -> word */ PPUTLBITNAND_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBNAND_o(a, b)                                 \
-  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BAND(a, b)), BNOT), \
+#define PPUTLBITNAND_o(a, b)                                 \
+  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BITAND(a, b)), BNOT), \
            PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bnor]
-/// --------------
+/// [bitwise.bitnor]
+/// ----------------
 /// bitwise NOR.
 ///
 /// returns unsigned if either operand is unsigned,
 /// decimal if either operand is decimal (and the
 /// result is non-negative), and hex otherwise.
 ///
-/// PTL_BNOR(0, 0) // 0xFFF
-/// PTL_BNOR(0, 1) // 0xFFE
-/// PTL_BNOR(5, 7) // 0xFF8
-/// PTL_BNOR(7, 8) // 0xFF0
-#define PTL_BNOR(/* word, word */...) /* -> word */ PPUTLBNOR_o(__VA_ARGS__)
+/// PTL_BITNOR(0, 0) // 0xFFF
+/// PTL_BITNOR(0, 1) // 0xFFE
+/// PTL_BITNOR(5, 7) // 0xFF8
+/// PTL_BITNOR(7, 8) // 0xFF0
+#define PTL_BITNOR(/* word, word */...) /* -> word */ PPUTLBITNOR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBNOR_o(a, b)                                 \
-  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BOR(a, b)), BNOT), \
+#define PPUTLBITNOR_o(a, b)                                 \
+  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BITOR(a, b)), BNOT), \
            PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bxnor]
-/// ---------------
+/// [bitwise.bitxnor]
+/// -----------------
 /// bitwise XNOR.
 ///
 /// returns unsigned if either operand is unsigned,
 /// decimal if either operand is decimal (and the
 /// result is non-negative), and hex otherwise.
 ///
-/// PTL_BXNOR(0, 0)  // 0xFFF
-/// PTL_BXNOR(0, 1)  // 0xFFE
-/// PTL_BXNOR(5, 7)  // 0xFFD
-/// PTL_BXNOR(15, 8) // 0xFF8
-#define PTL_BXNOR(/* word, word */...) /* -> word */ PPUTLBXNOR_o(__VA_ARGS__)
+/// PTL_BITXNOR(0, 0)  // 0xFFF
+/// PTL_BITXNOR(0, 1)  // 0xFFE
+/// PTL_BITXNOR(5, 7)  // 0xFFD
+/// PTL_BITXNOR(15, 8) // 0xFF8
+#define PTL_BITXNOR(/* word, word */...) /* -> word */ PPUTLBITXNOR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBXNOR_o(a, b)                                 \
-  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BXOR(a, b)), BNOT), \
+#define PPUTLBITXNOR_o(a, b)                                 \
+  PTL_WORD(PPUTLIMPL_UHEX(PTL_UHEX(PTL_BITXOR(a, b)), BNOT), \
            PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bget]
-/// --------------
+/// [bitwise.bitget]
+/// ----------------
 /// gets the ith bit from the word, indexed from least to most significant.
 /// fails on invalid bit index.
 ///
-/// PTL_BGET(2, 2)              // 0
-/// PTL_BGET(2, 1)              // 1
-/// PTL_BGET(2, 0)              // 0
-/// PTL_BGET(5u, 2)             // 1
-/// PTL_BGET(0xFFE, 1)          // 1
-/// PTL_BGET(0xFFEu, 0)         // 0
-/// PTL_BGET(0x800, PTL_NEG(1)) // 1
-#define PTL_BGET(/* word, ofs */...) /* -> bool */ \
-  PPUTLBGET_o(PTL_STR("[PTL_BGET] invalid index" : __VA_ARGS__), __VA_ARGS__)
+/// PTL_BITGET(2, 2)              // 0
+/// PTL_BITGET(2, 1)              // 1
+/// PTL_BITGET(2, 0)              // 0
+/// PTL_BITGET(5u, 2)             // 1
+/// PTL_BITGET(0xFFE, 1)          // 1
+/// PTL_BITGET(0xFFEu, 0)         // 0
+/// PTL_BITGET(0x800, PTL_NEG(1)) // 1
+#define PTL_BITGET(/* word, ofs */...) /* -> bool */ \
+  PPUTLBITGET_o(PTL_STR("[PTL_BITGET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBGET_o(e, v, i)                                                     \
-  PPUTLBGET_oo(PTL_IDEC(PPUTLIMPL_INDEX(PTL_UHEX(i), PTL_IS_INT(i), 0x00Cu, e)), \
-               PTL_BDUMP(v))
-#define PPUTLBGET_oo(i, ...)                             PTL_CAT(PPUTLBGET_, i)(__VA_ARGS__)
-#define PPUTLBGET_11(a, b, c, d, e, f, g, h, i, j, k, l) a
-#define PPUTLBGET_10(a, b, c, d, e, f, g, h, i, j, k, l) b
-#define PPUTLBGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  c
-#define PPUTLBGET_8(a, b, c, d, e, f, g, h, i, j, k, l)  d
-#define PPUTLBGET_7(a, b, c, d, e, f, g, h, i, j, k, l)  e
-#define PPUTLBGET_6(a, b, c, d, e, f, g, h, i, j, k, l)  f
-#define PPUTLBGET_5(a, b, c, d, e, f, g, h, i, j, k, l)  g
-#define PPUTLBGET_4(a, b, c, d, e, f, g, h, i, j, k, l)  h
-#define PPUTLBGET_3(a, b, c, d, e, f, g, h, i, j, k, l)  i
-#define PPUTLBGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  j
-#define PPUTLBGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  k
-#define PPUTLBGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  l
+#define PPUTLBITGET_o(e, v, i)                                                     \
+  PPUTLBITGET_oo(PTL_IDEC(PPUTLIMPL_INDEX(PTL_UHEX(i), PTL_IS_INT(i), 0x00Cu, e)), \
+                 PTL_BITDUMP(v))
+#define PPUTLBITGET_oo(i, ...)                             PTL_CAT(PPUTLBITGET_, i)(__VA_ARGS__)
+#define PPUTLBITGET_11(a, b, c, d, e, f, g, h, i, j, k, l) a
+#define PPUTLBITGET_10(a, b, c, d, e, f, g, h, i, j, k, l) b
+#define PPUTLBITGET_9(a, b, c, d, e, f, g, h, i, j, k, l)  c
+#define PPUTLBITGET_8(a, b, c, d, e, f, g, h, i, j, k, l)  d
+#define PPUTLBITGET_7(a, b, c, d, e, f, g, h, i, j, k, l)  e
+#define PPUTLBITGET_6(a, b, c, d, e, f, g, h, i, j, k, l)  f
+#define PPUTLBITGET_5(a, b, c, d, e, f, g, h, i, j, k, l)  g
+#define PPUTLBITGET_4(a, b, c, d, e, f, g, h, i, j, k, l)  h
+#define PPUTLBITGET_3(a, b, c, d, e, f, g, h, i, j, k, l)  i
+#define PPUTLBITGET_2(a, b, c, d, e, f, g, h, i, j, k, l)  j
+#define PPUTLBITGET_1(a, b, c, d, e, f, g, h, i, j, k, l)  k
+#define PPUTLBITGET_0(a, b, c, d, e, f, g, h, i, j, k, l)  l
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bset]
-/// --------------
+/// [bitwise.bitset]
+/// ----------------
 /// sets the ith bit of the word to b, indexed from least to most significant.
 /// fails on invalid bit index.
 ///
-/// PTL_BSET(0, 1, 1)      // 2
-/// PTL_BSET(1u, 2, 1)     // 5u
-/// PTL_BSET(5, 4, 1)      // 21
-/// PTL_BSET(0x002, 0, 1)  // 0x003
-/// PTL_BSET(0x003u, 0, 0) // 0x002u
-#define PTL_BSET(/* word, ofs, bool */...) /* -> word */ \
-  PPUTLBSET_o(PTL_STR("[PTL_BSET] invalid index" : __VA_ARGS__), __VA_ARGS__)
+/// PTL_BITSET(0, 1, 1)      // 2
+/// PTL_BITSET(1u, 2, 1)     // 5u
+/// PTL_BITSET(5, 4, 1)      // 21
+/// PTL_BITSET(0x002, 0, 1)  // 0x003
+/// PTL_BITSET(0x003u, 0, 0) // 0x002u
+#define PTL_BITSET(/* word, ofs, bool */...) /* -> word */ \
+  PPUTLBITSET_o(PTL_STR("[PTL_BITSET] invalid index" : __VA_ARGS__), __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBSET_o(e, v, i, b)                                                  \
-  PTL_WORD(PPUTLIMPL_HEX_CAT(PPUTLBSET_oo(                                       \
+#define PPUTLBITSET_o(e, v, i, b)                                                \
+  PTL_WORD(PPUTLIMPL_HEX_CAT(PPUTLBITSET_oo(                                     \
                PTL_IDEC(PPUTLIMPL_INDEX(PTL_UHEX(i), PTL_IS_INT(i), 0x00Cu, e)), \
-               PTL_BOOL(b), PTL_BDUMP(v))),                                      \
+               PTL_BOOL(b), PTL_BITDUMP(v))),                                    \
            PTL_TYPEOF(v))
-#define PPUTLBSET_oo(i, ...) PTL_CAT(PPUTLBSET_, i)(__VA_ARGS__)
-#define PPUTLBSET_11(a, _, b, c, d, e, f, g, h, i, j, k, l)         \
+#define PPUTLBITSET_oo(i, ...) PTL_CAT(PPUTLBITSET_, i)(__VA_ARGS__)
+#define PPUTLBITSET_11(a, _, b, c, d, e, f, g, h, i, j, k, l)       \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_10(b, a, _, c, d, e, f, g, h, i, j, k, l)         \
+#define PPUTLBITSET_10(b, a, _, c, d, e, f, g, h, i, j, k, l)       \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_9(c, a, b, _, d, e, f, g, h, i, j, k, l)          \
+#define PPUTLBITSET_9(c, a, b, _, d, e, f, g, h, i, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_8(d, a, b, c, _, e, f, g, h, i, j, k, l)          \
+#define PPUTLBITSET_8(d, a, b, c, _, e, f, g, h, i, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_7(e, a, b, c, d, _, f, g, h, i, j, k, l)          \
+#define PPUTLBITSET_7(e, a, b, c, d, _, f, g, h, i, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_6(f, a, b, c, d, e, _, g, h, i, j, k, l)          \
+#define PPUTLBITSET_6(f, a, b, c, d, e, _, g, h, i, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_5(g, a, b, c, d, e, f, _, h, i, j, k, l)          \
+#define PPUTLBITSET_5(g, a, b, c, d, e, f, _, h, i, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_4(h, a, b, c, d, e, f, g, _, i, j, k, l)          \
+#define PPUTLBITSET_4(h, a, b, c, d, e, f, g, _, i, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_3(i, a, b, c, d, e, f, g, h, _, j, k, l)          \
+#define PPUTLBITSET_3(i, a, b, c, d, e, f, g, h, _, j, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_2(j, a, b, c, d, e, f, g, h, i, _, k, l)          \
+#define PPUTLBITSET_2(j, a, b, c, d, e, f, g, h, i, _, k, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_1(k, a, b, c, d, e, f, g, h, i, j, _, l)          \
+#define PPUTLBITSET_1(k, a, b, c, d, e, f, g, h, i, j, _, l)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBSET_0(l, a, b, c, d, e, f, g, h, i, j, k, _)          \
+#define PPUTLBITSET_0(l, a, b, c, d, e, f, g, h, i, j, k, _)        \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.bflip]
-/// ---------------
+/// [bitwise.bitflip]
+/// -----------------
 /// flips the ith bit in the uint. indexed from least to most significant.
 /// fails on invalid bit index.
 ///
-/// PTL_BFLIP(0, 0)      // 1
-/// PTL_BFLIP(1u, 1)     // 3u
-/// PTL_BFLIP(0x002, 2)  // 0x006
-/// PTL_BFLIP(0x003u, 3) // 0x00Bu
-#define PTL_BFLIP(/* word, ofs */...) /* -> word */ \
-  PTL_BSET(__VA_ARGS__, PTL_NOT(PTL_BGET(__VA_ARGS__)))
+/// PTL_BITFLIP(0, 0)      // 1
+/// PTL_BITFLIP(1u, 1)     // 3u
+/// PTL_BITFLIP(0x002, 2)  // 0x006
+/// PTL_BITFLIP(0x003u, 3) // 0x00Bu
+#define PTL_BITFLIP(/* word, ofs */...) /* -> word */ \
+  PTL_BITSET(__VA_ARGS__, PTL_NOT(PTL_BITGET(__VA_ARGS__)))
 
-/// [bitwise.brotl]
-/// ---------------
+/// [bitwise.bitrotl]
+/// -----------------
 /// bitwise left rotation by n places.
 ///
-/// PTL_BROTL(0x000, 0) // 0x000
-/// PTL_BROTL(0x001)    // 0x002
-/// PTL_BROTL(0x001, 1) // 0x002
-/// PTL_BROTL(0x001, 2) // 0x004
-/// PTL_BROTL(0x003, 2) // 0x00C
-#define PTL_BROTL(/* word, size=1 */...) /* -> word */ PPUTLBROTL_o(__VA_ARGS__)
+/// PTL_BITROTL(0x000, 0) // 0x000
+/// PTL_BITROTL(0x001)    // 0x002
+/// PTL_BITROTL(0x001, 1) // 0x002
+/// PTL_BITROTL(0x001, 2) // 0x004
+/// PTL_BITROTL(0x003, 2) // 0x00C
+#define PTL_BITROTL(/* word, size=1 */...) /* -> word */ PPUTLBITROTL_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBROTL_o(v, ...)                                                      \
-  PTL_WORD(PPUTLIMPL_HEX_CAT(PPUTLBROTL_oo(PTL_SIZE(PTL_DEFAULT(1, __VA_ARGS__)), \
-                                           PTL_ESC(PTL_BDUMP(v)))),               \
+#define PPUTLBITROTL_o(v, ...)                                                      \
+  PTL_WORD(PPUTLIMPL_HEX_CAT(PPUTLBITROTL_oo(PTL_SIZE(PTL_DEFAULT(1, __VA_ARGS__)), \
+                                             PTL_ESC(PTL_BITDUMP(v)))),             \
            PTL_TYPEOF(v))
-#define PPUTLBROTL_oo(n, ...) PTL_XCAT(PPUTLBROTL_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
-#define PPUTLBROTL_15(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTL_oo(n, ...) PTL_XCAT(PPUTLBITROTL_, PTL_BITAND(n, 0x00F))(__VA_ARGS__)
+#define PPUTLBITROTL_15(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
       PPUTLIMPL_NYBL(l##a##b##c, HEX)
-#define PPUTLBROTL_14(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTL_14(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
       PPUTLIMPL_NYBL(k##l##a##b, HEX)
-#define PPUTLBROTL_13(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTL_13(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
       PPUTLIMPL_NYBL(j##k##l##a, HEX)
-#define PPUTLBROTL_12(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTL_12(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBROTL_11(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTL_11(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(l##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
       PPUTLIMPL_NYBL(h##i##j##k, HEX)
-#define PPUTLBROTL_10(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTL_10(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(k##l##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
       PPUTLIMPL_NYBL(g##h##i##j, HEX)
-#define PPUTLBROTL_9(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_9(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
       PPUTLIMPL_NYBL(f##g##h##i, HEX)
-#define PPUTLBROTL_8(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_8(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(i##j##k##l, HEX), PPUTLIMPL_NYBL(a##b##c##d, HEX), \
       PPUTLIMPL_NYBL(e##f##g##h, HEX)
-#define PPUTLBROTL_7(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_7(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(h##i##j##k, HEX), PPUTLIMPL_NYBL(l##a##b##c, HEX), \
       PPUTLIMPL_NYBL(d##e##f##g, HEX)
-#define PPUTLBROTL_6(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_6(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(g##h##i##j, HEX), PPUTLIMPL_NYBL(k##l##a##b, HEX), \
       PPUTLIMPL_NYBL(c##d##e##f, HEX)
-#define PPUTLBROTL_5(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_5(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(f##g##h##i, HEX), PPUTLIMPL_NYBL(j##k##l##a, HEX), \
       PPUTLIMPL_NYBL(b##c##d##e, HEX)
-#define PPUTLBROTL_4(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_4(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(e##f##g##h, HEX), PPUTLIMPL_NYBL(i##j##k##l, HEX), \
       PPUTLIMPL_NYBL(a##b##c##d, HEX)
-#define PPUTLBROTL_3(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_3(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
       PPUTLIMPL_NYBL(l##a##b##c, HEX)
-#define PPUTLBROTL_2(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_2(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
       PPUTLIMPL_NYBL(k##l##a##b, HEX)
-#define PPUTLBROTL_1(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_1(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
       PPUTLIMPL_NYBL(j##k##l##a, HEX)
-#define PPUTLBROTL_0(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTL_0(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [bitwise.brotr]
-/// ---------------
+/// [bitwise.bitrotr]
+/// -----------------
 /// bitwise right rotation by n places.
 ///
-/// PTL_BROTR(0x000, 0) // 0x000
-/// PTL_BROTR(0x001)    // 0x800
-/// PTL_BROTR(0x001, 1) // 0x800
-/// PTL_BROTR(0x002, 1) // 0x001
-/// PTL_BROTR(0x7FF, 2) // 0xDFF
-#define PTL_BROTR(/* word, size=1 */...) /* -> word */ PPUTLBROTR_o(__VA_ARGS__)
+/// PTL_BITROTR(0x000, 0) // 0x000
+/// PTL_BITROTR(0x001)    // 0x800
+/// PTL_BITROTR(0x001, 1) // 0x800
+/// PTL_BITROTR(0x002, 1) // 0x001
+/// PTL_BITROTR(0x7FF, 2) // 0xDFF
+#define PTL_BITROTR(/* word, size=1 */...) /* -> word */ PPUTLBITROTR_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLBROTR_o(v, ...)                                                        \
-  PTL_WORD(PPUTLIMPL_HEX_CAT(                                                       \
-               PPUTLBROTR_oo(PTL_SIZE(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BDUMP(v))), \
+#define PPUTLBITROTR_o(v, ...)                                                          \
+  PTL_WORD(PPUTLIMPL_HEX_CAT(                                                           \
+               PPUTLBITROTR_oo(PTL_SIZE(PTL_DEFAULT(1, __VA_ARGS__)), PTL_BITDUMP(v))), \
            PTL_TYPEOF(v))
-#define PPUTLBROTR_oo(n, ...) PTL_XCAT(PPUTLBROTR_, PTL_BAND(n, 0x00F))(__VA_ARGS__)
-#define PPUTLBROTR_15(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTR_oo(n, ...) PTL_XCAT(PPUTLBITROTR_, PTL_BITAND(n, 0x00F))(__VA_ARGS__)
+#define PPUTLBITROTR_15(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
       PPUTLIMPL_NYBL(f##g##h##i, HEX)
-#define PPUTLBROTR_14(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTR_14(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(k##l##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
       PPUTLIMPL_NYBL(g##h##i##j, HEX)
-#define PPUTLBROTR_13(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTR_13(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(l##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
       PPUTLIMPL_NYBL(h##i##j##k, HEX)
-#define PPUTLBROTR_12(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTR_12(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
-#define PPUTLBROTR_11(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTR_11(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(b##c##d##e, HEX), PPUTLIMPL_NYBL(f##g##h##i, HEX), \
       PPUTLIMPL_NYBL(j##k##l##a, HEX)
-#define PPUTLBROTR_10(a, b, c, d, e, f, g, h, i, j, k, l)           \
+#define PPUTLBITROTR_10(a, b, c, d, e, f, g, h, i, j, k, l)         \
   PPUTLIMPL_NYBL(c##d##e##f, HEX), PPUTLIMPL_NYBL(g##h##i##j, HEX), \
       PPUTLIMPL_NYBL(k##l##a##b, HEX)
-#define PPUTLBROTR_9(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_9(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(d##e##f##g, HEX), PPUTLIMPL_NYBL(h##i##j##k, HEX), \
       PPUTLIMPL_NYBL(l##a##b##c, HEX)
-#define PPUTLBROTR_8(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_8(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(e##f##g##h, HEX), PPUTLIMPL_NYBL(i##j##k##l, HEX), \
       PPUTLIMPL_NYBL(a##b##c##d, HEX)
-#define PPUTLBROTR_7(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_7(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(f##g##h##i, HEX), PPUTLIMPL_NYBL(j##k##l##a, HEX), \
       PPUTLIMPL_NYBL(b##c##d##e, HEX)
-#define PPUTLBROTR_6(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_6(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(g##h##i##j, HEX), PPUTLIMPL_NYBL(k##l##a##b, HEX), \
       PPUTLIMPL_NYBL(c##d##e##f, HEX)
-#define PPUTLBROTR_5(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_5(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(h##i##j##k, HEX), PPUTLIMPL_NYBL(l##a##b##c, HEX), \
       PPUTLIMPL_NYBL(d##e##f##g, HEX)
-#define PPUTLBROTR_4(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_4(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(i##j##k##l, HEX), PPUTLIMPL_NYBL(a##b##c##d, HEX), \
       PPUTLIMPL_NYBL(e##f##g##h, HEX)
-#define PPUTLBROTR_3(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_3(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(j##k##l##a, HEX), PPUTLIMPL_NYBL(b##c##d##e, HEX), \
       PPUTLIMPL_NYBL(f##g##h##i, HEX)
-#define PPUTLBROTR_2(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_2(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(k##l##a##b, HEX), PPUTLIMPL_NYBL(c##d##e##f, HEX), \
       PPUTLIMPL_NYBL(g##h##i##j, HEX)
-#define PPUTLBROTR_1(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_1(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(l##a##b##c, HEX), PPUTLIMPL_NYBL(d##e##f##g, HEX), \
       PPUTLIMPL_NYBL(h##i##j##k, HEX)
-#define PPUTLBROTR_0(a, b, c, d, e, f, g, h, i, j, k, l)            \
+#define PPUTLBITROTR_0(a, b, c, d, e, f, g, h, i, j, k, l)          \
   PPUTLIMPL_NYBL(a##b##c##d, HEX), PPUTLIMPL_NYBL(e##f##g##h, HEX), \
       PPUTLIMPL_NYBL(i##j##k##l, HEX)
 
@@ -12271,7 +12276,7 @@
 
 #define PPUTLRLP_o(n, f) PPUTLRLP_oo(PTL_SIZE(n, UDEC), f)
 #define PPUTLRLP_oo(n, f) \
-  PTL_XCAT(PPUTLRLP_oo_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)), f)
+  PTL_XCAT(PPUTLRLP_oo_, PTL_BITAND(n, 3))(PTL_IDEC(PTL_BITSRL(n, 2)), f)
 #define PPUTLRLP_oo_3u(n, f) f PTL_LP() f PTL_LP() f PTL_LP() PTL_XCAT(PPUTLRLP_, n)(f)
 #define PPUTLRLP_oo_2u(n, f) f PTL_LP() f PTL_LP() PTL_XCAT(PPUTLRLP_, n)(f)
 #define PPUTLRLP_oo_1u(n, f) f PTL_LP() PTL_XCAT(PPUTLRLP_, n)(f)
@@ -12386,7 +12391,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLRRP_o(n)    PTL_XCAT(PPUTLRRP_o_, PTL_BAND(n, 3))(PTL_IDEC(PTL_BSRL(n, 2)))
+#define PPUTLRRP_o(n)    PTL_XCAT(PPUTLRRP_o_, PTL_BITAND(n, 3))(PTL_IDEC(PTL_BITSRL(n, 2)))
 #define PPUTLRRP_o_3u(n) PTL_XCAT(PPUTLRRP_, n) PTL_RP() PTL_RP() PTL_RP()
 #define PPUTLRRP_o_2u(n) PTL_XCAT(PPUTLRRP_, n) PTL_RP() PTL_RP()
 #define PPUTLRRP_o_1u(n) PTL_XCAT(PPUTLRRP_, n) PTL_RP()
@@ -12622,8 +12627,9 @@
 #define PPUTLMUL_BEQZ(a, b) \
   PTL_WORD(0, PPUTLIMPL_XARITHHINT(PTL_TYPEOF(a), PTL_TYPEOF(b)))
 #define PPUTLMUL_R(...) PPUTLMUL_R_o(__VA_ARGS__)
-#define PPUTLMUL_R_o(a, b, s) \
-  PTL_BSLL(a), PTL_BSRA(b), PTL_IF(PTL_BGET(b, 0), PPUTLMUL_R_RECR, PPUTLMUL_R_BASE)(s, a)
+#define PPUTLMUL_R_o(a, b, s)   \
+  PTL_BITSLL(a), PTL_BITSRA(b), \
+      PTL_IF(PTL_BITGET(b, 0), PPUTLMUL_R_RECR, PPUTLMUL_R_BASE)(s, a)
 #define PPUTLMUL_R_RECR(s, a)   PTL_ADD(s, a)
 #define PPUTLMUL_R_BASE(s, a)   s
 #define PPUTLMUL_RES(...)       PPUTLMUL_RES_o(__VA_ARGS__)
@@ -12738,10 +12744,10 @@
 #define PPUTLDIVR_BEQZ(e, a, b)                      PTL_FAIL(e)
 #define PPUTLDIVR_R(...)                             PPUTLDIVR_R_o(__VA_ARGS__)
 #define PPUTLDIVR_R_o(i, q, r, a, b) \
-  PPUTLDIVR_R_oo(i, q, PTL_BSET(PTL_BSLL(r), 0, PTL_BGET(a, i)), a, b)
+  PPUTLDIVR_R_oo(i, q, PTL_BITSET(PTL_BITSLL(r), 0, PTL_BITGET(a, i)), a, b)
 #define PPUTLDIVR_R_oo(i, q, r, a, b) \
   PTL_DEC(i), PTL_IF(PTL_GE(r, b), PPUTLDIVR_R_REM, PPUTLDIVR_R_NOREM)(i, q, r, b), a, b
-#define PPUTLDIVR_R_REM(i, q, r, b)   PTL_BSET(q, i, 1), PTL_SUB(r, b)
+#define PPUTLDIVR_R_REM(i, q, r, b)   PTL_BITSET(q, i, 1), PTL_SUB(r, b)
 #define PPUTLDIVR_R_NOREM(i, q, r, b) q, r
 #define PPUTLDIVR_X(...)              __VA_ARGS__
 

@@ -31,11 +31,11 @@ namespace api {
 
 using namespace codegen;
 
-decltype(bnot) bnot = NIFTY_DEF(bnot, [&](va args) {
+decltype(bitnot) bitnot = NIFTY_DEF(bitnot, [&](va args) {
   docs << "bitwise NOT.";
 
-  tests << bnot("0u")                        = uint_max_s >> docs;
-  tests << bnot("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmin)) >> docs;
+  tests << bitnot("0u")                        = uint_max_s >> docs;
+  tests << bitnot("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmin)) >> docs;
 
   return word(impl::uhex(uhex(args), "BNOT"), typeof(args));
 });
