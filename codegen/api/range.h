@@ -45,19 +45,19 @@ inline codegen::category<"range"> range_;
 
 // TODO: arr overloads
 
-extern codegen::def<"sizeof(...: mem) -> udec&size"> const&                 sizeof_;
-extern codegen::def<"itemsof(...: mem) -> list"> const&                     itemsof;
-extern codegen::def<"is_empty(...: mem) -> bool"> const&                    is_empty;
-extern codegen::def<"bisect(...: mem, ofs) -> mem, mem, bool"> const&       bisect;
-extern codegen::def<"unite(...: mem, mem, bool=0) -> mem"> const&           unite;
-extern codegen::def<"head(...: mem, size=1) -> mem"> const&                 head;
-extern codegen::def<"tail(...: mem, size=1) -> mem"> const&                 tail;
-extern codegen::def<"push_front(...: mem, any) -> mem"> const&              push_front;
-extern codegen::def<"push_back(...: mem, any) -> mem"> const&               push_back;
-extern codegen::def<"pop_front(...: mem, size=1) -> tup"> const&            pop_front;
-extern codegen::def<"pop_back(...: mem, size=1) -> tup"> const&             pop_back;
-extern codegen::def<"get_item(...: mem, k: ofs|any) -> any"> const&         get_item;
-extern codegen::def<"set_item(...: mem, k: ofs|any, v: any) -> mem"> const& set_item;
+extern codegen::def<"sizeof(...: range) -> udec&size"> const&           sizeof_;
+extern codegen::def<"itemsof(...: range) -> list"> const&               itemsof;
+extern codegen::def<"is_empty(...: range) -> bool"> const&              is_empty;
+extern codegen::def<"bisect(...: buf, ofs) -> buf, buf, bool"> const&   bisect;
+extern codegen::def<"unite(...: buf, buf, bool=0) -> buf"> const&       unite;
+extern codegen::def<"head(...: buf, size=1) -> mem"> const&             head;
+extern codegen::def<"tail(...: buf, size=1) -> mem"> const&             tail;
+extern codegen::def<"push_front(...: buf, any) -> mem"> const&          push_front;
+extern codegen::def<"push_back(...: buf, any) -> mem"> const&           push_back;
+extern codegen::def<"pop_front(...: buf, size=1) -> tup"> const&        pop_front;
+extern codegen::def<"pop_back(...: buf, size=1) -> tup"> const&         pop_back;
+extern codegen::def<"get_at(...: range, k: ofs) -> any"> const&         get_item;
+extern codegen::def<"set_at(...: range, k: ofs, v: any) -> mem"> const& set_item;
 /* extern codegen::def<"ins_item(...: tup, ofs, any) -> tup"> const&      ins_item; */
 /* extern codegen::def<"del_item(...: tup, ofs, any) -> tup"> const&      del_item; */
 /* extern codegen::def<"front(...: tup) -> any"> const&                  front; */

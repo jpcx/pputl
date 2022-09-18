@@ -32,16 +32,16 @@ namespace api {
 using namespace codegen;
 
 decltype(range) range = NIFTY_DEF(range, [&](va args) {
-  docs << "[extends object; union tuple|array|stack|queue|heap|map|set]"
+  docs << "[extends object; union tuple|array|stack|queue|order|heap|map|set|pqueue]"
        << "constructible from any range type."
        << ""
        << "optionally provide a hint to choose a cast mode."
        << "hints can be calculated using typeof(range)."
        << ""
-       << "note: this constructor only performs casts that can safely be performed"
-       << "      by rewrapping items without verification. as such, while all ranges"
-       << "      are convertible to buffers, any ranges with sorted or structured"
-       << "      items (i.e. heap, map, and set) cannot be constructed from others."
+       << "note: this constructor only performs casts that can safely be performed by"
+       << "      rewrapping items without verification. as such, while all ranges are"
+       << "      convertible to buffers, any ranges with sorted or structured items"
+       << "      (i.e. heap, map, set, and pqueue) cannot be constructed from others."
        << ""
        << "cast modes:"
        << ""

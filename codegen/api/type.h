@@ -61,15 +61,14 @@ extern codegen::def<
     "size(...: word=0, hint=AUTO: enum<IDEC,IHEX,UDEC,UHEX,AUTO>) -> size"> const& size;
 extern codegen::def<
     "offset(...: word=0, hint=AUTO: enum<IDEC,IHEX,UDEC,UHEX,AUTO>) -> offset"> const&
-                                                            offset;
-extern codegen::def<"array(...: range=()) -> array"> const& array;
-extern codegen::def<
-    "order(...: {order}|{dir?: enum<ASC|DESC>, prefix?: atom}) -> order"> const& order;
-extern codegen::def<"map(...: {map}|{prefix?: atom}) -> map"> const&             map;
-extern codegen::def<"set(...: {set}|{prefix?: atom}) -> set"> const&             set;
+                                                                                 offset;
+extern codegen::def<"array(...: range=()) -> array"> const&                      array;
 extern codegen::def<"stack(...: range=()) -> stack"> const&                      stack;
 extern codegen::def<"queue(...: range=()) -> queue"> const&                      queue;
-extern codegen::def<"pqueue(...: {pqueue}|{prefix?: atom}) -> pqueue"> const&    pqueue;
+extern codegen::def<"heap(...: {heap}|{dir=MIN: enum<MIN,MAX>}) -> heap"> const& heap;
+extern codegen::def<"map(...: map?) -> map"> const&                              map;
+extern codegen::def<"set(...: set?) -> set"> const&                              set;
+extern codegen::def<"pqueue(...: pqueue?) -> pqueue"> const&                     pqueue;
 extern codegen::def<
     "range(...: range=(), hint=AUTO: "
     "enum<TUPLE|ARRAY|ORDER|MAP|SET|STACK|QUEUE|PQUEUE|AUTO>) -> range"> const& range;
@@ -95,11 +94,11 @@ NIFTY_DECL(word);
 NIFTY_DECL(size);
 NIFTY_DECL(offset);
 NIFTY_DECL(array);
-NIFTY_DECL(order);
-NIFTY_DECL(map);
-NIFTY_DECL(set);
 NIFTY_DECL(stack);
 NIFTY_DECL(queue);
+NIFTY_DECL(heap);
+NIFTY_DECL(map);
+NIFTY_DECL(set);
 NIFTY_DECL(pqueue);
 NIFTY_DECL(range);
 /* NIFTY_DECL(buffer); */

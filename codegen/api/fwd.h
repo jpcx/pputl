@@ -34,12 +34,13 @@ namespace fwd {
 inline codegen::category_fwd<"type"> type;
 
 inline codegen::def<"array">  array;
-inline codegen::def<"order">  order;
-inline codegen::def<"map">    map;
-inline codegen::def<"pqueue"> pqueue;
-inline codegen::def<"set">    set;
 inline codegen::def<"stack">  stack;
 inline codegen::def<"queue">  queue;
+inline codegen::def<"order">  order;
+inline codegen::def<"heap">   heap;
+inline codegen::def<"map">    map;
+inline codegen::def<"set">    set;
+inline codegen::def<"pqueue"> pqueue;
 
 inline codegen::end_category<"type"> type_end;
 
