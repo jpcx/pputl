@@ -32,24 +32,35 @@ namespace api {
 using namespace codegen;
 
 decltype(set) set = NIFTY_DEF(set, [&](va args) {
-  docs << "[inherits from " + obj + "] a set of words."
-       << "optionally provide arguments to make a type assertion."
+  docs << "[extends array] a set of words or enums."
+       << "provide a prefix to use enums instead of words."
        << ""
-       << "note: does not parse contained items during validity check.";
+       << "see [range] for available operations."
+       << ""
+       << "items are stored in ascending order."
+       << "resultant atom is an expansion-terminated self-reference.";
 
-  tests << set()      = set() >> docs;
-  tests << set(set()) = set() >> docs;
+  tests << xstr(set())            = pp::str(set("0u", "", pp::tup())) >> docs;
+  tests << xstr(set("ENUM_FOO_")) = pp::str(set("0u", "ENUM_FOO_", pp::tup())) >> docs;
+  tests << xstr(set(set()))       = pp::str(set("0u", "", pp::tup())) >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"\\0(...)"> _0 = [&](va args) {
+    def<"\\0(prefix)"> _0 = [&](arg prefix) {
+      return set("0u", prefix, pp::tup());
+    };
+
+    def<"\\1(set)">{} = [&](arg set) {
+      return set;
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), is_set(args)), atom(args));
   };
-  def<"\\1(e, set)">{} = [](arg, arg set) {
-    return set;
+
+  def<"\\1(...)">{} = [&](va) {
+    return set("0u", "", pp::tup());
   };
 
-  return def<"o(e, obj)">{[&](arg e, arg obj) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_set_o(obj)), e, obj);
-  }}(error(set, "invalid set", args), obj(default_(set(), args)));
+  return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
 });
 
 } // namespace api

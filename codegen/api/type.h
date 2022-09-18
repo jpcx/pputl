@@ -35,64 +35,74 @@ namespace api {
 
 inline codegen::category<"type"> type;
 
-// TODO: arr; tup construction from arr; arr construction from tup
-//
-// TODO: mem w/ hint
+// TODO: arr; range; range construction
+// TODO: enum/is_enum word check
+// TODO: update WhitespaceSensitiveMacros during build
+// TODO: word defaults
 
 extern codegen::def<"list(...: list) -> list"> const&                            list;
 extern codegen::def<"none(...: none) -> none"> const&                            none;
-extern codegen::def<"obj(...: obj) -> obj"> const&                               obj;
-extern codegen::def<"atom(...: obj) -> atom"> const&                             atom;
-extern codegen::def<"enum(...: chkprefix: atom, enum<...>) -> enum<...>"> const& enum_;
-extern codegen::def<"bool(...: bool) -> bool"> const&                            bool_;
-extern codegen::def<"idec(...: word) -> idec"> const&                            idec;
-extern codegen::def<"ihex(...: word) -> ihex"> const&                            ihex;
-extern codegen::def<"udec(...: word) -> udec"> const&                            udec;
-extern codegen::def<"uhex(...: word) -> uhex"> const&                            uhex;
-extern codegen::def<"int(...: word, hint=AUTO: enum<IDEC|IHEX|AUTO>) -> int"> const& int_;
-extern codegen::def<"tup(...: tup) -> tup"> const&                                   tup;
-extern codegen::def<"uint(...: word, hint=AUTO: enum<UDEC|UHEX|AUTO>) -> uint"> const&
+extern codegen::def<"object(...: object=0) -> object"> const&                    object;
+extern codegen::def<"tuple(...: range=()) -> tuple"> const&                      tuple;
+extern codegen::def<"atom(...: atom=0) -> atom"> const&                          atom;
+extern codegen::def<"enum(...: v: enum<...>, prefix: atom) -> enum<...>"> const& enum_;
+extern codegen::def<"idec(...: word=0) -> idec"> const&                          idec;
+extern codegen::def<"bool(...: bool=0) -> bool"> const&                          bool_;
+extern codegen::def<"ihex(...: word=0) -> ihex"> const&                          ihex;
+extern codegen::def<"udec(...: word=0) -> udec"> const&                          udec;
+extern codegen::def<"uhex(...: word=0) -> uhex"> const&                          uhex;
+extern codegen::def<"int(...: word=0, hint=AUTO: enum<IDEC,IHEX,AUTO>) -> int"> const&
+    int_;
+extern codegen::def<"uint(...: word=0, hint=AUTO: enum<UDEC,UHEX,AUTO>) -> uint"> const&
     uint;
 extern codegen::def<
-    "word(...: word, hint=AUTO: enum<IDEC|IHEX|UDEC|UHEX|AUTO>) -> word"> const& word;
+    "word(...: word=0, hint=AUTO: enum<IDEC,IHEX,UDEC,UHEX,AUTO>) -> word"> const& word;
 extern codegen::def<
-    "size(...: word, hint=AUTO: enum<IDEC|IHEX|UDEC|UHEX|AUTO>) -> size"> const& size;
+    "size(...: word=0, hint=AUTO: enum<IDEC,IHEX,UDEC,UHEX,AUTO>) -> size"> const& size;
 extern codegen::def<
-    "ofs(...: word, hint=AUTO: enum<IDEC|IHEX|UDEC|UHEX|AUTO>) -> ofs"> const& ofs;
-extern codegen::def<"arr(...: o?: arr|tup) -> arr"> const&                     arr;
-extern codegen::def<"map(...: o?: arr|tup) -> map"> const&                     map;
-extern codegen::def<"set(...: o?: arr|tup) -> set"> const&                     set;
-extern codegen::def<"stack(...: o?: arr|tup) -> stack"> const&                 stack;
-extern codegen::def<"queue(...: o?: arr|tup) -> queue"> const&                 queue;
-extern codegen::def<"pqueue(...: o?: arr|tup) -> pqueue"> const&               pqueue;
-extern codegen::def<"any(...: any) -> any"> const&                             any;
+    "offset(...: word=0, hint=AUTO: enum<IDEC,IHEX,UDEC,UHEX,AUTO>) -> offset"> const&
+                                                            offset;
+extern codegen::def<"array(...: range=()) -> array"> const& array;
+extern codegen::def<
+    "order(...: {order}|{dir?: enum<ASC|DESC>, prefix?: atom}) -> order"> const& order;
+extern codegen::def<"map(...: {map}|{prefix?: atom}) -> map"> const&             map;
+extern codegen::def<"set(...: {set}|{prefix?: atom}) -> set"> const&             set;
+extern codegen::def<"stack(...: range=()) -> stack"> const&                      stack;
+extern codegen::def<"queue(...: range=()) -> queue"> const&                      queue;
+extern codegen::def<"pqueue(...: {pqueue}|{prefix?: atom}) -> pqueue"> const&    pqueue;
+extern codegen::def<
+    "range(...: range=(), hint=AUTO: "
+    "enum<TUPLE|ARRAY|ORDER|MAP|SET|STACK|QUEUE|PQUEUE|AUTO>) -> range"> const& range;
+// extern codegen::def<
+//     "buffer(...: buffer=array(), hint=AUTO: enum<TUPLE|ARRAY|AUTO>) -> buffer"> const&
+//                                                    buffer;
+extern codegen::def<"any(...: any) -> any"> const&                              any;
 
 NIFTY_DECL(list);
 NIFTY_DECL(none);
-NIFTY_DECL(obj);
+NIFTY_DECL(object);
+NIFTY_DECL(tuple);
 NIFTY_DECL(atom);
 NIFTY_DECL(enum_);
-NIFTY_DECL(bool_);
 NIFTY_DECL(idec);
+NIFTY_DECL(bool_);
 NIFTY_DECL(ihex);
 NIFTY_DECL(udec);
 NIFTY_DECL(uhex);
 NIFTY_DECL(int_);
-NIFTY_DECL(tup);
 NIFTY_DECL(uint);
 NIFTY_DECL(word);
 NIFTY_DECL(size);
-NIFTY_DECL(ofs);
-namespace detail {
-extern codegen::def<>& arr_o;
-NIFTY_DECL(arr_o);
-} // namespace detail
-NIFTY_DECL(arr);
+NIFTY_DECL(offset);
+NIFTY_DECL(array);
+NIFTY_DECL(order);
 NIFTY_DECL(map);
 NIFTY_DECL(set);
 NIFTY_DECL(stack);
 NIFTY_DECL(queue);
 NIFTY_DECL(pqueue);
+NIFTY_DECL(range);
+/* NIFTY_DECL(buffer); */
 NIFTY_DECL(any);
 
 inline codegen::end_category<"type"> type_end;

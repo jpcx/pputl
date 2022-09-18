@@ -36,8 +36,7 @@ decltype(is_int_o) is_int_o = NIFTY_DEF(is_int_o);
 }
 
 decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
-  docs << "[extends " + is_idec + "|" + is_ihex
-              + "] detects if args is a signed integer.";
+  docs << "[union is_idec|is_ihex] detects if args is a signed integer.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));

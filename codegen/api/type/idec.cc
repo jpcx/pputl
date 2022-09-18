@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
-  docs << "[" + enum_ + "<0|1|...|" + std::to_string(conf::int_max - 1) + "|"
+  docs << "[extends enum<0|1|...|" + std::to_string(conf::int_max - 1) + "|"
               + std::to_string(conf::int_max) + ">] a positive decimal integer."
        << "constructible from any word within [0, int_max]."
        << ""
@@ -79,7 +79,7 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
                                    detail::is_enum_oo(impl::uhex_prefix, atom)))),
                     e0, e1, atom);
   }}(error(idec, "invalid word", args),
-     error(idec, "idec cannot represent negative words", args), atom(args));
+     error(idec, "idec cannot represent negative words", args), atom(default_(0, args)));
 });
 
 } // namespace api

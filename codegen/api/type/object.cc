@@ -25,35 +25,31 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "type.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
-  docs << "[extends is_list] detects if args is nothing (an empty list).";
+decltype(object) object = NIFTY_DEF(object, [&](va args) {
+  docs << "[extends list] a non-empty list without separators (exactly one thing).";
 
-  tests << is_none("")         = "1" >> docs;
-  tests << is_none("foo")      = "0" >> docs;
-  tests << is_none("foo, bar") = "0" >> docs;
-  tests << is_none(esc())      = "1" >> docs;
-  tests << is_none(", ")       = "0";
-  tests << is_none(", , ")     = "0";
-  tests << is_none("a, ")      = "0";
-  tests << is_none("a, , ")    = "0";
-  tests << is_none(", a")      = "0";
-  tests << is_none(", a, ")    = "0";
-  tests << is_none(", , a")    = "0";
+  tests << object()        = "0" >> docs;
+  tests << object("foo")   = "foo" >> docs;
+  tests << object(".")     = "." >> docs;
+  tests << object("()")    = "()" >> docs;
+  tests << object("foo()") = "foo()" >> docs;
 
-  def<"\\0"> _0 = [] {
-    return "1";
+  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+    return fail(e);
   };
-  def<"\\01">{} = [] {
-    return "0";
+  def<"\\1(e, obj)">{} = [](arg, arg obj) {
+    return obj;
   };
 
-  return pp::cat(_0, pp::va_opt("1"));
+  return def<"o(e, ...)">{[&](arg e, va args) {
+    return pp::call(xcat(utl::slice(_0, -1), is_object(args)), e, args);
+  }}(error(object, "must be exactly one thing", args), default_(0, args));
 });
 
 } // namespace api

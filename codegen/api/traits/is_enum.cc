@@ -37,20 +37,20 @@ decltype(is_enum_oo) is_enum_oo = NIFTY_DEF(is_enum_oo);
 } // namespace detail
 
 decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
-  docs << "[extends " + is_atom + "] detects if args matches a defined enumeration."
-       << "fails if chkprefix is not an atom."
+  docs << "[extends is_atom] detects if args matches a defined enumeration."
        << ""
-       << "to use this function, define a set of"
-       << "macros with the following characteristics:"
-       << " ‐ object-like"
-       << " ‐ common prefix"
-       << " ‐ enum value suffixes"
-       << " ‐ expansion contains a unique word as its first element"
-       << "pass the common prefix as chkprefix."
+       << "to use enums, define two sets of object-like macros with a common prefix:"
+       << " - the first set maps enum key suffixes to unique word values"
+       << " - the second set maps enum value suffixes to the corresponding enum key"
        << ""
-       << "example: (identifying an enum<GOOD|BAD>)"
+       << "note: any mapping macro may include additional data for other purposes;"
+       << "      the library checks the first element only."
+       << ""
+       << "example: (identifying an enum<GOOD,BAD>)"
        << " #define FOO_GOOD 0"
        << " #define FOO_BAD  1"
+       << " #define FOO_0 GOOD"
+       << " #define FOO_1  BAD"
        << " " + is_enum + "(FOO_, BLEH) // 0"
        << " " + is_enum + "(FOO_, GOOD) // 1"
        << " " + is_enum + "(FOO_, ,,,)  // 0";
@@ -61,6 +61,16 @@ decltype(is_enum) is_enum = NIFTY_DEF(is_enum, [&](va args) {
 
   detail::is_enum_o = def{"o(chk_atom, ...)"} = [&](arg chk_atom, va args) {
     detail::is_enum_oo = def{"<o(chk_atom, atom)"} = [&](arg chk_atom, arg atom) {
+      /* return def<"o(...)">{[&](va args) { */
+      /*   def<"\\0(_, ...)"> _0 = [&](arg first, va) { */
+      /*     return ; */
+      /*   }; */
+      /*   def<"\\1(...)">{} = [&](va args) { */
+      /*     return "0"; */
+      /*   }; */
+      /*   return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args); */
+      /* }}(xcat(chk_atom, atom)); */
+
       def<"\\0"> _0 = [&] {
         return "1";
       };

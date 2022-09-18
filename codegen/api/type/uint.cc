@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
-  docs << "[union " + udec + "|" + uhex + "] " + std::to_string(conf::word_size * 4)
-              + "-bit unsigned integer type."
+  docs << "[extends atom; union udec|uhex] an unsigned integer."
        << "constructible from any word type."
        << "instance is either udec or uhex."
        << ""
@@ -65,6 +64,8 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
        << "values above the int max must have a 'u' suffix; implicit interpretation"
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
+
+  tests << uint() = "0u" >> docs;
 
   // idec  → udec | [default]
   tests << uint(0)         = "0u" >> docs;
@@ -187,11 +188,12 @@ decltype(uint) uint = NIFTY_DEF(uint, [&](va args) {
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(xcat(utl::slice(id_id, -5),
-                         mode(e, typeof(v),
-                              enum_(utl::slice(hint_udec, -4), default_("AUTO", hint)))),
-                    v);
-  }}(str(pp::str("[" + uint + "] invalid arguments") + " : " + args), args);
+    return def<"<o(e, v, ...)">{[&](arg e, arg v, va hint) {
+      return pp::call(xcat(utl::slice(id_id, -5),
+                           mode(e, typeof(v), enum_(utl::slice(hint_udec, -4), hint))),
+                      v);
+    }}(e, default_(0, v), default_("AUTO", hint));
+  }}(error(uint, "invalid word", args), args);
 });
 
 } // namespace api

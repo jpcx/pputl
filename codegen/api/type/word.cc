@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(word) word = NIFTY_DEF(word, [&](va args) {
-  docs << "[union " + int_ + "|" + uint + "] any defined integer representation."
+  docs << "[extends atom; union int|uint] any kind of integer."
        << "constructibe from any word type."
        << ""
        << "cannot parse negative decimals; use numeric.neg instead."
@@ -69,6 +69,8 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
        << "values above the int max must have a 'u' suffix; implicit interpretation"
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
+
+  tests << word() = "0" >> docs;
 
   // idec  → idec  | [default]
   tests << word(0)         = "0" >> docs;
@@ -187,11 +189,12 @@ decltype(word) word = NIFTY_DEF(word, [&](va args) {
   };
 
   return def<"o(e, v, ...)">{[&](arg e, arg v, va hint) {
-    return pp::call(xcat(utl::slice(idec, -4),
-                         mode(e, typeof(v),
-                              enum_(utl::slice(hint_idec, -4), default_("AUTO", hint)))),
-                    v);
-  }}(str(pp::str("[" + word + "] invalid arguments") + " : " + args), args);
+    return def<"<o(e, v, ...)">{[&](arg e, arg v, va hint) {
+      return pp::call(xcat(utl::slice(idec, -4),
+                           mode(e, typeof(v), enum_(utl::slice(hint_idec, -4), hint))),
+                      v);
+    }}(e, default_(0, v), default_("AUTO", hint));
+  }}(error(word, "invalid word", args), args);
 });
 
 } // namespace api

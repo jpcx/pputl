@@ -32,60 +32,29 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_array_o)  is_array_o  = NIFTY_DEF(is_array_o);
-decltype(is_array_oo) is_array_oo = NIFTY_DEF(is_array_oo);
+decltype(is_array_o) is_array_o = NIFTY_DEF(is_array_o);
 } // namespace detail
 
 decltype(is_array) is_array = NIFTY_DEF(is_array, [&](va args) {
-  docs << "[extends " + is_object + "] detects if args is a pputl array object."
+  docs << "[extends is_atom] detects if args is a pputl array."
        << "note: does not parse contained items during validity check.";
 
-  tests << is_array()                   = "0" >> docs;
-  tests << is_array("1, 2")             = "0" >> docs;
-  tests << is_array("(a, b)")           = "0" >> docs;
-  tests << is_array(fwd::arr + "()")    = "1" >> docs;
-  tests << is_array(fwd::map + "()")    = "1" >> docs;
-  tests << is_array(fwd::pqueue + "()") = "1" >> docs;
-  tests << is_array(fwd::set + "()")    = "1" >> docs;
-  tests << is_array(fwd::stack + "()")  = "1" >> docs;
-  tests << is_array(fwd::queue + "()")  = "1" >> docs;
+  tests << is_array()                  = "0" >> docs;
+  tests << is_array("1, 2")            = "0" >> docs;
+  tests << is_array("(a, b)")          = "0" >> docs;
+  tests << is_array(fwd::array + "()") = "1" >> docs;
+
+  def chk = def{"chk_\\" + fwd::array + "(...)"} = [&](va) {
+    return "";
+  };
 
   def<"fail(...)"> fail{[&](va) {
     return "0";
   }};
 
-  detail::is_array_o = def{"o(obj)"} = [&](arg obj) {
-    detail::is_array_oo = def{"<o(atom)"} = [&](arg atom) {
-      def arr = def{"\\" + fwd::arr + "(...)"} = [&](va) {
-        return "";
-      };
-      def{"\\" + fwd::map + "(...)"} = [&](va) {
-        return "";
-      };
-      def{"\\" + fwd::pqueue + "(...)"} = [&](va) {
-        return "";
-      };
-      def{"\\" + fwd::set + "(...)"} = [&](va) {
-        return "";
-      };
-      def{"\\" + fwd::stack + "(...)"} = [&](va) {
-        return "";
-      };
-      def{"\\" + fwd::queue + "(...)"} = [&](va) {
-        return "";
-      };
-      return is_none(
-          pp::cat(utl::slice(arr, -(((std::string const&)fwd::arr).size())), atom));
-    };
-
-    def<"\\0"> _0 = [&] {
-      return detail::is_array_oo;
-    };
-    def<"\\1">{} = [&] {
-      return fail;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
+  detail::is_array_o = def{"o(atom)"} = [&](arg atom) {
+    return is_none(
+        pp::cat(utl::slice(chk, -(((std::string const&)fwd::array).size())), atom));
   };
 
   def<"\\0"> _0 = [&] {
@@ -95,7 +64,7 @@ decltype(is_array) is_array = NIFTY_DEF(is_array, [&](va args) {
     return detail::is_array_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

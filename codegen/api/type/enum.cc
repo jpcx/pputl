@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
-  docs << "[inherits from " + atom + "] an atom that matches a specified union."
+  docs << "[extends atom] an atom matching a defined enumeration."
        << ""
        << "to use this function, define a set of"
        << "macros with the following characteristics:"
@@ -61,7 +61,7 @@ decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
       return pp::call(xcat(utl::slice(_0, -1), detail::is_enum_oo(chkatom, vatom)), e,
                       vatom);
     }}(e, atom(chk), atom(v));
-  }}(str(pp::str("[" + enum_ + "] enum validation failure") + " : " + args), args);
+  }}(error(enum_, "invalid enumeration or value mismatch", args), args);
 });
 
 } // namespace api

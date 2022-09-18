@@ -36,22 +36,45 @@ decltype(is_range_o) is_range_o = NIFTY_DEF(is_range_o);
 }
 
 decltype(is_range) is_range = NIFTY_DEF(is_range, [&](va args) {
-  docs << "[extends " + is_tuple + "|" + is_array
-              + "] detects if args is a structured range of any.";
+  docs << "[extends is_object; union is_tuple|is_array|is_map|is_set|is_stack|is_queue].";
 
   tests << is_range()                   = "0" >> docs;
   tests << is_range("foo")              = "0" >> docs;
   tests << is_range("(foo)")            = "1" >> docs;
-  tests << is_range(fwd::arr + "()")    = "1" >> docs;
+  tests << is_range(fwd::array + "()")  = "1" >> docs;
+  tests << is_range(fwd::order + "()")  = "1" >> docs;
   tests << is_range(fwd::map + "()")    = "1" >> docs;
-  tests << is_range(fwd::pqueue + "()") = "1" >> docs;
   tests << is_range(fwd::set + "()")    = "1" >> docs;
   tests << is_range(fwd::stack + "()")  = "1" >> docs;
   tests << is_range(fwd::queue + "()")  = "1" >> docs;
+  tests << is_range(fwd::pqueue + "()") = "1" >> docs;
+
+  def chk_array = def{"chk_\\" + fwd::array + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::order + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::map + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::set + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::stack + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::queue + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::pqueue + "(...)"} = [&](va) {
+    return "";
+  };
 
   detail::is_range_o = def{"o(object)"} = [&](arg object) {
     def<"\\0(atom)"> _0 = [&](arg atom) {
-      return detail::is_array_oo(atom);
+      return is_none(
+          xcat(utl::slice(chk_array, -((std::string const&)fwd::array).size()), atom));
     };
 
     def<"\\1(tuple)">{} = [&](arg) {
@@ -64,7 +87,7 @@ decltype(is_range) is_range = NIFTY_DEF(is_range, [&](va args) {
   def<"fail(...)"> fail{[&](va) {
     return "0";
   }};
-  def<"\\0"> _0 = [&] {
+  def<"\\0">       _0 = [&] {
     return fail;
   };
   def<"\\1">{} = [&] {

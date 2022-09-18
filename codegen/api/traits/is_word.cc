@@ -36,7 +36,7 @@ decltype(is_word_o) is_word_o = NIFTY_DEF(is_word_o);
 }
 
 decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
-  docs << "[extends " + is_int + "|" + is_uint + "] detects if args is an integer.";
+  docs << "[union is_int|is_uint] detects if args is an integer.";
 
   tests << is_word("0")                               = "1" >> docs;
   tests << is_word("0u")                              = "1" >> docs;

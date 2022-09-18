@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(is_object) is_object = NIFTY_DEF(is_object, [&](va args) {
-  docs << "[extends " + is_list + "] detects if args has exactly one element.";
+  docs << "[extends is_list] detects if args has exactly one element.";
 
   tests << is_object("")         = "0" >> docs;
   tests << is_object(",")        = "0" >> docs;

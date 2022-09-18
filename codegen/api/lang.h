@@ -45,13 +45,13 @@ extern codegen::def<"rest(_, ...: first: any, ...rest: any) -> any..."> const&  
 extern codegen::def<"xrest(...: any...) -> any..."> const&                       xrest;
 extern codegen::def<"trim(...: any...) -> any..."> const&                        trim;
 extern codegen::def<"default(...: default: any, ...args: any) -> any..."> const& default_;
-extern codegen::def<"fail(...: msg: obj)"> const&                                fail;
+extern codegen::def<"fail(...: msg=\"unspecified error\": atom)"> const&         fail;
 
 // creates an error string for possible failure
 // see type.any for a simple usage example
 [[nodiscard]] inline std::string
 error(codegen::def_base const& targ, std::string const& msg, codegen::va args) {
-  return str(codegen::pp::str(msg) + " : " + targ(args));
+  return str(targ(args) + " -> <" + msg + ">");
 }
 
 // TODO fmt.hex

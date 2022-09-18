@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "[union " + none + "|" + obj + "] a list with no separatory commas."
-       << "fails if more than one arg.";
+  docs << "[union none|object] nothing or exactly one thing (any arg).";
 
   tests << any()      = "" >> docs;
   tests << any("foo") = "foo" >> docs;
@@ -46,7 +45,7 @@ decltype(any) any = NIFTY_DEF(any, [&](va args) {
   };
 
   return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
-                  error(any, "any cannot describe multiple args", args), args);
+                  error(any, "must be nothing or exactly one thing", args), args);
 });
 
 } // namespace api

@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
-  docs << "[" + enum_ + "<0x" + utl::cat(samp::hmin) + "|" + "0x" + utl::cat(samp::h1)
+  docs << "[extends enum<0x" + utl::cat(samp::hmin) + "|" + "0x" + utl::cat(samp::h1)
               + "|...|" + "0x" + utl::cat(svect{conf::word_size - 1, "F"}) + "E|" + "0x"
               + utl::cat(samp::hmax) + ">] a hexadecimal integer."
        << "constructible from any word within [int_min, int_max].";
@@ -43,6 +43,7 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
   auto umax = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto five = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "5";
 
+  tests << ihex()                                    = zero >> docs;
   tests << ihex(0)                                   = zero >> docs;
   tests << ihex(1)                                   = one >> docs;
   tests << ihex(5u)                                  = five >> docs;
@@ -71,7 +72,7 @@ decltype(ihex) ihex = NIFTY_DEF(ihex, [&](va args) {
                               xcat(detail::is_enum_oo(impl::udec_prefix, atom),
                                    detail::is_enum_oo(impl::uhex_prefix, atom)))),
                     e, atom);
-  }}(error(ihex, "invalid word", args), atom(args));
+  }}(error(ihex, "invalid word", args), atom(default_(0, args)));
 });
 
 } // namespace api

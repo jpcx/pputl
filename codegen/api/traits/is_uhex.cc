@@ -36,8 +36,8 @@ decltype(is_uhex_o) is_uhex_o = NIFTY_DEF(is_uhex_o);
 }
 
 decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](va args) {
-  docs << "[extends " + is_enum + "] detects if args is an enum<" + "0x"
-              + utl::cat(samp::hmin) + "u|" + "0x" + utl::cat(samp::h1) + "u|...|" + "0x"
+  docs << "[extends is_enum] detects if args is an enum<0x" + utl::cat(samp::hmin) + "u|"
+              + "0x" + utl::cat(samp::h1) + "u|...|" + "0x"
               + utl::cat(svect{conf::word_size - 1, "F"}) + "Eu|" + "0x"
               + utl::cat(samp::hmax) + "u>.";
 

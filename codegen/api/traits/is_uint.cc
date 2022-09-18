@@ -36,8 +36,7 @@ decltype(is_uint_o) is_uint_o = NIFTY_DEF(is_uint_o);
 }
 
 decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va args) {
-  docs << "[extends " + is_udec + "|" + is_uhex
-              + "] detects if args is an unsigned integer.";
+  docs << "[union is_udec|is_uhex] detects if args is an unsigned integer.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));

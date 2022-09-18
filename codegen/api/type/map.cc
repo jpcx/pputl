@@ -32,33 +32,35 @@ namespace api {
 using namespace codegen;
 
 decltype(map) map = NIFTY_DEF(map, [&](va args) {
-  docs << "[inherits from " + arr + "] a sorted mapping of words to elements."
-       << "overloads: map(arr), map(size, tup), map(tup...)."
+  docs << "[extends atom] a sorted map of words or enums to any."
+       << "provide a prefix to use enums as keys instead of words."
        << ""
-       << "elements are stored as key/value pairs in sorted order; construction from"
-       << "list or tuple assumes the inputs are valid (word, any) pairs in sorted order."
+       << "see [range] for available operations."
        << ""
-       << "resultant object is an expansion-terminated self-reference."
-       << ""
-       << "note: constructor never fails. construction from existing array type"
-       << "      assumes that the contained structure is valid, construction from"
-       << "      explicit size assumes size is valid, and any inputs that do not"
-       << "      match any other constructor fallback to list construction.";
+       << "items are stored as (key, value) pairs sorted in ascending order by key."
+       << "resultant atom is an expansion-terminated self-reference.";
 
-  tests << map()      = map() >> docs;
-  tests << map(map()) = map() >> docs;
+  tests << xstr(map())            = pp::str(map("0u", "", pp::tup())) >> docs;
+  tests << xstr(map("ENUM_FOO_")) = pp::str(map("0u", "ENUM_FOO_", pp::tup())) >> docs;
+  tests << xstr(map(map()))       = pp::str(map("0u", "", pp::tup())) >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"\\0(...)"> _0 = [&](va args) {
+    def<"\\0(prefix)"> _0 = [&](arg prefix) {
+      return map("0u", prefix, pp::tup());
+    };
+
+    def<"\\1(map)">{} = [&](arg map) {
+      return map;
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), is_map(args)), atom(args));
   };
 
-  def<"\\1(e, map)">{} = [](arg, arg map) {
-    return map;
+  def<"\\1(...)">{} = [&](va) {
+    return map("0u", "", pp::tup());
   };
 
-  return def<"o(e, obj)">{[&](arg e, arg obj) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_map_o(obj)), e, obj);
-  }}(error(map, "invalid map", args), obj(default_(map(), args)));
+  return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
 });
 
 } // namespace api

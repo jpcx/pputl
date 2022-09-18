@@ -36,7 +36,7 @@ decltype(is_tuple_o) is_tuple_o = NIFTY_DEF(is_tuple_o);
 }
 
 decltype(is_tuple) is_tuple = NIFTY_DEF(is_tuple, [&](va args) {
-  docs << "[extends " + is_object + "] detects if args is a tuple (parenthesized list).";
+  docs << "[extends is_object] detects if args is a tuple (parenthesized list).";
 
   tests << is_tuple()                 = "0" >> docs;
   tests << is_tuple("1, 2")           = "0" >> docs;

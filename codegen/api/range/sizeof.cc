@@ -52,7 +52,7 @@ decltype(sizeof_) sizeof_ = NIFTY_DEF(sizeof_, [&](va args) {
   tests << sizeof_("(, a, )") = "3u";
   tests << sizeof_("(, , a)") = "3u";
 
-  return esc(countof + " " + tup(args));
+  return esc(countof + " " + tuple(args));
 });
 
 } // namespace api

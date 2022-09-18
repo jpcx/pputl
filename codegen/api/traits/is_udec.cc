@@ -36,7 +36,7 @@ decltype(is_udec_o) is_udec_o = NIFTY_DEF(is_udec_o);
 }
 
 decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
-  docs << "[extends " + is_enum + "] detects if args is an enum<0u|1u|...|"
+  docs << "[extends is_enum] detects if args is an enum<0u|1u|...|"
               + std::to_string(conf::uint_max - 1) + "u|" + std::to_string(conf::uint_max)
               + "u>.";
 

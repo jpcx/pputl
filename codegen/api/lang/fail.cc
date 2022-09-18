@@ -38,7 +38,7 @@ decltype(fail) fail = NIFTY_DEF(fail, [&](va args) {
        << "usage: " + fail("\"something bad happened\"")
        << "       " + fail(str("[myfun] invalid args : __VA_ARGS__"));
 
-  return pp::cat(fail, args);
+  return xcat(fail, default_(pp::str("unspecified error"), args));
 });
 
 } // namespace api

@@ -32,16 +32,20 @@ namespace api {
 using namespace codegen;
 
 decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
-  docs << "detects the most appropriate value type."
+  docs << "determines the most appropriate value type."
        << ""
-       << "warn: must be one of the defined value types."
-       << "      inputs such as `-`, `\"`, `foo()`, etc., are not"
-       << "      detectable and will cause an unexpected pp error."
+       << "results can be used with constructors that support type hints;"
+       << "see the math and bitwise implementations for examples."
+       << ""
+       << "warning: must be one of the defined value types. inputs"
+       << "         such as `-`, `\"`, etc., are not detectable and"
+       << "         will trigger an unexpected concatenation error."
        << ""
        << "returns one of:"
        << ""
-       << " | NONE  | LIST  | TUPLE | ARRAY | MAP  | PQUEUE | SET"
-       << " | STACK | QUEUE | ATOM  | IDEC  | IHEX | UDEC   | UHEX";
+       << " | NONE | LIST   | TUPLE | ARRAY | ORDER"
+       << " | MAP  | PQUEUE | SET   | STACK | QUEUE"
+       << " | ATOM | IDEC   | IHEX  | UDEC  | UHEX";
 
   auto ihexneg1 = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto ubinmax  = ihexneg1 + "u";
@@ -57,7 +61,8 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
   tests << typeof("001")              = "ATOM" >> docs;
   tests << typeof("foo, bar")         = "LIST" >> docs;
   tests << typeof()                   = "NONE" >> docs;
-  tests << typeof(fwd::arr + "()")    = "ARRAY" >> docs;
+  tests << typeof(fwd::array + "()")  = "ARRAY" >> docs;
+  tests << typeof(fwd::order + "()")  = "ORDER" >> docs;
   tests << typeof(fwd::map + "()")    = "MAP" >> docs;
   tests << typeof(fwd::pqueue + "()") = "PQUEUE" >> docs;
   tests << typeof(fwd::set + "()")    = "SET" >> docs;
@@ -78,8 +83,8 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
       def<"\\0(atom)"> _0 = [&](arg atom) {
         docs << "^!none → obj → !tuple";
 
-        def<"\\0(atom)"> _0 = [&](arg atom) {
-          docs << "^!none → obj → !tuple → !array";
+        def<"\\0000000(atom)"> _0000000 = [&](arg atom) {
+          docs << "^!none → obj → !tuple → !(array|map|set|stack|queue|pqueue)";
 
           def<"\\0000"> _0000 = [&] {
             return "ATOM";
@@ -102,32 +107,40 @@ decltype(typeof) typeof = NIFTY_DEF(typeof, [&](va args) {
                            xcat(detail::is_udec_o(atom), detail::is_uhex_o(atom))));
         };
 
-        def<"\\1(array)">{} = [&](arg array) {
-          docs << "^!none → obj → !tuple → array";
-
-          def arr = def{"\\" + fwd::arr + "(...)"} = [&](va) {
-            return "ARRAY";
-          };
-          def{"\\" + fwd::map + "(...)"} = [&](va) {
-            return "MAP";
-          };
-          def{"\\" + fwd::pqueue + "(...)"} = [&](va) {
-            return "PQUEUE";
-          };
-          def{"\\" + fwd::set + "(...)"} = [&](va) {
-            return "SET";
-          };
-          def{"\\" + fwd::stack + "(...)"} = [&](va) {
-            return "STACK";
-          };
-          def{"\\" + fwd::queue + "(...)"} = [&](va) {
-            return "QUEUE";
-          };
-
-          return pp::cat(utl::slice(arr, -((std::string const&)fwd::arr).size()), array);
+        def<"\\0000001(pqueue)">{} = [&](arg) {
+          return "PQUEUE";
         };
 
-        return pp::call(xcat(utl::slice(_0, -1), detail::is_array_oo(atom)), atom);
+        def<"\\0000010(queue)">{} = [&](arg) {
+          return "QUEUE";
+        };
+
+        def<"\\0000100(stack)">{} = [&](arg) {
+          return "STACK";
+        };
+
+        def<"\\0001000(set)">{} = [&](arg) {
+          return "SET";
+        };
+
+        def<"\\0010000(map)">{} = [&](arg) {
+          return "MAP";
+        };
+
+        def<"\\0100000(order)">{} = [&](arg) {
+          return "ORDER";
+        };
+
+        def<"\\1000000(array)">{} = [&](arg) {
+          return "ARRAY";
+        };
+
+        return pp::call(
+            xcat(xcat(xcat(utl::slice(_0000000, -7), detail::is_array_o(atom)),
+                      xcat(detail::is_order_o(atom), detail::is_map_o(atom))),
+                 xcat(xcat(detail::is_set_o(atom), detail::is_stack_o(atom)),
+                      xcat(detail::is_queue_o(atom), detail::is_pqueue_o(atom)))),
+            atom);
       };
 
       def<"\\1(tuple)">{} = [&](arg) {

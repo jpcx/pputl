@@ -25,30 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(tup) tup = NIFTY_DEF(tup, [&](va args) {
-  docs << "[inherits from " + obj + "] tuple type (parenthesized list)."
-       << "expands to t if valid, else fails.";
+namespace detail {
+decltype(is_order_o) is_order_o = NIFTY_DEF(is_order_o);
+} // namespace detail
 
-  tests << tup(pp::tup())     = "()" >> docs;
-  tests << tup(pp::tup(1, 2)) = "(1, 2)" >> docs;
+decltype(is_order) is_order = NIFTY_DEF(is_order, [&](va args) {
+  docs << "[extends is_atom] detects if args is a pputl sorted sequence."
+       << "note: does not parse contained items during validity check.";
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  tests << is_order()                  = "0" >> docs;
+  tests << is_order("1, 2")            = "0" >> docs;
+  tests << is_order("(a, b)")          = "0" >> docs;
+  tests << is_order(fwd::order + "()") = "1" >> docs;
+
+  def chk = def{"chk_\\" + fwd::order + "(...)"} = [&](va) {
+    return "";
   };
-  def<"\\1(e, tup)">{} = [](arg, arg tup) {
-    return tup;
+
+  def<"fail(...)"> fail{[&](va) {
+    return "0";
+  }};
+
+  detail::is_order_o = def{"o(atom)"} = [&](arg atom) {
+    return is_none(
+        pp::cat(utl::slice(chk, -(((std::string const&)fwd::order).size())), atom));
   };
 
-  return def<"o(e, obj)">{[&](arg e, arg obj) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), e, obj);
-  }}(str(pp::str("[" + tup + "] tuple must be wrapped in parentheses") + " : " + args),
-     obj(args));
+  def<"\\0"> _0 = [&] {
+    return fail;
+  };
+  def<"\\1">{} = [&] {
+    return detail::is_order_o;
+  };
+
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
-  docs << "[" + enum_ + "<0|1>] boolean type.";
+  docs << "[extends idec; extends enum<0|1>] boolean type.";
 
   tests << bool_(0) = "0" >> docs;
   tests << bool_(1) = "1" >> docs;
@@ -46,10 +46,7 @@ decltype(bool_) bool_ = NIFTY_DEF(bool_, [&](va args) {
 
   return def<"o(e, atom)">{[&](arg e, arg atom) {
     return pp::call(xcat(utl::slice(_0, -1), is_bool(atom)), e, atom);
-  }}(str(pp::str("[" + bool_
-                 + "] bool cannot describe anything but the literal '1' and '0'")
-         + " : " + args),
-     atom(args));
+  }}(error(bool_, "invalid boolean", args), atom(default_(0, args)));
 });
 
 } // namespace api

@@ -111,3 +111,4 @@ SpacesInSquareBrackets                    : false
 Standard                                  : c++20
 TabWidth                                  : 2
 UseTab                                    : Never
+WhitespaceSensitiveMacros                 : ["PTL_STR", "PTL_XSTR"]

@@ -32,12 +32,11 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_pqueue_o)  is_pqueue_o  = NIFTY_DEF(is_pqueue_o);
-decltype(is_pqueue_oo) is_pqueue_oo = NIFTY_DEF(is_pqueue_oo);
+decltype(is_pqueue_o) is_pqueue_o = NIFTY_DEF(is_pqueue_o);
 } // namespace detail
 
 decltype(is_pqueue) is_pqueue = NIFTY_DEF(is_pqueue, [&](va args) {
-  docs << "[extends " + is_object + "] detects if args is a pputl priority queue object.";
+  docs << "[extends is_atom] detects if args is a pputl priority queue.";
 
   tests << is_pqueue()                   = "0" >> docs;
   tests << is_pqueue("1, 2")             = "0" >> docs;
@@ -51,20 +50,9 @@ decltype(is_pqueue) is_pqueue = NIFTY_DEF(is_pqueue, [&](va args) {
     return "0";
   }};
 
-  detail::is_pqueue_o = def{"o(obj)"} = [&](arg obj) {
-    detail::is_pqueue_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
-      return is_none(
-          pp::cat(utl::slice(chk, -(((std::string const&)fwd::pqueue).size())), obj));
-    };
-
-    def<"\\0"> _0 = [&] {
-      return detail::is_pqueue_oo;
-    };
-    def<"\\1">{} = [&] {
-      return fail;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
+  detail::is_pqueue_o = def{"o(atom)"} = [&](arg atom) {
+    return is_none(
+        pp::cat(utl::slice(chk, -(((std::string const&)fwd::pqueue).size())), atom));
   };
 
   def<"\\0"> _0 = [&] {
@@ -74,7 +62,7 @@ decltype(is_pqueue) is_pqueue = NIFTY_DEF(is_pqueue, [&](va args) {
     return detail::is_pqueue_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

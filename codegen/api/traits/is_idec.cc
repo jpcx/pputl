@@ -39,7 +39,7 @@ decltype(is_idec_o) is_idec_o = NIFTY_DEF(is_idec_o);
 }
 
 decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
-  docs << "[extends " + is_enum + "] detects if args is an enum<0|1|...|"
+  docs << "[extends is_enum] detects if args is an enum<0|1|...|"
               + std::to_string(conf::int_max - 1) + "|" + std::to_string(conf::int_max)
               + ">.";
 
@@ -55,7 +55,7 @@ decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](va args) {
   tests << is_idec("(), ()")       = "0" >> docs;
 
   detail::is_idec_o = def{"o(atom)"} = [&](arg atom) {
-    return def<"o(atom)">{[&](arg atom) {
+    return def<"<o(atom)">{[&](arg atom) {
       def<"\\0(atom)"> _0 = [&](arg) {
         return "0";
       };

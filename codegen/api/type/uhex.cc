@@ -32,9 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
-  docs << "[" + enum_ + "<" + "0x" + utl::cat(samp::hmin) + "u|" + "0x"
-              + utl::cat(samp::h1) + "u|...|" + "0x"
-              + utl::cat(svect{conf::word_size - 1, "F"}) + "Eu|" + "0x"
+  docs << "[extends enum<0x" + utl::cat(samp::hmin) + "u|" + "0x" + utl::cat(samp::h1)
+              + "u|...|" + "0x" + utl::cat(svect{conf::word_size - 1, "F"}) + "Eu|" + "0x"
               + utl::cat(samp::hmax) + "u>] an unsigned hexadecimal integer.";
 
   auto min  = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0")) + "u";
@@ -43,6 +42,7 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
   auto imax = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto five = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "5u";
 
+  tests << uhex()           = min >> docs;
   tests << uhex(0)          = min >> docs;
   tests << uhex(1u)         = one >> docs;
   tests << uhex(5)          = five >> docs;
@@ -73,7 +73,7 @@ decltype(uhex) uhex = NIFTY_DEF(uhex, [&](va args) {
                               xcat(detail::is_enum_oo(impl::udec_prefix, atom),
                                    detail::is_enum_oo(impl::uhex_prefix, atom)))),
                     e, atom);
-  }}(error(uhex, "invalid word", args), atom(args));
+  }}(error(uhex, "invalid word", args), atom(default_(0, args)));
 });
 
 } // namespace api

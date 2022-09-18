@@ -25,35 +25,40 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
-  docs << "[extends is_list] detects if args is nothing (an empty list).";
+decltype(sized_items) sized_items = NIFTY_DEF(sized_items, [&](arg v) {
+  docs << "[internal] extracts the size and items from a pputl datastructure.";
 
-  tests << is_none("")         = "1" >> docs;
-  tests << is_none("foo")      = "0" >> docs;
-  tests << is_none("foo, bar") = "0" >> docs;
-  tests << is_none(esc())      = "1" >> docs;
-  tests << is_none(", ")       = "0";
-  tests << is_none(", , ")     = "0";
-  tests << is_none("a, ")      = "0";
-  tests << is_none("a, , ")    = "0";
-  tests << is_none(", a")      = "0";
-  tests << is_none(", a, ")    = "0";
-  tests << is_none(", , a")    = "0";
-
-  def<"\\0"> _0 = [] {
-    return "1";
+  def array_ = def{"\\" + fwd::array + "(sz, items)"} = [&](arg sz, arg items) {
+    return sz + ", " + items;
   };
-  def<"\\01">{} = [] {
-    return "0";
+  def{"\\" + fwd::order + "(sz, dir, pre, items)"} = [&](arg sz, arg, arg, arg items) {
+    return sz + ", " + items;
+  };
+  def{"\\" + fwd::map + "(sz, pre, items)"} = [&](arg sz, arg, arg items) {
+    return sz + ", " + items;
+  };
+  def{"\\" + fwd::set + "(sz, pre, items)"} = [&](arg sz, arg, arg items) {
+    return sz + ", " + items;
+  };
+  def{"\\" + fwd::stack + "(sz, items)"} = [&](arg sz, arg items) {
+    return sz + ", " + items;
+  };
+  def{"\\" + fwd::queue + "(sz, items)"} = [&](arg sz, arg items) {
+    return sz + ", " + items;
+  };
+  def{"\\" + fwd::pqueue + "(sz, pre, items)"} = [&](arg sz, arg, arg items) {
+    return sz + ", " + items;
   };
 
-  return pp::cat(_0, pp::va_opt("1"));
+  return pp::cat(utl::slice(array_, -((std::string const&)fwd::array).size()), v);
 });
 
+} // namespace impl
 } // namespace api

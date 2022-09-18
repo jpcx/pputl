@@ -53,7 +53,7 @@ decltype(index) index = NIFTY_DEF(index, [&](va args) {
   tests << index(5, neg(5))    = "0" >> docs;
 
   return def<"o(e, sz, i)">{[&](arg e, arg sz, arg i) {
-    return ofs(impl::index(uhex(i), is_int(i), uhex(sz), e), typeof(sz));
+    return offset(impl::index(uhex(i), is_int(i), uhex(sz), e), typeof(sz));
   }}(error(index, "index out of bounds", args), args);
 });
 

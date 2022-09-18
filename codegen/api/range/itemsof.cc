@@ -49,7 +49,7 @@ decltype(itemsof) itemsof = NIFTY_DEF(itemsof, [&](va args) {
 
   return def<"x(...)">{[&](va args) {
     return esc + " " + args;
-  }}(tup(args));
+  }}(tuple(args));
 });
 
 } // namespace api

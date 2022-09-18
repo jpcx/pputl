@@ -32,8 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(size) size = NIFTY_DEF(size, [&](va args) {
-  docs << "[inherits from " + word + "] any non-negative word up to " + size_max + " ("
-              + size_max_s + ")."
+  docs << "[extends word] a non-negative word up to size_max."
        << "constructibe from any word type."
        << ""
        << "cannot parse negative decimals; use numeric.neg instead."
@@ -49,6 +48,7 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
               + " is not a valid integer).";
 
+  tests << size()                          = "0" >> docs;
   tests << size(0)                         = "0" >> docs;
   tests << size(1)                         = "1" >> docs;
   tests << size("0x" + utl::cat(samp::h7)) = ("0x" + utl::cat(samp::h7)) >> docs;
@@ -63,10 +63,8 @@ decltype(size) size = NIFTY_DEF(size, [&](va args) {
     };
 
     return pp::call(xcat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
-  }}(str(pp::str("[" + size + "] invalid size; must be within 0 and " + size_max + " ("
-                 + size_max_s + ")")
-         + " : " + args),
-     word(args));
+  }}(error(size, "must be a non-negative word up to size_max", args),
+     word(default_(0, args)));
 });
 
 } // namespace api

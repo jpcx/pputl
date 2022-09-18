@@ -32,12 +32,11 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_set_o)  is_set_o  = NIFTY_DEF(is_set_o);
-decltype(is_set_oo) is_set_oo = NIFTY_DEF(is_set_oo);
+decltype(is_set_o) is_set_o = NIFTY_DEF(is_set_o);
 } // namespace detail
 
 decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
-  docs << "[extends " + is_object + "] detects if args is a pputl set object.";
+  docs << "[extends is_atom] detects if args is a pputl set.";
 
   tests << is_set()                = "0" >> docs;
   tests << is_set("1, 2")          = "0" >> docs;
@@ -51,20 +50,9 @@ decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
     return "0";
   }};
 
-  detail::is_set_o = def{"o(obj)"} = [&](arg obj) {
-    detail::is_set_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
-      return is_none(
-          pp::cat(utl::slice(chk, -(((std::string const&)fwd::set).size())), obj));
-    };
-
-    def<"\\0"> _0 = [&] {
-      return detail::is_set_oo;
-    };
-    def<"\\1">{} = [&] {
-      return fail;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
+  detail::is_set_o = def{"o(atom)"} = [&](arg atom) {
+    return is_none(
+        pp::cat(utl::slice(chk, -(((std::string const&)fwd::set).size())), atom));
   };
 
   def<"\\0"> _0 = [&] {
@@ -74,7 +62,7 @@ decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
     return detail::is_set_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

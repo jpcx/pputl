@@ -36,8 +36,7 @@ decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
 }
 
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
-  docs << "[extends " + is_object
-              + "] detects if args is a sequence of digit|nondigit tokens."
+  docs << "[extends is_object] detects if args is a sequence of digit|nondigit tokens."
        << ""
        << "this function only tests for nothing, tuples, and multiple values."
        << ""

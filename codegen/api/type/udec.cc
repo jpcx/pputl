@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
-  docs << "[" + enum_ + "<0u|1u|...|" + std::to_string(conf::uint_max - 1) + "u|"
+  docs << "[extends enum<0u|1u|...|" + std::to_string(conf::uint_max - 1) + "u|"
               + std::to_string(conf::uint_max) + "u>] an unsigned decimal integer.";
 
   auto min  = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0")) + "u";
@@ -41,6 +41,7 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
   auto in1  = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
   auto five = "0x" + utl::cat(std::vector<std::string>(conf::word_size - 1, "0")) + "5u";
 
+  tests << udec()     = "0u" >> docs;
   tests << udec(min)  = "0u" >> docs;
   tests << udec(1)    = "1u" >> docs;
   tests << udec(5u)   = "5u" >> docs;
@@ -70,7 +71,7 @@ decltype(udec) udec = NIFTY_DEF(udec, [&](va args) {
                               xcat(detail::is_enum_oo(impl::udec_prefix, atom),
                                    detail::is_enum_oo(impl::uhex_prefix, atom)))),
                     e, atom);
-  }}(error(udec, "invalid word", args), atom(args));
+  }}(error(udec, "invalid word", args), atom(default_(0, args)));
 });
 
 } // namespace api

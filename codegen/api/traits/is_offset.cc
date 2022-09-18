@@ -37,8 +37,7 @@ decltype(is_offset_o) is_offset_o = NIFTY_DEF(is_offset_o);
 }
 
 decltype(is_offset) is_offset = NIFTY_DEF(is_offset, [&](va args) {
-  docs << "[extends " + is_word
-              + "] detects if args is any word whose abs is a valid size.";
+  docs << "[extends is_word] detects if args is any word whose abs is a valid size.";
 
   constexpr auto size_lt_max = conf::word_size > 2 and conf::cpp20_arglimit;
 

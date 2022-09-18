@@ -32,12 +32,11 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_map_o)  is_map_o  = NIFTY_DEF(is_map_o);
-decltype(is_map_oo) is_map_oo = NIFTY_DEF(is_map_oo);
+decltype(is_map_o) is_map_o = NIFTY_DEF(is_map_o);
 } // namespace detail
 
 decltype(is_map) is_map = NIFTY_DEF(is_map, [&](va args) {
-  docs << "[extends " + is_object + "] detects if args is a pputl map object."
+  docs << "[extends is_atom] detects if args is a pputl map."
        << "note: does not parse contained items during validity check.";
 
   tests << is_map()                = "0" >> docs;
@@ -52,20 +51,9 @@ decltype(is_map) is_map = NIFTY_DEF(is_map, [&](va args) {
     return "0";
   }};
 
-  detail::is_map_o = def{"o(obj)"} = [&](arg obj) {
-    detail::is_map_oo = def{"<o(obj: <non tuple>)"} = [&](arg obj) {
-      return is_none(
-          pp::cat(utl::slice(chk, -(((std::string const&)fwd::map).size())), obj));
-    };
-
-    def<"\\0"> _0 = [&] {
-      return detail::is_map_oo;
-    };
-    def<"\\1">{} = [&] {
-      return fail;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), obj);
+  detail::is_map_o = def{"o(atom)"} = [&](arg atom) {
+    return is_none(
+        pp::cat(utl::slice(chk, -(((std::string const&)fwd::map).size())), atom));
   };
 
   def<"\\0"> _0 = [&] {
@@ -75,7 +63,7 @@ decltype(is_map) is_map = NIFTY_DEF(is_map, [&](va args) {
     return detail::is_map_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
 });
 
 } // namespace api

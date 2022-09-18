@@ -28,6 +28,7 @@
 
 #include "codegen.h"
 #include "config.h"
+#include "fwd.h"
 #include "lang.h"
 //
 #include "impl/traits/detail.h"
@@ -60,12 +61,14 @@ extern std::conditional_t<
     codegen::def<
         "udec(v, t: enum<0u|1u|...>, enum<UHEX|IOFS|UOFS|LOG2|SQRT|FACT>)">> const& udec;
 extern codegen::def<"uhex(v, t: enum<...>, enum<UDEC|IHEX|ICAST|ILTZ|BNOT|HDUMP>)"> const&
-                                                                         uhex;
+                                                                 uhex;
 extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX>, "
-                    "enum<IDEC|IHEX|UDEC|UHEX>)"> const&                 arithhint;
+                    "enum<IDEC|IHEX|UDEC|UHEX>)"> const&         arithhint;
 extern codegen::def<"xarithhint(...: enum<IDEC|IHEX|UDEC|UHEX>, "
-                    "enum<IDEC|IHEX|UDEC|UHEX>)"> const&                 xarithhint;
-extern codegen::def<"hex_cat(...: enum<0|1|...|E|F>...) -> uhex"> const& hex_cat;
+                    "enum<IDEC|IHEX|UDEC|UHEX>)"> const&         xarithhint;
+extern codegen::def<"hex_cat(...: enum<0|1|...|E|F>...)"> const& hex_cat;
+extern codegen::def<"sized_items(v: array|map|set|stack|queue|pqueue)"> const&
+    sized_items;
 
 NIFTY_DECL(hex_prefix);
 NIFTY_DECL(nybl_prefix);
@@ -79,6 +82,7 @@ NIFTY_DECL(uhex);
 NIFTY_DECL(arithhint);
 NIFTY_DECL(xarithhint);
 NIFTY_DECL(hex_cat);
+NIFTY_DECL(sized_items);
 
 inline codegen::end_category<"impl.traits"> traits_end;
 

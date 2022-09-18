@@ -32,37 +32,57 @@ namespace api {
 using namespace codegen;
 
 namespace detail {
-decltype(is_queue_o) is_queue_o = NIFTY_DEF(is_queue_o);
-} // namespace detail
+decltype(is_buffer_o) is_buffer_o = NIFTY_DEF(is_buffer_o);
+}
 
-decltype(is_queue) is_queue = NIFTY_DEF(is_queue, [&](va args) {
-  docs << "[extends is_atom] detects if args is a pputl queue.";
+decltype(is_buffer) is_buffer = NIFTY_DEF(is_buffer, [&](va args) {
+  docs << "[extends is_range; union is_tuple|is_array|is_stack|is_queue]";
 
-  tests << is_queue()                  = "0" >> docs;
-  tests << is_queue("1, 2")            = "0" >> docs;
-  tests << is_queue(fwd::queue + "()") = "1" >> docs;
+  tests << is_buffer()                   = "0" >> docs;
+  tests << is_buffer("foo")              = "0" >> docs;
+  tests << is_buffer("(foo)")            = "1" >> docs;
+  tests << is_buffer(fwd::array + "()")  = "1" >> docs;
+  tests << is_buffer(fwd::order + "()")  = "0" >> docs;
+  tests << is_buffer(fwd::map + "()")    = "0" >> docs;
+  tests << is_buffer(fwd::set + "()")    = "0" >> docs;
+  tests << is_buffer(fwd::stack + "()")  = "1" >> docs;
+  tests << is_buffer(fwd::queue + "()")  = "1" >> docs;
+  tests << is_buffer(fwd::pqueue + "()") = "0" >> docs;
 
-  def chk = def{"chk_\\" + fwd::queue + "(...)"} = [&](va) {
+  def chk_array = def{"chk_\\" + fwd::array + "(...)"} = [&](va) {
     return "";
+  };
+  def{"chk_\\" + fwd::stack + "(...)"} = [&](va) {
+    return "";
+  };
+  def{"chk_\\" + fwd::queue + "(...)"} = [&](va) {
+    return "";
+  };
+
+  detail::is_buffer_o = def{"o(object)"} = [&](arg object) {
+    def<"\\0(atom)"> _0 = [&](arg atom) {
+      return is_none(
+          xcat(utl::slice(chk_array, -((std::string const&)fwd::array).size()), atom));
+    };
+
+    def<"\\1(tuple)">{} = [&](arg) {
+      return "1";
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), object);
   };
 
   def<"fail(...)"> fail{[&](va) {
     return "0";
   }};
-
-  detail::is_queue_o = def{"o(atom)"} = [&](arg atom) {
-    return is_none(
-        pp::cat(utl::slice(chk, -(((std::string const&)fwd::queue).size())), atom));
-  };
-
-  def<"\\0"> _0 = [&] {
+  def<"\\0">       _0 = [&] {
     return fail;
   };
   def<"\\1">{} = [&] {
-    return detail::is_queue_o;
+    return detail::is_buffer_o;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
 });
 
 } // namespace api

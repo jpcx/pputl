@@ -32,24 +32,44 @@ namespace api {
 using namespace codegen;
 
 decltype(stack) stack = NIFTY_DEF(stack, [&](va args) {
-  docs << "[inherits from " + obj + "] a LIFO stack of lists."
-       << "optionally provide arguments to make a type assertion."
+  docs << "[extends atom] a LIFO stack."
+       << "see [range] for available operations."
        << ""
-       << "note: does not parse contained items during validity check.";
+       << "items are stored in insertion order from newest to oldest."
+       << "resultant atom is an expansion-terminated self-reference."
+       << ""
+       << "note: prefix is discarded when constructing"
+       << "      from map and set; only items are copied.";
 
-  tests << stack()        = stack() >> docs;
-  tests << stack(stack()) = stack() >> docs;
+  tests << xstr(stack())          = pp::str(stack("0u", pp::tup())) >> docs;
+  tests << xstr(stack(pp::tup())) = pp::str(stack("0u", pp::tup())) >> docs;
+  tests << xstr(stack(pp::tup('a', 'b'))) =
+      pp::str(stack("2u", pp::tup('a', 'b'))) >> docs;
+  tests << xstr(stack(stack(pp::tup("foo", "bar")))) =
+      pp::str(stack("2u", pp::tup("foo", "bar"))) >> docs;
+  tests << xstr(stack(fwd::set + pp::tup())) = pp::str(stack("0u", pp::tup())) >> docs;
+  tests << xstr(stack(fwd::map + pp::tup("ENUM_FOO_"))) =
+      pp::str(stack("0u", pp::tup())) >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"\\0(e, atom)"> _0 = [&](arg e, arg atom) {
+    def<"\\0(e, atom)"> _0 = [&](arg e, arg) {
+      return fail(e);
+    };
+
+    def<"\\1(e, range)">{} = [&](arg, arg range) {
+      return stack(impl::sized_items(range));
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_range_o(atom)), e, atom);
   };
-  def<"\\1(e, stack)">{} = [](arg, arg stack) {
-    return stack;
+
+  def<"\\1(e, tuple)">{} = [&](arg, arg tuple) {
+    return stack(countof + " " + tuple, tuple);
   };
 
-  return def<"o(e, obj)">{[&](arg e, arg obj) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_stack_o(obj)), e, obj);
-  }}(error(stack, "invalid stack", args), obj(default_(stack(), args)));
+  return def<"o(e, object)">{[&](arg e, arg object) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), e, object);
+  }}(error(stack, "invalid range", args), object(default_(pp::tup(), args)));
 });
 
 } // namespace api

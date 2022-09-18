@@ -31,20 +31,34 @@ namespace api {
 
 using namespace codegen;
 
-decltype(obj) obj = NIFTY_DEF(obj, [&](va args) {
-  docs << "[inherits from " + list + "] a list with exactly one element.";
+decltype(tuple) tuple = NIFTY_DEF(tuple, [&](va args) {
+  docs << "[extends object] a parenthesized list."
+       << "constructibe from any range.";
 
-  tests << obj("foo") = "foo" >> docs;
+  tests << tuple()                                  = "()" >> docs;
+  tests << tuple(pp::tup())                         = "()" >> docs;
+  tests << tuple(pp::tup(1, 2))                     = "(1, 2)" >> docs;
+  tests << tuple(fwd::array + pp::tup("(a, b, c)")) = "(a, b, c)" >> docs;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"\\0(e, atom)"> _0 = [](arg e, arg atom) {
+    def<"\\0(e, ...)"> _0 = [](arg e, va) {
+      return fail(e);
+    };
+
+    def<"\\1(e, range)">{} = [](arg, arg range) {
+      return xrest(impl::sized_items(range));
+    };
+
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_range_o(atom)), e, atom);
   };
-  def<"\\1(e, obj)">{} = [](arg, arg obj) {
-    return obj;
+
+  def<"\\1(e, tup)">{} = [](arg, arg tup) {
+    return tup;
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_object(args)),
-                  error(obj, "obj must describe exactly one element", args), args);
+  return def<"o(e, obj)">{[&](arg e, arg obj) {
+    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(obj)), e, obj);
+  }}(error(tuple, "must be a parenthesized list", args), object(default_("()", args)));
 });
 
 } // namespace api
