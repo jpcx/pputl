@@ -25,43 +25,43 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(pqueue) pqueue = NIFTY_DEF(pqueue, [&](va args) {
-  docs << "[extends atom] a queue prioritized by words or enums."
-       << "provide a prefix to use enums as priorities instead of words."
-       << ""
-       << "see [range] for available operations."
-       << ""
-       << "items are stored as (priority, value) pairs in descending order by priority."
-       << "resultant atom is an expansion-terminated self-reference.";
-
-  tests << xstr(pqueue()) = pp::str(pqueue("0u", "", pp::tup())) >> docs;
-  tests << xstr(pqueue("ENUM_FOO_")) =
-      pp::str(pqueue("0u", "ENUM_FOO_", pp::tup())) >> docs;
-  tests << xstr(pqueue(pqueue())) = pp::str(pqueue("0u", "", pp::tup())) >> docs;
-
-  def<"\\0(...)"> _0 = [&](va args) {
-    def<"\\0(prefix)"> _0 = [&](arg prefix) {
-      return pqueue("0u", prefix, pp::tup());
-    };
-
-    def<"\\1(pqueue)">{} = [&](arg pqueue) {
-      return pqueue;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), is_pqueue(args)), atom(args));
-  };
-
-  def<"\\1(...)">{} = [&](va) {
-    return pqueue("0u", "", pp::tup());
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
-});
-
-} // namespace api
+// #include "type.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(pqueue) pqueue = NIFTY_DEF(pqueue, [&](va args) {
+//   docs << "[extends atom] a queue prioritized by words or enums."
+//        << "provide a prefix to use enums as priorities instead of words."
+//        << ""
+//        << "see [range] for available operations."
+//        << ""
+//        << "items are stored as (priority, value) pairs in descending order by priority."
+//        << "resultant atom is an expansion-terminated self-reference.";
+// 
+//   tests << xstr(pqueue()) = pp::str(pqueue("0u", "", pp::tup())) >> docs;
+//   tests << xstr(pqueue("ENUM_FOO_")) =
+//       pp::str(pqueue("0u", "ENUM_FOO_", pp::tup())) >> docs;
+//   tests << xstr(pqueue(pqueue())) = pp::str(pqueue("0u", "", pp::tup())) >> docs;
+// 
+//   def<"\\0(...)"> _0 = [&](va args) {
+//     def<"\\0(prefix)"> _0 = [&](arg prefix) {
+//       return pqueue("0u", prefix, pp::tup());
+//     };
+// 
+//     def<"\\1(pqueue)">{} = [&](arg pqueue) {
+//       return pqueue;
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), is_pqueue(args)), atom(args));
+//   };
+// 
+//   def<"\\1(...)">{} = [&](va) {
+//     return pqueue("0u", "", pp::tup());
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
+// });
+// 
+// } // namespace api

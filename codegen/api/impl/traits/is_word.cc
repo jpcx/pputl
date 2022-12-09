@@ -32,32 +32,27 @@ namespace impl {
 
 using namespace codegen;
 
-decltype(sized_items) sized_items = NIFTY_DEF(sized_items, [&](arg v) {
-  docs << "[internal] extracts the size and items from a pputl datastructure.";
+decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va atom) {
+  docs << "[internal] detects if atom is a word.";
 
-  def array_ = def{"\\" + fwd::array + "(sz, items)"} = [&](arg sz, arg items) {
-    return sz + ", " + items;
+  def<"\\0000"> _0000 = [&] {
+    return "0";
   };
-  def{"\\" + fwd::order + "(sz, dir, pre, items)"} = [&](arg sz, arg, arg, arg items) {
-    return sz + ", " + items;
+  def<"\\0001">{} = [&] {
+    return "1";
   };
-  def{"\\" + fwd::map + "(sz, pre, items)"} = [&](arg sz, arg, arg items) {
-    return sz + ", " + items;
+  def<"\\0010">{} = [&] {
+    return "1";
   };
-  def{"\\" + fwd::set + "(sz, pre, items)"} = [&](arg sz, arg, arg items) {
-    return sz + ", " + items;
+  def<"\\0100">{} = [&] {
+    return "1";
   };
-  def{"\\" + fwd::stack + "(sz, items)"} = [&](arg sz, arg items) {
-    return sz + ", " + items;
-  };
-  def{"\\" + fwd::queue + "(sz, items)"} = [&](arg sz, arg items) {
-    return sz + ", " + items;
-  };
-  def{"\\" + fwd::pqueue + "(sz, pre, items)"} = [&](arg sz, arg, arg items) {
-    return sz + ", " + items;
+  def<"\\1000">{} = [&] {
+    return "1";
   };
 
-  return pp::cat(utl::slice(array_, -((std::string const&)fwd::array).size()), v);
+  return xcat(utl::slice(_0000, -4), xcat(xcat(is_udec(atom), is_uhex(atom)),
+                                          xcat(is_idec(atom), is_ihex(atom))));
 });
 
 } // namespace impl

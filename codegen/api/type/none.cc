@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(none) none = NIFTY_DEF(none, [&](va args) {
-  docs << "[extends list] nothing; an absence of pp-tokens (an empty list).";
+  docs << "[inherits any] the literal nothing; an absence of pp-tokens.";
 
   tests << none() = "" >> docs;
 
@@ -44,7 +44,7 @@ decltype(none) none = NIFTY_DEF(none, [&](va args) {
   };
 
   return pp::call(xcat(utl::slice(_0, -1), is_none(args)),
-                  error(none, "must be an empty list", args));
+                  error(none, "must be the literal nothing", args));
 });
 
 } // namespace api

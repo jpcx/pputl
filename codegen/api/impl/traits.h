@@ -28,10 +28,10 @@
 
 #include "codegen.h"
 #include "config.h"
-#include "fwd.h"
 #include "lang.h"
 //
 #include "impl/traits/detail.h"
+#include "obj_fwd.h"
 
 namespace api {
 namespace impl {
@@ -67,8 +67,14 @@ extern codegen::def<"arithhint(a, b: enum<IDEC|IHEX|UDEC|UHEX>, "
 extern codegen::def<"xarithhint(...: enum<IDEC|IHEX|UDEC|UHEX>, "
                     "enum<IDEC|IHEX|UDEC|UHEX>)"> const&         xarithhint;
 extern codegen::def<"hex_cat(...: enum<0|1|...|E|F>...)"> const& hex_cat;
-extern codegen::def<"sized_items(v: array|map|set|stack|queue|pqueue)"> const&
-    sized_items;
+extern codegen::def<"is_udec(sym)"> const&                       is_udec;
+extern codegen::def<"is_uhex(sym)"> const&                       is_uhex;
+extern codegen::def<"is_idec(sym)"> const&                       is_idec;
+extern codegen::def<"is_ihex(sym)"> const&                       is_ihex;
+extern codegen::def<"is_uint(...: sym)"> const&                  is_uint;
+extern codegen::def<"is_int(...: sym)"> const&                   is_int;
+extern codegen::def<"is_word(...: sym)"> const&                  is_word;
+extern codegen::def<"is_obj(...: any)"> const&                   is_obj;
 
 NIFTY_DECL(hex_prefix);
 NIFTY_DECL(nybl_prefix);
@@ -82,7 +88,14 @@ NIFTY_DECL(uhex);
 NIFTY_DECL(arithhint);
 NIFTY_DECL(xarithhint);
 NIFTY_DECL(hex_cat);
-NIFTY_DECL(sized_items);
+NIFTY_DECL(is_udec);
+NIFTY_DECL(is_uhex);
+NIFTY_DECL(is_idec);
+NIFTY_DECL(is_ihex);
+NIFTY_DECL(is_uint);
+NIFTY_DECL(is_int);
+NIFTY_DECL(is_word);
+NIFTY_DECL(is_obj);
 
 inline codegen::end_category<"impl.traits"> traits_end;
 

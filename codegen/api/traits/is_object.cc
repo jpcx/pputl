@@ -25,36 +25,36 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(is_object) is_object = NIFTY_DEF(is_object, [&](va args) {
-  docs << "[extends is_list] detects if args has exactly one element.";
-
-  tests << is_object("")         = "0" >> docs;
-  tests << is_object(",")        = "0" >> docs;
-  tests << is_object("foo,")     = "0" >> docs;
-  tests << is_object("foo, bar") = "0" >> docs;
-  tests << is_object("foo")      = "1" >> docs;
-  tests << is_object("(42)")     = "1" >> docs;
-
-  def<"\\0(...)"> _0 = [] {
-    return "0";
-  };
-  def<"\\01(_, ...)">{} = [] {
-    def<"\\0"> _0 = [&] {
-      return "1";
-    };
-    def<"\\01">{} = [&] {
-      return "0";
-    };
-    return pp::cat(_0, pp::va_opt(1));
-  };
-
-  return pp::call(pp::cat(_0, pp::va_opt("1")), args + ".");
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(is_object) is_object = NIFTY_DEF(is_object, [&](va args) {
+//   docs << "[extends is_list] detects if args has exactly one element.";
+// 
+//   tests << is_object("")         = "0" >> docs;
+//   tests << is_object(",")        = "0" >> docs;
+//   tests << is_object("foo,")     = "0" >> docs;
+//   tests << is_object("foo, bar") = "0" >> docs;
+//   tests << is_object("foo")      = "1" >> docs;
+//   tests << is_object("(42)")     = "1" >> docs;
+// 
+//   def<"\\0(...)"> _0 = [] {
+//     return "0";
+//   };
+//   def<"\\01(_, ...)">{} = [] {
+//     def<"\\0"> _0 = [&] {
+//       return "1";
+//     };
+//     def<"\\01">{} = [&] {
+//       return "0";
+//     };
+//     return pp::cat(_0, pp::va_opt(1));
+//   };
+// 
+//   return pp::call(pp::cat(_0, pp::va_opt("1")), args + ".");
+// });
+// 
+// } // namespace api

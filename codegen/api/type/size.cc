@@ -25,46 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(size) size = NIFTY_DEF(size, [&](va args) {
-  docs << "[extends word] a non-negative word up to size_max."
-       << "constructibe from any word type."
-       << ""
-       << "cannot parse negative decimals; use numeric.neg instead."
-       << "hex length is fixed. cannot parse shorter hex lengths."
-       << ""
-       << "see type.word for available cast modes."
-       << ""
-       << "preserves hex/decimal representation by default."
-       << ""
-       << "cast between signed and unsigned reinterprets bits."
-       << ""
-       << "values above the int max must have a 'u' suffix; implicit interpretation"
-       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
-              + " is not a valid integer).";
-
-  tests << size()                          = "0" >> docs;
-  tests << size(0)                         = "0" >> docs;
-  tests << size(1)                         = "1" >> docs;
-  tests << size("0x" + utl::cat(samp::h7)) = ("0x" + utl::cat(samp::h7)) >> docs;
-  tests << size(size_max_s)                = size_max_s >> docs;
-
-  return def<"o(e, w)">{[&](arg e, arg w) {
-    def<"\\0(e, w)"> _0 = [&](arg e, arg) {
-      return fail(e);
-    };
-    def<"\\1(e, w)">{} = [&](arg, arg w) {
-      return w;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
-  }}(error(size, "must be a non-negative word up to size_max", args),
-     word(default_(0, args)));
-});
-
-} // namespace api
+// #include "type.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(size) size = NIFTY_DEF(size, [&](va args) {
+//   docs << "[extends word] a non-negative word up to size_max."
+//        << "constructibe from any word type."
+//        << ""
+//        << "cannot parse negative decimals; use numeric.neg instead."
+//        << "hex length is fixed. cannot parse shorter hex lengths."
+//        << ""
+//        << "see type.word for available cast modes."
+//        << ""
+//        << "preserves hex/decimal representation by default."
+//        << ""
+//        << "cast between signed and unsigned reinterprets bits."
+//        << ""
+//        << "values above the int max must have a 'u' suffix; implicit interpretation"
+//        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+//               + " is not a valid integer).";
+// 
+//   tests << size()                          = "0" >> docs;
+//   tests << size(0)                         = "0" >> docs;
+//   tests << size(1)                         = "1" >> docs;
+//   tests << size("0x" + utl::cat(samp::h7)) = ("0x" + utl::cat(samp::h7)) >> docs;
+//   tests << size(size_max_s)                = size_max_s >> docs;
+// 
+//   return def<"o(e, w)">{[&](arg e, arg w) {
+//     def<"\\0(e, w)"> _0 = [&](arg e, arg) {
+//       return fail(e);
+//     };
+//     def<"\\1(e, w)">{} = [&](arg, arg w) {
+//       return w;
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), detail::is_size_o(w)), e, w);
+//   }}(error(size, "must be a non-negative word up to size_max", args),
+//      word(default_(0, args)));
+// });
+// 
+// } // namespace api

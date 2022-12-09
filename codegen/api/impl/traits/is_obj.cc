@@ -1,4 +1,3 @@
-#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -26,23 +25,46 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "codegen.h"
+#include "impl/traits.h"
 
 namespace api {
-namespace fwd {
+namespace impl {
 
-inline codegen::category_fwd<"type"> type;
+using namespace codegen;
 
-inline codegen::def<"array">  array;
-inline codegen::def<"stack">  stack;
-inline codegen::def<"queue">  queue;
-inline codegen::def<"order">  order;
-inline codegen::def<"heap">   heap;
-inline codegen::def<"map">    map;
-inline codegen::def<"set">    set;
-inline codegen::def<"pqueue"> pqueue;
+decltype(is_obj) is_obj = NIFTY_DEF(is_obj, [&](va any) {
+  docs << "[internal] detects if sym is an obj.";
 
-inline codegen::end_category<"type"> type_end;
+  def chk_obj = def{"chk_\\" + fwd::obj + "(...)"} = [&](va) {
+    return "";
+  };
 
-} // namespace fwd
+  def<"\\0(...)"> _0 = [&] {
+    return def<"o(...)">{[&](va) {
+      return "0";
+    }};
+  };
+  def<"\\01(any)">{} = [&](arg any) {
+    return def<"o(any, ...)">{[&](arg, va) {
+      def<"\\0(...)"> _0 = [&] {
+        return "0";
+      };
+      def<"\\01(any)">{} = [&](arg any) {
+        return def<"o(...)">{[&](va) {
+          def<"\\0"> _0 = [&] {
+            return "1";
+          };
+          def<"\\01">{} = [&] {
+            return "0";
+          };
+          return pp::cat(_0, pp::va_opt(1));
+        }}(pp::cat(utl::slice(chk_obj, -((std::string const&)fwd::obj).size()), any));
+      };
+      return pp::cat(_0, pp::va_opt(1));
+    }}(any, eat + " " + any);
+  };
+  return pp::call(pp::call(pp::cat(_0, pp::va_opt(1)), any), any);
+});
+
+} // namespace impl
 } // namespace api

@@ -25,27 +25,37 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "any potentially-empty argument in a __VA_ARGS__ expression.";
+decltype(is_idec) is_idec = NIFTY_DEF(is_idec, [&](arg atom) {
+  docs << "[internal] detects if atom is an idec.";
 
-  tests << any()      = "" >> docs;
-  tests << any("foo") = "foo" >> docs;
+  return def<"o(atom)">{[&](arg atom) {
+    return def<"<o(...)">{[&](va args) {
+      return def<"<o(atom, _, ...)">{[&](arg atom, arg, va) {
+        def<"\\0(atom)"> _0 = [](arg) {
+          return "0";
+        };
+        def<"\\01(atom)">{} = [](arg atom) {
+          def<"\\0"> _0 = [] {
+            return "1";
+          };
+          def<"\\1">{} = [] {
+            return "0";
+          };
+          return xcat(utl::slice(_0, -1), uhex(udec(atom, "UHEX"), "ILTZ"));
+        };
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-  def<"\\1(e, obj)">{} = [](arg, arg obj) {
-    return obj;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
-                  error(any, "must be nothing or exactly one thing", args), args);
+        return pp::call(pp::cat(_0, pp::va_opt("1")), atom);
+      }}(args);
+    }}(atom, pp::cat(udec_prefix, atom));
+  }}(pp::cat(atom, 'u'));
 });
 
+} // namespace impl
 } // namespace api

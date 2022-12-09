@@ -25,27 +25,38 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "traits.h"
 
 namespace api {
 
 using namespace codegen;
 
-decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "any potentially-empty argument in a __VA_ARGS__ expression.";
+decltype(is_tup) is_tup = NIFTY_DEF(is_tup, [&](va args) {
+  docs << "[extends is_any] detects if args is a tuple (parenthesized list).";
 
-  tests << any()      = "" >> docs;
-  tests << any("foo") = "foo" >> docs;
+  tests << is_tup()                 = "0" >> docs;
+  tests << is_tup("1, 2")           = "0" >> docs;
+  tests << is_tup("()")             = "1" >> docs;
+  tests << is_tup("(1, 2)")         = "1" >> docs;
+  tests << is_tup("(), ()")         = "0";
+  tests << is_tup(esc + "(())")     = "1";
+  tests << is_tup(esc + "((1, 2))") = "1";
+  tests << is_tup(", ")             = "0";
+  tests << is_tup(", , ")           = "0";
+  tests << is_tup("a, ")            = "0";
+  tests << is_tup("a, , ")          = "0";
+  tests << is_tup(", a")            = "0";
+  tests << is_tup(", a, ")          = "0";
+  tests << is_tup(", , a")          = "0";
+  tests << is_tup("(, )")           = "1";
+  tests << is_tup("(, , )")         = "1";
+  tests << is_tup("(a, )")          = "1";
+  tests << is_tup("(a, , )")        = "1";
+  tests << is_tup("(, a)")          = "1";
+  tests << is_tup("(, a, )")        = "1";
+  tests << is_tup("(, , a)")        = "1";
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-  def<"\\1(e, obj)">{} = [](arg, arg obj) {
-    return obj;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
-                  error(any, "must be nothing or exactly one thing", args), args);
+  return is_none(eat + " " + args);
 });
 
 } // namespace api

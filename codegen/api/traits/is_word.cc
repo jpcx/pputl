@@ -25,61 +25,61 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-namespace detail {
-decltype(is_word_o) is_word_o = NIFTY_DEF(is_word_o);
-}
-
-decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
-  docs << "[union is_int|is_uint] detects if args is an integer.";
-
-  tests << is_word("0")                               = "1" >> docs;
-  tests << is_word("0u")                              = "1" >> docs;
-  tests << is_word("foo")                             = "0" >> docs;
-  tests << is_word("()")                              = "0" >> docs;
-  tests << is_word("A")                               = "0" >> docs;
-  tests << is_word(int_min_s)                         = "1" >> docs;
-  tests << is_word(uint_max_s)                        = "1" >> docs;
-  tests << is_word("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
-
-  detail::is_word_o = def{"o(atom)"} = [&](arg atom) {
-    def<"\\0(atom)"> _0 = [&](arg atom) {
-      def<"\\00"> _00 = [&] {
-        return "0";
-      };
-      def<"\\01">{} = [&] {
-        return "1";
-      };
-      def<"\\10">{} = [&] {
-        return "1";
-      };
-
-      return xcat(utl::slice(_00, -2), xcat(detail::is_enum_oo(impl::udec_prefix, atom),
-                                            detail::is_enum_oo(impl::uhex_prefix, atom)));
-    };
-    def<"\\1(int)">{} = [&](arg) {
-      return "1";
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
-  };
-
-  def<"fail(...)"> fail{[&](va) {
-    return "0";
-  }};
-  def<"\\0">       _0 = [&] {
-    return fail;
-  };
-  def<"\\1">{} = [&] {
-    return detail::is_word_o;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// namespace detail {
+// decltype(is_word_o) is_word_o = NIFTY_DEF(is_word_o);
+// }
+// 
+// decltype(is_word) is_word = NIFTY_DEF(is_word, [&](va args) {
+//   docs << "[union is_int|is_uint] detects if args is an integer.";
+// 
+//   tests << is_word("0")                               = "1" >> docs;
+//   tests << is_word("0u")                              = "1" >> docs;
+//   tests << is_word("foo")                             = "0" >> docs;
+//   tests << is_word("()")                              = "0" >> docs;
+//   tests << is_word("A")                               = "0" >> docs;
+//   tests << is_word(int_min_s)                         = "1" >> docs;
+//   tests << is_word(uint_max_s)                        = "1" >> docs;
+//   tests << is_word("0x" + utl::cat(samp::hmax) + "u") = "1" >> docs;
+// 
+//   detail::is_word_o = def{"o(atom)"} = [&](arg atom) {
+//     def<"\\0(atom)"> _0 = [&](arg atom) {
+//       def<"\\00"> _00 = [&] {
+//         return "0";
+//       };
+//       def<"\\01">{} = [&] {
+//         return "1";
+//       };
+//       def<"\\10">{} = [&] {
+//         return "1";
+//       };
+// 
+//       return xcat(utl::slice(_00, -2), xcat(detail::is_enum_oo(impl::udec_prefix, atom),
+//                                             detail::is_enum_oo(impl::uhex_prefix, atom)));
+//     };
+//     def<"\\1(int)">{} = [&](arg) {
+//       return "1";
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), detail::is_int_o(atom)), atom);
+//   };
+// 
+//   def<"fail(...)"> fail{[&](va) {
+//     return "0";
+//   }};
+//   def<"\\0">       _0 = [&] {
+//     return fail;
+//   };
+//   def<"\\1">{} = [&] {
+//     return detail::is_word_o;
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+// });
+// 
+// } // namespace api

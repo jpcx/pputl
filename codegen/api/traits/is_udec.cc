@@ -31,14 +31,10 @@ namespace api {
 
 using namespace codegen;
 
-namespace detail {
-decltype(is_udec_o) is_udec_o = NIFTY_DEF(is_udec_o);
-}
-
 decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
-  docs << "[extends is_enum] detects if args is an enum<0u|1u|...|"
+  docs << "[extends is_atom] detects if args matches atoms 0u|1u|...|"
               + std::to_string(conf::uint_max - 1) + "u|" + std::to_string(conf::uint_max)
-              + "u>.";
+              + "u.";
 
   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
@@ -51,10 +47,6 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
   tests << is_udec(max)            = "0" >> docs;
   tests << is_udec("(), ()")       = "0" >> docs;
 
-  detail::is_udec_o = def{"o(atom)"} = [&](arg atom) {
-    return detail::is_enum_oo(impl::udec_prefix, atom);
-  };
-
   def<"fail(...)"> fail{[&](va) {
     return "0";
   }};
@@ -62,7 +54,7 @@ decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](va args) {
     return fail;
   };
   def<"\\1">{} = [&] {
-    return detail::is_udec_o;
+    return impl::is_udec;
   };
 
   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);

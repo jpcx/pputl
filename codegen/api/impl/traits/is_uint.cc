@@ -25,31 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(object) object = NIFTY_DEF(object, [&](va args) {
-  docs << "[extends list] a non-empty list without separators (exactly one thing).";
+decltype(is_uint) is_uint = NIFTY_DEF(is_uint, [&](va sym) {
+  docs << "[internal] detects if sym is a uint.";
 
-  tests << object()        = "0" >> docs;
-  tests << object("foo")   = "foo" >> docs;
-  tests << object(".")     = "." >> docs;
-  tests << object("()")    = "()" >> docs;
-  tests << object("foo()") = "foo()" >> docs;
-
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"\\00"> _00 = [&] {
+    return "0";
   };
-  def<"\\1(e, obj)">{} = [](arg, arg obj) {
-    return obj;
+  def<"\\01">{} = [&] {
+    return "1";
+  };
+  def<"\\10">{} = [&] {
+    return "1";
   };
 
-  return def<"o(e, ...)">{[&](arg e, va args) {
-    return pp::call(xcat(utl::slice(_0, -1), is_object(args)), e, args);
-  }}(error(object, "must be exactly one thing", args), default_(0, args));
+  return xcat(utl::slice(_00, -2), xcat(is_udec(sym), is_uhex(sym)));
 });
 
+} // namespace impl
 } // namespace api

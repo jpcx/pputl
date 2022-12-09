@@ -32,7 +32,7 @@ namespace api {
 using namespace codegen;
 
 decltype(is_none) is_none = NIFTY_DEF(is_none, [&](va) {
-  docs << "[extends is_list] detects if args is nothing (an empty list).";
+  docs << "[extends is_any] detects the literal nothing; an absence of pp-tokens.";
 
   tests << is_none("")         = "1" >> docs;
   tests << is_none("foo")      = "0" >> docs;

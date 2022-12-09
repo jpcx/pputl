@@ -25,64 +25,64 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-namespace detail {
-decltype(is_buffer_o) is_buffer_o = NIFTY_DEF(is_buffer_o);
-}
-
-decltype(is_buffer) is_buffer = NIFTY_DEF(is_buffer, [&](va args) {
-  docs << "[extends is_range; union is_tuple|is_array|is_stack|is_queue]";
-
-  tests << is_buffer()                   = "0" >> docs;
-  tests << is_buffer("foo")              = "0" >> docs;
-  tests << is_buffer("(foo)")            = "1" >> docs;
-  tests << is_buffer(fwd::array + "()")  = "1" >> docs;
-  tests << is_buffer(fwd::order + "()")  = "0" >> docs;
-  tests << is_buffer(fwd::map + "()")    = "0" >> docs;
-  tests << is_buffer(fwd::set + "()")    = "0" >> docs;
-  tests << is_buffer(fwd::stack + "()")  = "1" >> docs;
-  tests << is_buffer(fwd::queue + "()")  = "1" >> docs;
-  tests << is_buffer(fwd::pqueue + "()") = "0" >> docs;
-
-  def chk_array = def{"chk_\\" + fwd::array + "(...)"} = [&](va) {
-    return "";
-  };
-  def{"chk_\\" + fwd::stack + "(...)"} = [&](va) {
-    return "";
-  };
-  def{"chk_\\" + fwd::queue + "(...)"} = [&](va) {
-    return "";
-  };
-
-  detail::is_buffer_o = def{"o(object)"} = [&](arg object) {
-    def<"\\0(atom)"> _0 = [&](arg atom) {
-      return is_none(
-          xcat(utl::slice(chk_array, -((std::string const&)fwd::array).size()), atom));
-    };
-
-    def<"\\1(tuple)">{} = [&](arg) {
-      return "1";
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), object);
-  };
-
-  def<"fail(...)"> fail{[&](va) {
-    return "0";
-  }};
-  def<"\\0">       _0 = [&] {
-    return fail;
-  };
-  def<"\\1">{} = [&] {
-    return detail::is_buffer_o;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// namespace detail {
+// decltype(is_buffer_o) is_buffer_o = NIFTY_DEF(is_buffer_o);
+// }
+// 
+// decltype(is_buffer) is_buffer = NIFTY_DEF(is_buffer, [&](va args) {
+//   docs << "[extends is_range; union is_tuple|is_array|is_stack|is_queue]";
+// 
+//   tests << is_buffer()                   = "0" >> docs;
+//   tests << is_buffer("foo")              = "0" >> docs;
+//   tests << is_buffer("(foo)")            = "1" >> docs;
+//   tests << is_buffer(fwd::array + "()")  = "1" >> docs;
+//   tests << is_buffer(fwd::order + "()")  = "0" >> docs;
+//   tests << is_buffer(fwd::map + "()")    = "0" >> docs;
+//   tests << is_buffer(fwd::set + "()")    = "0" >> docs;
+//   tests << is_buffer(fwd::stack + "()")  = "1" >> docs;
+//   tests << is_buffer(fwd::queue + "()")  = "1" >> docs;
+//   tests << is_buffer(fwd::pqueue + "()") = "0" >> docs;
+// 
+//   def chk_array = def{"chk_\\" + fwd::array + "(...)"} = [&](va) {
+//     return "";
+//   };
+//   def{"chk_\\" + fwd::stack + "(...)"} = [&](va) {
+//     return "";
+//   };
+//   def{"chk_\\" + fwd::queue + "(...)"} = [&](va) {
+//     return "";
+//   };
+// 
+//   detail::is_buffer_o = def{"o(object)"} = [&](arg object) {
+//     def<"\\0(atom)"> _0 = [&](arg atom) {
+//       return is_none(
+//           xcat(utl::slice(chk_array, -((std::string const&)fwd::array).size()), atom));
+//     };
+// 
+//     def<"\\1(tuple)">{} = [&](arg) {
+//       return "1";
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), object);
+//   };
+// 
+//   def<"fail(...)"> fail{[&](va) {
+//     return "0";
+//   }};
+//   def<"\\0">       _0 = [&] {
+//     return fail;
+//   };
+//   def<"\\1">{} = [&] {
+//     return detail::is_buffer_o;
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_object(args)), args);
+// });
+// 
+// } // namespace api

@@ -25,42 +25,42 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(set) set = NIFTY_DEF(set, [&](va args) {
-  docs << "[extends array] a set of words or enums."
-       << "provide a prefix to use enums instead of words."
-       << ""
-       << "see [range] for available operations."
-       << ""
-       << "items are stored in ascending order."
-       << "resultant atom is an expansion-terminated self-reference.";
-
-  tests << xstr(set())            = pp::str(set("0u", "", pp::tup())) >> docs;
-  tests << xstr(set("ENUM_FOO_")) = pp::str(set("0u", "ENUM_FOO_", pp::tup())) >> docs;
-  tests << xstr(set(set()))       = pp::str(set("0u", "", pp::tup())) >> docs;
-
-  def<"\\0(...)"> _0 = [&](va args) {
-    def<"\\0(prefix)"> _0 = [&](arg prefix) {
-      return set("0u", prefix, pp::tup());
-    };
-
-    def<"\\1(set)">{} = [&](arg set) {
-      return set;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), is_set(args)), atom(args));
-  };
-
-  def<"\\1(...)">{} = [&](va) {
-    return set("0u", "", pp::tup());
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
-});
-
-} // namespace api
+// #include "type.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(set) set = NIFTY_DEF(set, [&](va args) {
+//   docs << "[extends array] a set of words or enums."
+//        << "provide a prefix to use enums instead of words."
+//        << ""
+//        << "see [range] for available operations."
+//        << ""
+//        << "items are stored in ascending order."
+//        << "resultant atom is an expansion-terminated self-reference.";
+// 
+//   tests << xstr(set())            = pp::str(set("0u", "", pp::tup())) >> docs;
+//   tests << xstr(set("ENUM_FOO_")) = pp::str(set("0u", "ENUM_FOO_", pp::tup())) >> docs;
+//   tests << xstr(set(set()))       = pp::str(set("0u", "", pp::tup())) >> docs;
+// 
+//   def<"\\0(...)"> _0 = [&](va args) {
+//     def<"\\0(prefix)"> _0 = [&](arg prefix) {
+//       return set("0u", prefix, pp::tup());
+//     };
+// 
+//     def<"\\1(set)">{} = [&](arg set) {
+//       return set;
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), is_set(args)), atom(args));
+//   };
+// 
+//   def<"\\1(...)">{} = [&](va) {
+//     return set("0u", "", pp::tup());
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
+// });
+// 
+// } // namespace api

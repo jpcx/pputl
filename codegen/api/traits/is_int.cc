@@ -25,59 +25,59 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-namespace detail {
-decltype(is_int_o) is_int_o = NIFTY_DEF(is_int_o);
-}
-
-decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
-  docs << "[union is_idec|is_ihex] detects if args is a signed integer.";
-
-  auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
-  auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
-
-  tests << is_int()               = "0" >> docs;
-  tests << is_int("foo")          = "0" >> docs;
-  tests << is_int(0)              = "1" >> docs;
-  tests << is_int("0u")           = "0" >> docs;
-  tests << is_int(conf::uint_max) = "0" >> docs;
-  tests << is_int(min + "u")      = "0" >> docs;
-  tests << is_int(max)            = "1" >> docs;
-  if constexpr (conf::word_size > 1)
-    tests << is_int("0xF") = "0" >> docs;
-  tests << is_int("(), ()") = "0" >> docs;
-
-  detail::is_int_o = def{"o(atom)"} = [&](arg atom) {
-    def<"\\00"> _00 = [&] {
-      return "0";
-    };
-    def<"\\01">{} = [&] {
-      return "1";
-    };
-    def<"\\10">{} = [&] {
-      return "1";
-    };
-
-    return xcat(utl::slice(_00, -2),
-                xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)));
-  };
-
-  def<"fail(...)"> fail{[&](va) {
-    return "0";
-  }};
-  def<"\\0">       _0 = [&] {
-    return fail;
-  };
-  def<"\\1">{} = [&] {
-    return detail::is_int_o;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// namespace detail {
+// decltype(is_int_o) is_int_o = NIFTY_DEF(is_int_o);
+// }
+// 
+// decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va args) {
+//   docs << "[union is_idec|is_ihex] detects if args is a signed integer.";
+// 
+//   auto min = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "0"));
+//   auto max = "0x" + utl::cat(std::vector<std::string>(conf::word_size, "F"));
+// 
+//   tests << is_int()               = "0" >> docs;
+//   tests << is_int("foo")          = "0" >> docs;
+//   tests << is_int(0)              = "1" >> docs;
+//   tests << is_int("0u")           = "0" >> docs;
+//   tests << is_int(conf::uint_max) = "0" >> docs;
+//   tests << is_int(min + "u")      = "0" >> docs;
+//   tests << is_int(max)            = "1" >> docs;
+//   if constexpr (conf::word_size > 1)
+//     tests << is_int("0xF") = "0" >> docs;
+//   tests << is_int("(), ()") = "0" >> docs;
+// 
+//   detail::is_int_o = def{"o(atom)"} = [&](arg atom) {
+//     def<"\\00"> _00 = [&] {
+//       return "0";
+//     };
+//     def<"\\01">{} = [&] {
+//       return "1";
+//     };
+//     def<"\\10">{} = [&] {
+//       return "1";
+//     };
+// 
+//     return xcat(utl::slice(_00, -2),
+//                 xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)));
+//   };
+// 
+//   def<"fail(...)"> fail{[&](va) {
+//     return "0";
+//   }};
+//   def<"\\0">       _0 = [&] {
+//     return fail;
+//   };
+//   def<"\\1">{} = [&] {
+//     return detail::is_int_o;
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+// });
+// 
+// } // namespace api

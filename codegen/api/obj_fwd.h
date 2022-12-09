@@ -1,3 +1,4 @@
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -25,43 +26,16 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "codegen.h"
 
 namespace api {
+namespace fwd {
 
-using namespace codegen;
+inline codegen::category_fwd<"type"> type;
 
-decltype(enum_) enum_ = NIFTY_DEF(enum_, [&](va args) {
-  docs << "[extends atom] an atom matching a defined enumeration."
-       << ""
-       << "to use this function, define a set of"
-       << "macros with the following characteristics:"
-       << " ‐ object-like"
-       << " ‐ common prefix"
-       << " ‐ enum value suffixes"
-       << " ‐ expand to nothing OR expand to more than one value"
-       << "pass the common prefix as chkprefix."
-       << ""
-       << "example: (asserting an enum<GOOD|BAD>)"
-       << " #define FOO_GOOD"
-       << " #define FOO_BAD"
-       << " " + enum_ + "(FOO_, BLEH) // <fail>"
-       << " " + enum_ + "(FOO_, GOOD) // GOOD"
-       << " " + enum_ + "(FOO_, ,,,)  // <fail>";
+inline codegen::def<"obj"> obj;
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-  def<"\\1(e, enum)">{} = [](arg, arg enum_) {
-    return enum_;
-  };
+inline codegen::end_category<"type"> type_end;
 
-  return def<"o(e, chk, v)">{[&](arg e, arg chk, arg v) {
-    return def<"<o(e, chkatom, vatom)">{[&](arg e, arg chkatom, arg vatom) {
-      return pp::call(xcat(utl::slice(_0, -1), detail::is_enum_oo(chkatom, vatom)), e,
-                      vatom);
-    }}(e, atom(chk), atom(v));
-  }}(error(enum_, "invalid enumeration or value mismatch", args), args);
-});
-
+} // namespace fwd
 } // namespace api

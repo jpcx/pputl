@@ -25,27 +25,29 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "any potentially-empty argument in a __VA_ARGS__ expression.";
+decltype(is_uhex) is_uhex = NIFTY_DEF(is_uhex, [&](arg atom) {
+  docs << "[internal] detects if atom is a uhex.";
 
-  tests << any()      = "" >> docs;
-  tests << any("foo") = "foo" >> docs;
+  return def<"o(...)">{[&](va args) {
+    return def<"<o(_, ...)">{[&](arg, va) {
+      def<"\\0"> _0 = [] {
+        return "0";
+      };
+      def<"\\01">{} = [] {
+        return "1";
+      };
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
-  };
-  def<"\\1(e, obj)">{} = [](arg, arg obj) {
-    return obj;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
-                  error(any, "must be nothing or exactly one thing", args), args);
+      return pp::cat(_0, pp::va_opt("1"));
+    }}(args);
+  }}(pp::cat(uhex_prefix, atom));
 });
 
+} // namespace impl
 } // namespace api

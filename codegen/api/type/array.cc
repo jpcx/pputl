@@ -25,52 +25,52 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(array) array = NIFTY_DEF(array, [&](va args) {
-  docs << "[extends atom] a sized sequence of items."
-       << "copies items from any range; see range.itemsof for details."
-       << ""
-       << "see [range] for available operations."
-       << ""
-       << "resultant atom is an expansion-terminated self-reference."
-       << ""
-       << "note: prefix is discarded when constructing"
-       << "      from map and set; only items are copied.";
-
-  tests << xstr(array())          = pp::str(array("0u", pp::tup())) >> docs;
-  tests << xstr(array(pp::tup())) = pp::str(array("0u", pp::tup())) >> docs;
-  tests << xstr(array(pp::tup('a', 'b'))) =
-      pp::str(array("2u", pp::tup('a', 'b'))) >> docs;
-  tests << xstr(array(array(pp::tup("foo", "bar")))) =
-      pp::str(array("2u", pp::tup("foo", "bar"))) >> docs;
-  tests << xstr(array(fwd::set + pp::tup())) = pp::str(array("0u", pp::tup())) >> docs;
-  tests << xstr(array(fwd::map + pp::tup("ENUM_FOO_"))) =
-      pp::str(array("0u", pp::tup())) >> docs;
-
-  def<"\\0(e, atom)"> _0 = [&](arg e, arg atom) {
-    def<"\\0(e, atom)"> _0 = [&](arg e, arg) {
-      return fail(e);
-    };
-
-    def<"\\1(e, range)">{} = [&](arg, arg range) {
-      return array(impl::sized_items(range));
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_range_o(atom)), e, atom);
-  };
-
-  def<"\\1(e, tuple)">{} = [&](arg, arg tuple) {
-    return array(countof + " " + tuple, tuple);
-  };
-
-  return def<"o(e, object)">{[&](arg e, arg object) {
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), e, object);
-  }}(error(array, "invalid range", args), object(default_(pp::tup(), args)));
-});
-
-} // namespace api
+// #include "type.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(array) array = NIFTY_DEF(array, [&](va args) {
+//   docs << "[extends atom] a sized sequence of items."
+//        << "copies items from any range; see range.itemsof for details."
+//        << ""
+//        << "see [range] for available operations."
+//        << ""
+//        << "resultant atom is an expansion-terminated self-reference."
+//        << ""
+//        << "note: prefix is discarded when constructing"
+//        << "      from map and set; only items are copied.";
+// 
+//   tests << xstr(array())          = pp::str(array("0u", pp::tup())) >> docs;
+//   tests << xstr(array(pp::tup())) = pp::str(array("0u", pp::tup())) >> docs;
+//   tests << xstr(array(pp::tup('a', 'b'))) =
+//       pp::str(array("2u", pp::tup('a', 'b'))) >> docs;
+//   tests << xstr(array(array(pp::tup("foo", "bar")))) =
+//       pp::str(array("2u", pp::tup("foo", "bar"))) >> docs;
+//   tests << xstr(array(fwd::set + pp::tup())) = pp::str(array("0u", pp::tup())) >> docs;
+//   tests << xstr(array(fwd::map + pp::tup("ENUM_FOO_"))) =
+//       pp::str(array("0u", pp::tup())) >> docs;
+// 
+//   def<"\\0(e, atom)"> _0 = [&](arg e, arg atom) {
+//     def<"\\0(e, atom)"> _0 = [&](arg e, arg) {
+//       return fail(e);
+//     };
+// 
+//     def<"\\1(e, range)">{} = [&](arg, arg range) {
+//       return array(impl::sized_items(range));
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), detail::is_range_o(atom)), e, atom);
+//   };
+// 
+//   def<"\\1(e, tuple)">{} = [&](arg, arg tuple) {
+//     return array(countof + " " + tuple, tuple);
+//   };
+// 
+//   return def<"o(e, object)">{[&](arg e, arg object) {
+//     return pp::call(xcat(utl::slice(_0, -1), detail::is_tuple_o(object)), e, object);
+//   }}(error(array, "invalid range", args), object(default_(pp::tup(), args)));
+// });
+// 
+// } // namespace api

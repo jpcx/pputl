@@ -25,20 +25,29 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(list) list = NIFTY_DEF(list, [&](va args) {
-  docs << "__VA_ARGS__ base type. returns args in all cases (matches everything)";
+decltype(is_udec) is_udec = NIFTY_DEF(is_udec, [&](arg atom) {
+  docs << "[internal] detects if atom is a udec.";
 
-  tests << list()           = "" >> docs;
-  tests << list("foo")      = "foo" >> docs;
-  tests << list("foo, bar") = "foo, bar" >> docs;
+  return def<"o(...)">{[&](va args) {
+    return def<"<o(_, ...)">{[&](arg, va) {
+      def<"\\0"> _0 = [] {
+        return "0";
+      };
+      def<"\\01">{} = [] {
+        return "1";
+      };
 
-  return args;
+      return pp::cat(_0, pp::va_opt("1"));
+    }}(args);
+  }}(pp::cat(udec_prefix, atom));
 });
 
+} // namespace impl
 } // namespace api

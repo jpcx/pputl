@@ -28,6 +28,7 @@
 #include "codegen.h"
 
 #include <unordered_set>
+#include <unordered_map>
 
 namespace codegen {
 

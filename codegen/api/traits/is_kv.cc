@@ -32,39 +32,59 @@
 // using namespace codegen;
 // 
 // namespace detail {
-// decltype(is_array_o) is_array_o = NIFTY_DEF(is_array_o);
-// } // namespace detail
+// decltype(is_kv_o) is_kv_o = NIFTY_DEF(is_kv_o);
+// }
 // 
-// decltype(is_array) is_array = NIFTY_DEF(is_array, [&](va args) {
-//   docs << "[extends is_atom] detects if args is a pputl array."
-//        << "note: does not parse contained items during validity check.";
+// decltype(is_kv) is_kv = NIFTY_DEF(is_kv, [&](va args) {
+//   docs << "[extends is_pair] detects if args is a word-keyed value.";
 // 
-//   tests << is_array()                  = "0" >> docs;
-//   tests << is_array("1, 2")            = "0" >> docs;
-//   tests << is_array("(a, b)")          = "0" >> docs;
-//   tests << is_array(fwd::array + "()") = "1" >> docs;
+//   tests << is_kv()          = "0" >> docs;
+//   tests << is_kv("1, 2")    = "0" >> docs;
+//   tests << is_kv("()")      = "0" >> docs;
+//   tests << is_kv("(1, 2)")  = "1" >> docs;
+//   tests << is_kv("(1, b)")  = "1" >> docs;
+//   tests << is_kv("(a, 2)")  = "0" >> docs;
+//   tests << is_kv("(), ()")  = "0";
+//   tests << is_kv(", ")      = "0";
+//   tests << is_kv(", , ")    = "0";
+//   tests << is_kv("a, ")     = "0";
+//   tests << is_kv("a, , ")   = "0";
+//   tests << is_kv(", a")     = "0";
+//   tests << is_kv(", a, ")   = "0";
+//   tests << is_kv(", , a")   = "0";
+//   tests << is_kv("(, )")    = "1";
+//   tests << is_kv("(, , )")  = "0";
+//   tests << is_kv("(a, )")   = "0";
+//   tests << is_kv("(9, )")   = "1";
+//   tests << is_kv("(a, , )") = "0";
+//   tests << is_kv("(, a)")   = "0";
+//   tests << is_kv("(, a, )") = "0";
+//   tests << is_kv("(, , a)") = "0";
 // 
-//   def chk = def{"chk_\\" + fwd::array + "(...)"} = [&](va) {
-//     return "";
+//   detail::is_kv_o = def{"o(pair)"} = [&](arg pair) {
+//     return def<"o(...)">{[&](va args) {
+//       def<"\\0(...)"> _0 = [&] {
+//         return "0";
+//       };
+//       def<"\\1(sym)">{} = [&](arg sym) {
+//         return impl::is_word(sym);
+//       };
+// 
+//       return pp::call(xcat(utl::slice(_0, -1), is_none(args)), args);
+//     }}(first + " " + pair);
 //   };
 // 
-//   def<"fail(...)"> fail{[&](va) {
+//   def<"fail(...)"> fail = [&](va) {
 //     return "0";
-//   }};
-// 
-//   detail::is_array_o = def{"o(atom)"} = [&](arg atom) {
-//     return is_none(
-//         pp::cat(utl::slice(chk, -(((std::string const&)fwd::array).size())), atom));
 //   };
-// 
 //   def<"\\0"> _0 = [&] {
 //     return fail;
 //   };
 //   def<"\\1">{} = [&] {
-//     return detail::is_array_o;
+//     return detail::is_kv_o;
 //   };
 // 
-//   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+//   return pp::call(xcat(utl::slice(_0, -1), is_pair(args)), args);
 // });
 // 
 // } // namespace api

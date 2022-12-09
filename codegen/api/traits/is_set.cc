@@ -25,44 +25,44 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-namespace detail {
-decltype(is_set_o) is_set_o = NIFTY_DEF(is_set_o);
-} // namespace detail
-
-decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
-  docs << "[extends is_atom] detects if args is a pputl set.";
-
-  tests << is_set()                = "0" >> docs;
-  tests << is_set("1, 2")          = "0" >> docs;
-  tests << is_set(fwd::set + "()") = "1" >> docs;
-
-  def chk = def{"chk_\\" + fwd::set + "(...)"} = [&](va) {
-    return "";
-  };
-
-  def<"fail(...)"> fail{[&](va) {
-    return "0";
-  }};
-
-  detail::is_set_o = def{"o(atom)"} = [&](arg atom) {
-    return is_none(
-        pp::cat(utl::slice(chk, -(((std::string const&)fwd::set).size())), atom));
-  };
-
-  def<"\\0"> _0 = [&] {
-    return fail;
-  };
-  def<"\\1">{} = [&] {
-    return detail::is_set_o;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// namespace detail {
+// decltype(is_set_o) is_set_o = NIFTY_DEF(is_set_o);
+// } // namespace detail
+// 
+// decltype(is_set) is_set = NIFTY_DEF(is_set, [&](va args) {
+//   docs << "[extends is_atom] detects if args is a pputl set.";
+// 
+//   tests << is_set()                = "0" >> docs;
+//   tests << is_set("1, 2")          = "0" >> docs;
+//   tests << is_set(fwd::set + "()") = "1" >> docs;
+// 
+//   def chk = def{"chk_\\" + fwd::set + "(...)"} = [&](va) {
+//     return "";
+//   };
+// 
+//   def<"fail(...)"> fail{[&](va) {
+//     return "0";
+//   }};
+// 
+//   detail::is_set_o = def{"o(atom)"} = [&](arg atom) {
+//     return is_none(
+//         pp::cat(utl::slice(chk, -(((std::string const&)fwd::set).size())), atom));
+//   };
+// 
+//   def<"\\0"> _0 = [&] {
+//     return fail;
+//   };
+//   def<"\\1">{} = [&] {
+//     return detail::is_set_o;
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+// });
+// 
+// } // namespace api

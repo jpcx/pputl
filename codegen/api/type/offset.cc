@@ -25,47 +25,47 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
-
-namespace api {
-
-using namespace codegen;
-
-decltype(offset) offset = NIFTY_DEF(offset, [&](va args) {
-  docs << "[extends word] any word whose absolute value is a valid size."
-       << "constructibe from any word type."
-       << ""
-       << "cannot parse negative decimals; use numeric.neg instead."
-       << "hex length is fixed. cannot parse shorter hex lengths."
-       << ""
-       << "see type.word for available cast modes."
-       << ""
-       << "preserves hex/decimal representation by default."
-       << ""
-       << "cast between signed and unsigned reinterprets bits."
-       << ""
-       << "values above the int max must have a 'u' suffix; implicit interpretation"
-       << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
-              + " is not a valid integer).";
-
-  tests << offset()                            = "0" >> docs;
-  tests << offset(0)                           = "0" >> docs;
-  tests << offset(1)                           = "1" >> docs;
-  tests << offset("0x" + utl::cat(samp::h7))   = ("0x" + utl::cat(samp::h7)) >> docs;
-  tests << offset("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmax)) >> docs;
-  tests << offset(conf::size_max - 1) = std::to_string(conf::size_max - 1) >> docs;
-
-  return def<"o(e, w)">{[&](arg e, arg w) {
-    def<"\\0(e, w)"> _0 = [&](arg e, arg) {
-      return fail(e);
-    };
-    def<"\\1(e, w)">{} = [&](arg, arg w) {
-      return w;
-    };
-
-    return pp::call(xcat(utl::slice(_0, -1), detail::is_offset_o(w)), e, w);
-  }}(error(offset, "must be a word whose absolute value is a valid size", args),
-     word(default_(0, args)));
-});
-
-} // namespace api
+// #include "type.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// decltype(offset) offset = NIFTY_DEF(offset, [&](va args) {
+//   docs << "[extends word] any word whose absolute value is a valid size."
+//        << "constructibe from any word type."
+//        << ""
+//        << "cannot parse negative decimals; use numeric.neg instead."
+//        << "hex length is fixed. cannot parse shorter hex lengths."
+//        << ""
+//        << "see type.word for available cast modes."
+//        << ""
+//        << "preserves hex/decimal representation by default."
+//        << ""
+//        << "cast between signed and unsigned reinterprets bits."
+//        << ""
+//        << "values above the int max must have a 'u' suffix; implicit interpretation"
+//        << "as unsigned is not allowed (e.g. " + std::to_string(conf::uint_max)
+//               + " is not a valid integer).";
+// 
+//   tests << offset()                            = "0" >> docs;
+//   tests << offset(0)                           = "0" >> docs;
+//   tests << offset(1)                           = "1" >> docs;
+//   tests << offset("0x" + utl::cat(samp::h7))   = ("0x" + utl::cat(samp::h7)) >> docs;
+//   tests << offset("0x" + utl::cat(samp::hmax)) = ("0x" + utl::cat(samp::hmax)) >> docs;
+//   tests << offset(conf::size_max - 1) = std::to_string(conf::size_max - 1) >> docs;
+// 
+//   return def<"o(e, w)">{[&](arg e, arg w) {
+//     def<"\\0(e, w)"> _0 = [&](arg e, arg) {
+//       return fail(e);
+//     };
+//     def<"\\1(e, w)">{} = [&](arg, arg w) {
+//       return w;
+//     };
+// 
+//     return pp::call(xcat(utl::slice(_0, -1), detail::is_offset_o(w)), e, w);
+//   }}(error(offset, "must be a word whose absolute value is a valid size", args),
+//      word(default_(0, args)));
+// });
+// 
+// } // namespace api

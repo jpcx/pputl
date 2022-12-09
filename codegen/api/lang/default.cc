@@ -47,9 +47,10 @@ decltype(default_) default_ = NIFTY_DEF(default_, [&](va args) {
     return args;
   };
 
-  return def<"o(_, ...)">{[&](arg first, va rest) {
-    return pp::call(pp::cat(_0, pp::va_opt("1")), first, rest);
-  }}(args);
+  return pp::call(def<"o(_, ...)">{[&](arg, va) {
+                    return pp::cat(_0, pp::va_opt("1"));
+                  }}(args),
+                  args);
 });
 
 } // namespace api

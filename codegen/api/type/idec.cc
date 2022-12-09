@@ -32,11 +32,8 @@ namespace api {
 using namespace codegen;
 
 decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
-  docs << "[extends enum<0|1|...|" + std::to_string(conf::int_max - 1) + "|"
-              + std::to_string(conf::int_max) + ">] a positive decimal integer."
-       << "constructible from any word within [0, int_max]."
-       << ""
-       << "note: negative decimals may be pasted using fmt.c_int.";
+  docs << "[extends atom] atoms 0|1|...|" + std::to_string(conf::int_max - 1) + "|"
+              + std::to_string(conf::int_max) + ".";
 
   auto zero = "0x" + utl::cat(samp::hmin);
   auto one  = "0x" + utl::cat(samp::h1);
@@ -73,11 +70,10 @@ decltype(idec) idec = NIFTY_DEF(idec, [&](va args) {
       return idec;
     };
 
-    return pp::call(xcat(utl::slice(_0000, -4),
-                         xcat(xcat(detail::is_idec_o(atom), detail::is_ihex_o(atom)),
-                              xcat(detail::is_enum_oo(impl::udec_prefix, atom),
-                                   detail::is_enum_oo(impl::uhex_prefix, atom)))),
-                    e0, e1, atom);
+    return pp::call(
+        xcat(utl::slice(_0000, -4), xcat(xcat(impl::is_idec(atom), impl::is_ihex(atom)),
+                                         xcat(impl::is_udec(atom), impl::is_uhex(atom)))),
+        e0, e1, atom);
   }}(error(idec, "invalid word", args),
      error(idec, "idec cannot represent negative words", args), atom(default_(0, args)));
 });

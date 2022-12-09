@@ -33,19 +33,19 @@ using namespace codegen;
 
 namespace detail {
 decltype(is_atom_o) is_atom_o = NIFTY_DEF(is_atom_o);
-}
+} // namespace detail
 
 decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
-  docs << "[extends is_object] detects if args is a sequence of digit|nondigit tokens."
+  docs << "[extends is_any] matches non-empty sequences of pp-concatable tokens."
+       << "pp-concatability implies that atom##atom is valid."
        << ""
-       << "this function only tests for nothing, tuples, and multiple values."
+       << "tries to return true if the inputs are any, non-none,"
+       << "non-tup, and non-obj. asserts concatability by attempting"
+       << "atom##atom concatenation (which may trigger a preprocessor error)."
        << ""
-       << "while not testable, the true semantics of atom implies"
-       << "that its values are able to concatenate with identifiers"
-       << "to form new identifiers, meaning that is must match /[\\w\\d_]+/."
-       << ""
-       << "this property is critical for value-based control flow"
-       << "and must be observed by the user where applicable.";
+       << "invalid concatenations trigger a primitive error message (atom-based, not"
+       << "string-based like lang.fail) that contains the text "
+              + std::string{conf::api_prefix} + "FAIL_INVALID_ATOM.";
 
   tests << is_atom()                 = "0" >> docs;
   tests << is_atom("foo")            = "1" >> docs;
@@ -53,6 +53,7 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   tests << is_atom("1, 2")           = "0" >> docs;
   tests << is_atom("()")             = "0" >> docs;
   tests << is_atom("(1, 2)")         = "0" >> docs;
+  tests << is_atom(fwd::obj + "()")  = "0" >> docs;
   tests << is_atom("(), ()")         = "0";
   tests << is_atom(esc + "(())")     = "0";
   tests << is_atom(esc + "((1, 2))") = "0";
@@ -71,34 +72,64 @@ decltype(is_atom) is_atom = NIFTY_DEF(is_atom, [&](va args) {
   tests << is_atom("(, a, )")        = "0";
   tests << is_atom("(, , a)")        = "0";
 
+  def<> fail_oo;
+
   def<"fail(...)"> fail = [&](va) {
-    return "0";
+    return def<"o(...)">{[&](va) {
+      fail_oo = def{"<o(...)"} = [&](va) {
+        return def{"<o(...)"} = [&](va) {
+          return "0";
+        };
+      };
+      return fail_oo;
+    }};
   };
 
-  detail::is_atom_o = def{"o(obj)"} = [&](arg obj) {
-    def<"\\0"> _0 = [] {
-      return "1";
-    };
-    def<"\\1">{} = [] {
-      return "0";
-    };
-    return xcat(utl::slice(_0, -1), is_none(eat + " " + obj));
+  def<"res(...)"> res = [&](va) {
+    return "1";
   };
 
-  def<"\\0(...)"> _0 = [&] {
+  detail::is_atom_o =
+      def{"o(...: any) -> (any) -> (any) -> (any) -> bool"} = [&](va any) {
+        def<"<o(any: <non-none, non-tup>)"> o = [&](arg any_non_tup) {
+          def<"\\0(atom)"> _0 = [&](arg atom) {
+            return res( //
+                pp::cat(std::string{conf::api_prefix} + "FAIL_INVALID_ATOM__", atom,
+                        "__" + std::string{conf::api_prefix} + "FAIL_INVALID_ATOM"));
+          };
+          def<"\\1(...)">{} = [](va) {
+            return "0";
+          };
+          return xcat(utl::slice(_0, -1), impl::is_obj(any_non_tup));
+        };
+
+        // <is-none>
+        def<"\\0(...)"> _0 = [&] {
+          return fail_oo;
+        };
+        // <is-not-none> <is-not-tup>
+        def<"\\10(...)">{} = [&] {
+          return o;
+        };
+        // <is-not-none> <is-tup>
+        def<"\\11(...)">{} = [&] {
+          return fail_oo;
+        };
+        return xcat(pp::cat(utl::slice(_0, -1), pp::va_opt(1)), is_none(eat + " " + any));
+      };
+
+  def<"\\0"> _0 = [&] {
     return fail;
   };
-  def<"\\01(_, ...)">{} = [&] {
-    def<"\\0"> _0 = [&] {
-      return detail::is_atom_o;
-    };
-    def<"\\01">{} = [&] {
-      return fail;
-    };
-    return pp::cat(_0, pp::va_opt(1));
+
+  def<"\\1">{} = [&] {
+    return detail::is_atom_o;
   };
 
-  return pp::call(pp::call(pp::cat(_0, pp::va_opt("1")), args + "."), args);
+  return pp::call(
+      pp::call(pp::call(pp::call(xcat(utl::slice(_0, -1), is_any(args)), args), args),
+               args),
+      args);
 });
 
 } // namespace api

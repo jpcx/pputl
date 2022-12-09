@@ -25,44 +25,44 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
-
-namespace api {
-
-using namespace codegen;
-
-namespace detail {
-decltype(is_pqueue_o) is_pqueue_o = NIFTY_DEF(is_pqueue_o);
-} // namespace detail
-
-decltype(is_pqueue) is_pqueue = NIFTY_DEF(is_pqueue, [&](va args) {
-  docs << "[extends is_atom] detects if args is a pputl priority queue.";
-
-  tests << is_pqueue()                   = "0" >> docs;
-  tests << is_pqueue("1, 2")             = "0" >> docs;
-  tests << is_pqueue(fwd::pqueue + "()") = "1" >> docs;
-
-  def chk = def{"chk_\\" + fwd::pqueue + "(...)"} = [&](va) {
-    return "";
-  };
-
-  def<"fail(...)"> fail{[&](va) {
-    return "0";
-  }};
-
-  detail::is_pqueue_o = def{"o(atom)"} = [&](arg atom) {
-    return is_none(
-        pp::cat(utl::slice(chk, -(((std::string const&)fwd::pqueue).size())), atom));
-  };
-
-  def<"\\0"> _0 = [&] {
-    return fail;
-  };
-  def<"\\1">{} = [&] {
-    return detail::is_pqueue_o;
-  };
-
-  return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
-});
-
-} // namespace api
+// #include "traits.h"
+// 
+// namespace api {
+// 
+// using namespace codegen;
+// 
+// namespace detail {
+// decltype(is_pqueue_o) is_pqueue_o = NIFTY_DEF(is_pqueue_o);
+// } // namespace detail
+// 
+// decltype(is_pqueue) is_pqueue = NIFTY_DEF(is_pqueue, [&](va args) {
+//   docs << "[extends is_atom] detects if args is a pputl priority queue.";
+// 
+//   tests << is_pqueue()                   = "0" >> docs;
+//   tests << is_pqueue("1, 2")             = "0" >> docs;
+//   tests << is_pqueue(fwd::pqueue + "()") = "1" >> docs;
+// 
+//   def chk = def{"chk_\\" + fwd::pqueue + "(...)"} = [&](va) {
+//     return "";
+//   };
+// 
+//   def<"fail(...)"> fail{[&](va) {
+//     return "0";
+//   }};
+// 
+//   detail::is_pqueue_o = def{"o(atom)"} = [&](arg atom) {
+//     return is_none(
+//         pp::cat(utl::slice(chk, -(((std::string const&)fwd::pqueue).size())), atom));
+//   };
+// 
+//   def<"\\0"> _0 = [&] {
+//     return fail;
+//   };
+//   def<"\\1">{} = [&] {
+//     return detail::is_pqueue_o;
+//   };
+// 
+//   return pp::call(xcat(utl::slice(_0, -1), is_atom(args)), args);
+// });
+// 
+// } // namespace api

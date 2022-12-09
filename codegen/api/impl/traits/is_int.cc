@@ -25,27 +25,28 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "type.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(any) any = NIFTY_DEF(any, [&](va args) {
-  docs << "any potentially-empty argument in a __VA_ARGS__ expression.";
+decltype(is_int) is_int = NIFTY_DEF(is_int, [&](va sym) {
+  docs << "[internal] detects if sym is an int.";
 
-  tests << any()      = "" >> docs;
-  tests << any("foo") = "foo" >> docs;
-
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
-    return fail(e);
+  def<"\\00"> _00 = [&] {
+    return "0";
   };
-  def<"\\1(e, obj)">{} = [](arg, arg obj) {
-    return obj;
+  def<"\\01">{} = [&] {
+    return "1";
+  };
+  def<"\\10">{} = [&] {
+    return "1";
   };
 
-  return pp::call(xcat(utl::slice(_0, -1), is_any(args)),
-                  error(any, "must be nothing or exactly one thing", args), args);
+  return xcat(utl::slice(_00, -2), xcat(is_idec(sym), is_ihex(sym)));
 });
 
+} // namespace impl
 } // namespace api

@@ -25,28 +25,29 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "traits.h"
+#include "impl/traits.h"
 
 namespace api {
+namespace impl {
 
 using namespace codegen;
 
-decltype(is_list) is_list = NIFTY_DEF(is_list, [&](va) {
-  docs << "list detection; returns 1 in all cases (root type; everything matches).";
+decltype(is_ihex) is_ihex = NIFTY_DEF(is_ihex, [&](arg atom) {
+  docs << "[internal] detects if atom is an ihex.";
 
-  tests << is_list()         = "1" >> docs;
-  tests << is_list("foo")    = "1" >> docs;
-  tests << is_list("(a, b)") = "1" >> docs;
-  tests << is_list("a, b")   = "1" >> docs;
-  tests << is_list(", ")     = "1" >> docs;
-  tests << is_list(", , ")   = "1" >> docs;
-  tests << is_list("a, ")    = "1";
-  tests << is_list("a, , ")  = "1";
-  tests << is_list(", a")    = "1";
-  tests << is_list(", a, ")  = "1";
-  tests << is_list(", , a")  = "1";
+  return def<"o(...)">{[&](va args) {
+    return def<"<o(_, ...)">{[&](arg, va) {
+      def<"\\0"> _0 = [] {
+        return "0";
+      };
+      def<"\\01">{} = [] {
+        return "1";
+      };
 
-  return "1";
+      return pp::cat(_0, pp::va_opt("1"));
+    }}(args);
+  }}(pp::cat(uhex_prefix, atom, 'u'));
 });
 
+} // namespace impl
 } // namespace api
