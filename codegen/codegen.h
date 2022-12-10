@@ -1,5 +1,5 @@
-#ifndef CODEGEN_H_INCLUDED
-#define CODEGEN_H_INCLUDED
+#ifndef CODEGEN_H
+#define CODEGEN_H
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \

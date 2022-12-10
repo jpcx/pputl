@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_LANG_TRIM
-#define PPUTL_CODEGEN_LANG_TRIM
+#ifndef CODEGEN_API_LANG_TRIM_CC
+#define CODEGEN_API_LANG_TRIM_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \

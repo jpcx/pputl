@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_CONFIG_INT_MAX
-#define PPUTL_CODEGEN_CONFIG_INT_MAX
+#ifndef CODEGEN_API_CONFIG_INT_MAX_CC
+#define CODEGEN_API_CONFIG_INT_MAX_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -28,14 +28,15 @@
 ///////////////////////////////////////////////////////////////////////////// */
 
 #include "codegen.h"
-#include "config/util.h"
 
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline codegen::def<"int_max -> idec"> int_max = [] {
+inline string const int_max_s{to_string(conf::int_max)};
+
+inline def<"int_max -> idec"> int_max = [] {
   category = "config";
 
   docs << "the maximum value of a pputl signed int.";

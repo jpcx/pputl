@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_CONFIG_BUILD
-#define PPUTL_CODEGEN_CONFIG_BUILD
+#ifndef CODEGEN_API_CONFIG_BUILD_CC
+#define CODEGEN_API_CONFIG_BUILD_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -32,25 +32,24 @@
 #include <sstream>
 
 #include "codegen.h"
-#include "config/util.h"
 
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline codegen::def<"build -> <c++ int>"> build = [] {
+inline def<"build -> <c++ int>"> build = [] {
   category = "config";
 
   docs << "the build number of this pputl release (ISO8601).";
 
-  using std::chrono::system_clock;
-  std::ostringstream ss;
-  auto               t = system_clock::to_time_t(system_clock::now());
-  ss << std::put_time(gmtime(&t), "%F");
-  static std::regex repl{"[-:]", std::regex_constants::optimize};
+  using chrono::system_clock;
+  ostringstream ss;
+  auto          t = system_clock::to_time_t(system_clock::now());
+  ss << put_time(gmtime(&t), "%F");
+  static regex repl{"[-:]", regex_constants::optimize};
 
-  return std::regex_replace(ss.str(), repl, "");
+  return regex_replace(ss.str(), repl, "");
 };
 
 } // namespace api

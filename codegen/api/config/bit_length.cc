@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_CONFIG_BIT_LENGTH
-#define PPUTL_CODEGEN_CONFIG_BIT_LENGTH
+#ifndef CODEGEN_API_CONFIG_BIT_LENGTH_CC
+#define CODEGEN_API_CONFIG_BIT_LENGTH_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -34,13 +34,13 @@ namespace api {
 
 using namespace std;
 
-inline codegen::def<"bit_length -> udec&size"> bit_length = [] {
+inline def<"bit_length -> udec&size"> bit_length = [] {
   category = "config";
 
   docs << "the number of bits that can be used to represent pputl integers."
        << "see the readme code generation section to configure.";
 
-  return std::to_string(conf::bit_length) + "u";
+  return to_string(conf::bit_length) + "u";
 };
 
 } // namespace api

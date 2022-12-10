@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_LANG_FIRST
-#define PPUTL_CODEGEN_LANG_FIRST
+#ifndef CODEGEN_API_LANG_FIRST_CC
+#define CODEGEN_API_LANG_FIRST_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \

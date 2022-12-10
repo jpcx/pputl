@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_CONFIG_WORD_SIZE
-#define PPUTL_CODEGEN_CONFIG_WORD_SIZE
+#ifndef CODEGEN_API_CONFIG_WORD_SIZE_CC
+#define CODEGEN_API_CONFIG_WORD_SIZE_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -34,14 +34,14 @@ namespace api {
 
 using namespace std;
 
-inline codegen::def<"word_size -> udec&size"> word_size = [] {
+inline def<"word_size -> udec&size"> word_size = [] {
   category = "config";
 
   docs << "the number of hex digits used to represent pputl integers."
        << "hex representations of integers are fixed at this length."
        << "see the readme code generation section to configure.";
 
-  return std::to_string(conf::word_size) + "u";
+  return to_string(conf::word_size) + "u";
 };
 
 } // namespace api

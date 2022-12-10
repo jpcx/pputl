@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_LANG_EAT
-#define PPUTL_CODEGEN_LANG_EAT
+#ifndef CODEGEN_API_LANG_EAT_CC
+#define CODEGEN_API_LANG_EAT_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \

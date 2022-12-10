@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_CONFIG_SIZE_MAX
-#define PPUTL_CODEGEN_CONFIG_SIZE_MAX
+#ifndef CODEGEN_API_CONFIG_SIZE_MAX_CC
+#define CODEGEN_API_CONFIG_SIZE_MAX_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -28,14 +28,15 @@
 ///////////////////////////////////////////////////////////////////////////// */
 
 #include "codegen.h"
-#include "config/util.h"
 
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline codegen::def<"size_max -> udec&size"> size_max = [] {
+inline string const size_max_s{to_string(conf::size_max) + "u"};
+
+inline def<"size_max -> udec&size"> size_max = [] {
   category = "config";
 
   docs << "the maximum number of arguments bounded by the C++20 standard."

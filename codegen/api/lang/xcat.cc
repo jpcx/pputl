@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_LANG_XCAT
-#define PPUTL_CODEGEN_LANG_XCAT
+#ifndef CODEGEN_API_LANG_XCAT_CC
+#define CODEGEN_API_LANG_XCAT_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \

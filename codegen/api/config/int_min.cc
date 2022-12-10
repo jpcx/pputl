@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_CONFIG_INT_MIN
-#define PPUTL_CODEGEN_CONFIG_INT_MIN
+#ifndef CODEGEN_API_CONFIG_INT_MIN_CC
+#define CODEGEN_API_CONFIG_INT_MIN_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -28,14 +28,16 @@
 ///////////////////////////////////////////////////////////////////////////// */
 
 #include "codegen.h"
-#include "config/util.h"
 
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline codegen::def<"int_min -> ihex"> int_min = [] {
+inline string const int_min_s =
+    "0x8" + utl::cat(vector<string>(conf::word_size - 1, "0"));
+
+inline def<"int_min -> ihex"> int_min = [] {
   category = "config";
 
   docs << "the minimum value of a pputl signed int."

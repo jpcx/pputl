@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_LANG_XREST
-#define PPUTL_CODEGEN_LANG_XREST
+#ifndef CODEGEN_API_LANG_XREST_CC
+#define CODEGEN_API_LANG_XREST_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \

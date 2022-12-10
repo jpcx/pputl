@@ -1,5 +1,5 @@
-#ifndef PPUTL_CODEGEN_LANG_STR
-#define PPUTL_CODEGEN_LANG_STR
+#ifndef CODEGEN_API_LANG_STR_CC
+#define CODEGEN_API_LANG_STR_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -55,6 +55,13 @@ inline def<"str(...: any...) -> obj"> str = [](va args) {
 
   return "#" + args;
 };
+
+// creates an error string for possible failure
+// see type.any for a simple usage example
+[[nodiscard]] inline string
+error(def_base const& targ, string const& msg, va args) {
+  return str(targ(args) + " -> <" + msg + ">");
+}
 
 } // namespace api
 } // namespace codegen
