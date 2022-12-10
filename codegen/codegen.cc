@@ -27,8 +27,8 @@
 
 #include "codegen.h"
 
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace codegen {
 
@@ -755,8 +755,7 @@ struct def_base::instance*
 def_base::get_instance() {
   /// the empty instance to be returned on macro default constructions.
   static struct instance default_instance {
-    .context = {}, .id = {}, .category = {}, .name = {}, .source_loc = {},
-    .clang_format = {},
+    .context = {}, .id = {}, .name = {}, .source_loc = {}, .clang_format = {},
   };
   return &default_instance;
 }
@@ -766,7 +765,7 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   // construct id
   std::string id{};
 
-  if (_cur_category.starts_with("impl."))
+  if (not _exec_stack.empty())
     id += "impl_";
 
   for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it)
@@ -781,7 +780,7 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
 
   // apply naming scheme
 
-  if (_cur_category.starts_with("impl.") or not _exec_stack.empty()) {
+  if (not _exec_stack.empty()) {
     id = implname(id);
   } else {
     id = apiname(id);
@@ -834,7 +833,6 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
   auto res = &*_instances.insert(ins_it, instance{
                                              .context      = _exec_stack,
                                              .id           = id,
-                                             .category     = _cur_category,
                                              .name         = name,
                                              .source_loc   = loc,
                                              .clang_format = _cur_clang_format,
@@ -1114,6 +1112,20 @@ docs::operator<<(std::string const& line) const {
   if (not def_base::_exec_stack.back()->description.empty())
     def_base::_exec_stack.back()->description += "\n";
   def_base::_exec_stack.back()->description += line;
+  return *this;
+}
+
+class category const&
+category::operator=(std::string const& name) const {
+  if (def_base::_exec_stack.empty())
+    throw std::runtime_error{"cannot use category outside of a macro body"};
+  if (not def_base::_exec_stack.back()->category.empty())
+    throw std::runtime_error{"cannot define category twice"};
+  if (std::ranges::find(def_base::_defined_categories, name)
+      == std::ranges::end(def_base::_defined_categories)) {
+    def_base::_defined_categories.push_back(name);
+  }
+  def_base::_exec_stack.back()->category = name;
   return *this;
 }
 

@@ -1,5 +1,4 @@
-#ifndef PPUTL_CODEGEN_CONFIG_WORD_SIZE
-#define PPUTL_CODEGEN_CONFIG_WORD_SIZE
+#pragma once
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,22 +28,19 @@
 
 #include "codegen.h"
 
+#include "lang/str.cc"
+
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline codegen::def<"word_size -> udec&size"> word_size = [] {
-  category = "config";
-
-  docs << "the number of hex digits used to represent pputl integers."
-       << "hex representations of integers are fixed at this length."
-       << "see the readme code generation section to configure.";
-
-  return std::to_string(conf::word_size) + "u";
-};
+// creates an error string for possible failure
+// see type.any for a simple usage example
+[[nodiscard]] inline std::string
+error(codegen::def_base const& targ, std::string const& msg, codegen::va args) {
+  return str(targ(args) + " -> <" + msg + ">");
+}
 
 } // namespace api
 } // namespace codegen
-
-#endif

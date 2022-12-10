@@ -1,3 +1,5 @@
+#ifndef PPUTL_CODEGEN_LANG_STR
+#define PPUTL_CODEGEN_LANG_STR
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -11,27 +13,32 @@
 //  pputl Preprocessor Utilities
 //  Copyright (C) 2020 - 2022 Justin Collier <m@jpcx.dev>
 //
-//	   This program is free software: you can redistribute it and/or modify
-//	   it under the terms of the GNU General Public License as published by
-//	   the Free Software Foundation, either version 3 of the License, or
-//	   (at your option) any later version.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-//	   This program is distributed in the hope that it will be useful,
-//	   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	   GNU General Public License for more details.
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "codegen.h"
 
+#include "lang/cat.cc"
+
+namespace codegen {
 namespace api {
 
-using namespace codegen;
+using namespace std;
 
-decltype(str) str = NIFTY_DEF(str, [&](va args) {
+inline def<"str(...: any...) -> obj"> str = [](va args) {
+  category = "lang";
+
   docs << "immediately stringizes args.";
 
   tests << str()                  = "\"\"" >> docs;
@@ -47,6 +54,9 @@ decltype(str) str = NIFTY_DEF(str, [&](va args) {
   tests << str(", , a")           = "\", , a\"";
 
   return "#" + args;
-});
+};
 
 } // namespace api
+} // namespace codegen
+
+#endif

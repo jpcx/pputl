@@ -1,3 +1,5 @@
+#ifndef PPUTL_CODEGEN_CONFIG_INT_MIN
+#define PPUTL_CODEGEN_CONFIG_INT_MIN
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -11,30 +13,38 @@
 //  pputl Preprocessor Utilities
 //  Copyright (C) 2020 - 2022 Justin Collier <m@jpcx.dev>
 //
-//	   This program is free software: you can redistribute it and/or modify
-//	   it under the terms of the GNU General Public License as published by
-//	   the Free Software Foundation, either version 3 of the License, or
-//	   (at your option) any later version.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-//	   This program is distributed in the hope that it will be useful,
-//	   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	   GNU General Public License for more details.
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "config.h"
+#include "codegen.h"
+#include "config/util.h"
 
+namespace codegen {
 namespace api {
 
-using namespace codegen;
+using namespace std;
 
-decltype(int_min) int_min = NIFTY_DEF(int_min, [&] {
+inline codegen::def<"int_min -> ihex"> int_min = [] {
+  category = "config";
+
   docs << "the minimum value of a pputl signed int."
        << "only representable as hex. see type.int for details.";
+
   return int_min_s;
-});
+};
 
 } // namespace api
+} // namespace codegen
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef PPUTL_CODEGEN_CONFIG_UINT_MAX
+#define PPUTL_CODEGEN_CONFIG_UINT_MAX
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -11,29 +13,37 @@
 //  pputl Preprocessor Utilities
 //  Copyright (C) 2020 - 2022 Justin Collier <m@jpcx.dev>
 //
-//	   This program is free software: you can redistribute it and/or modify
-//	   it under the terms of the GNU General Public License as published by
-//	   the Free Software Foundation, either version 3 of the License, or
-//	   (at your option) any later version.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-//	   This program is distributed in the hope that it will be useful,
-//	   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	   GNU General Public License for more details.
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "config.h"
+#include "codegen.h"
+#include "config/util.h"
 
+namespace codegen {
 namespace api {
 
-using namespace codegen;
+using namespace std;
 
-decltype(uint_max) uint_max = NIFTY_DEF(uint_max, [&] {
+inline codegen::def<"uint_max -> udec"> uint_max = [] {
+  category = "config";
+
   docs << "the maximum value of a pputl unsigned int.";
+
   return uint_max_s;
-});
+};
 
 } // namespace api
+} // namespace codegen
+
+#endif

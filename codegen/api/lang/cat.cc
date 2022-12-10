@@ -1,3 +1,5 @@
+#ifndef PPUTL_CODEGEN_LANG_CAT
+#define PPUTL_CODEGEN_LANG_CAT
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -11,27 +13,32 @@
 //  pputl Preprocessor Utilities
 //  Copyright (C) 2020 - 2022 Justin Collier <m@jpcx.dev>
 //
-//	   This program is free software: you can redistribute it and/or modify
-//	   it under the terms of the GNU General Public License as published by
-//	   the Free Software Foundation, either version 3 of the License, or
-//	   (at your option) any later version.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-//	   This program is distributed in the hope that it will be useful,
-//	   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	   GNU General Public License for more details.
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "lang.h"
+#include "codegen.h"
 
+#include "lang/eat.cc"
+
+namespace codegen {
 namespace api {
 
-using namespace codegen;
+using namespace std;
 
-decltype(cat) cat = NIFTY_DEF(cat, [&](arg a, arg b) {
+inline def<"cat(a, b: a: any, b: any) -> any"> cat = [](arg a, arg b) {
+  category = "lang";
+
   docs << "immediately concatenates a with b."
        << "must provide at least one arg."
        << "args must be compatible with the ## operator.";
@@ -40,6 +47,9 @@ decltype(cat) cat = NIFTY_DEF(cat, [&](arg a, arg b) {
   tests << cat("foo", eat("bar")) = ("foo" + eat + "(bar)") >> docs;
 
   return pp::cat(a, b);
-});
+};
 
 } // namespace api
+} // namespace codegen
+
+#endif

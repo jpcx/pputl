@@ -1,3 +1,5 @@
+#ifndef PPUTL_CODEGEN_CONFIG_SIZE_MAX
+#define PPUTL_CODEGEN_CONFIG_SIZE_MAX
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -11,31 +13,39 @@
 //  pputl Preprocessor Utilities
 //  Copyright (C) 2020 - 2022 Justin Collier <m@jpcx.dev>
 //
-//	   This program is free software: you can redistribute it and/or modify
-//	   it under the terms of the GNU General Public License as published by
-//	   the Free Software Foundation, either version 3 of the License, or
-//	   (at your option) any later version.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-//	   This program is distributed in the hope that it will be useful,
-//	   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	   GNU General Public License for more details.
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
 ///////////////////////////////////////////////////////////////////////////// */
 
-#include "config.h"
+#include "codegen.h"
+#include "config/util.h"
 
+namespace codegen {
 namespace api {
 
-using namespace codegen;
+using namespace std;
 
-decltype(size_max) size_max = NIFTY_DEF(size_max, [&] {
+inline codegen::def<"size_max -> udec&size"> size_max = [] {
+  category = "config";
+
   docs << "the maximum number of arguments bounded by the C++20 standard."
        << "set to min(255, uint_max) unless built with cpp20_arglimit=false"
        << "(which sets size_max to uint_max).";
+
   return size_max_s;
-});
+};
 
 } // namespace api
+} // namespace codegen
+
+#endif

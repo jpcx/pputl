@@ -127,10 +127,10 @@
 //                                                                            //
 //    Supported integer modes:                                                //
 //                                                                            //
-//       word_size=1    ⋮   4-bit integers  ⋮  ~? KiB                         //
-//       word_size=2    ⋮   8-bit integers  ⋮  ~? KiB                         //
-//     [ word_size=3    ⋮  12-bit integers  ⋮  ~? MiB  (default) ]            //
-//       word_size=4 †  ⋮  16-bit integers  ⋮  ~? MiB                         //
+//       word_size=1    :   4-bit integers  :  ~? KiB                         //
+//       word_size=2    :   8-bit integers  :  ~? KiB                         //
+//     [ word_size=3    :  12-bit integers  :  ~? MiB  (default) ]            //
+//       word_size=4 †  :  16-bit integers  :  ~? MiB                         //
 //                                        ________________________________    //
 //                                        †: requires cpp20_deflimit=false    //
 //                                                                            //
@@ -264,10 +264,6 @@ ASSERT_PP_EQ((PTL_ESC (a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
 ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (fooPTL_EAT(bar)));
 
-ASSERT_PP_EQ((PTL_XCAT(foo, bar)), (foobar));
-ASSERT_PP_EQ((PTL_XCAT(foo, PTL_EAT(bar))), (foo));
-ASSERT_PP_EQ((PTL_XCAT(,)), ());
-
 ASSERT_PP_EQ((PTL_STR()), (""));
 ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
 ASSERT_PP_EQ((PTL_STR(PTL_CAT(foo, bar))), ("PTL_CAT(foo, bar)"));
@@ -292,10 +288,14 @@ ASSERT_PP_EQ((PTL_XSTR(, a)), (", a"));
 ASSERT_PP_EQ((PTL_XSTR(, a, )), (", a,"));
 ASSERT_PP_EQ((PTL_XSTR(, , a)), (", , a"));
 
-ASSERT_PP_EQ((PTL_XFIRST()), ());
-ASSERT_PP_EQ((PTL_XFIRST(, )), ());
-ASSERT_PP_EQ((PTL_XFIRST(a)), (a));
-ASSERT_PP_EQ((PTL_XFIRST(a, b)), (a));
+ASSERT_PP_EQ((PTL_DEFAULT(a)), (a));
+ASSERT_PP_EQ((PTL_DEFAULT(a,)), (a));
+ASSERT_PP_EQ((PTL_DEFAULT(a, b)), (b));
+ASSERT_PP_EQ((PTL_DEFAULT(a, b, c)), (b, c));
+
+ASSERT_PP_EQ((PTL_XCAT(foo, bar)), (foobar));
+ASSERT_PP_EQ((PTL_XCAT(foo, PTL_EAT(bar))), (foo));
+ASSERT_PP_EQ((PTL_XCAT(,)), ());
 
 ASSERT_PP_EQ((PTL_XREST()), ());
 ASSERT_PP_EQ((PTL_XREST(, )), ());
@@ -305,6 +305,11 @@ ASSERT_PP_EQ((PTL_XREST(a, b, c)), (b, c));
 ASSERT_PP_EQ((PTL_XREST(PTL_XREST(a, b, c))), (c));
 ASSERT_PP_EQ((PTL_XREST(a, , )), (,));
 ASSERT_PP_EQ((PTL_XREST(a, b, , )), (b, ,));
+
+ASSERT_PP_EQ((PTL_XFIRST()), ());
+ASSERT_PP_EQ((PTL_XFIRST(, )), ());
+ASSERT_PP_EQ((PTL_XFIRST(a)), (a));
+ASSERT_PP_EQ((PTL_XFIRST(a, b)), (a));
 
 ASSERT_PP_EQ((PTL_TRIM()), ());
 ASSERT_PP_EQ((PTL_TRIM(, )), ());
@@ -316,169 +321,4 @@ ASSERT_PP_EQ((PTL_TRIM(a, b, )), (a, b,));
 ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
 ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
-
-ASSERT_PP_EQ((PTL_DEFAULT(a)), (a));
-ASSERT_PP_EQ((PTL_DEFAULT(a,)), (a));
-ASSERT_PP_EQ((PTL_DEFAULT(a, b)), (b));
-ASSERT_PP_EQ((PTL_DEFAULT(a, b, c)), (b, c));
-
-ASSERT_PP_EQ((PTL_IS_ANY()), (1));
-ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
-ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (0));
-
-ASSERT_PP_EQ((PTL_IS_NONE()), (1));
-ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(PTL_ESC())), (1));
-ASSERT_PP_EQ((PTL_IS_NONE(, )), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_NONE(, , a)), (0));
-
-ASSERT_PP_EQ((PTL_IS_ATOM()), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(foo)), (1));
-ASSERT_PP_EQ((PTL_IS_ATOM(0)), (1));
-ASSERT_PP_EQ((PTL_IS_ATOM(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(())), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((1, 2))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(PTL_OBJ())), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(PTL_ESC(()))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(PTL_ESC((1, 2)))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(, )), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM(, , a)), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((, ))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((, , ))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((a, ))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((a, , ))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((, a))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((, a, ))), (0));
-ASSERT_PP_EQ((PTL_IS_ATOM((, , a))), (0));
-
-ASSERT_PP_EQ((PTL_IS_IDEC(1)), (1));
-ASSERT_PP_EQ((PTL_IS_IDEC(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(127)), (1));
-ASSERT_PP_EQ((PTL_IS_IDEC(255)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(0x00u)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC(0xFF)), (0));
-ASSERT_PP_EQ((PTL_IS_IDEC((), ())), (0));
-
-ASSERT_PP_EQ((PTL_IS_BOOL()), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0)), (1));
-ASSERT_PP_EQ((PTL_IS_BOOL(1)), (1));
-ASSERT_PP_EQ((PTL_IS_BOOL(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0x00)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0, 1)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL((0))), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(())), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(0, )), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(, )), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_BOOL(, , a)), (0));
-
-ASSERT_PP_EQ((PTL_IS_IHEX(1)), (0));
-ASSERT_PP_EQ((PTL_IS_IHEX(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_IHEX(0x00)), (1));
-ASSERT_PP_EQ((PTL_IS_IHEX(0xFF)), (1));
-ASSERT_PP_EQ((PTL_IS_IHEX(0xFFu)), (0));
-ASSERT_PP_EQ((PTL_IS_IHEX((), ())), (0));
-
-ASSERT_PP_EQ((PTL_IS_UDEC(1)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC(1u)), (1));
-ASSERT_PP_EQ((PTL_IS_UDEC(255)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC(255u)), (1));
-ASSERT_PP_EQ((PTL_IS_UDEC(0x00u)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC(0xFF)), (0));
-ASSERT_PP_EQ((PTL_IS_UDEC((), ())), (0));
-
-ASSERT_PP_EQ((PTL_IS_UHEX(1)), (0));
-ASSERT_PP_EQ((PTL_IS_UHEX(1u)), (0));
-ASSERT_PP_EQ((PTL_IS_UHEX(0x00u)), (1));
-ASSERT_PP_EQ((PTL_IS_UHEX(0xFF)), (0));
-ASSERT_PP_EQ((PTL_IS_UHEX((), ())), (0));
-
-ASSERT_PP_EQ((PTL_IS_TUP()), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(())), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((1, 2))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC(()))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC((1, 2)))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP(, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_TUP(, , a)), (0));
-ASSERT_PP_EQ((PTL_IS_TUP((, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (1));
-
-ASSERT_PP_EQ((PTL_IS_PAIR()), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(1, 2)), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(())), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR((1, 2))), (1));
-ASSERT_PP_EQ((PTL_IS_PAIR((), ())), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(, )), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(, , )), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(a, )), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(a, , )), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(, a)), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(, a, )), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR(, , a)), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR((, ))), (1));
-ASSERT_PP_EQ((PTL_IS_PAIR((, , ))), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR((a, ))), (1));
-ASSERT_PP_EQ((PTL_IS_PAIR((a, , ))), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR((, a))), (1));
-ASSERT_PP_EQ((PTL_IS_PAIR((, a, ))), (0));
-ASSERT_PP_EQ((PTL_IS_PAIR((, , a))), (0));
-
-ASSERT_PP_EQ((PTL_ANY()), ());
-ASSERT_PP_EQ((PTL_ANY(foo)), (foo));
-
-ASSERT_PP_EQ((PTL_NONE()), ());
-
-ASSERT_PP_EQ((PTL_ATOM()), (0));
-ASSERT_PP_EQ((PTL_ATOM(1)), (1));
-ASSERT_PP_EQ((PTL_ATOM(foo)), (foo));
-
-ASSERT_PP_EQ((PTL_IDEC(0x00)), (0));
-ASSERT_PP_EQ((PTL_IDEC(0x01)), (1));
-ASSERT_PP_EQ((PTL_IDEC(0x05u)), (5));
-ASSERT_PP_EQ((PTL_IDEC(0x7F)), (127));
-ASSERT_PP_EQ((PTL_IDEC(127)), (127));
-
-ASSERT_PP_EQ((PTL_IHEX()), (0x00));
-ASSERT_PP_EQ((PTL_IHEX(0)), (0x00));
-ASSERT_PP_EQ((PTL_IHEX(1)), (0x01));
-ASSERT_PP_EQ((PTL_IHEX(5)), (0x05));
-ASSERT_PP_EQ((PTL_IHEX(255u)), (0xFF));
-ASSERT_PP_EQ((PTL_IHEX(127u)), (0x7F));
 // clang-format on

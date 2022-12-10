@@ -33,11 +33,13 @@
 #  include <experimental/source_location>
 #endif
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <list>
 #include <optional>
 #include <regex>
 #include <span>
+#include <type_traits>
 #include <unordered_set>
 
 namespace codegen {
@@ -230,10 +232,10 @@ constexpr char const project_header[]{
     "//                                                                            //\n"
     "//    Supported integer modes:                                                //\n"
     "//                                                                            //\n"
-    "//       word_size=1    ⋮   4-bit integers  ⋮  ~? KiB                         //\n"
-    "//       word_size=2    ⋮   8-bit integers  ⋮  ~? KiB                         //\n"
-    "//     [ word_size=3    ⋮  12-bit integers  ⋮  ~? MiB  (default) ]            //\n"
-    "//       word_size=4 †  ⋮  16-bit integers  ⋮  ~? MiB                         //\n"
+    "//       word_size=1    :   4-bit integers  :  ~? KiB                         //\n"
+    "//       word_size=2    :   8-bit integers  :  ~? KiB                         //\n"
+    "//     [ word_size=3    :  12-bit integers  :  ~? MiB  (default) ]            //\n"
+    "//       word_size=4 †  :  16-bit integers  :  ~? MiB                         //\n"
     "//                                        ________________________________    //\n"
     "//                                        †: requires cpp20_deflimit=false    //\n"
     "//                                                                            //\n"
@@ -496,18 +498,48 @@ concept string_representable = std::convertible_to<T, std::string> or requires(T
 
 /// an overload of std::to_string that allows string-convertible types.
 template<string_representable T>
-[[nodiscard]] std::string to_string(T&& v);
+[[nodiscard]] std::string
+to_string(T&& v) {
+  if constexpr (std::convertible_to<T, std::string>) {
+    return std::string{std::forward<T>(v)};
+  } else if constexpr (std::same_as<std::remove_cvref_t<T>, char>) {
+    return {v};
+  } else {
+    return std::to_string(std::forward<T>(v));
+  }
+}
 
 [[nodiscard]] std::string slice(std::string const& s, int end_ofs);
 [[nodiscard]] std::string slice(std::string const& s, int begin_ofs, int end_ofs);
 [[nodiscard]] std::vector<std::string> split(std::string const& target,
                                              std::regex const&  delim);
+
 template<detail::forward_iterable_for<std::string const> Strs>
-[[nodiscard]] std::string cat(Strs&& strs, std::string const& delim = "");
+std::string
+cat(Strs&& strs, std::string const& delim = "") {
+  if (strs.begin() == strs.end())
+    return {};
+  std::string res{};
+  auto        it = strs.begin();
+  for (; it != std::prev(strs.end()); ++it)
+    res += *it + delim;
+  res += *it;
+  return res;
+}
+
 template<detail::forward_iterable_for<std::string const> Strs>
   requires(not std::is_const_v<Strs>)
-[[nodiscard]] auto                     replace(Strs&&                                                  strs,
-                                               std::vector<std::pair<std::string, std::string>> const& repl);
+auto
+replace(Strs&& strs, std::vector<std::pair<std::string, std::string>> const& repl) {
+  for (auto&& v : strs) {
+    for (auto&& [t, r] : repl) {
+      if (v == t)
+        v = r;
+    }
+  }
+  return strs;
+}
+
 [[nodiscard]] std::string              alpha_base52(std::size_t num); // a-zA-Z
 [[nodiscard]] std::vector<std::string> base10_seq(std::size_t size,
                                                   std::string begin = "0"); // 0-9
@@ -516,12 +548,50 @@ template<detail::forward_iterable_for<std::string const> Strs>
                                            std::string begin = "a"); // a-zA-Z
 [[nodiscard]] std::string prefix_lines(std::string const& prefix,
                                        std::string const& multiline);
+
 template<std::unsigned_integral Int>
-[[nodiscard]] std::vector<Int> prime_factors(Int n);
+[[nodiscard]] std::vector<Int>
+prime_factors(Int n) {
+  if (n <= 3)
+    return {};
+  std::vector<Int> res{};
+  Int              cur{n};
+  while (cur % 2 == 0) {
+    res.push_back(2);
+    cur /= 2;
+  }
+  for (Int i = 3; i <= std::sqrt(cur); i += 2) {
+    while (cur % i == 0) {
+      res.push_back(i);
+      cur /= i;
+    }
+  }
+  if (cur > 2 and cur != n)
+    res.push_back(cur);
+  return res;
+}
+
 template<std::unsigned_integral Int>
-[[nodiscard]] inline Int next_le_pow2(Int n);
+[[nodiscard]] Int
+next_le_pow2(Int n) {
+  if (n == 0)
+    throw std::runtime_error{"cannot find a power of two before zero"};
+  Int res{1};
+  for (Int cur = 1; cur <= n; res = cur, cur *= 2)
+    ;
+  return res;
+}
+
 template<std::unsigned_integral Int>
-[[nodiscard]] inline Int next_ge_pow2(Int n);
+[[nodiscard]] Int
+next_ge_pow2(Int n) {
+  if (n == 0)
+    return 1;
+  auto res = next_le_pow2(n);
+  if (res == n)
+    return n;
+  return res * 2;
+}
 
 template<class T>
 using storage = std::aligned_storage_t<sizeof(std::remove_cvref_t<T>),
@@ -581,32 +651,79 @@ class nifty {
       internal_nifty##extern_ref_name##storage_ {                                     \
   }
 
+#define FEATURE_DECL(name, sig)         \
+  extern codegen::def<sig> const& name; \
+  NIFTY_DECL(name)
+
 } // namespace utl
 
 [[nodiscard]] std::string apiname(std::string const& short_name); // uses conf::api_prefix
 [[nodiscard]] std::string implname(std::string short_name); // uses conf::impl_prefix
 
 namespace pp {
+
 template<detail::forward_iterable_for<std::string const> Args>
-[[nodiscard]] std::string va_opt(Args&& args);
-template<detail::forward_iterable_for<std::string const> Args>
-[[nodiscard]] std::string cat(Args&& args);
-template<bool Space = true, detail::forward_iterable_for<std::string const> Args>
-[[nodiscard]] std::string tup(Args&& args);
-template<std::convertible_to<std::string>                Fn,
-         detail::forward_iterable_for<std::string const> Args>
-[[nodiscard]] std::string call(Fn&& fn, Args&& args);
+[[nodiscard]] std::string
+va_opt(Args&& args) {
+  return "__VA_OPT__(" + utl::cat(std::forward<Args>(args), ", ") + ")";
+}
 
 template<utl::string_representable... Args>
-[[nodiscard]] std::string va_opt(Args&&... args);
+[[nodiscard]] std::string
+va_opt(Args&&... args) {
+  return va_opt(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+}
+
+template<detail::forward_iterable_for<std::string const> Args>
+[[nodiscard]] std::string
+cat(Args&& args) {
+  return utl::cat(std::forward<Args>(args), "##");
+}
+
 template<utl::string_representable... Args>
-[[nodiscard]] std::string cat(Args&&... args);
+[[nodiscard]] std::string
+cat(Args&&... args) {
+  return cat(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+}
+
+template<bool Space = true, detail::forward_iterable_for<std::string const> Args>
+[[nodiscard]] std::string
+tup(Args&& args) {
+  return "(" + utl::cat(std::forward<Args>(args), (Space ? ", " : ",")) + ")";
+}
+
 template<bool Space = true, utl::string_representable... Args>
-[[nodiscard]] std::string tup(Args&&... args);
-template<utl::string_representable... Args>
-[[nodiscard]] std::string str(Args&&... args);
+[[nodiscard]] std::string
+tup(Args&&... args) {
+  return tup<Space>(
+      std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+}
+
+template<std::convertible_to<std::string>                Fn,
+         detail::forward_iterable_for<std::string const> Args>
+[[nodiscard]] std::string
+call(Fn&& fn, Args&& args) {
+  return std::string{std::forward<Fn>(fn)} + tup(std::forward<Args>(args));
+}
+
 template<utl::string_representable Fn, utl::string_representable... Args>
-[[nodiscard]] std::string call(Fn&& fn, Args&&... args);
+[[nodiscard]] std::string
+call(Fn&& fn, Args&&... args) {
+  return call(std::string{std::forward<Fn>(fn)},
+              std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+}
+
+template<detail::forward_iterable_for<std::string const> Args>
+[[nodiscard]] std::string
+str(Args&& args) {
+  return "\"" + utl::cat(std::forward<Args>(args), ", ") + "\"";
+}
+
+template<utl::string_representable... Args>
+[[nodiscard]] std::string
+str(Args&&... args) {
+  return str(std::vector<std::string>{utl::to_string(std::forward<Args>(args))...});
+}
 
 } // namespace pp
 
@@ -727,6 +844,34 @@ trim_end(Begin begin, End end) noexcept {
 is_alphanum(char ch) noexcept {
   return (ch >= '0' and ch <= '9') or (ch >= 'A' and ch <= 'Z')
       or (ch >= 'a' and ch <= 'z');
+}
+
+template<functor F, class T, std::same_as<std::string>... Args, std::size_t... Idxs>
+[[nodiscard]] inline auto
+iter_invoke_impl(F&& f, std::deque<T>& src_args, std::tuple<Args...>&& args = {},
+                 std::index_sequence<Idxs...>&& = {}) {
+  if constexpr (sizeof...(Idxs) == std::tuple_size_v<functor_params_type<F>>) {
+    if (not src_args.empty())
+      throw std::runtime_error{"too many args provided to iter_invoke"};
+    return f(get<Idxs>(args)...);
+  } else {
+    if (src_args.empty())
+      throw std::runtime_error{"too few args provided to iter_invoke"};
+    std::string next = src_args.front();
+    src_args.pop_front();
+    return iter_invoke_impl(std::forward<F>(f), src_args,
+                            std::tuple{get<Idxs>(args)..., next},
+                            std::make_index_sequence<sizeof...(Idxs) + 1>{});
+  }
+}
+
+template<functor F, std::ranges::forward_range Range>
+[[nodiscard]] inline auto
+iter_invoke(F&& f, Range const& args) {
+  std::deque<std::ranges::range_value_t<Range>> src_args{};
+  src_args.resize(args.size());
+  std::ranges::copy(args, src_args.begin());
+  return iter_invoke_impl(std::forward<F>(f), src_args);
 }
 
 } // namespace detail
@@ -1149,9 +1294,6 @@ class def_base {
   /// all defined categories sorted by their position in the dependency graph.
   static inline std::vector<std::string> _defined_categories{};
 
-  /// the current feature category. set by a codegen::category definition.
-  static inline std::string _cur_category{};
-
   /// the current clang_format preference.
   static inline bool _cur_clang_format{true};
 
@@ -1164,10 +1306,6 @@ class def_base {
     /// if this instance is a child, uses implname. else, uses apiname.
     /// no two instances may share the same id.
     std::string const id;
-    //
-    /// category of the macro.
-    /// set by codegen::begin_category.
-    std::string const category;
 
     /// name of the macro.
     std::string const name;
@@ -1178,6 +1316,10 @@ class def_base {
     /// whether or not the macro should be formatted.
     /// modified by clang_format = false in macro body;
     bool const clang_format;
+
+    /// category of the macro.
+    /// set by codegen::begin_category.
+    std::string category{};
 
     /// a vector of child instances. assigned by children.
     std::vector<instance*> children{};
@@ -1227,7 +1369,171 @@ class def_base {
   ///
   /// only executed once per instance. results are saved for future invocations.
   template<detail::body_functor Body>
-  void define(Body&& body);
+  void
+  define(Body&& body) {
+    static std::regex argdelim{", *", std::regex_constants::optimize};
+    static std::regex variadic{"[^.]*\\.{3}", std::regex_constants::optimize};
+
+    if (_instance->definition)
+      throw std::runtime_error{"macro " + _instance->id + " defined twice"};
+
+    { // ensure instance directly follows parent (fix forward declaration misplacements)
+      auto it = std::ranges::find(_instances, _instance, [](auto&& v) {
+        return &v;
+      });
+      if (it == _instances.end())
+        throw std::logic_error{"could not find instance " + _instance->id
+                               + " in the instances list"};
+
+      auto ins = _instances.end();
+      if (not _instance->context.empty()) {
+        ins = std::ranges::find(_instances, _instance->context.back(), [](auto&& v) {
+          return &v;
+        });
+        if (ins != _instances.end()) {
+          // register this child with its parent
+          ins->children.push_back(_instance);
+          ++ins;
+        }
+      }
+
+      _instances.splice(ins, _instances, it);
+    }
+
+    // copy category from parent
+    if (not _exec_stack.empty())
+      _instance->category = _exec_stack.back()->category;
+
+    std::string def{};
+    std::string body_s{};
+
+    std::optional<std::vector<std::string>> args{
+        ([&]() -> std::optional<std::vector<std::string>> {
+          if (_instance->params) {
+            std::vector<std::string> args{};
+            for (auto&& v : utl::split(*_instance->params, argdelim)) {
+              if (not std::regex_match(v, variadic))
+                args.push_back(v);
+              else
+                args.push_back("__VA_ARGS__");
+            }
+            return {args};
+          } else {
+            return {std::nullopt};
+          }
+        })()};
+
+    if constexpr (std::tuple_size_v<detail::functor_params_type<Body>> == 0) {
+      // may either be a nullary function or a non-function
+
+      _exec_stack.push_back(_instance);
+      body_s = body();
+      _exec_stack.pop_back();
+    } else if constexpr (detail::elements_same_as_any_of<
+                             detail::functor_params_type<Body>, arg, va>) {
+      // must be a function that accept individual arg|va arguments
+
+      if (not args)
+        throw std::runtime_error{"missing params for " + _instance->id};
+
+      _exec_stack.push_back(_instance);
+      try {
+        body_s = detail::iter_invoke(std::forward<Body>(body), *args);
+      } catch (std::runtime_error const& e) {
+        throw std::runtime_error{
+            "found invalid parameter/body configuration while executing " + _instance->id
+            + ": " + e.what()};
+      }
+      _exec_stack.pop_back();
+    } else {
+      // must be a function that accepts pack arguments
+      static_assert(
+          std::tuple_size_v<detail::functor_params_type<Body>> == 1
+          and std::same_as<std::tuple_element_t<0, detail::functor_params_type<Body>>,
+                           pack>);
+
+      if (not args)
+        throw std::runtime_error{"missing params for " + _instance->id};
+
+      _exec_stack.push_back(_instance);
+      body_s = body(*args);
+      _exec_stack.pop_back();
+    }
+
+    if (_instance->category.empty())
+      throw std::runtime_error{"missing category for " + _instance->id};
+
+    if (not _instance->description.empty() or not _instance->examples.empty()) {
+      if (_instance->description.front() != '^')
+        def += "\n";
+
+      if (_exec_stack.empty()) { // only put category for top-level macros
+        auto catstr = utl::ii << [&] {
+          if (_instance->category.starts_with("impl.")) {
+            auto catname =
+                std::string{_instance->category.begin() + 5, _instance->category.end()};
+            auto catless_name =
+                std::regex_replace(_instance->name, std::regex{catname + "_?"}, "");
+            return "[" + _instance->category + "." + catless_name + "]";
+          } else {
+            return "[" + _instance->category + "." + _instance->name + "]";
+          }
+        };
+        def += "/// " + catstr + "\n";
+        def += "/// " + utl::cat(std::vector<std::string>(catstr.size(), "-")) + "\n";
+      }
+
+      if (not _instance->description.empty()) {
+        if (_instance->description.front() != '^')
+          def += utl::prefix_lines("/// ", _instance->description) + "\n";
+        else
+          def += utl::prefix_lines("/// ", std::string{_instance->description.begin() + 1,
+                                                       _instance->description.end()})
+               + "\n";
+      }
+      if (not _instance->examples.empty()) {
+        def += "///\n";
+        std::size_t max_expectedsz{0};
+        for (auto&& v : _instance->examples) {
+          if (v[0].size() > max_expectedsz)
+            max_expectedsz = v[0].size();
+        }
+        for (auto&& v : _instance->examples) {
+          def += "/// " + v[0];
+          for (std::size_t _ = v[0].size(); _ < max_expectedsz + 1; ++_)
+            def += " ";
+          if (v[1] != "") {
+            def += "// " + v[1] + "\n";
+          } else {
+            def += "// <nothing>\n";
+          }
+        }
+      }
+    }
+
+    def += "#define " + _instance->id;
+    if (_instance->params) {
+      if (_instance->docparams)
+        def += "( /* " + *_instance->docparams + " */" + *_instance->params + ")";
+      else
+        def += "(" + *_instance->params + ")";
+    }
+    if (_instance->xout or _instance->docreturn) {
+      def += " /* ";
+      if (_instance->xout)
+        def += "-<" + *_instance->xout + ">";
+      def += "->";
+      if (_instance->docreturn)
+        def += " " + *_instance->docreturn;
+      def += " */";
+    }
+
+    def += " ";
+
+    def += body_s;
+
+    _instance->definition = def;
+  }
 
   void update_instance(runtime_signature const& sig);
 
@@ -1235,15 +1541,7 @@ class def_base {
   friend class tests;
   friend class docs;
   friend class clang_format;
-  template<detail::string_literal Name>
-    requires(not Name.empty())
-  friend class category_fwd;
-  template<detail::string_literal Name>
-    requires(not Name.empty())
   friend class category;
-  template<detail::string_literal Name>
-    requires(not Name.empty())
-  friend class end_category;
   friend class arg;
   friend class va;
   friend class pack;
@@ -1266,30 +1564,54 @@ class def_base {
   /// macros cannot be redefined.
   template<detail::body_functor Body>
   def_base(runtime_signature const& sig, Body&& body,
-           detail::source_location const& loc = detail::source_location::current());
+           detail::source_location const& loc = detail::source_location::current())
+      : _instance{get_instance(sig.name, loc)} {
+    update_instance(sig);
+    define(std::forward<Body>(body));
+  }
 
   /// defines the macro.
   /// macros cannot be redefined.
   template<detail::body_functor Body>
-  def_base& operator=(Body&& body) noexcept;
+  def_base&
+  operator=(Body&& body) noexcept {
+    define(std::forward<Body>(body));
+    return *this;
+  }
 
   /// implicitly convertible to string using the macro id.
   [[nodiscard]] operator std::string const&() const noexcept;
 
   /// construct a call string using this id and any string-representable args.
   template<utl::string_representable... Args>
-  [[nodiscard]] std::string operator()(Args&&... args) const;
+  [[nodiscard]] std::string
+  operator()(Args&&... args) const {
+    if (not _instance->params)
+      throw std::runtime_error{"cannot call a non-function macro " + _instance->id};
+    return pp::call(*this, std::forward<Args>(args)...);
+  }
 
   /// construct a call string using this id and any string-representable args.
   template<detail::forward_iterable_for<std::string const> Args>
-  [[nodiscard]] std::string operator()(Args&& args) const;
+  [[nodiscard]] std::string
+  operator()(Args&& args) const {
+    if (not _instance->params)
+      throw std::runtime_error{"cannot call a non-function macro " + _instance->id};
+    return pp::call(*this, std::forward<Args>(args));
+  }
 };
 
 template<std::convertible_to<std::string> T>
-[[nodiscard]] std::string operator+(def_base const& lhs, T&& rhs) noexcept;
+[[nodiscard]] std::string
+operator+(def_base const& lhs, T&& rhs) noexcept {
+  return std::string{lhs} + std::string{std::forward<T>(rhs)};
+}
 
 template<std::convertible_to<std::string> T>
-[[nodiscard]] std::string operator+(T&& lhs, def_base const& rhs) noexcept;
+[[nodiscard]] std::string
+operator+(T&& lhs, def_base const& rhs) noexcept {
+  return std::string{std::forward<T>(lhs)} + std::string{rhs};
+}
 
 /// stream object for adding docs to the current execution macro.
 /// can be used as an indicator for tests to specify an example.
@@ -1297,6 +1619,13 @@ inline class docs {
  public:
   docs const& operator<<(std::string const& line) const; // add line to descr
 } docs{};
+
+/// sets current category.
+/// must be called within def execution body.
+inline class category {
+ public:
+  category const& operator=(std::string const& name) const;
+} category{};
 
 /// stream object for adding tests to the current execution macro.
 inline class tests {
@@ -1344,43 +1673,6 @@ inline class clang_format {
 ///   tests << "actual" = "expected" >> docs; // both tested and documented
 [[nodiscard]] tests::example_tag operator>>(std::string const& expected,
                                             class docs const&) noexcept;
-
-/// sets a forward-declared category for all newly constructed defs.
-template<detail::string_literal Name>
-  requires(not Name.empty())
-class category_fwd {
- public:
-  category_fwd() {
-    if (not def_base::_cur_category.empty())
-      throw std::runtime_error{"cannot start a new category before ending category "
-                               + def_base::_cur_category};
-    def_base::_cur_category = Name.c_str();
-  }
-};
-
-/// sets the category for all newly constructed defs.
-template<detail::string_literal Name>
-  requires(not Name.empty())
-class category : public category_fwd<Name> {
- public:
-  category() {
-    def_base::_defined_categories.push_back(def_base::_cur_category);
-  }
-};
-
-/// sets the category for all newly constructed defs.
-template<detail::string_literal Name>
-  requires(not Name.empty())
-class end_category {
- public:
-  end_category() {
-    if (def_base::_cur_category != Name.c_str())
-      throw std::runtime_error{std::string{"end_category <"} + Name.c_str()
-                               + ">not preceeded by same category: "
-                               + def_base::_cur_category};
-    def_base::_cur_category = "";
-  }
-};
 
 class arg {
   std::string         _value;
@@ -1448,43 +1740,52 @@ class def : public def_base {
   /// passes static signature to macro
   template<class = void>
     requires(not Sig.empty())
-  def(detail::source_location const& loc = detail::source_location::current());
+  def(detail::source_location const& loc = detail::source_location::current())
+      : def_base{runtime_signature{Sig}, loc} {
+  }
 
   /// defines using static signature.
   /// macros cannot be redefined.
   template<detail::body_functor Body>
     requires(not Sig.empty())
   def(Body&&                         body,
-      detail::source_location const& loc = detail::source_location::current());
+      detail::source_location const& loc = detail::source_location::current())
+      : def_base{runtime_signature{Sig}, std::forward<Body>(body), loc} {
+  }
 
   /// default construction. does not register anything.
   template<class = void>
     requires(Sig.empty())
-  def();
+  def() : def_base{} {
+  }
 
   /// updates signature data.
   template<class = void>
     requires(Sig.empty())
   explicit def(runtime_signature const&       sig,
-               detail::source_location const& loc = detail::source_location::current());
+               detail::source_location const& loc = detail::source_location::current())
+      : def_base{sig, loc} {
+  }
 
   /// updates signature data and defines.
   /// macros cannot be redefined.
   template<detail::body_functor Body>
     requires(Sig.empty())
   def(runtime_signature const& sig, Body&& body,
-      detail::source_location const& loc = detail::source_location::current());
+      detail::source_location const& loc = detail::source_location::current())
+      : def_base{sig, std::forward<Body>(body), loc} {
+  }
 
   /// defines the macro.
   /// macros cannot be redefined.
   template<detail::body_functor Body>
-  def& operator=(Body&& body) noexcept;
+  def&
+  operator=(Body&& body) noexcept {
+    def_base::operator=(std::forward<Body>(body));
+    return *this;
+  }
 };
 
 } // namespace codegen
-
-#ifndef CODEGEN_CODEGEN_TCC_INCLUDED
-#  include "codegen/codegen.tcc"
-#endif
 
 #endif
