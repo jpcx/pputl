@@ -45,7 +45,7 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many high-level constructs including integers, recursion, and OOP.      //
+//    many language constructs including integers, recursion, and vectors.    //
 //                                                                            //
 //    Speed, safety, and flexibility are its primary goals.                   //
 //                                                                            //
@@ -55,61 +55,6 @@
 //                                                                            //
 //    Functions verify their arguments and use type casting to ensure that    //
 //    useful error messages are generated as soon as an issue manifests.      //
-//                                                                            //
-//    Features overview:                                                      //
-//                                                                            //
-//     ◆ language enhancements                                                //
-//       ‐ basic argument manipulation                              [lang]    //
-//           eat  esc  first  xfirst  rest  xrest  trim                       //
-//       ‐ control flow                                    [lang, control]    //
-//           default  fail  if  switch                                        //
-//       ‐ type casting                                             [type]    //
-//           any   none   tup    pair  kv    sym  enum                        //
-//           idec  bool   ihex   udec  uhex  int  uint                        //
-//           word  size   ofs    obj   null  arr  buf                         //
-//           ord   stack  queue  heap  pq    set  map                         //
-//       ‐ type traits                                     [traits, range]    //
-//           is_any   is_none  is_tup   is_pair  is_kv     is_sym             //
-//           is_enum  is_idec  is_bool  is_ihex  is_udec   is_uhex            //
-//           is_int   is_uint  is_word  is_size  is_ofs    is_obj             //
-//           is_null  is_arr   is_buf   is_ord   is_stack  is_queue           //
-//           is_heap  is_pq    is_set   is_map   enum_k    enum_v             //
-//           typeof   chainof  countof  sizeof   itemsof   is_empty           //
-//       ‐ boolean logic                                           [logic]    //
-//           not  and  or  xor  nand  nor  xnor                               //
-//       ‐ paste formatting                                    [lang, fmt]    //
-//           str  xstr  cat  xcat  c_int  c_bin                               //
-//     ◆ signed and unsigned integers                                         //
-//       ‐ arithmetic                                      [numeric, math]    //
-//           inc  dec  neg  abs   log2  sqrt  fact  prime                     //
-//           add  sub  mul  divr  div   rem   index                           //
-//       ‐ comparison                                   [numeric, compare]    //
-//           eqz  nez  ltz  gtz  lez  gez  lt                                 //
-//           gt   le   ge   eq   ne   min  max                                //
-//       ‐ bitwise operations                                    [bitwise]    //
-//           hexdump  bitdump  bitsll   bitsrl   bitsra   bitnot              //
-//           bitand   bitor    bitxor   bitnand  bitnor   bitxnor             //
-//           bitget   bitset   bitflip  bitrotl  bitrotr                      //
-//     ◆ datastructures and algorithms                                        //
-//       ‐ range manipulation                                      [range]    //
-//           bisect     unite      head      tail    push_front               //
-//           push_back  pop_front  pop_back  get     set                      //
-//           ins        del        swap      front   back                     //
-//           slice      splice     push      pop                              //
-//       ‐ range generation                                         [algo]    //
-//           iota  repeat  generate_lp  generate_rp  enumerate                //
-//       ‐ range algorithms                                         [algo]    //
-//           reverse    transform_lp  transform_rp  shift    rotate           //
-//           reduce_lp  reduce_rp     sort_lp       sort_rp  find             //
-//           find_not   find_if_lp    find_if_rp                              //
-//     ◆ metaprogramming utilities                                            //
-//       ‐ expansion control and tracing                            [meta]    //
-//           x  xx_lp  xx_rp  lp  rp  xtrace  xtrace_read                     //
-//       ‐ inline recursive stack construction                      [meta]    //
-//           recur_lp  recur_rp                                               //
-//     ◆ configuration details                                    [config]    //
-//           version  build     word_size  bit_length  int_min                //
-//           int_max  uint_max  size_max   offset_min  offset_max             //
 //                                                                            //
 //    USAGE                                                                   //
 //    -----                                                                   //
@@ -125,18 +70,15 @@
 //    Various settings including word size and naming rules may be changed    //
 //    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
-//    The default build uses 12-bit words and 8-bit sizes and is              //
-//    fully compliant with the C++20 standard, which defines the              //
-//    following implementation limits in [implimits]:                         //
+//    The default build defines 12-bit words and caps sizes at 255, which     //
+//    complies with the following C++20 implementation limits [implimits]:    //
 //                                                                            //
 //     ‐ Macro identifiers simultaneously                                     //
 //       defined in one translation unit: [65536].                            //
 //     ‐ Parameters in one macro definition: [256].                           //
 //     ‐ Arguments in one macro invocation: [256].                            //
 //                                                                            //
-//    If you wish to modify the settings to create your own build, keep       //
-//    these limitations in mind. Exceeding these limits is possible but       //
-//    depends on the preprocessor.                                            //
+//    Exceeding these limits is possible but depends on the preprocessor.     //
 //                                                                            //
 //    pputl has been tested with:                                             //
 //                                                                            //
@@ -156,7 +98,7 @@
 //    API functions are strictly documented using this type system. Inputs    //
 //    are validated by invoking the associated constructor or through some    //
 //    other form of inference. An argument is valid if it can be converted    //
-//    to or interpreted as its parameter type without losing information.     //
+//    to (or interpreted as) its paramter type without losing information.    //
 //                                                                            //
 //     any: any potentially-empty argument in a __VA_ARGS__ expression        //
 //      ├╴none: the literal nothing; an absence of pp-tokens                  //
@@ -165,18 +107,11 @@
 //      │  │  └╴bool: 0|1                                                     //
 //      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //
 //      │  └╴word: int|uint                                                   //
-//      │     ├╴size: a non-negative word less than size_max                  //
-//      │     └╴ofs:  a word ranged from (-size_max, size_max)                //
+//      │     ├╴size: any word in the range of [0, size_max]                  //
+//      │     └╴ofs:  any word in the range of (-size_max, size_max)          //
 //      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //
 //      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //
-//      └╴obj: an inheritable, atom-addressable state manager                 //
-//         ├╴null:  an empty object (the default object)                      //
-//         └╴range: a sized, indexable, and iterable item container           //
-//            ├╴arr:   a freely-mutable item sequence                         //
-//            ├╴stack: a LIFO stack                                           //
-//            ├╴queue: a FIFO queue                                           //
-//            ├╴map:   a word-keyed map                                       //
-//            └╴set:   a set of words                                         //
+//      └╴vec: a resizable item sequence [e.g. PTL_VEC(2u, (a, b))]           //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -194,8 +129,8 @@
 //    Negative ints are represented as valid C++ arithmetic expressions in    //
 //    order to avoid post-processing:  pputl arithmetic operations  always    //
 //    expand to values  that are usable in both preprocessor and C++ code.    //
-//    When constructing preprocessor identifiers,  use lang.cat to convert   ///
-//    the expression to its hex prefix before concatenation.                ////
+//    When constructing  preprocessor identifiers  from negative integers,   ///
+//    use int_name to extract the hex prefix before concatenation.          ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 

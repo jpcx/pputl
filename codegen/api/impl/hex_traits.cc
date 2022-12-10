@@ -136,8 +136,7 @@ inline def<"impl_hex_traits(v, t: 0|1|...|E|F, NOT|DEC0|DEC1|INC0|INC1|NYBL|BITS
         }
         digits[i] = def{"\\" + string{impl::alpha[i]}} = [&] {
           docs << "not, dec0carry, dec0, dec1carry, dec1, inc0carry, inc0, inc1carry, "
-                  "inc1, "
-                  "nybl, ...bits";
+                  "inc1, nybl, ...bits";
           return impl::not_(i) + ", " + impl::dec0(i) + ", " + impl::dec1(i) + ", "
                + impl::inc0(i) + ", " + impl::inc1(i) + ", " + impl::to_nybl(i) + ", "
                + impl::bits(i);

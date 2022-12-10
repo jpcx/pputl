@@ -34,69 +34,31 @@ namespace api {
 
 using namespace std;
 
-inline def<"impl_arithhint(a, b: IDEC|IHEX|UDEC|UHEX, IDEC|IHEX|UDEC|UHEX)"> arithhint =
-    [](arg a, arg b) {
-      category = "impl";
+inline def<"impl_arithhint(a, b: INT|UINT, INT|UINT) -> INT|UINT"> arithhint = [](arg a,
+                                                                                  arg b) {
+  category = "impl";
 
-      docs << "[internal] two-operand arithmetic cast hint."
-           << ""
-           << "immediately concatenates args."
-           << ""
-           << "returns UDEC|UHEX if either operand is"
-           << "UDEC|UHEX, UDEC|IDEC if either operand"
-           << "is UDEC|IDEC, and UHEX|IHEX otherwise.";
+  docs << "[internal] two-operand arithmetic cast hint."
+       << ""
+       << "immediately concatenates args."
+       << ""
+       << "returns UINT if either operand is UINT, else INT.";
 
-      def<"\\IDECIDEC"> idecidec = [&] {
-        return "IDEC";
-      };
-      def<"\\IDECIHEX">{} = [&] {
-        return "IDEC";
-      };
-      def<"\\IDECUDEC">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\IDECUHEX">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\IHEXIDEC">{} = [&] {
-        return "IDEC";
-      };
-      def<"\\IHEXIHEX">{} = [&] {
-        return "IHEX";
-      };
-      def<"\\IHEXUDEC">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\IHEXUHEX">{} = [&] {
-        return "UHEX";
-      };
-      def<"\\UDECIDEC">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\UDECIHEX">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\UDECUDEC">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\UDECUHEX">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\UHEXIDEC">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\UHEXIHEX">{} = [&] {
-        return "UHEX";
-      };
-      def<"\\UHEXUDEC">{} = [&] {
-        return "UDEC";
-      };
-      def<"\\UHEXUHEX">{} = [&] {
-        return "UHEX";
-      };
+  def<"\\INTINT"> idecidec = [&] {
+    return "INT";
+  };
+  def<"\\INTUINT">{} = [&] {
+    return "UINT";
+  };
+  def<"\\UINTINT">{} = [&] {
+    return "UINT";
+  };
+  def<"\\UINTUINT">{} = [&] {
+    return "UINT";
+  };
 
-      return pp::cat(utl::slice(idecidec, -8), a, b);
-    };
+  return pp::cat(utl::slice(idecidec, -8), a, b);
+};
 
 } // namespace api
 } // namespace codegen
