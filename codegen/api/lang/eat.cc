@@ -39,6 +39,9 @@ inline def<"eat(...) -> none"> eat = [](va) {
 
   docs << "eats arguments; return nothing.";
 
+  tests << eat()      = "" >> docs;
+  tests << eat("foo") = "" >> docs;
+
   return "";
 };
 

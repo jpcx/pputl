@@ -37,10 +37,10 @@ using namespace std;
 inline def<"esc(...) -> any..."> esc = [](va args) {
   category = "lang";
 
-  docs << "escapes parentheses. identity function.";
-
-  tests << esc + " ()"        = "" >> docs;
-  tests << esc + " (a, b, c)" = "a, b, c" >> docs;
+  docs << "escapes parentheses. identity function."
+       << ""
+       << "e.g. #define FOO (a, b, c)"
+       << "     " + esc + " FOO // a, b, c";
 
   return args;
 };

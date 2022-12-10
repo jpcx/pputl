@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_CAT_CC
-#define CODEGEN_API_LANG_CAT_CC
+#ifndef CODEGEN_API_IMPL_HEX_CAT_CC
+#define CODEGEN_API_IMPL_HEX_CAT_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,28 +29,24 @@
 
 #include "codegen.h"
 
-#include "lang/eat.cc"
-
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline def<"cat(a, b: a: any, b: any) -> any"> cat = [](arg a, arg b) {
-  category = "lang";
+inline def<"impl_hex_cat(...: 0|1|...|E|F...)"> hex_cat = [](va args) {
+  category = "impl";
 
-  docs << "immediately concatenates a with b."
-       << "must provide at least one arg."
-       << "args must be compatible with the ## operator."
-       << ""
-       << "cat cannot be used to concatenate expression results,"
-       << "as the inputs are evaluated immediately. use xcat for"
-       << "expressions that should expand before concatenation.";
+  docs << "[internal] concatenates hexadecimal digits to a uhex expression.";
 
-  tests << cat("foo", "bar")      = "foobar" >> docs;
-  tests << cat("foo", eat("bar")) = ("foo" + eat + "(bar)") >> docs;
-
-  return pp::cat(a, b);
+  def o =
+      def{"o("
+          + utl::cat(utl::replace(utl::alpha_base52_seq(conf::word_size), {{"u", "_u"}}),
+                     ", ")
+          + ")"} = [&](pack args) {
+        return pp::cat("0x", pp::cat(args), "u");
+      };
+  return o(args);
 };
 
 } // namespace api

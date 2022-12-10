@@ -39,7 +39,7 @@ using namespace std;
 inline def<"xfirst(...: any...) -> any"> xfirst = [](va args) {
   category = "lang";
 
-  docs << "returns the first argument.";
+  docs << "returns the first argument after an expansion.";
 
   tests << xfirst("")     = "" >> docs;
   tests << xfirst(", ")   = "" >> docs;

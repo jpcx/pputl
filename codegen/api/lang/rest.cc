@@ -46,6 +46,10 @@ inline def<"rest(_, ...: first: any, ...rest: any) -> any..."> rest = [](arg, va
        << "for quickly retrieving the rest tuple elements"
        << "using an identity function such as " + esc + "."
        << ""
+       << "rest cannot be used to extract from expression results,"
+       << "as the inputs are evaluated immediately. use xrest for"
+       << "expressions that should expand before selection."
+       << ""
        << "e.g. " + rest("__VA_ARGS__") << "     " + esc(rest + " tup");
 
   return rest_;

@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_CAT_CC
-#define CODEGEN_API_LANG_CAT_CC
+#ifndef CODEGEN_API_IMPL_XARITHHINT_CC
+#define CODEGEN_API_IMPL_XARITHHINT_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,29 +29,25 @@
 
 #include "codegen.h"
 
-#include "lang/eat.cc"
+#include "impl/arithhint.cc"
 
 namespace codegen {
 namespace api {
 
 using namespace std;
 
-inline def<"cat(a, b: a: any, b: any) -> any"> cat = [](arg a, arg b) {
-  category = "lang";
+inline def<"impl_xarithhint(...: IDEC|IHEX|UDEC|UHEX, IDEC|IHEX|UDEC|UHEX)"> xarithhint =
+    [](va args) {
+      category = "impl";
 
-  docs << "immediately concatenates a with b."
-       << "must provide at least one arg."
-       << "args must be compatible with the ## operator."
-       << ""
-       << "cat cannot be used to concatenate expression results,"
-       << "as the inputs are evaluated immediately. use xcat for"
-       << "expressions that should expand before concatenation.";
+      docs << "[internal] two-operand arithmetic cast hint."
+           << ""
+           << "returns UDEC|UHEX if either operand is"
+           << "UDEC|UHEX, UDEC|IDEC if either operand"
+           << "is UDEC|IDEC, and UHEX|IHEX otherwise.";
 
-  tests << cat("foo", "bar")      = "foobar" >> docs;
-  tests << cat("foo", eat("bar")) = ("foo" + eat + "(bar)") >> docs;
-
-  return pp::cat(a, b);
-};
+      return arithhint(args);
+    };
 
 } // namespace api
 } // namespace codegen

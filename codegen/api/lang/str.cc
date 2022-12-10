@@ -39,7 +39,11 @@ using namespace std;
 inline def<"str(...: any...) -> obj"> str = [](va args) {
   category = "lang";
 
-  docs << "immediately stringizes args.";
+  docs << "immediately stringizes args."
+       << ""
+       << "str cannot be used to stringize expression results,"
+       << "as the inputs are evaluated immediately. use xstr for"
+       << "expressions that should expand before stringization.";
 
   tests << str()                  = "\"\"" >> docs;
   tests << str("foo")             = "\"foo\"";

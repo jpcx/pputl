@@ -125,25 +125,18 @@
 //    Various settings including word size and naming rules may be changed    //
 //    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
-//    Supported integer modes:                                                //
-//                                                                            //
-//       word_size=1    :   4-bit integers  :  ~? KiB                         //
-//       word_size=2    :   8-bit integers  :  ~? KiB                         //
-//     [ word_size=3    :  12-bit integers  :  ~? MiB  (default) ]            //
-//       word_size=4 †  :  16-bit integers  :  ~? MiB                         //
-//                                        ________________________________    //
-//                                        †: requires cpp20_deflimit=false    //
-//                                                                            //
-//    By default, pputl is fully compliant with the C++20 standard,           //
-//    which defines the following implementation limits in [implimits]:       //
+//    The default build uses 12-bit words and 8-bit sizes and is              //
+//    fully compliant with the C++20 standard, which defines the              //
+//    following implementation limits in [implimits]:                         //
 //                                                                            //
 //     ‐ Macro identifiers simultaneously                                     //
 //       defined in one translation unit: [65536].                            //
 //     ‐ Parameters in one macro definition: [256].                           //
 //     ‐ Arguments in one macro invocation: [256].                            //
 //                                                                            //
-//    Settings are available to ignore these limits, but support for sizes    //
-//    and macro definition counts higher than the standard is variable.       //
+//    If you wish to modify the settings to create your own build, keep       //
+//    these limitations in mind. Exceeding these limits is possible but       //
+//    depends on the preprocessor.                                            //
 //                                                                            //
 //    pputl has been tested with:                                             //
 //                                                                            //
@@ -163,21 +156,17 @@
 //    API functions are strictly documented using this type system. Inputs    //
 //    are validated by invoking the associated constructor or through some    //
 //    other form of inference. An argument is valid if it can be converted    //
-//    to its parameter type; see [type] for constructor documentation.        //
+//    to or interpreted as its parameter type without losing information.     //
 //                                                                            //
 //     any: any potentially-empty argument in a __VA_ARGS__ expression        //
 //      ├╴none: the literal nothing; an absence of pp-tokens                  //
-//      ├╴atom: a non-empty sequence of pp-concatable tokens                  //
-//      │  ├╴idec: atoms 0|1|...|2046|2047                                    //
-//      │  │  └╴bool: idecs 0|1                                               //
-//      │  ├╴ihex: atoms 0x000|0x001|...|0xFFE|0xFFF                          //
-//      │  ├╴udec: atoms 0u|1u|...|4094u|4095u                                //
-//      │  ├╴uhex: atoms 0x000u|0x001u|...|0xFFEu|0xFFFu                      //
-//      │  ├╴int:  idec|ihex; a signed two's complement integer               //
-//      │  ├╴uint: udec|uhex; an unsigned integer                             //
-//      │  └╴word:  int|uint; any integer                                     //
-//      │     ├╴size: any non-negative word up to size_max                    //
-//      │     └╴ofs:  any word whose absolute value is a valid size           //
+//      ├╴atom: a non-empty, concatable sequence of pp-tokens                 //
+//      │  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047 (2s-compl)        //
+//      │  │  └╴bool: 0|1                                                     //
+//      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //
+//      │  └╴word: int|uint                                                   //
+//      │     ├╴size: a non-negative word less than size_max                  //
+//      │     └╴ofs:  a word ranged from (-size_max, size_max)                //
 //      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //
 //      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //
 //      └╴obj: an inheritable, atom-addressable state manager                 //
@@ -202,11 +191,11 @@
 //    inputs to another.  Inputs must be distinguishable after the primary    //
 //    expansion; deferred input behavior is undefined.                        //
 //                                                                            //
-//    Negative ints  cannot be represented in decimal due to concatenation    //
-//    restrictions. Arithmetic and bitwise functions attempt to cast their    //
-//    results in the same form as their input, but will always return ihex    //
-//    when an idec input becomes negative.  Decimal representations may be   ///
-//    generated for pasting using fmt.c_int.                                ////
+//    Negative ints are represented as valid C++ arithmetic expressions in    //
+//    order to avoid post-processing:  pputl arithmetic operations  always    //
+//    expand to values  that are usable in both preprocessor and C++ code.    //
+//    When constructing preprocessor identifiers,  use lang.cat to convert   ///
+//    the expression to its hex prefix before concatenation.                ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -258,8 +247,8 @@ pp_streq(char const* l, char const* r) {
 #define ASSERT_PP_EQ(a, b)   ASSERT_PP_EQ_X(a, b)
 
 // clang-format off
-ASSERT_PP_EQ((PTL_ESC ()), ());
-ASSERT_PP_EQ((PTL_ESC (a, b, c)), (a, b, c));
+ASSERT_PP_EQ((PTL_EAT()), ());
+ASSERT_PP_EQ((PTL_EAT(foo)), ());
 
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
 ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (fooPTL_EAT(bar)));

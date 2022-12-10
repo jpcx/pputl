@@ -39,7 +39,7 @@ using namespace std;
 inline def<"xrest(...: any...) -> any..."> xrest = [](va args) {
   category = "lang";
 
-  docs << "returns all arguments except for the first.";
+  docs << "returns all arguments except for the first after an expansion.";
 
   tests << xrest("")               = "" >> docs;
   tests << xrest(", ")             = "" >> docs;

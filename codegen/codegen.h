@@ -230,25 +230,18 @@ constexpr char const project_header[]{
     "//    Various settings including word size and naming rules may be changed    //\n"
     "//    by modifying the head of codegen/codegen.h and running `make`.          //\n"
     "//                                                                            //\n"
-    "//    Supported integer modes:                                                //\n"
-    "//                                                                            //\n"
-    "//       word_size=1    :   4-bit integers  :  ~? KiB                         //\n"
-    "//       word_size=2    :   8-bit integers  :  ~? KiB                         //\n"
-    "//     [ word_size=3    :  12-bit integers  :  ~? MiB  (default) ]            //\n"
-    "//       word_size=4 †  :  16-bit integers  :  ~? MiB                         //\n"
-    "//                                        ________________________________    //\n"
-    "//                                        †: requires cpp20_deflimit=false    //\n"
-    "//                                                                            //\n"
-    "//    By default, pputl is fully compliant with the C++20 standard,           //\n"
-    "//    which defines the following implementation limits in [implimits]:       //\n"
+    "//    The default build uses 12-bit words and 8-bit sizes and is              //\n"
+    "//    fully compliant with the C++20 standard, which defines the              //\n"
+    "//    following implementation limits in [implimits]:                         //\n"
     "//                                                                            //\n"
     "//     ‐ Macro identifiers simultaneously                                     //\n"
     "//       defined in one translation unit: [65536].                            //\n"
     "//     ‐ Parameters in one macro definition: [256].                           //\n"
     "//     ‐ Arguments in one macro invocation: [256].                            //\n"
     "//                                                                            //\n"
-    "//    Settings are available to ignore these limits, but support for sizes    //\n"
-    "//    and macro definition counts higher than the standard is variable.       //\n"
+    "//    If you wish to modify the settings to create your own build, keep       //\n"
+    "//    these limitations in mind. Exceeding these limits is possible but       //\n"
+    "//    depends on the preprocessor.                                            //\n"
     "//                                                                            //\n"
     "//    pputl has been tested with:                                             //\n"
     "//                                                                            //\n"
@@ -268,21 +261,17 @@ constexpr char const project_header[]{
     "//    API functions are strictly documented using this type system. Inputs    //\n"
     "//    are validated by invoking the associated constructor or through some    //\n"
     "//    other form of inference. An argument is valid if it can be converted    //\n"
-    "//    to its parameter type; see [type] for constructor documentation.        //\n"
+    "//    to or interpreted as its parameter type without losing information.     //\n"
     "//                                                                            //\n"
     "//     any: any potentially-empty argument in a __VA_ARGS__ expression        //\n"
     "//      ├╴none: the literal nothing; an absence of pp-tokens                  //\n"
-    "//      ├╴atom: a non-empty sequence of pp-concatable tokens                  //\n"
-    "//      │  ├╴idec: atoms 0|1|...|2046|2047                                    //\n"
-    "//      │  │  └╴bool: idecs 0|1                                               //\n"
-    "//      │  ├╴ihex: atoms 0x000|0x001|...|0xFFE|0xFFF                          //\n"
-    "//      │  ├╴udec: atoms 0u|1u|...|4094u|4095u                                //\n"
-    "//      │  ├╴uhex: atoms 0x000u|0x001u|...|0xFFEu|0xFFFu                      //\n"
-    "//      │  ├╴int:  idec|ihex; a signed two's complement integer               //\n"
-    "//      │  ├╴uint: udec|uhex; an unsigned integer                             //\n"
-    "//      │  └╴word:  int|uint; any integer                                     //\n"
-    "//      │     ├╴size: any non-negative word up to size_max                    //\n"
-    "//      │     └╴ofs:  any word whose absolute value is a valid size           //\n"
+    "//      ├╴atom: a non-empty, concatable sequence of pp-tokens                 //\n"
+    "//      │  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047 (2s-compl)        //\n"
+    "//      │  │  └╴bool: 0|1                                                     //\n"
+    "//      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //\n"
+    "//      │  └╴word: int|uint                                                   //\n"
+    "//      │     ├╴size: a non-negative word less than size_max                  //\n"
+    "//      │     └╴ofs:  a word ranged from (-size_max, size_max)                //\n"
     "//      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //\n"
     "//      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //\n"
     "//      └╴obj: an inheritable, atom-addressable state manager                 //\n"
@@ -307,11 +296,11 @@ constexpr char const project_header[]{
     "//    inputs to another.  Inputs must be distinguishable after the primary    //\n"
     "//    expansion; deferred input behavior is undefined.                        //\n"
     "//                                                                            //\n"
-    "//    Negative ints  cannot be represented in decimal due to concatenation    //\n"
-    "//    restrictions. Arithmetic and bitwise functions attempt to cast their    //\n"
-    "//    results in the same form as their input, but will always return ihex    //\n"
-    "//    when an idec input becomes negative.  Decimal representations may be   ///\n"
-    "//    generated for pasting using fmt.c_int.                                ////\n"
+    "//    Negative ints are represented as valid C++ arithmetic expressions in    //\n"
+    "//    order to avoid post-processing:  pputl arithmetic operations  always    //\n"
+    "//    expand to values  that are usable in both preprocessor and C++ code.    //\n"
+    "//    When constructing preprocessor identifiers,  use lang.cat to convert   ///\n"
+    "//    the expression to its hex prefix before concatenation.                ////\n"
     "//                                                                         /////\n"
     "///////////////////////////////////////////////////////////////////////////// */"};
 
@@ -630,30 +619,6 @@ class nifty {
       reinterpret_cast<value_type&>(_data).~value_type();
   }
 };
-
-#define NIFTY_DECL(extern_ref_name)                      \
-  extern codegen::utl::nifty<decltype(extern_ref_name)>  \
-      internal_nifty##extern_ref_name##storage_;         \
-  static struct internal_nifty##extern_ref_name##decl_ { \
-    internal_nifty##extern_ref_name##decl_();            \
-    ~internal_nifty##extern_ref_name##decl_();           \
-  } internal_nifty##extern_ref_name##decl_
-
-#define NIFTY_DEF(extern_ref_name, ...)                                               \
-  internal_nifty##extern_ref_name##storage_;                                          \
-  internal_nifty##extern_ref_name##decl_::internal_nifty##extern_ref_name##decl_() {  \
-    internal_nifty##extern_ref_name##storage_.ref(__VA_ARGS__);                       \
-  }                                                                                   \
-  internal_nifty##extern_ref_name##decl_::~internal_nifty##extern_ref_name##decl_() { \
-    internal_nifty##extern_ref_name##storage_.unref();                                \
-  }                                                                                   \
-  codegen::utl::nifty<decltype(extern_ref_name)>                                      \
-      internal_nifty##extern_ref_name##storage_ {                                     \
-  }
-
-#define FEATURE_DECL(name, sig)         \
-  extern codegen::def<sig> const& name; \
-  NIFTY_DECL(name)
 
 } // namespace utl
 
@@ -1361,7 +1326,7 @@ class def_base {
   struct instance* _instance;
 
   [[nodiscard]] static instance* get_instance();
-  [[nodiscard]] static instance* get_instance(std::string const&             name,
+  [[nodiscard]] static instance* get_instance(std::string                    name,
                                               detail::source_location const& loc);
 
   /// computes the definition of the macro (preprocessor-ready string).

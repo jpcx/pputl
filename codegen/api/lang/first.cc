@@ -46,6 +46,10 @@ inline def<"first(_, ...: first: any, ...rest: any) -> any"> first = [](arg firs
        << "for quickly retrieving the first tuple element"
        << "using an identity function such as " + esc + "."
        << ""
+       << "first cannot be used to extract from expression results,"
+       << "as the inputs are evaluated immediately. use xfirst for"
+       << "expressions that should expand before selection."
+       << ""
        << "e.g. " + first("__VA_ARGS__") << "     " + esc(first + " tup");
 
   return first_;

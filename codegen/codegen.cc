@@ -761,11 +761,18 @@ def_base::get_instance() {
 }
 
 struct def_base::instance*
-def_base::get_instance(std::string const& name, detail::source_location const& loc) {
+def_base::get_instance(std::string name, detail::source_location const& loc) {
   // construct id
   std::string id{};
 
-  if (not _exec_stack.empty())
+  bool toplevel_impl = false;
+
+  if (name.starts_with("impl_")) {
+    toplevel_impl = true;
+    name          = std::string{name.begin() + 5, name.end()};
+  }
+
+  if (toplevel_impl or not _exec_stack.empty())
     id += "impl_";
 
   for (auto it = _exec_stack.begin(); it != _exec_stack.end(); ++it)
@@ -780,7 +787,7 @@ def_base::get_instance(std::string const& name, detail::source_location const& l
 
   // apply naming scheme
 
-  if (not _exec_stack.empty()) {
+  if (toplevel_impl or not _exec_stack.empty()) {
     id = implname(id);
   } else {
     id = apiname(id);
@@ -970,6 +977,7 @@ std::string
 def_base::definitions() {
   std::vector<std::string> chunks{};
   instance*                fdm_end{nullptr};
+  instance*                inst_end{_instances.empty() ? nullptr : &_instances.back()};
   bool                     last_clang_format = true;
   bool                     last_impl         = false;
 
@@ -989,7 +997,7 @@ def_base::definitions() {
       throw std::runtime_error{"macro " + v.id + " missing definition"};
 
     {
-      auto cur_impl = v.category.starts_with("impl.");
+      auto cur_impl = v.category == "impl";
 
       if (last_clang_format and not v.clang_format)
         chunks.push_back("\n// clang-format off\n");
@@ -1001,9 +1009,13 @@ def_base::definitions() {
         chunks.push_back("\n//" + buf + "{{{\n");
       else if (last_impl and not cur_impl)
         chunks.push_back("\n//" + buf + "}}}\n");
-      last_impl = v.category.starts_with("impl.");
 
       chunks.push_back(*v.definition);
+
+      if (last_impl and &v == inst_end)
+        chunks.push_back("\n//" + buf + "}}}\n");
+
+      last_impl = v.category == "impl";
     }
 
     if (&v == fdm_end) {
