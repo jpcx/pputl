@@ -27,7 +27,7 @@
 
 CXX       ?= g++
 WARNINGS   = -Wall -Wextra -Werror -pedantic -Wno-gnu-zero-variadic-macro-arguments
-CXXFLAGS  += -std=c++20 -Icodegen -Icodegen/api $(WARNINGS) -O0
+CXXFLAGS  += -std=c++20 -Icodegen -Icodegen/api $(WARNINGS) -O0 -g
 RM        ?= rm -f
 MKDIR     ?= mkdir
 BIN       ?= .build/bin

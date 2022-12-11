@@ -37,7 +37,7 @@ namespace api {
 
 using namespace std;
 
-inline def<"xstr(...: any...) -> obj"> xstr = [](va args) {
+inline def<"xstr(...: any...) -> any"> xstr = [](va args) {
   category = "lang";
 
   docs << "stringizes args after an expansion.";

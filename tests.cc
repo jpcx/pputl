@@ -100,18 +100,20 @@
 //    other form of inference. An argument is valid if it can be converted    //
 //    to (or interpreted as) its paramter type without losing information.    //
 //                                                                            //
-//     any: any potentially-empty argument in a __VA_ARGS__ expression        //
+//     any: any potentially-empty, individual argument in __VA_ARGS__         //
 //      ├╴none: the literal nothing; an absence of pp-tokens                  //
-//      ├╴atom: a non-empty, concatable sequence of pp-tokens                 //
+//      ├╴atom: a non-empty, concatable token seq that expands to itself      //
 //      │  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047 (2s-compl)        //
 //      │  │  └╴bool: 0|1                                                     //
 //      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //
-//      │  └╴word: int|uint                                                   //
+//      │  └╴word: <union: int|uint>                                          //
 //      │     ├╴size: any word in the range of [0, size_max]                  //
 //      │     └╴ofs:  any word in the range of (-size_max, size_max)          //
 //      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //
 //      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //
-//      └╴vec: a resizable item sequence [e.g. PTL_VEC(2u, (a, b))]           //
+//      ├╴vec:   a resizable item sequence [e.g. PTL_VEC(2, 3, (a, b, ))]     //
+//      ├╴map:   a map of words to any [e.g. PTL_MAP(2, ((0, ), (1, a)))]     //
+//      └╴range: <union: tup|vec|map>                                         //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //

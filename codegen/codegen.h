@@ -205,19 +205,20 @@ constexpr char const project_header[]{
     "//    other form of inference. An argument is valid if it can be converted    //\n"
     "//    to (or interpreted as) its paramter type without losing information.    //\n"
     "//                                                                            //\n"
-    "//     any: any potentially-empty argument in a __VA_ARGS__ expression        //\n"
+    "//     any: any potentially-empty, individual argument in __VA_ARGS__         //\n"
     "//      ├╴none: the literal nothing; an absence of pp-tokens                  //\n"
     "//      ├╴atom: a non-empty, concatable token seq that expands to itself      //\n"
     "//      │  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047 (2s-compl)        //\n"
     "//      │  │  └╴bool: 0|1                                                     //\n"
     "//      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //\n"
-    "//      │  └╴word: int|uint                                                   //\n"
+    "//      │  └╴word: <union: int|uint>                                          //\n"
     "//      │     ├╴size: any word in the range of [0, size_max]                  //\n"
     "//      │     └╴ofs:  any word in the range of (-size_max, size_max)          //\n"
     "//      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //\n"
     "//      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //\n"
-    "//      ├╴vec: a resizable item sequence [e.g. PTL_VEC(3u, 2u, (a, b, ))]     //\n"
-    "//      └╴map: a size-indexable map [e.g. PTL_MAP(2u, ((0u, b), (1u, )))]     //\n"
+    "//      ├╴vec:   a resizable item sequence [e.g. PTL_VEC(2, 3, (a, b, ))]     //\n"
+    "//      ├╴map:   a map of words to any [e.g. PTL_MAP(2, ((0, ), (1, a)))]     //\n"
+    "//      └╴range: <union: tup|vec|map>                                         //\n"
     "//                                                                            //\n"
     "//    FUNDAMENTALS                                                            //\n"
     "//    ------------                                                            //\n"
@@ -1197,9 +1198,6 @@ class def_base {
   /// all defined categories sorted by their position in the dependency graph.
   static inline std::vector<std::string> _defined_categories{};
 
-  /// the current clang_format preference.
-  static inline bool _cur_clang_format{true};
-
   struct instance {
     /// a copy of the exec_stack at the time of creation.
     /// ensures that no two macros defined in different places have the same ID.
@@ -1217,8 +1215,8 @@ class def_base {
     detail::source_location const source_loc;
 
     /// whether or not the macro should be formatted.
-    /// modified by clang_format = false in macro body;
-    bool const clang_format;
+    /// modified by using the clang_format object in a macro body.
+    bool clang_format{true};
 
     /// category of the macro.
     /// set by codegen::begin_category.
@@ -1563,10 +1561,8 @@ inline class tests {
 
 inline class clang_format {
  public:
-  // set clang_format for all macros defined after a clang_format= statement.
-  // default is true. set true again after setting false within the same body.
-  //
-  // must be used within macro body (only disable formatting for impl macros)
+  // set clang-format preference.
+  // must be used within macro body.
   void operator=(bool on) const;
 } clang_format{};
 

@@ -755,7 +755,7 @@ struct def_base::instance*
 def_base::get_instance() {
   /// the empty instance to be returned on macro default constructions.
   static struct instance default_instance {
-    .context = {}, .id = {}, .name = {}, .source_loc = {}, .clang_format = {},
+    .context = {}, .id = {}, .name = {}, .source_loc = {}
   };
   return &default_instance;
 }
@@ -838,11 +838,10 @@ def_base::get_instance(std::string name, detail::source_location const& loc) {
 
   // insert after parent (if any), and return
   auto res = &*_instances.insert(ins_it, instance{
-                                             .context      = _exec_stack,
-                                             .id           = id,
-                                             .name         = name,
-                                             .source_loc   = loc,
-                                             .clang_format = _cur_clang_format,
+                                             .context    = _exec_stack,
+                                             .id         = id,
+                                             .name       = name,
+                                             .source_loc = loc,
                                          });
   return res;
 }
@@ -932,9 +931,8 @@ def_base::synopsis() {
     throw std::logic_error{
         "mismatch between defined categories and instance-derived categories"};
   std::unordered_set<std::string> seen_categories{};
-  for (auto&& v : _defined_categories) {
-    if (seen_categories.contains(v))
-      continue;
+
+  auto push = [&](std::string const& v) -> void {
     seen_categories.insert(v);
     if (not by_category.contains(v))
       throw std::logic_error{
@@ -965,7 +963,27 @@ def_base::synopsis() {
       details += "\n\n";
     }
     summary += "\n";
+  };
+
+  // verify that config exists and push it first
+  bool found_config = false;
+  for (auto&& v : _defined_categories) {
+    if (v == "config") {
+      found_config = true;
+      push(v);
+      break;
+    }
   }
+  if (not found_config)
+    throw std::runtime_error{"config category not found."};
+
+  // then push rest
+  for (auto&& v : _defined_categories) {
+    if (seen_categories.contains(v))
+      continue;
+    push(v);
+  }
+
   if (not details.empty())
     details.pop_back();
   if (not details.empty())
@@ -992,17 +1010,14 @@ def_base::definitions() {
     return " " + utl::cat(dashes) + " ";
   };
 
-  for (auto&& v : _instances) {
-    if (not v.definition)
-      throw std::runtime_error{"macro " + v.id + " missing definition"};
-
+  auto push = [&](instance& v) {
     {
       auto cur_impl = v.category == "impl";
 
       if (last_clang_format and not v.clang_format)
-        chunks.push_back("\n// clang-format off\n");
+        chunks.push_back("\n\n// clang-format off\n\n");
       else if (not last_clang_format and v.clang_format)
-        chunks.push_back("\n// clang-format on\n");
+        chunks.push_back("\n\n// clang-format on\n\n");
       last_clang_format = v.clang_format;
 
       if (not last_impl and cur_impl)
@@ -1027,6 +1042,21 @@ def_base::definitions() {
         fdm_end = fdm_end->children.front();
       chunks.push_back("\n//" + buf + "{{{\n");
     }
+  };
+
+  // push config first
+  for (instance& v : _instances) {
+    if (not v.definition)
+      throw std::runtime_error{"macro " + v.id + " missing definition"};
+
+    if (v.category == "config")
+      push(v);
+  }
+
+  // then push rest
+  for (instance& v : _instances) {
+    if (v.category != "config")
+      push(v);
   }
 
   return utl::cat(chunks, "\n");
@@ -1179,24 +1209,11 @@ void
 clang_format::operator=(bool on) const {
   if (def_base::_exec_stack.empty())
     throw std::runtime_error{"cannot use clang_format outside of a macro body"};
-  static def_base::instance* off_setter{nullptr};
-  if (def_base::_cur_clang_format == on)
+  if (def_base::_exec_stack.back()->clang_format == on)
     throw std::runtime_error{"clang_format must only be toggled. redundant setting: "
                              + std::to_string(on)};
 
-  if (on) {
-    if (off_setter == nullptr)
-      throw std::runtime_error{"cannot set clang_format on without setting off first"};
-    if (def_base::_exec_stack.back() != off_setter)
-      throw std::runtime_error{
-          "setting clang_format on from a different macro than the off setter: "
-          + def_base::_exec_stack.back()->id + " != " + off_setter->id};
-    def_base::_cur_clang_format = true;
-    off_setter                  = nullptr;
-  } else {
-    def_base::_cur_clang_format = false;
-    off_setter                  = def_base::_exec_stack.back();
-  }
+  def_base::_exec_stack.back()->clang_format = on;
 }
 
 void

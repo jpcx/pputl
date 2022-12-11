@@ -36,7 +36,7 @@ using namespace std;
 
 inline string const int_max_s{to_string(conf::int_max)};
 
-inline def<"int_max -> idec"> int_max = [] {
+inline def<"int_max -> int"> int_max = [] {
   category = "config";
 
   docs << "the maximum value of a pputl signed int.";

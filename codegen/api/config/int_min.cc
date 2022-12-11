@@ -34,14 +34,14 @@ namespace api {
 
 using namespace std;
 
-inline string const int_min_s =
-    "0x8" + utl::cat(vector<string>(conf::word_size - 1, "0"));
+inline string const int_min_s = "0x8" + utl::cat(vector<string>(conf::word_size - 1, "0"))
+                              + "-" + to_string(conf::uint_max + 1);
 
-inline def<"int_min -> ihex"> int_min = [] {
-  category = "config";
+inline def<"int_min -> int"> int_min = [] {
+  category     = "config";
+  clang_format = false;
 
-  docs << "the minimum value of a pputl signed int."
-       << "only representable as hex. see type.int for details.";
+  docs << "the minimum value of a pputl signed int.";
 
   return int_min_s;
 };

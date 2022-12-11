@@ -34,13 +34,13 @@ namespace api {
 
 using namespace std;
 
-inline def<"bit_length -> udec&size"> bit_length = [] {
+inline def<"bit_length -> int"> bit_length = [] {
   category = "config";
 
   docs << "the number of bits that can be used to represent pputl integers."
        << "see the readme code generation section to configure.";
 
-  return to_string(conf::bit_length) + "u";
+  return to_string(conf::bit_length);
 };
 
 } // namespace api

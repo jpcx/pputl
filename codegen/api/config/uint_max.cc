@@ -36,7 +36,7 @@ using namespace std;
 
 inline string const uint_max_s{to_string(conf::uint_max) + "u"};
 
-inline def<"uint_max -> udec"> uint_max = [] {
+inline def<"uint_max -> uint"> uint_max = [] {
   category = "config";
 
   docs << "the maximum value of a pputl unsigned int.";

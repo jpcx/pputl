@@ -36,7 +36,7 @@ using namespace std;
 
 inline string const size_max_s{to_string(conf::size_max) + "u"};
 
-inline def<"size_max -> udec&size"> size_max = [] {
+inline def<"size_max -> uint"> size_max = [] {
   category = "config";
 
   docs << "the maximum number of arguments bounded by the C++20 standard."

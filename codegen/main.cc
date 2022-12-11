@@ -48,6 +48,13 @@ main() {
   {
     std::ofstream lout{conf::lib_output};
     std::ofstream tout{conf::tests_output};
+
+    /* #ifdef PTL_BUILD
+#if PTL_BUILD != 20221211011552
+#error "Two different pputl builds were included in this translation unit! Expected build
+20221211011552" #endif #else #error "One or more pputl.h inclusions is missing a build
+number or uses a different naming scheme! Expected PTL_BUILD 20221211011552" #endif */
+
     lout << "#ifndef " << conf::header_guard << "\n#define " << conf::header_guard << "\n"
          << conf::project_header << "\n\n"
          << def_base::definitions() << "\n\n// vim: fdm=marker:fmr={{{,}}}\n\n#endif\n";

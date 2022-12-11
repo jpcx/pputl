@@ -38,15 +38,15 @@ namespace api {
 
 using namespace std;
 
-inline def<"build -> <c++ int>"> build = [] {
+inline def<"build -> atom"> build = [] {
   category = "config";
 
-  docs << "the build number of this pputl release (ISO8601).";
+  docs << "the build number of this pputl release (UTC ISO8601).";
 
   using chrono::system_clock;
   ostringstream ss;
   auto          t = system_clock::to_time_t(system_clock::now());
-  ss << put_time(gmtime(&t), "%F");
+  ss << put_time(gmtime(&t), "%F%T");
   static regex repl{"[-:]", regex_constants::optimize};
 
   return regex_replace(ss.str(), repl, "");

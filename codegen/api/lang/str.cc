@@ -36,7 +36,7 @@ namespace api {
 
 using namespace std;
 
-inline def<"str(...: any...) -> obj"> str = [](va args) {
+inline def<"str(...: any...) -> any"> str = [](va args) {
   category = "lang";
 
   docs << "immediately stringizes args."

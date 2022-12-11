@@ -34,14 +34,14 @@ namespace api {
 
 using namespace std;
 
-inline def<"word_size -> udec&size"> word_size = [] {
+inline def<"word_size -> int"> word_size = [] {
   category = "config";
 
   docs << "the number of hex digits used to represent pputl integers."
        << "hex representations of integers are fixed at this length."
        << "see the readme code generation section to configure.";
 
-  return to_string(conf::word_size) + "u";
+  return to_string(conf::word_size);
 };
 
 } // namespace api
