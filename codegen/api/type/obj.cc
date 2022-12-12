@@ -38,25 +38,35 @@ namespace obj_ {
 
 using namespace std;
 
-#define FOO_IS_FOO
-#define FOO_A 0
-#define FOO_B 1
-#define FOO_C 2
+#define PTL_SYM_EQ(a, b)
 
-#define BAR_IS_FOO
-#define BAR_IS_BAR
-#define BAR_A 3
-#define BAR_B 4
+#define IS_NAMED(...) IS_NAMED_X(__VA_ARGS__)
+#define IS_NAMED_X(name, o) \
+  PTL_IS_NONE(PTL_CAT(PTL_CAT(name, _IS_), IS_NAMED_NAME_PTL_OBJ(o)))
+#define IS_NAMED_NAME_PTL_OBJ(name, ...) name
 
-inline def<"obj(...: scope: tup, state: tup) -> obj"> self = [](va args) {
+#define VEC_IS_VEC
+#define VEC(...)          VEC_X(PTL_SIZEOF(__ARGS__), (__VA_ARGS__))
+#define VEC_X(size, data) PTL_OBJ(VEC, (size, size, data))
+
+#define VEC_CAP  0
+#define VEC_SIZE 1
+#define VEC_DATA 2
+
+#define VEC_RESERVE(_, cap) VEC_RESERVE_X(_, PTL_SUB(cap, PTL_GET(_, CAP)))
+#define VEC_RESERVE_X(_, diff) \
+  PTL_IF(PTL_GTZ(diff), VEC_RESERVE_GROW, VEC_RESERVE_NOOP)(_, diff)
+#define VEC_RESERVE_GROW(_, diff) \
+  PTL_SET(PTL_SET(_, DATA, (PTL_ITEMS(PTL_GET(_, DATA)), PTL_REPEAT(diff))), CAP, cap)
+#define VEC_RESERVE_NOOP(_, cap) _
+
+#define v VEC(a, b, c)
+#define x PTL_GET(v, CAP)
+
+inline def<"obj(...: name: sym, state: tup) -> obj"> self = [](va args) {
   category = "type";
 
-  docs << "[extends some] an inheritable, name-addressable state container";
-
-  tests << self(pp::tup(), pp::tup())      = self(pp::tup(), pp::tup()) >> docs;
-  tests << self(pp::tup("FOO"), pp::tup()) = self(pp::tup("FOO"), pp::tup()) >> docs;
-  tests << self(pp::tup("BAR"), pp::tup('a', 'b')) =
-      self(pp::tup("BAR"), pp::tup('a', 'b')) >> docs;
+  docs << "[extends some] an atom-addressable state container";
 
   return self(args);
 };
