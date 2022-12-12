@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_XCAT_CC
-#define CODEGEN_API_LANG_XCAT_CC
+#ifndef CODEGEN_API_TRAITS_IS_ANY_CC
+#define CODEGEN_API_TRAITS_IS_ANY_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,26 +29,44 @@
 
 #include "codegen.h"
 
-#include "lang/cat.cc"
-#include "lang/eat.cc"
-
 namespace codegen {
 namespace api {
 
+namespace is_any_ {
+
 using namespace std;
 
-inline def<"xcat(...: a: any, b: any) -> any"> xcat = [](va args) {
-  category = "lang";
+inline def<"is_any(...: any...) -> bool"> self = [](va args) {
+  category = "traits";
 
-  docs << "concatenates two args after an expansion."
-       << "args must be compatible with the ## operator.";
+  docs << "checks if args is a single, potentially empty arg";
 
-  tests << xcat("foo", "bar")      = "foobar" >> docs;
-  tests << xcat("foo", eat("bar")) = "foo" >> docs;
-  tests << xcat(",")               = "" >> docs;
+  tests << self()         = "1" >> docs;
+  tests << self("foo")    = "1" >> docs;
+  tests << self("(a, b)") = "1" >> docs;
+  tests << self("a, b")   = "0" >> docs;
+  tests << self(", ")     = "0" >> docs;
+  tests << self(", , ")   = "0" >> docs;
+  tests << self("a, ")    = "0";
+  tests << self("a, , ")  = "0";
+  tests << self(", a")    = "0";
+  tests << self(", a, ")  = "0";
+  tests << self(", , a")  = "0";
 
-  return cat(args);
+  return def<"o(_, ...)">{[&](arg, va) {
+    def<"\\0"> _0 = [&] {
+      return "1";
+    };
+    def<"\\01">{} = [&] {
+      return "0";
+    };
+    return pp::cat(_0, pp::va_opt(1));
+  }}(args + ".");
 };
+
+} // namespace is_any_
+
+inline constexpr auto& is_any = is_any_::self;
 
 } // namespace api
 } // namespace codegen

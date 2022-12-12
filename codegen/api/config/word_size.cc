@@ -32,9 +32,11 @@
 namespace codegen {
 namespace api {
 
+namespace word_size_ {
+
 using namespace std;
 
-inline def<"word_size -> int"> word_size = [] {
+inline def<"word_size -> int"> self = [] {
   category = "config";
 
   docs << "the number of hex digits used to represent pputl integers."
@@ -43,6 +45,10 @@ inline def<"word_size -> int"> word_size = [] {
 
   return to_string(conf::word_size);
 };
+
+} // namespace word_size_
+
+inline constexpr auto& word_size = word_size_::self;
 
 } // namespace api
 } // namespace codegen

@@ -34,26 +34,29 @@
 namespace codegen {
 namespace api {
 
+namespace first_ {
+
 using namespace std;
 
-inline def<"first(_, ...: first: any, ...rest: any) -> any"> first = [](arg first_, va) {
+inline def<"first(...: any...) -> any"> self = [](va args) {
   category = "lang";
 
-  docs << "immediately returns the first argument."
-       << "must have at least one argument."
-       << ""
-       << "useful for operating directly on __VA_ARGS__ or"
-       << "for quickly retrieving the first tuple element"
-       << "using an identity function such as " + esc + "."
-       << ""
-       << "first cannot be used to extract from expression results,"
-       << "as the inputs are evaluated immediately. use xfirst for"
-       << "expressions that should expand before selection."
-       << ""
-       << "e.g. " + first("__VA_ARGS__") << "     " + esc(first + " tup");
+  docs << "returns the first argument.";
 
-  return first_;
+  tests << self("")       = "" >> docs;
+  tests << self(", ")     = "" >> docs;
+  tests << self("a")      = "a" >> docs;
+  tests << self("a, b")   = "a" >> docs;
+  tests << self("(a, b)") = "(a, b)" >> docs;
+
+  return def<"o(_, ...)">{[](arg first, va) {
+    return first;
+  }}(args);
 };
+
+} // namespace first_
+
+inline constexpr auto& first = first_::self;
 
 } // namespace api
 } // namespace codegen

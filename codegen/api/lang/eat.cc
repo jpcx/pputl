@@ -32,18 +32,24 @@
 namespace codegen {
 namespace api {
 
+namespace eat_ {
+
 using namespace std;
 
-inline def<"eat(...) -> none"> eat = [](va) {
+inline def<"eat(...: any...) -> none"> self = [](va) {
   category = "lang";
 
   docs << "eats arguments; return nothing.";
 
-  tests << eat()      = "" >> docs;
-  tests << eat("foo") = "" >> docs;
+  tests << self()      = "" >> docs;
+  tests << self("foo") = "" >> docs;
 
   return "";
 };
+
+} // namespace eat_
+
+inline constexpr auto& eat = eat_::self;
 
 } // namespace api
 } // namespace codegen

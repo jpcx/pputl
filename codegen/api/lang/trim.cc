@@ -29,31 +29,33 @@
 
 #include "codegen.h"
 
-#include "lang/xcat.cc"
-#include "lang/xfirst.cc"
-#include "lang/xrest.cc"
+#include "lang/cat.cc"
+#include "lang/first.cc"
+#include "lang/rest.cc"
 
 namespace codegen {
 namespace api {
 
+namespace trim_ {
+
 using namespace std;
 
-inline def<"trim(...: any...) -> any..."> trim = [](va args) {
+inline def<"trim(...: any...) -> any..."> self = [](va args) {
   category = "lang";
 
   docs << "removes an unnecessary comma at the front of args"
        << "if either the first arg or the rest args are nothing.";
 
-  tests << trim("")        = "" >> docs;
-  tests << trim(", ")      = "" >> docs;
-  tests << trim("a")       = "a" >> docs;
-  tests << trim("a, b")    = "a, b" >> docs;
-  tests << trim("a, b, c") = "a, b, c";
-  tests << trim("a, ")     = "a" >> docs;
-  tests << trim(", b")     = "b";
-  tests << trim(", b, c")  = "b, c" >> docs;
-  tests << trim("a, b, ")  = "a, b," >> docs;
-  tests << trim("a, , c")  = "a,  , c";
+  tests << self("")        = "" >> docs;
+  tests << self(", ")      = "" >> docs;
+  tests << self("a")       = "a" >> docs;
+  tests << self("a, b")    = "a, b" >> docs;
+  tests << self("a, b, c") = "a, b, c";
+  tests << self("a, ")     = "a" >> docs;
+  tests << self(", b")     = "b";
+  tests << self(", b, c")  = "b, c" >> docs;
+  tests << self("a, b, ")  = "a, b," >> docs;
+  tests << self("a, , c")  = "a,  , c";
 
   def<"\\00(...)"> _00 = [&](va) {
     return "";
@@ -72,9 +74,12 @@ inline def<"trim(...: any...) -> any..."> trim = [](va args) {
     return pp::cat(0, pp::va_opt(1));
   };
 
-  return pp::call(xcat(utl::slice(_00, -2), xcat(sel(xfirst(args)), sel(xrest(args)))),
-                  args);
+  return pp::call(cat(utl::slice(_00, -2), cat(sel(first(args)), sel(rest(args)))), args);
 };
+
+} // namespace trim_
+
+inline constexpr auto& trim = trim_::self;
 
 } // namespace api
 } // namespace codegen

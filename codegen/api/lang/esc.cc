@@ -1,5 +1,5 @@
-#ifndef PPUTL_API_CODEGEN_LANG_ESC
-#define PPUTL_API_CODEGEN_LANG_ESC
+#ifndef PPUTL_API_CODEGEN_LANG_ESC_CC
+#define PPUTL_API_CODEGEN_LANG_ESC_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -32,18 +32,24 @@
 namespace codegen {
 namespace api {
 
+namespace esc_ {
+
 using namespace std;
 
-inline def<"esc(...) -> any..."> esc = [](va args) {
+inline def<"esc(...: any...) -> any..."> self = [](va args) {
   category = "lang";
 
   docs << "escapes parentheses. identity function."
        << ""
        << "e.g. #define FOO (a, b, c)"
-       << "     " + esc + " FOO // a, b, c";
+       << "     " + self + " FOO // a, b, c";
 
   return args;
 };
+
+} // namespace esc_
+
+inline constexpr auto& esc = esc_::self;
 
 } // namespace api
 } // namespace codegen

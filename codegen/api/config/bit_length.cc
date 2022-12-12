@@ -32,9 +32,11 @@
 namespace codegen {
 namespace api {
 
+namespace bit_length_ {
+
 using namespace std;
 
-inline def<"bit_length -> int"> bit_length = [] {
+inline def<"bit_length -> int"> self = [] {
   category = "config";
 
   docs << "the number of bits that can be used to represent pputl integers."
@@ -42,6 +44,10 @@ inline def<"bit_length -> int"> bit_length = [] {
 
   return to_string(conf::bit_length);
 };
+
+} // namespace bit_length_
+
+inline constexpr auto& bit_length = bit_length_::self;
 
 } // namespace api
 } // namespace codegen

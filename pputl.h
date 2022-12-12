@@ -47,7 +47,8 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many language constructs including integers, recursion, and vectors.    //
+//    many language constructs including  integers, recursion, queues, and    //
+//    inheritable objects.                                                    //
 //                                                                            //
 //    Speed, safety, and flexibility are its primary goals.                   //
 //                                                                            //
@@ -72,7 +73,7 @@
 //    Various settings including word size and naming rules may be changed    //
 //    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
-//    The default build defines 12-bit words and caps sizes at 255, which     //
+//    The default build defines 12-bit words and an 8-bit size cap, which     //
 //    complies with the following C++20 implementation limits [implimits]:    //
 //                                                                            //
 //     ‐ Macro identifiers simultaneously                                     //
@@ -103,19 +104,21 @@
 //    to (or interpreted as) its paramter type without losing information.    //
 //                                                                            //
 //     any: any potentially-empty, individual argument in __VA_ARGS__         //
-//      ├╴none: the literal nothing; an absence of pp-tokens                  //
-//      ├╴atom: a non-empty, concatable token seq that expands to itself      //
-//      │  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047 (2s-compl)        //
-//      │  │  └╴bool: 0|1                                                     //
-//      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //
-//      │  └╴word: <union: int|uint>                                          //
-//      │     ├╴size: any word in the range of [0, size_max]                  //
-//      │     └╴ofs:  any word in the range of (-size_max, size_max)          //
-//      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //
-//      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //
-//      ├╴vec:   a resizable item sequence [e.g. PTL_VEC(2, 3, (a, b, ))]     //
-//      ├╴map:   a map of words to any [e.g. PTL_MAP(2, ((0, ), (1, a)))]     //
-//      └╴range: <union: tup|vec|map>                                         //
+//      ├╴none: an empty argument; an absence of pp-tokens                    //
+//      └╴some: a non-empty argument; a presence of pp-tokens                 //
+//         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
+//         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
+//         ├╴obj: an inheritable, name-addressable state container            //
+//         │  ├╴err: an error message container for invoking a failure        //
+//         │  ├╴dq:  a size/ofs-keyed, double-ended queue                     //
+//         │  └╴pq:  a word-keyed priority queue                              //
+//         └╴atom: a non-empty argument that is not a tup or obj              //
+//            └╴word: a C++ integral expression matching a predefined set     //
+//               ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047             //
+//               │  ├╴bool: 0|1                                               //
+//               │  └╴ofs:  an int in the range of (-size_max, size_max)      //
+//               └╴uint: 0u|1u|...|4094u|4095u                                //
+//                  └╴size: a uint in the range of [0u, size_max]             //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -125,10 +128,9 @@
 //    errors produced by pputl functions include the macro name, a textual    //
 //    description, and the primary expansion arguments.                       //
 //                                                                            //
-//    With a few exceptions in [lang], non-nullary API functions are fully    //
-//    variadic and chainable  such that the outputs of one  may be used as    //
-//    inputs to another.  Inputs must be distinguishable after the primary    //
-//    expansion; deferred input behavior is undefined.                        //
+//    pputl API functions  are fully variadic and chainable,  meaning that    //
+//    their arguments can be populated using macro expansion results. Args    //
+//    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
 //    Negative ints are represented as valid C++ arithmetic expressions in    //
 //    order to avoid post-processing:  pputl arithmetic operations  always    //
@@ -149,12 +151,12 @@
 /// the maximum number of arguments bounded by the C++20 standard.
 /// set to min(255, uint_max) unless built with cpp20_arglimit=false
 /// (which sets size_max to uint_max).
-#define PTL_SIZE_MAX /* -> uint */ 255u
+#define PTL_SIZE_MAX /* -> size */ 255u
 
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (UTC ISO8601).
-#define PTL_BUILD /* -> atom */ 20221211175651
+#define PTL_BUILD /* -> atom */ 20221212034339
 
 /// [config.uint_max]
 /// -----------------
@@ -188,41 +190,44 @@
 ///
 /// e.g. #define FOO (a, b, c)
 ///      PTL_ESC FOO // a, b, c
-#define PTL_ESC(...) /* -> any... */ __VA_ARGS__
+#define PTL_ESC(/* any... */...) /* -> any... */ __VA_ARGS__
 
 /// [lang.first]
 /// ------------
-/// immediately returns the first argument.
-/// must have at least one argument.
+/// returns the first argument.
 ///
-/// useful for operating directly on __VA_ARGS__ or
-/// for quickly retrieving the first tuple element
-/// using an identity function such as PTL_ESC.
-///
-/// first cannot be used to extract from expression results,
-/// as the inputs are evaluated immediately. use xfirst for
-/// expressions that should expand before selection.
-///
-/// e.g. PTL_FIRST(__VA_ARGS__)
-///      PTL_ESC(PTL_FIRST tup)
-#define PTL_FIRST(/* first: any, ...rest: any */ _, ...) /* -> any */ _
+/// PTL_FIRST()       // <nothing>
+/// PTL_FIRST(, )     // <nothing>
+/// PTL_FIRST(a)      // a
+/// PTL_FIRST(a, b)   // a
+/// PTL_FIRST((a, b)) // (a, b)
+#define PTL_FIRST(/* any... */...) /* -> any */ PPUTLIMPL_FIRST_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_FIRST_o(_, ...) _
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [lang.rest]
 /// -----------
-/// immediately returns all args except for the first.
-/// must have at least one argument.
+/// returns all but the first argument.
 ///
-/// useful for operating directly on __VA_ARGS__ or
-/// for quickly retrieving the rest tuple elements
-/// using an identity function such as PTL_ESC.
-///
-/// rest cannot be used to extract from expression results,
-/// as the inputs are evaluated immediately. use xrest for
-/// expressions that should expand before selection.
-///
-/// e.g. PTL_REST(__VA_ARGS__)
-///      PTL_ESC(PTL_REST tup)
-#define PTL_REST(/* first: any, ...rest: any */ _, ...) /* -> any... */ __VA_ARGS__
+/// PTL_REST()                  // <nothing>
+/// PTL_REST(, )                // <nothing>
+/// PTL_REST(a)                 // <nothing>
+/// PTL_REST(a, b)              // b
+/// PTL_REST(a, b, c)           // b, c
+/// PTL_REST(PTL_REST(a, b, c)) // c
+/// PTL_REST(a, , )             // ,
+/// PTL_REST(a, b, , )          // b, ,
+#define PTL_REST(/* any... */...) /* -> any... */ PPUTLIMPL_REST_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_REST_o(_, ...) __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [lang.eat]
 /// ----------
@@ -230,54 +235,49 @@
 ///
 /// PTL_EAT()    // <nothing>
 /// PTL_EAT(foo) // <nothing>
-#define PTL_EAT(...) /* -> none */
+#define PTL_EAT(/* any... */...) /* -> none */
 
 /// [lang.cat]
 /// ----------
-/// immediately concatenates a with b.
-/// must provide at least one arg.
-/// args must be compatible with the ## operator.
-///
-/// cat cannot be used to concatenate expression results,
-/// as the inputs are evaluated immediately. use xcat for
-/// expressions that should expand before concatenation.
+/// concatenates two args. must be compatible with the ## operator.
 ///
 /// PTL_CAT(foo, bar)          // foobar
-/// PTL_CAT(foo, PTL_EAT(bar)) // fooPTL_EAT(bar)
-#define PTL_CAT(/* a: any, b: any */ a, b) /* -> any */ a##b
+/// PTL_CAT(foo, PTL_EAT(bar)) // foo
+/// PTL_CAT(,)                 // <nothing>
+#define PTL_CAT(/* a: any, b: any */...) /* -> any */ PPUTLIMPL_CAT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_CAT_o(a, b) a##b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [lang.str]
 /// ----------
-/// immediately stringizes args.
-///
-/// str cannot be used to stringize expression results,
-/// as the inputs are evaluated immediately. use xstr for
-/// expressions that should expand before stringization.
+/// stringizes args.
 ///
 /// PTL_STR()                  // ""
 /// PTL_STR(foo, bar)          // "foo, bar"
-/// PTL_STR(PTL_CAT(foo, bar)) // "PTL_CAT(foo, bar)"
-#define PTL_STR(/* any... */...) /* -> any */ #__VA_ARGS__
+/// PTL_STR(PTL_CAT(foo, bar)) // "foobar"
+#define PTL_STR(/* any... */...) /* -> some */ PPUTLIMPL_STR_o(__VA_ARGS__)
 
-/// [lang.xstr]
-/// -----------
-/// stringizes args after an expansion.
-///
-/// PTL_XSTR()                  // ""
-/// PTL_XSTR(foo, bar)          // "foo, bar"
-/// PTL_XSTR(PTL_CAT(foo, bar)) // "foobar"
-#define PTL_XSTR(/* any... */...) /* -> any */ PTL_STR(__VA_ARGS__)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_STR_o(...) #__VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [lang.default]
 /// --------------
 /// returns the first argument iff the rest of the arguments are nothing.
 /// else, returns only the rest of the arguments.
 ///
+/// PTL_DEFAULT()        // <nothing>
 /// PTL_DEFAULT(a)       // a
 /// PTL_DEFAULT(a,)      // a
 /// PTL_DEFAULT(a, b)    // b
 /// PTL_DEFAULT(a, b, c) // b, c
-#define PTL_DEFAULT(/* default: any, ...args: any */...) /* -> any... */ \
+#define PTL_DEFAULT(/* default: any [, ...args: any] */...) /* -> any... */ \
   PPUTLIMPL_DEFAULT_o(__VA_ARGS__)(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -287,50 +287,6 @@
 #define PPUTLIMPL_DEFAULT_0(_, ...)  _
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [lang.xcat]
-/// -----------
-/// concatenates two args after an expansion.
-/// args must be compatible with the ## operator.
-///
-/// PTL_XCAT(foo, bar)          // foobar
-/// PTL_XCAT(foo, PTL_EAT(bar)) // foo
-/// PTL_XCAT(,)                 // <nothing>
-#define PTL_XCAT(/* a: any, b: any */...) /* -> any */ PTL_CAT(__VA_ARGS__)
-
-/// [lang.fail]
-/// -----------
-/// executes an invalid preprocessor operation to indicate a failure.
-/// must provide a string literal message.
-///
-/// usage: PTL_FAIL("something bad happened")
-///        PTL_FAIL(PTL_STR([myfun] invalid args : __VA_ARGS__))
-#define PTL_FAIL(/* msg="unspecified error": atom */...) \
-  PTL_XCAT(PTL_FAIL, PTL_DEFAULT("unspecified error", __VA_ARGS__))
-
-/// [lang.xrest]
-/// ------------
-/// returns all arguments except for the first after an expansion.
-///
-/// PTL_XREST()                   // <nothing>
-/// PTL_XREST(, )                 // <nothing>
-/// PTL_XREST(a)                  // <nothing>
-/// PTL_XREST(a, b)               // b
-/// PTL_XREST(a, b, c)            // b, c
-/// PTL_XREST(PTL_XREST(a, b, c)) // c
-/// PTL_XREST(a, , )              // ,
-/// PTL_XREST(a, b, , )           // b, ,
-#define PTL_XREST(/* any... */...) /* -> any... */ __VA_OPT__(PTL_REST(__VA_ARGS__))
-
-/// [lang.xfirst]
-/// -------------
-/// returns the first argument after an expansion.
-///
-/// PTL_XFIRST()     // <nothing>
-/// PTL_XFIRST(, )   // <nothing>
-/// PTL_XFIRST(a)    // a
-/// PTL_XFIRST(a, b) // a
-#define PTL_XFIRST(/* any... */...) /* -> any */ __VA_OPT__(PTL_FIRST(__VA_ARGS__))
 
 /// [lang.trim]
 /// -----------
@@ -344,9 +300,9 @@
 /// PTL_TRIM(a, )    // a
 /// PTL_TRIM(, b, c) // b, c
 /// PTL_TRIM(a, b, ) // a, b,
-#define PTL_TRIM(/* any... */...) /* -> any... */                                 \
-  PTL_XCAT(PPUTLIMPL_TRIM_, PTL_XCAT(PPUTLIMPL_TRIM_SEL(PTL_XFIRST(__VA_ARGS__)), \
-                                     PPUTLIMPL_TRIM_SEL(PTL_XREST(__VA_ARGS__)))) \
+#define PTL_TRIM(/* any... */...) /* -> any... */                              \
+  PTL_CAT(PPUTLIMPL_TRIM_, PTL_CAT(PPUTLIMPL_TRIM_SEL(PTL_FIRST(__VA_ARGS__)), \
+                                   PPUTLIMPL_TRIM_SEL(PTL_REST(__VA_ARGS__)))) \
   (__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
@@ -356,6 +312,94 @@
 #define PPUTLIMPL_TRIM_010(_, ...)  _
 #define PPUTLIMPL_TRIM_001(_, ...)  __VA_ARGS__
 #define PPUTLIMPL_TRIM_00(...)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.obj]
+/// ----------
+/// [extends some] an inheritable, name-addressable state container
+///
+/// PTL_OBJ((), ())        // PTL_OBJ((), ())
+/// PTL_OBJ((FOO), ())     // PTL_OBJ((FOO), ())
+/// PTL_OBJ((BAR), (a, b)) // PTL_OBJ((BAR), (a, b))
+#define PTL_OBJ(/* scope: tup, state: tup */...) /* -> obj */ PTL_OBJ(__VA_ARGS__)
+
+/// [traits.is_none]
+/// ----------------
+/// [extends is_any] checks if args is the literal nothing
+///
+/// PTL_IS_NONE()          // 1
+/// PTL_IS_NONE(foo)       // 0
+/// PTL_IS_NONE(foo, bar)  // 0
+/// PTL_IS_NONE(PTL_ESC()) // 1
+#define PTL_IS_NONE(/* any... */...) /* -> bool */ PPUTLIMPL_IS_NONE_0##__VA_OPT__(1)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_IS_NONE_01 0
+#define PPUTLIMPL_IS_NONE_0  1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_some]
+/// ----------------
+/// [extends is_any] checks if args is a singluar value
+///
+/// PTL_IS_SOME()          // 0
+/// PTL_IS_SOME(foo)       // 1
+/// PTL_IS_SOME(())        // 1
+/// PTL_IS_SOME((a, b))    // 1
+/// PTL_IS_SOME(foo, bar)  // 0
+/// PTL_IS_SOME(PTL_ESC()) // 0
+#define PTL_IS_SOME(/* any... */...) /* -> bool */ \
+  PPUTLIMPL_IS_SOME_0##__VA_OPT__(1)(__VA_ARGS__.)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_IS_SOME_01(_, ...) PPUTLIMPL_IS_SOME_01_0##__VA_OPT__(1)
+#define PPUTLIMPL_IS_SOME_01_01      0
+#define PPUTLIMPL_IS_SOME_01_0       1
+#define PPUTLIMPL_IS_SOME_0(_, ...)  0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_tup]
+/// ---------------
+/// [extends is_some] checks if args is a tuple
+///
+/// PTL_IS_TUP()       // 0
+/// PTL_IS_TUP(1, 2)   // 0
+/// PTL_IS_TUP(())     // 1
+/// PTL_IS_TUP((1, 2)) // 1
+#define PTL_IS_TUP(/* any... */...) /* -> bool */ \
+  PTL_CAT(PPUTLIMPL_IS_TUP_, PTL_IS_SOME(__VA_ARGS__))(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_IS_TUP_1           PPUTLIMPL_IS_TUP_1_o
+#define PPUTLIMPL_IS_TUP_1_o(obj)    PTL_IS_NONE(PTL_EAT obj)
+#define PPUTLIMPL_IS_TUP_0           PPUTLIMPL_IS_TUP_0_fail
+#define PPUTLIMPL_IS_TUP_0_fail(...) 0
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_any]
+/// ---------------
+/// checks if args is a single, potentially empty arg
+///
+/// PTL_IS_ANY()       // 1
+/// PTL_IS_ANY(foo)    // 1
+/// PTL_IS_ANY((a, b)) // 1
+/// PTL_IS_ANY(a, b)   // 0
+/// PTL_IS_ANY(, )     // 0
+/// PTL_IS_ANY(, , )   // 0
+#define PTL_IS_ANY(/* any... */...) /* -> bool */ PPUTLIMPL_IS_ANY_o(__VA_ARGS__.)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_IS_ANY_o(_, ...) PPUTLIMPL_IS_ANY_o_0##__VA_OPT__(1)
+#define PPUTLIMPL_IS_ANY_o_01      0
+#define PPUTLIMPL_IS_ANY_o_0       1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

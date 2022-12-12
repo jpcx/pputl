@@ -34,26 +34,32 @@
 namespace codegen {
 namespace api {
 
+namespace rest_ {
+
 using namespace std;
 
-inline def<"rest(_, ...: first: any, ...rest: any) -> any..."> rest = [](arg, va rest_) {
+inline def<"rest(...: any...) -> any..."> self = [](va args) {
   category = "lang";
 
-  docs << "immediately returns all args except for the first."
-       << "must have at least one argument."
-       << ""
-       << "useful for operating directly on __VA_ARGS__ or"
-       << "for quickly retrieving the rest tuple elements"
-       << "using an identity function such as " + esc + "."
-       << ""
-       << "rest cannot be used to extract from expression results,"
-       << "as the inputs are evaluated immediately. use xrest for"
-       << "expressions that should expand before selection."
-       << ""
-       << "e.g. " + rest("__VA_ARGS__") << "     " + esc(rest + " tup");
+  docs << "returns all but the first argument.";
 
-  return rest_;
+  tests << self("")              = "" >> docs;
+  tests << self(", ")            = "" >> docs;
+  tests << self("a")             = "" >> docs;
+  tests << self("a, b")          = "b" >> docs;
+  tests << self("a, b, c")       = "b, c" >> docs;
+  tests << self(self("a, b, c")) = "c" >> docs;
+  tests << self("a, , ")         = "," >> docs;
+  tests << self("a, b, , ")      = "b, ," >> docs;
+
+  return def<"o(_, ...)">{[](arg, va rest) {
+    return rest;
+  }}(args);
 };
+
+} // namespace rest_
+
+inline constexpr auto& rest = rest_::self;
 
 } // namespace api
 } // namespace codegen

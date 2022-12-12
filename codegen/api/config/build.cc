@@ -36,9 +36,11 @@
 namespace codegen {
 namespace api {
 
+namespace build_ {
+
 using namespace std;
 
-inline def<"build -> atom"> build = [] {
+inline def<"build -> atom"> self = [] {
   category = "config";
 
   docs << "the build number of this pputl release (UTC ISO8601).";
@@ -51,6 +53,10 @@ inline def<"build -> atom"> build = [] {
 
   return regex_replace(ss.str(), repl, "");
 };
+
+} // namespace build_
+
+inline constexpr auto& build = build_::self;
 
 } // namespace api
 } // namespace codegen

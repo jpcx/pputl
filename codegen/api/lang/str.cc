@@ -34,38 +34,35 @@
 namespace codegen {
 namespace api {
 
+namespace str_ {
+
 using namespace std;
 
-inline def<"str(...: any...) -> any"> str = [](va args) {
+inline def<"str(...: any...) -> some"> self = [](va args) {
   category = "lang";
 
-  docs << "immediately stringizes args."
-       << ""
-       << "str cannot be used to stringize expression results,"
-       << "as the inputs are evaluated immediately. use xstr for"
-       << "expressions that should expand before stringization.";
+  docs << "stringizes args.";
 
-  tests << str()                  = "\"\"" >> docs;
-  tests << str("foo")             = "\"foo\"";
-  tests << str("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << str(cat("foo", "bar")) = pp::str(cat("foo", "bar")) >> docs;
-  tests << str(", ")              = "\",\"";
-  tests << str(", , ")            = "\", ,\"";
-  tests << str("a, ")             = "\"a,\"";
-  tests << str("a, , ")           = "\"a, ,\"";
-  tests << str(", a")             = "\", a\"";
-  tests << str(", a, ")           = "\", a,\"";
-  tests << str(", , a")           = "\", , a\"";
+  tests << self()                  = "\"\"" >> docs;
+  tests << self("foo")             = "\"foo\"";
+  tests << self("foo, bar")        = "\"foo, bar\"" >> docs;
+  tests << self(cat("foo", "bar")) = pp::str("foobar") >> docs;
+  tests << self(", ")              = "\",\"";
+  tests << self(", , ")            = "\", ,\"";
+  tests << self("a, ")             = "\"a,\"";
+  tests << self("a, , ")           = "\"a, ,\"";
+  tests << self(", a")             = "\", a\"";
+  tests << self(", a, ")           = "\", a,\"";
+  tests << self(", , a")           = "\", , a\"";
 
-  return "#" + args;
+  return def<"o(...)">{[](va args) {
+    return "#" + args;
+  }}(args);
 };
 
-// creates an error string for possible failure
-// see type.any for a simple usage example
-[[nodiscard]] inline string
-error(def_base const& targ, string const& msg, va args) {
-  return str(targ(args) + " -> <" + msg + ">");
-}
+} // namespace str_
+
+inline constexpr auto& str = str_::self;
 
 } // namespace api
 } // namespace codegen

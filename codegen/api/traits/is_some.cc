@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_XFIRST_CC
-#define CODEGEN_API_LANG_XFIRST_CC
+#ifndef CODEGEN_API_TRAITS_IS_SOME_CC
+#define CODEGEN_API_TRAITS_IS_SOME_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,25 +29,54 @@
 
 #include "codegen.h"
 
-#include "lang/first.cc"
+#include "lang/esc.cc"
 
 namespace codegen {
 namespace api {
 
+namespace is_some_ {
+
 using namespace std;
 
-inline def<"xfirst(...: any...) -> any"> xfirst = [](va args) {
-  category = "lang";
+inline def<"is_some(...: any...) -> bool"> self = [](va args) {
+  category = "traits";
 
-  docs << "returns the first argument after an expansion.";
+  docs << "[extends is_any] checks if args is a singluar value";
 
-  tests << xfirst("")     = "" >> docs;
-  tests << xfirst(", ")   = "" >> docs;
-  tests << xfirst("a")    = "a" >> docs;
-  tests << xfirst("a, b") = "a" >> docs;
+  tests << self("")         = "0" >> docs;
+  tests << self("foo")      = "1" >> docs;
+  tests << self("()")       = "1" >> docs;
+  tests << self("(a, b)")   = "1" >> docs;
+  tests << self("foo, bar") = "0" >> docs;
+  tests << self(esc())      = "0" >> docs;
+  tests << self(", ")       = "0";
+  tests << self(", , ")     = "0";
+  tests << self("a, ")      = "0";
+  tests << self("a, , ")    = "0";
+  tests << self(", a")      = "0";
+  tests << self(", a, ")    = "0";
+  tests << self(", , a")    = "0";
 
-  return pp::va_opt(first(args));
+  def<"\\0(_, ...)"> _0 = [](arg, va) {
+    return "0";
+  };
+
+  def<"\\01(_, ...)">{} = [](arg, va) {
+    def<"\\0"> _0 = [&] {
+      return "1";
+    };
+    def<"\\01">{} = [&] {
+      return "0";
+    };
+    return pp::cat(_0, pp::va_opt(1));
+  };
+
+  return pp::call(pp::cat(_0, pp::va_opt("1")), args + ".");
 };
+
+} // namespace is_some_
+
+inline constexpr auto& is_some = is_some_::self;
 
 } // namespace api
 } // namespace codegen

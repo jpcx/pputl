@@ -32,18 +32,21 @@
 namespace codegen {
 namespace api {
 
+namespace default_ns_ {
+
 using namespace std;
 
-inline def<"default(...: default: any, ...args: any) -> any..."> default_ = [](va args) {
+inline def<"default(...: default: any [, ...args: any]) -> any..."> self = [](va args) {
   category = "lang";
 
   docs << "returns the first argument iff the rest of the arguments are nothing."
        << "else, returns only the rest of the arguments.";
 
-  tests << default_("a")       = "a" >> docs;
-  tests << default_("a,")      = "a" >> docs;
-  tests << default_("a, b")    = "b" >> docs;
-  tests << default_("a, b, c") = "b, c" >> docs;
+  tests << self("")        = "" >> docs;
+  tests << self("a")       = "a" >> docs;
+  tests << self("a,")      = "a" >> docs;
+  tests << self("a, b")    = "b" >> docs;
+  tests << self("a, b, c") = "b, c" >> docs;
 
   def<"\\0(_, ...)"> _0 = [&](arg first, va) {
     return first;
@@ -57,6 +60,10 @@ inline def<"default(...: default: any, ...args: any) -> any..."> default_ = [](v
                   }}(args),
                   args);
 };
+
+} // namespace default_ns_
+
+inline constexpr auto& default_ = default_ns_::self;
 
 } // namespace api
 } // namespace codegen

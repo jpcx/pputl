@@ -45,7 +45,8 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many language constructs including integers, recursion, and vectors.    //
+//    many language constructs including  integers, recursion, queues, and    //
+//    inheritable objects.                                                    //
 //                                                                            //
 //    Speed, safety, and flexibility are its primary goals.                   //
 //                                                                            //
@@ -70,7 +71,7 @@
 //    Various settings including word size and naming rules may be changed    //
 //    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
-//    The default build defines 12-bit words and caps sizes at 255, which     //
+//    The default build defines 12-bit words and an 8-bit size cap, which     //
 //    complies with the following C++20 implementation limits [implimits]:    //
 //                                                                            //
 //     ‐ Macro identifiers simultaneously                                     //
@@ -101,19 +102,21 @@
 //    to (or interpreted as) its paramter type without losing information.    //
 //                                                                            //
 //     any: any potentially-empty, individual argument in __VA_ARGS__         //
-//      ├╴none: the literal nothing; an absence of pp-tokens                  //
-//      ├╴atom: a non-empty, concatable token seq that expands to itself      //
-//      │  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047 (2s-compl)        //
-//      │  │  └╴bool: 0|1                                                     //
-//      │  ├╴uint: 0u|1u|...|4094u|4095u                                      //
-//      │  └╴word: <union: int|uint>                                          //
-//      │     ├╴size: any word in the range of [0, size_max]                  //
-//      │     └╴ofs:  any word in the range of (-size_max, size_max)          //
-//      ├╴tup: a parens-enclosed item sequence [e.g. (a, b, c)]               //
-//      │  └╴pair: a two-tuple [e.g. (foo, bar)]                              //
-//      ├╴vec:   a resizable item sequence [e.g. PTL_VEC(2, 3, (a, b, ))]     //
-//      ├╴map:   a map of words to any [e.g. PTL_MAP(2, ((0, ), (1, a)))]     //
-//      └╴range: <union: tup|vec|map>                                         //
+//      ├╴none: an empty argument; an absence of pp-tokens                    //
+//      └╴some: a non-empty argument; a presence of pp-tokens                 //
+//         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
+//         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
+//         ├╴obj: an inheritable, name-addressable state container            //
+//         │  ├╴err: an error message container for invoking a failure        //
+//         │  ├╴dq:  a size/ofs-keyed, double-ended queue                     //
+//         │  └╴pq:  a word-keyed priority queue                              //
+//         └╴atom: a non-empty argument that is not a tup or obj              //
+//            └╴word: a C++ integral expression matching a predefined set     //
+//               ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047             //
+//               │  ├╴bool: 0|1                                               //
+//               │  └╴ofs:  an int in the range of (-size_max, size_max)      //
+//               └╴uint: 0u|1u|...|4094u|4095u                                //
+//                  └╴size: a uint in the range of [0u, size_max]             //
 //                                                                            //
 //    FUNDAMENTALS                                                            //
 //    ------------                                                            //
@@ -123,10 +126,9 @@
 //    errors produced by pputl functions include the macro name, a textual    //
 //    description, and the primary expansion arguments.                       //
 //                                                                            //
-//    With a few exceptions in [lang], non-nullary API functions are fully    //
-//    variadic and chainable  such that the outputs of one  may be used as    //
-//    inputs to another.  Inputs must be distinguishable after the primary    //
-//    expansion; deferred input behavior is undefined.                        //
+//    pputl API functions  are fully variadic and chainable,  meaning that    //
+//    their arguments can be populated using macro expansion results. Args    //
+//    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
 //    Negative ints are represented as valid C++ arithmetic expressions in    //
 //    order to avoid post-processing:  pputl arithmetic operations  always    //
@@ -184,15 +186,31 @@ pp_streq(char const* l, char const* r) {
 #define ASSERT_PP_EQ(a, b)   ASSERT_PP_EQ_X(a, b)
 
 // clang-format off
+ASSERT_PP_EQ((PTL_FIRST()), ());
+ASSERT_PP_EQ((PTL_FIRST(, )), ());
+ASSERT_PP_EQ((PTL_FIRST(a)), (a));
+ASSERT_PP_EQ((PTL_FIRST(a, b)), (a));
+ASSERT_PP_EQ((PTL_FIRST((a, b))), ((a, b)));
+
+ASSERT_PP_EQ((PTL_REST()), ());
+ASSERT_PP_EQ((PTL_REST(, )), ());
+ASSERT_PP_EQ((PTL_REST(a)), ());
+ASSERT_PP_EQ((PTL_REST(a, b)), (b));
+ASSERT_PP_EQ((PTL_REST(a, b, c)), (b, c));
+ASSERT_PP_EQ((PTL_REST(PTL_REST(a, b, c))), (c));
+ASSERT_PP_EQ((PTL_REST(a, , )), (,));
+ASSERT_PP_EQ((PTL_REST(a, b, , )), (b, ,));
+
 ASSERT_PP_EQ((PTL_EAT()), ());
 ASSERT_PP_EQ((PTL_EAT(foo)), ());
 
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
-ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (fooPTL_EAT(bar)));
+ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
+ASSERT_PP_EQ((PTL_CAT(,)), ());
 
 ASSERT_PP_EQ((PTL_STR()), (""));
 ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
-ASSERT_PP_EQ((PTL_STR(PTL_CAT(foo, bar))), ("PTL_CAT(foo, bar)"));
+ASSERT_PP_EQ((PTL_STR(PTL_CAT(foo, bar))), ("foobar"));
 ASSERT_PP_EQ((PTL_STR(foo)), ("foo"));
 ASSERT_PP_EQ((PTL_STR(, )), (","));
 ASSERT_PP_EQ((PTL_STR(, , )), (", ,"));
@@ -202,40 +220,11 @@ ASSERT_PP_EQ((PTL_STR(, a)), (", a"));
 ASSERT_PP_EQ((PTL_STR(, a, )), (", a,"));
 ASSERT_PP_EQ((PTL_STR(, , a)), (", , a"));
 
-ASSERT_PP_EQ((PTL_XSTR()), (""));
-ASSERT_PP_EQ((PTL_XSTR(foo, bar)), ("foo, bar"));
-ASSERT_PP_EQ((PTL_XSTR(PTL_CAT(foo, bar))), ("foobar"));
-ASSERT_PP_EQ((PTL_XSTR(foo)), ("foo"));
-ASSERT_PP_EQ((PTL_XSTR(, )), (","));
-ASSERT_PP_EQ((PTL_XSTR(, , )), (", ,"));
-ASSERT_PP_EQ((PTL_XSTR(a, )), ("a,"));
-ASSERT_PP_EQ((PTL_XSTR(a, , )), ("a, ,"));
-ASSERT_PP_EQ((PTL_XSTR(, a)), (", a"));
-ASSERT_PP_EQ((PTL_XSTR(, a, )), (", a,"));
-ASSERT_PP_EQ((PTL_XSTR(, , a)), (", , a"));
-
+ASSERT_PP_EQ((PTL_DEFAULT()), ());
 ASSERT_PP_EQ((PTL_DEFAULT(a)), (a));
 ASSERT_PP_EQ((PTL_DEFAULT(a,)), (a));
 ASSERT_PP_EQ((PTL_DEFAULT(a, b)), (b));
 ASSERT_PP_EQ((PTL_DEFAULT(a, b, c)), (b, c));
-
-ASSERT_PP_EQ((PTL_XCAT(foo, bar)), (foobar));
-ASSERT_PP_EQ((PTL_XCAT(foo, PTL_EAT(bar))), (foo));
-ASSERT_PP_EQ((PTL_XCAT(,)), ());
-
-ASSERT_PP_EQ((PTL_XREST()), ());
-ASSERT_PP_EQ((PTL_XREST(, )), ());
-ASSERT_PP_EQ((PTL_XREST(a)), ());
-ASSERT_PP_EQ((PTL_XREST(a, b)), (b));
-ASSERT_PP_EQ((PTL_XREST(a, b, c)), (b, c));
-ASSERT_PP_EQ((PTL_XREST(PTL_XREST(a, b, c))), (c));
-ASSERT_PP_EQ((PTL_XREST(a, , )), (,));
-ASSERT_PP_EQ((PTL_XREST(a, b, , )), (b, ,));
-
-ASSERT_PP_EQ((PTL_XFIRST()), ());
-ASSERT_PP_EQ((PTL_XFIRST(, )), ());
-ASSERT_PP_EQ((PTL_XFIRST(a)), (a));
-ASSERT_PP_EQ((PTL_XFIRST(a, b)), (a));
 
 ASSERT_PP_EQ((PTL_TRIM()), ());
 ASSERT_PP_EQ((PTL_TRIM(, )), ());
@@ -247,4 +236,68 @@ ASSERT_PP_EQ((PTL_TRIM(a, b, )), (a, b,));
 ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
 ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
+
+ASSERT_PP_EQ((PTL_OBJ((), ())), (PTL_OBJ((), ())));
+ASSERT_PP_EQ((PTL_OBJ((FOO), ())), (PTL_OBJ((FOO), ())));
+ASSERT_PP_EQ((PTL_OBJ((BAR), (a, b))), (PTL_OBJ((BAR), (a, b))));
+
+ASSERT_PP_EQ((PTL_IS_NONE()), (1));
+ASSERT_PP_EQ((PTL_IS_NONE(foo)), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(PTL_ESC())), (1));
+ASSERT_PP_EQ((PTL_IS_NONE(, )), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_NONE(, , a)), (0));
+
+ASSERT_PP_EQ((PTL_IS_SOME()), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_SOME(())), (1));
+ASSERT_PP_EQ((PTL_IS_SOME((a, b))), (1));
+ASSERT_PP_EQ((PTL_IS_SOME(foo, bar)), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(PTL_ESC())), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(, )), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_SOME(, , a)), (0));
+
+ASSERT_PP_EQ((PTL_IS_TUP()), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(1, 2)), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(())), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((1, 2))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((), ())), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC(()))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP(PTL_ESC((1, 2)))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP(, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_TUP(, , a)), (0));
+ASSERT_PP_EQ((PTL_IS_TUP((, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, a))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (1));
+ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (1));
+
+ASSERT_PP_EQ((PTL_IS_ANY()), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(foo)), (1));
+ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (1));
+ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, , )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, a)), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (0));
+ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (0));
 // clang-format on

@@ -32,19 +32,26 @@
 namespace codegen {
 namespace api {
 
+namespace size_max_ {
+
 using namespace std;
 
-inline string const size_max_s{to_string(conf::size_max) + "u"};
+inline string const str{to_string(conf::size_max) + "u"};
 
-inline def<"size_max -> uint"> size_max = [] {
+inline def<"size_max -> size"> self = [] {
   category = "config";
 
   docs << "the maximum number of arguments bounded by the C++20 standard."
        << "set to min(255, uint_max) unless built with cpp20_arglimit=false"
        << "(which sets size_max to uint_max).";
 
-  return size_max_s;
+  return str;
 };
+
+} // namespace size_max_
+
+inline constexpr auto& size_max_s = size_max_::str;
+inline constexpr auto& size_max   = size_max_::self;
 
 } // namespace api
 } // namespace codegen

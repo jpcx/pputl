@@ -34,24 +34,27 @@
 namespace codegen {
 namespace api {
 
+namespace cat_ {
+
 using namespace std;
 
-inline def<"cat(a, b: a: any, b: any) -> any"> cat = [](arg a, arg b) {
+inline def<"cat(...: a: any, b: any) -> any"> self = [](va args) {
   category = "lang";
 
-  docs << "immediately concatenates a with b."
-       << "must provide at least one arg."
-       << "args must be compatible with the ## operator."
-       << ""
-       << "cat cannot be used to concatenate expression results,"
-       << "as the inputs are evaluated immediately. use xcat for"
-       << "expressions that should expand before concatenation.";
+  docs << "concatenates two args. must be compatible with the ## operator.";
 
-  tests << cat("foo", "bar")      = "foobar" >> docs;
-  tests << cat("foo", eat("bar")) = ("foo" + eat + "(bar)") >> docs;
+  tests << self("foo", "bar")      = "foobar" >> docs;
+  tests << self("foo", eat("bar")) = "foo" >> docs;
+  tests << self(",")               = "" >> docs;
 
-  return pp::cat(a, b);
+  return def<"o(a, b)">{[](arg a, arg b) {
+    return pp::cat(a, b);
+  }}(args);
 };
+
+} // namespace cat_
+
+inline constexpr auto& cat = cat_::self;
 
 } // namespace api
 } // namespace codegen

@@ -32,19 +32,26 @@
 namespace codegen {
 namespace api {
 
+namespace int_min_ {
+
 using namespace std;
 
-inline string const int_min_s = "0x8" + utl::cat(vector<string>(conf::word_size - 1, "0"))
-                              + "-" + to_string(conf::uint_max + 1);
+inline string const str = "0x8" + utl::cat(vector<string>(conf::word_size - 1, "0")) + "-"
+                        + to_string(conf::uint_max + 1);
 
-inline def<"int_min -> int"> int_min = [] {
+inline def<"int_min -> int"> self = [] {
   category     = "config";
   clang_format = false;
 
   docs << "the minimum value of a pputl signed int.";
 
-  return int_min_s;
+  return str;
 };
+
+} // namespace int_min_
+
+inline constexpr auto& int_min_s = int_min_::str;
+inline constexpr auto& int_min   = int_min_::self;
 
 } // namespace api
 } // namespace codegen

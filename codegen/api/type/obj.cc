@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_XSTR_CC
-#define CODEGEN_API_LANG_XSTR_CC
+#ifndef CODEGEN_API_TYPE_OBJ_CC
+#define CODEGEN_API_TYPE_OBJ_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,33 +29,41 @@
 
 #include "codegen.h"
 
-#include "lang/cat.cc"
-#include "lang/str.cc"
+#include "traits/is_tup.cc"
 
 namespace codegen {
 namespace api {
 
+namespace obj_ {
+
 using namespace std;
 
-inline def<"xstr(...: any...) -> any"> xstr = [](va args) {
-  category = "lang";
+#define FOO_IS_FOO
+#define FOO_A 0
+#define FOO_B 1
+#define FOO_C 2
 
-  docs << "stringizes args after an expansion.";
+#define BAR_IS_FOO
+#define BAR_IS_BAR
+#define BAR_A 3
+#define BAR_B 4
 
-  tests << xstr()                  = "\"\"" >> docs;
-  tests << xstr("foo")             = "\"foo\"";
-  tests << xstr("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << xstr(cat("foo", "bar")) = pp::str("foobar") >> docs;
-  tests << xstr(", ")              = "\",\"";
-  tests << xstr(", , ")            = "\", ,\"";
-  tests << xstr("a, ")             = "\"a,\"";
-  tests << xstr("a, , ")           = "\"a, ,\"";
-  tests << xstr(", a")             = "\", a\"";
-  tests << xstr(", a, ")           = "\", a,\"";
-  tests << xstr(", , a")           = "\", , a\"";
+inline def<"obj(...: scope: tup, state: tup) -> obj"> self = [](va args) {
+  category = "type";
 
-  return str(args);
+  docs << "[extends some] an inheritable, name-addressable state container";
+
+  tests << self(pp::tup(), pp::tup())      = self(pp::tup(), pp::tup()) >> docs;
+  tests << self(pp::tup("FOO"), pp::tup()) = self(pp::tup("FOO"), pp::tup()) >> docs;
+  tests << self(pp::tup("BAR"), pp::tup('a', 'b')) =
+      self(pp::tup("BAR"), pp::tup('a', 'b')) >> docs;
+
+  return self(args);
 };
+
+} // namespace obj_
+
+inline constexpr auto& obj = obj_::self;
 
 } // namespace api
 } // namespace codegen

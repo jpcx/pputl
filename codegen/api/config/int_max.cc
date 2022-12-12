@@ -32,17 +32,24 @@
 namespace codegen {
 namespace api {
 
+namespace int_max_ {
+
 using namespace std;
 
-inline string const int_max_s{to_string(conf::int_max)};
+inline string const str{to_string(conf::int_max)};
 
-inline def<"int_max -> int"> int_max = [] {
+inline def<"int_max -> int"> self = [] {
   category = "config";
 
   docs << "the maximum value of a pputl signed int.";
 
-  return int_max_s;
+  return str;
 };
+
+} // namespace int_max_
+
+inline constexpr auto& int_max_s = int_max_::str;
+inline constexpr auto& int_max   = int_max_::self;
 
 } // namespace api
 } // namespace codegen

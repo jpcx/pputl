@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_FAIL_CC
-#define CODEGEN_API_LANG_FAIL_CC
+#ifndef CODEGEN_API_TRAITS_IS_NONE_CC
+#define CODEGEN_API_TRAITS_IS_NONE_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,26 +29,45 @@
 
 #include "codegen.h"
 
-#include "lang/default.cc"
-#include "lang/str.cc"
-#include "lang/xcat.cc"
+#include "lang/esc.cc"
 
 namespace codegen {
 namespace api {
 
+namespace is_none_ {
+
 using namespace std;
 
-inline def<"fail(...: msg=\"unspecified error\": atom)"> fail = [](va args) {
-  category = "lang";
+inline def<"is_none(...: any...) -> bool"> self = [](va) {
+  category = "traits";
 
-  docs << "executes an invalid preprocessor operation to indicate a failure."
-       << "must provide a string literal message."
-       << ""
-       << "usage: " + fail("\"something bad happened\"")
-       << "       " + fail(str("[myfun] invalid args : __VA_ARGS__"));
+  docs << "[extends is_any] checks if args is the literal nothing";
 
-  return xcat(fail, default_(pp::str("unspecified error"), args));
+  tests << self("")         = "1" >> docs;
+  tests << self("foo")      = "0" >> docs;
+  tests << self("foo, bar") = "0" >> docs;
+  tests << self(esc())      = "1" >> docs;
+  tests << self(", ")       = "0";
+  tests << self(", , ")     = "0";
+  tests << self("a, ")      = "0";
+  tests << self("a, , ")    = "0";
+  tests << self(", a")      = "0";
+  tests << self(", a, ")    = "0";
+  tests << self(", , a")    = "0";
+
+  def<"\\0"> _0 = [] {
+    return "1";
+  };
+  def<"\\01">{} = [] {
+    return "0";
+  };
+
+  return pp::cat(_0, pp::va_opt("1"));
 };
+
+} // namespace is_none_
+
+inline constexpr auto& is_none = is_none_::self;
 
 } // namespace api
 } // namespace codegen
