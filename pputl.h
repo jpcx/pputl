@@ -47,8 +47,8 @@
 //    -----                                                                   //
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
-//    many language constructs including  integers, recursion, queues, and    //
-//    inheritable objects.                                                    //
+//    many language constructs  including a type system, integers, errors,    //
+//    recursion, polymorphic objects, and common datastructures.              //
 //                                                                            //
 //    Speed, safety, and flexibility are its primary goals.                   //
 //                                                                            //
@@ -62,18 +62,16 @@
 //    USAGE                                                                   //
 //    -----                                                                   //
 //                                                                            //
-//    Copy pputl.h and include. The distribution is single-header.            //
+//    pputl is a standalone single-header library. include pputl.h to use.    //
+//    A C++20-compliant preprocessor is required.                             //
 //                                                                            //
-//    pputl requires a preprocessor that supports the C++20 specifications    //
-//    for macro replacement and macro-related implementation limits.          //
-//                                                                            //
-//    pputl is completely generated and tested by a custom C++ framework.     //
+//    pputl  is completely generated and tested by a custom C++ framework.    //
 //    See the codegen/ folder for the full source.                            //
 //                                                                            //
 //    Various settings including word size and naming rules may be changed    //
 //    by modifying the head of codegen/codegen.h and running `make`.          //
 //                                                                            //
-//    The default build defines 12-bit words and an 8-bit size cap, which     //
+//    The default build defines 12-bit words and an 8-bit size cap,  which    //
 //    complies with the following C++20 implementation limits [implimits]:    //
 //                                                                            //
 //     ‐ Macro identifiers simultaneously                                     //
@@ -81,7 +79,9 @@
 //     ‐ Parameters in one macro definition: [256].                           //
 //     ‐ Arguments in one macro invocation: [256].                            //
 //                                                                            //
-//    Exceeding these limits is possible but depends on the preprocessor.     //
+//    Exceeding these limits  is possible but depends on the preprocessor.    //
+//    The size cap is bounded by the maximum number of parameters, and the    //
+//    word size is directly proportional to the number of macros defined.     //
 //                                                                            //
 //    pputl has been tested with:                                             //
 //                                                                            //
@@ -91,8 +91,8 @@
 //                                                                            //
 //    Run `make test` to validate on your system.                             //
 //                                                                            //
-//    TERMINOLOGY                                                             //
-//    -----------                                                             //
+//    TYPES                                                                   //
+//    -----                                                                   //
 //                                                                            //
 //    pputl makes extensive use of duck-typing  for control flow and error    //
 //    management.  pputl types are essentially pairs of functions: one for    //
@@ -101,27 +101,32 @@
 //    API functions are strictly documented using this type system. Inputs    //
 //    are validated by invoking the associated constructor or through some    //
 //    other form of inference. An argument is valid if it can be converted    //
-//    to (or interpreted as) its paramter type without losing information.    //
+//    to (or interpreted as) its parameter without losing information.        //
 //                                                                            //
 //     any: any potentially-empty, individual argument in __VA_ARGS__         //
 //      ├╴none: an empty argument; an absence of pp-tokens                    //
 //      └╴some: a non-empty argument; a presence of pp-tokens                 //
 //         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
 //         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
-//         ├╴obj: an inheritable, name-addressable state container            //
+//         ├╴obj: a named, polymorphic, atom-addressable state container      //
 //         │  ├╴err: an error message container for invoking a failure        //
-//         │  ├╴dq:  a size/ofs-keyed, double-ended queue                     //
-//         │  └╴pq:  a word-keyed priority queue                              //
+//         │  └╴range: a sized tuple container                                //
+//         │     ├╴vec: a resizable, freely-mutable array                     //
+//         │     ├╴map: a mapping of equality-comparable keys to any          //
+//         │     └╴pq:  a priority queue                                      //
+//         │        ├╴queue: a FIFO queue                                     //
+//         │        └╴stack: a LIFO queue                                     //
 //         └╴atom: a non-empty argument that is not a tup or obj              //
-//            └╴word: a C++ integral expression matching a predefined set     //
-//               ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047             //
-//               │  ├╴bool: 0|1                                               //
-//               │  └╴ofs:  an int in the range of (-size_max, size_max)      //
-//               └╴uint: 0u|1u|...|4094u|4095u                                //
-//                  └╴size: a uint in the range of [0u, size_max]             //
+//            └╴sym: an explicitly defined, equality-comparable atom          //
+//               └╴word: a builtin C++ integral expression                    //
+//                  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047          //
+//                  │  ├╴bool: 0|1                                            //
+//                  │  └╴ofs:  an int within (-size_max, size_max)            //
+//                  └╴uint: 0u|1u|...|4094u|4095u                             //
+//                     └╴size: a uint within [0u, size_max]                   //
 //                                                                            //
-//    FUNDAMENTALS                                                            //
-//    ------------                                                            //
+//    NOTES                                                                   //
+//    -----                                                                   //
 //                                                                            //
 //    pputl errors  execute an invalid preprocessor operation by using the    //
 //    concatenation operator (incorrectly) on a string error message.  All    //
@@ -156,7 +161,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (UTC ISO8601).
-#define PTL_BUILD /* -> atom */ 20221212034339
+#define PTL_BUILD /* -> atom */ 20221213203025
 
 /// [config.uint_max]
 /// -----------------
@@ -317,12 +322,60 @@
 
 /// [type.obj]
 /// ----------
-/// [extends some] an inheritable, name-addressable state container
+/// [extends some] a named, polymorphic, atom-addressable state container.
 ///
-/// PTL_OBJ((), ())        // PTL_OBJ((), ())
-/// PTL_OBJ((FOO), ())     // PTL_OBJ((FOO), ())
-/// PTL_OBJ((BAR), (a, b)) // PTL_OBJ((BAR), (a, b))
-#define PTL_OBJ(/* scope: tup, state: tup */...) /* -> obj */ PTL_OBJ(__VA_ARGS__)
+/// objects have the form of NAME(...state) and can be created either directly
+/// or using a self-referential constructor (which terminates expansion).
+///
+/// example:
+///
+///   // obj types must be properly declared as a pputl symbol and object.
+///   // object declarations represent the heirarchy and root obj construction.
+///   #define PTL_SYM_POS2D_IS_POS2D
+///   #define PTL_OBJ_POS2D(...) POS2D, PTL_OBJ(__VA_ARGS__)
+///
+///   // member names are atoms defined as follows (using their index):
+///   #define PTL_IDX_POS2D_Y 0
+///   #define PTL_IDX_POS2D_X 1
+///
+///   // a constructor that handles copies, default, and member initialization
+///   #define POS2D(...)
+///     PTL_IF(
+///         PTL_ISA(__VA_ARGS__, POS2D), POS2D_COPY,
+///         PTL_IF(PTL_IS_NONE(__VA_ARGS__), POS2D_DEFAULT, POS2D_ARGS))
+///     (__VA_ARGS__)
+///
+///   // explicitly retrieving Y and X instead of simply
+///   // returning o, as it may be a derived object
+///   #define POS2D_COPY(o)      PTL_COPY(PTL_COPY(POS2D_DEFAULT(), o, Y), X)
+///   #define POS2D_DEFAULT(...) POS2D(0, 0)
+///   #define POS2D_ARGS(y, x)   POS2D(y, x)
+///
+///   // deriving from POS2D. note: derived comes before base in heirarchy
+///   #define PTL_SYM_POS3D_IS_POS3D
+///   #define PTL_OBJ_POS3D(...) POS3D, POS2D, PTL_OBJ(__VA_ARGS__)
+///
+///   // using a new index for this member. reusing an index overrides base.
+///   #define PTL_IDX_POS3D_Z 2
+///
+///   // this constructor also handles cast from base
+///   #define POS3D(...)
+///     PTL_IF(PTL_ISA(__VA_ARGS__, POS3D), POS3D_COPY,
+///            PTL_IF(PTL_ISA(__VA_ARGS__, POS2D), POS3D_BASE,
+///                   PTL_IF(PTL_IS_NONE(__VA_ARGS__), POS2D_DEFAULT,
+///                          POS2D_ARGS)))
+///     (__VA_ARGS__)
+///
+///   #define POS3D_COPY(o)
+///     PTL_COPY(PTL_COPY(PTL_COPY(POS3D_DEFAULT(), o, Y), X), Z)
+///   #define POS3D_BASE(o)       POS3D(PTL_GET(o, Y), PTL_GET(o, X), 0)
+///   #define POS3D_DEFAULT(...)  POS3D(0, 0, 0)
+///   #define POS3D_ARGS(y, x, z) POS3D(y, x, z)
+///
+///   // elements from objects can be indexed using PTL_GET and PTL_SET
+///   #define POS   POS3D(3, 5, 4)
+///   #define MOVED PTL_SET(FOO, X, PTL_INC(PTL_GET(FOO, X)))
+#define PTL_OBJ(/* ...state: any... */...) /* -> obj */ PTL_OBJ(__VA_ARGS__)
 
 /// [traits.is_none]
 /// ----------------
