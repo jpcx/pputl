@@ -29,8 +29,6 @@
 
 #include "codegen.h"
 
-#include "traits/is_tup.cc"
-
 namespace codegen {
 namespace api {
 
@@ -38,35 +36,21 @@ namespace obj_ {
 
 using namespace std;
 
-#define PTL_SYM_EQ(a, b)
+#define PTL_EQ(a, b)
 
-#define IS_NAMED(...) IS_NAMED_X(__VA_ARGS__)
-#define IS_NAMED_X(name, o) \
-  PTL_IS_NONE(PTL_CAT(PTL_CAT(name, _IS_), IS_NAMED_NAME_PTL_OBJ(o)))
-#define IS_NAMED_NAME_PTL_OBJ(name, ...) name
+#define PTL_OBJ_VEC(...) PTL_OBJ(__VA_ARGS__)
 
-#define VEC_IS_VEC
-#define VEC(...)          VEC_X(PTL_SIZEOF(__ARGS__), (__VA_ARGS__))
-#define VEC_X(size, data) PTL_OBJ(VEC, (size, size, data))
+#define VEC_CAP  0u
+#define VEC_SIZE 1u
+#define VEC_DATA 2u
 
-#define VEC_CAP  0
-#define VEC_SIZE 1
-#define VEC_DATA 2
+#define VEC(...)        VEC_X(PTL_COUNT(__VA_ARGS__), (__VA_ARGS__))
+#define VEC_X(ct, data) VEC(ct, ct, data)
 
-#define VEC_RESERVE(_, cap) VEC_RESERVE_X(_, PTL_SUB(cap, PTL_GET(_, CAP)))
-#define VEC_RESERVE_X(_, diff) \
-  PTL_IF(PTL_GTZ(diff), VEC_RESERVE_GROW, VEC_RESERVE_NOOP)(_, diff)
-#define VEC_RESERVE_GROW(_, diff) \
-  PTL_SET(PTL_SET(_, DATA, (PTL_ITEMS(PTL_GET(_, DATA)), PTL_REPEAT(diff))), CAP, cap)
-#define VEC_RESERVE_NOOP(_, cap) _
-
-#define v VEC(a, b, c)
-#define x PTL_GET(v, CAP)
-
-inline def<"obj(...: name: sym, state: tup) -> obj"> self = [](va args) {
+inline def<"obj(...: ...state: any...) -> obj"> self = [](va args) {
   category = "type";
 
-  docs << "[extends some] an atom-addressable state container";
+  docs << "[extends some] a named state container";
 
   return self(args);
 };
