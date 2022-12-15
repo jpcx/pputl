@@ -43,23 +43,23 @@ inline def<"is_none(...: any...) -> bool"> self = [](va) {
 
   docs << "[extends is_any] checks if args is the literal nothing";
 
-  tests << self("")         = "1" >> docs;
-  tests << self("foo")      = "0" >> docs;
-  tests << self("foo, bar") = "0" >> docs;
-  tests << self(esc())      = "1" >> docs;
-  tests << self(", ")       = "0";
-  tests << self(", , ")     = "0";
-  tests << self("a, ")      = "0";
-  tests << self("a, , ")    = "0";
-  tests << self(", a")      = "0";
-  tests << self(", a, ")    = "0";
-  tests << self(", , a")    = "0";
+  tests << self("")         = "true" >> docs;
+  tests << self("foo")      = "false" >> docs;
+  tests << self("foo, bar") = "false" >> docs;
+  tests << self(esc())      = "true" >> docs;
+  tests << self(", ")       = "false";
+  tests << self(", , ")     = "false";
+  tests << self("a, ")      = "false";
+  tests << self("a, , ")    = "false";
+  tests << self(", a")      = "false";
+  tests << self(", a, ")    = "false";
+  tests << self(", , a")    = "false";
 
   def<"\\0"> _0 = [] {
-    return "1";
+    return "true";
   };
   def<"\\01">{} = [] {
-    return "0";
+    return "false";
   };
 
   return pp::cat(_0, pp::va_opt("1"));

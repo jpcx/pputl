@@ -41,24 +41,24 @@ inline def<"is_any(...: any...) -> bool"> self = [](va args) {
 
   docs << "checks if args is a single, potentially empty arg";
 
-  tests << self()         = "1" >> docs;
-  tests << self("foo")    = "1" >> docs;
-  tests << self("(a, b)") = "1" >> docs;
-  tests << self("a, b")   = "0" >> docs;
-  tests << self(", ")     = "0" >> docs;
-  tests << self(", , ")   = "0" >> docs;
-  tests << self("a, ")    = "0";
-  tests << self("a, , ")  = "0";
-  tests << self(", a")    = "0";
-  tests << self(", a, ")  = "0";
-  tests << self(", , a")  = "0";
+  tests << self()         = "true" >> docs;
+  tests << self("foo")    = "true" >> docs;
+  tests << self("(a, b)") = "true" >> docs;
+  tests << self("a, b")   = "false" >> docs;
+  tests << self(", ")     = "false" >> docs;
+  tests << self(", , ")   = "false" >> docs;
+  tests << self("a, ")    = "false";
+  tests << self("a, , ")  = "false";
+  tests << self(", a")    = "false";
+  tests << self(", a, ")  = "false";
+  tests << self(", , a")  = "false";
 
   return def<"o(_, ...)">{[&](arg, va) {
     def<"\\0"> _0 = [&] {
-      return "1";
+      return "true";
     };
     def<"\\01">{} = [&] {
-      return "0";
+      return "false";
     };
     return pp::cat(_0, pp::va_opt(1));
   }}(args + ".");

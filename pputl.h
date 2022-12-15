@@ -108,15 +108,13 @@
 //      └╴some: a non-empty argument; a presence of pp-tokens                 //
 //         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
 //         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
-//         ├╴sym: an explicitly defined, equality-comparable identifier       //
-//         │  ├╴hex:  0x0|0x1|...|0xE|0xF                                     //
-//         │  └╴word: a builtin, totally-ordered, 12-bit arithmetic sym       //
-//         │     ├╴int: _2048|_2047|...|0|...|2046|2047                       //
-//         │     │  ├╴bool: 0|1                                               //
-//         │     │  └╴ofs:  an int within (_size_max, size_max)               //
-//         │     └╴uint: 0u|1u|...|4094u|4095u                                //
-//         │        ├╴idx:  a uint within [0u, size_max)                      //
-//         │        └╴size: a uint within [0u, size_max]                      //
+//         ├╴sym: an explicitly defined equality-comparable token sequence    //
+//         │  └╴num: a builtin, totally-ordered, arithmetic sym               //
+//         │     ├╴bool: false|true                                           //
+//         │     ├╴int:  0x800-4096|0x801-4096|...|0|...|2046|2047            //
+//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
+//         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
+//         │     └╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
 //         └╴obj: a named, polymorphic, member-addressable state container    //
 //            ├╴err:   an error message container for lang.fail               //
 //            ├╴vec:   a resizable array                                      //
@@ -137,10 +135,13 @@
 //    their arguments can be populated using macro expansion results. Args    //
 //    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
-//    Unlike other words,  negative ints are not valid C++ int expressions    //
-//    as they are prefixed by an underscore (hyphens cannot be used within    //
-//    identifiers or pputl syms). When pasting negative ints into C++ code   ///
-//    to be used as C++ ints, use lang.cint.                                ////
+//    pputl num types are mutually exclusive token sequences that have the    //
+//    same numeric meaning in pputl, the preprocessor, and C++.  Since the    //
+//    preprocessor does not support hyphens in identifiers,  negative ints    //
+//    are special syms that cannot form part of an identifier  (unlike all    //
+//    other syms).  However, the library is able to detect these sequences    //
+//    by concatenating with the hex prefix and dropping the rest. If using   ///
+//    an int to construct an identifier, use lang.cat to extract the hex.   ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -160,7 +161,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (UTC ISO8601).
-#define PTL_BUILD /* -> atom */ 20221215202734
+#define PTL_BUILD /* -> atom */ 20221215225022
 
 /// [config.uint_max]
 /// -----------------
@@ -385,19 +386,19 @@
 /// ---------------
 /// checks if args is a single, potentially empty arg
 ///
-/// PTL_IS_ANY()       // 1
-/// PTL_IS_ANY(foo)    // 1
-/// PTL_IS_ANY((a, b)) // 1
-/// PTL_IS_ANY(a, b)   // 0
-/// PTL_IS_ANY(, )     // 0
-/// PTL_IS_ANY(, , )   // 0
+/// PTL_IS_ANY()       // true
+/// PTL_IS_ANY(foo)    // true
+/// PTL_IS_ANY((a, b)) // true
+/// PTL_IS_ANY(a, b)   // false
+/// PTL_IS_ANY(, )     // false
+/// PTL_IS_ANY(, , )   // false
 #define PTL_IS_ANY(/* any... */...) /* -> bool */ PPUTLIMPL_IS_ANY_o(__VA_ARGS__.)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIMPL_IS_ANY_o(_, ...) PPUTLIMPL_IS_ANY_o_0##__VA_OPT__(1)
-#define PPUTLIMPL_IS_ANY_o_01      0
-#define PPUTLIMPL_IS_ANY_o_0       1
+#define PPUTLIMPL_IS_ANY_o_01      false
+#define PPUTLIMPL_IS_ANY_o_0       true
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -412,8 +413,8 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_ANY_1(e, ...) __VA_ARGS__
-#define PPUTLIMPL_ANY_0(e, ...) PTL_FAIL(e)
+#define PPUTLIMPL_ANY_true(e, ...)  __VA_ARGS__
+#define PPUTLIMPL_ANY_false(e, ...) PTL_FAIL(e)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -421,16 +422,16 @@
 /// ----------------
 /// [extends is_any] checks if args is the literal nothing
 ///
-/// PTL_IS_NONE()          // 1
-/// PTL_IS_NONE(foo)       // 0
-/// PTL_IS_NONE(foo, bar)  // 0
-/// PTL_IS_NONE(PTL_ESC()) // 1
+/// PTL_IS_NONE()          // true
+/// PTL_IS_NONE(foo)       // false
+/// PTL_IS_NONE(foo, bar)  // false
+/// PTL_IS_NONE(PTL_ESC()) // true
 #define PTL_IS_NONE(/* any... */...) /* -> bool */ PPUTLIMPL_IS_NONE_0##__VA_OPT__(1)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_IS_NONE_01 0
-#define PPUTLIMPL_IS_NONE_0  1
+#define PPUTLIMPL_IS_NONE_01 false
+#define PPUTLIMPL_IS_NONE_0  true
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -438,21 +439,21 @@
 /// ----------------
 /// [extends is_any] checks if args is a singluar value
 ///
-/// PTL_IS_SOME()          // 0
-/// PTL_IS_SOME(foo)       // 1
-/// PTL_IS_SOME(())        // 1
-/// PTL_IS_SOME((a, b))    // 1
-/// PTL_IS_SOME(foo, bar)  // 0
-/// PTL_IS_SOME(PTL_ESC()) // 0
+/// PTL_IS_SOME()          // false
+/// PTL_IS_SOME(foo)       // true
+/// PTL_IS_SOME(())        // true
+/// PTL_IS_SOME((a, b))    // true
+/// PTL_IS_SOME(foo, bar)  // false
+/// PTL_IS_SOME(PTL_ESC()) // false
 #define PTL_IS_SOME(/* any... */...) /* -> bool */ \
   PPUTLIMPL_IS_SOME_0##__VA_OPT__(1)(__VA_ARGS__.)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 #define PPUTLIMPL_IS_SOME_01(_, ...) PPUTLIMPL_IS_SOME_01_0##__VA_OPT__(1)
-#define PPUTLIMPL_IS_SOME_01_01      0
-#define PPUTLIMPL_IS_SOME_01_0       1
-#define PPUTLIMPL_IS_SOME_0(_, ...)  0
+#define PPUTLIMPL_IS_SOME_01_01      false
+#define PPUTLIMPL_IS_SOME_01_0       true
+#define PPUTLIMPL_IS_SOME_0(_, ...)  false
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -460,19 +461,19 @@
 /// ---------------
 /// [extends is_some] checks if args is a tuple
 ///
-/// PTL_IS_TUP()       // 0
-/// PTL_IS_TUP(1, 2)   // 0
-/// PTL_IS_TUP(())     // 1
-/// PTL_IS_TUP((1, 2)) // 1
+/// PTL_IS_TUP()       // false
+/// PTL_IS_TUP(1, 2)   // false
+/// PTL_IS_TUP(())     // true
+/// PTL_IS_TUP((1, 2)) // true
 #define PTL_IS_TUP(/* any... */...) /* -> bool */ \
   PTL_CAT(PPUTLIMPL_IS_TUP_, PTL_IS_SOME(__VA_ARGS__))(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_IS_TUP_1           PPUTLIMPL_IS_TUP_1_o
-#define PPUTLIMPL_IS_TUP_1_o(obj)    PTL_IS_NONE(PTL_EAT obj)
-#define PPUTLIMPL_IS_TUP_0           PPUTLIMPL_IS_TUP_0_fail
-#define PPUTLIMPL_IS_TUP_0_fail(...) 0
+#define PPUTLIMPL_IS_TUP_true            PPUTLIMPL_IS_TUP_true_o
+#define PPUTLIMPL_IS_TUP_true_o(obj)     PTL_IS_NONE(PTL_EAT obj)
+#define PPUTLIMPL_IS_TUP_false           PPUTLIMPL_IS_TUP_false_fail
+#define PPUTLIMPL_IS_TUP_false_fail(...) false
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

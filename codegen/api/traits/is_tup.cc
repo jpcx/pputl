@@ -47,41 +47,41 @@ inline def<"is_tup(...: any...) -> bool"> self = [](va args) {
 
   docs << "[extends is_some] checks if args is a tuple";
 
-  tests << self()                 = "0" >> docs;
-  tests << self("1, 2")           = "0" >> docs;
-  tests << self("()")             = "1" >> docs;
-  tests << self("(1, 2)")         = "1" >> docs;
-  tests << self("(), ()")         = "0";
-  tests << self(esc + "(())")     = "1";
-  tests << self(esc + "((1, 2))") = "1";
-  tests << self(", ")             = "0";
-  tests << self(", , ")           = "0";
-  tests << self("a, ")            = "0";
-  tests << self("a, , ")          = "0";
-  tests << self(", a")            = "0";
-  tests << self(", a, ")          = "0";
-  tests << self(", , a")          = "0";
-  tests << self("(, )")           = "1";
-  tests << self("(, , )")         = "1";
-  tests << self("(a, )")          = "1";
-  tests << self("(a, , )")        = "1";
-  tests << self("(, a)")          = "1";
-  tests << self("(, a, )")        = "1";
-  tests << self("(, , a)")        = "1";
+  tests << self()                 = "false" >> docs;
+  tests << self("1, 2")           = "false" >> docs;
+  tests << self("()")             = "true" >> docs;
+  tests << self("(1, 2)")         = "true" >> docs;
+  tests << self("(), ()")         = "false";
+  tests << self(esc + "(())")     = "true";
+  tests << self(esc + "((1, 2))") = "true";
+  tests << self(", ")             = "false";
+  tests << self(", , ")           = "false";
+  tests << self("a, ")            = "false";
+  tests << self("a, , ")          = "false";
+  tests << self(", a")            = "false";
+  tests << self(", a, ")          = "false";
+  tests << self(", , a")          = "false";
+  tests << self("(, )")           = "true";
+  tests << self("(, , )")         = "true";
+  tests << self("(a, )")          = "true";
+  tests << self("(a, , )")        = "true";
+  tests << self("(, a)")          = "true";
+  tests << self("(, a, )")        = "true";
+  tests << self("(, , a)")        = "true";
 
-  def<"\\0"> _0 = [&] {
+  def<"\\false"> _false = [&] {
     return def<"fail(...)">{[&](va) {
-      return "0";
+      return "false";
     }};
   };
 
-  def<"\\1">{} = [&] {
+  def<"\\true">{} = [&] {
     return def<"o(obj)">{[&](arg obj) {
       return is_none(eat + " " + obj);
     }};
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_some(args)), args);
+  return pp::call(cat(utl::slice(_false, -5), is_some(args)), args);
 };
 
 } // namespace is_tup_

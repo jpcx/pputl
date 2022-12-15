@@ -46,18 +46,17 @@ inline def<"any(...: any...) -> any"> self = [](va args) {
   docs << "any potentially-empty, individual argument in __VA_ARGS__."
        << "this constructor asserts that args are either 0 or 1 in size.";
 
-  def<"\\0(e, ...)"> _0 = [](arg e, va) {
+  def<"\\false(e, ...)"> _false = [](arg e, va) {
     return pp::call(apiname("fail"), e);
   };
 
-  def<"\\1(e, ...)">{} = [](arg, va args) {
+  def<"\\true(e, ...)">{} = [](arg, va args) {
     return args;
   };
 
-  return pp::call(cat(utl::slice(_0, -1), is_any(args)),
+  return pp::call(cat(utl::slice(_false, -5), is_any(args)),
                   pp::call(apiname("err"), self,
-                           pp::str("any can only represent args of size 0 or 1"),
-                           args),
+                           pp::str("any can only represent args of size 0 or 1"), args),
                   args);
 };
 

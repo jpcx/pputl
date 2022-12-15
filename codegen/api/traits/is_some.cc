@@ -43,30 +43,30 @@ inline def<"is_some(...: any...) -> bool"> self = [](va args) {
 
   docs << "[extends is_any] checks if args is a singluar value";
 
-  tests << self("")         = "0" >> docs;
-  tests << self("foo")      = "1" >> docs;
-  tests << self("()")       = "1" >> docs;
-  tests << self("(a, b)")   = "1" >> docs;
-  tests << self("foo, bar") = "0" >> docs;
-  tests << self(esc())      = "0" >> docs;
-  tests << self(", ")       = "0";
-  tests << self(", , ")     = "0";
-  tests << self("a, ")      = "0";
-  tests << self("a, , ")    = "0";
-  tests << self(", a")      = "0";
-  tests << self(", a, ")    = "0";
-  tests << self(", , a")    = "0";
+  tests << self("")         = "false" >> docs;
+  tests << self("foo")      = "true" >> docs;
+  tests << self("()")       = "true" >> docs;
+  tests << self("(a, b)")   = "true" >> docs;
+  tests << self("foo, bar") = "false" >> docs;
+  tests << self(esc())      = "false" >> docs;
+  tests << self(", ")       = "false";
+  tests << self(", , ")     = "false";
+  tests << self("a, ")      = "false";
+  tests << self("a, , ")    = "false";
+  tests << self(", a")      = "false";
+  tests << self(", a, ")    = "false";
+  tests << self(", , a")    = "false";
 
   def<"\\0(_, ...)"> _0 = [](arg, va) {
-    return "0";
+    return "false";
   };
 
   def<"\\01(_, ...)">{} = [](arg, va) {
     def<"\\0"> _0 = [&] {
-      return "1";
+      return "true";
     };
     def<"\\01">{} = [&] {
-      return "0";
+      return "false";
     };
     return pp::cat(_0, pp::va_opt(1));
   };
