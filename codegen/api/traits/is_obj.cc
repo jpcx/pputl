@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_STR_CC
-#define CODEGEN_API_LANG_STR_CC
+#ifndef CODEGEN_API_TRAITS_IS_OBJ_CC
+#define CODEGEN_API_TRAITS_IS_OBJ_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -29,40 +29,24 @@
 
 #include "codegen.h"
 
-#include "lang/cat.cc"
-
 namespace codegen {
 namespace api {
 
-namespace str_ {
+namespace is_obj_ {
 
 using namespace std;
 
-inline def<"str(...: any...) -> some"> self = [](va args) {
-  category = "lang";
+inline def<"is_obj(...: any...) -> bool"> self = [](va args) {
+  category = "traits";
 
-  docs << "stringizes args.";
+  docs << "[extends is_some] checks if args is a pputl object.";
 
-  tests << self()                  = "\"\"" >> docs;
-  tests << self("foo")             = "\"foo\"";
-  tests << self("foo, bar")        = "\"foo, bar\"" >> docs;
-  tests << self(cat("foo", "bar")) = pp::str("foobar") >> docs;
-  tests << self(", ")              = "\",\"";
-  tests << self(", , ")            = "\", ,\"";
-  tests << self("a, ")             = "\"a,\"";
-  tests << self("a, , ")           = "\"a, ,\"";
-  tests << self(", a")             = "\", a\"";
-  tests << self(", a, ")           = "\", a,\"";
-  tests << self(", , a")           = "\", , a\"";
-
-  return def<"o(...)">{[](va args) {
-    return "#" + args;
-  }}(args);
+  return args;
 };
 
-} // namespace str_
+} // namespace is_obj_
 
-inline constexpr auto& str = str_::self;
+inline constexpr auto& is_obj = is_obj_::self;
 
 } // namespace api
 } // namespace codegen

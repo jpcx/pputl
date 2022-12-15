@@ -108,22 +108,22 @@
 //      └╴some: a non-empty argument; a presence of pp-tokens                 //
 //         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
 //         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
-//         ├╴obj: a named, polymorphic, atom-addressable state container      //
-//         │  ├╴err: an error message container for invoking a failure        //
-//         │  └╴range: a sized tuple container                                //
-//         │     ├╴vec: a resizable, freely-mutable array                     //
-//         │     ├╴map: a mapping of equality-comparable keys to any          //
-//         │     └╴pq:  a priority queue                                      //
-//         │        ├╴queue: a FIFO queue                                     //
-//         │        └╴stack: a LIFO queue                                     //
-//         └╴atom: a non-empty argument that is not a tup or obj              //
-//            └╴sym: an explicitly defined, equality-comparable atom          //
-//               └╴word: a builtin C++ integral expression                    //
-//                  ├╴int: 0x800-4096|0x801-4096|...|0|...|2046|2047          //
-//                  │  ├╴bool: 0|1                                            //
-//                  │  └╴ofs:  an int within (-size_max, size_max)            //
-//                  └╴uint: 0u|1u|...|4094u|4095u                             //
-//                     └╴size: a uint within [0u, size_max]                   //
+//         ├╴sym: an explicitly defined, equality-comparable identifier       //
+//         │  ├╴hex:  0x0|0x1|...|0xE|0xF                                     //
+//         │  └╴word: a builtin, totally-ordered, 12-bit arithmetic sym       //
+//         │     ├╴int: _2048|_2047|...|0|...|2046|2047                       //
+//         │     │  ├╴bool: 0|1                                               //
+//         │     │  └╴ofs:  an int within (_size_max, size_max)               //
+//         │     └╴uint: 0u|1u|...|4094u|4095u                                //
+//         │        ├╴idx:  a uint within [0u, size_max)                      //
+//         │        └╴size: a uint within [0u, size_max]                      //
+//         └╴obj: a named, polymorphic, member-addressable state container    //
+//            ├╴err:   an error message container for lang.fail               //
+//            ├╴vec:   a resizable array                                      //
+//            ├╴map:   a mapping of equality-comparable keys to any           //
+//            ├╴pq:    a priority queue                                       //
+//            ├╴queue: a FIFO queue                                           //
+//            └╴stack: a LIFO queue                                           //
 //                                                                            //
 //    NOTES                                                                   //
 //    -----                                                                   //
@@ -137,11 +137,10 @@
 //    their arguments can be populated using macro expansion results. Args    //
 //    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
-//    Negative ints are represented as valid C++ arithmetic expressions in    //
-//    order to avoid post-processing:  pputl arithmetic operations  always    //
-//    expand to values  that are usable in both preprocessor and C++ code.    //
-//    When constructing  preprocessor identifiers  from negative integers,   ///
-//    use int_name to extract the hex prefix before concatenation.          ////
+//    Unlike other words,  negative ints are not valid C++ int expressions    //
+//    as they are prefixed by an underscore (hyphens cannot be used within    //
+//    identifiers or pputl syms). When pasting negative ints into C++ code   ///
+//    to be used as C++ ints, use lang.cint.                                ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -161,7 +160,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (UTC ISO8601).
-#define PTL_BUILD /* -> atom */ 20221213203025
+#define PTL_BUILD /* -> atom */ 20221215202734
 
 /// [config.uint_max]
 /// -----------------
@@ -242,36 +241,6 @@
 /// PTL_EAT(foo) // <nothing>
 #define PTL_EAT(/* any... */...) /* -> none */
 
-/// [lang.cat]
-/// ----------
-/// concatenates two args. must be compatible with the ## operator.
-///
-/// PTL_CAT(foo, bar)          // foobar
-/// PTL_CAT(foo, PTL_EAT(bar)) // foo
-/// PTL_CAT(,)                 // <nothing>
-#define PTL_CAT(/* a: any, b: any */...) /* -> any */ PPUTLIMPL_CAT_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_CAT_o(a, b) a##b
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [lang.str]
-/// ----------
-/// stringizes args.
-///
-/// PTL_STR()                  // ""
-/// PTL_STR(foo, bar)          // "foo, bar"
-/// PTL_STR(PTL_CAT(foo, bar)) // "foobar"
-#define PTL_STR(/* any... */...) /* -> some */ PPUTLIMPL_STR_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_STR_o(...) #__VA_ARGS__
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [lang.default]
 /// --------------
 /// returns the first argument iff the rest of the arguments are nothing.
@@ -290,6 +259,21 @@
 #define PPUTLIMPL_DEFAULT_o(_, ...)  PPUTLIMPL_DEFAULT_0##__VA_OPT__(1)
 #define PPUTLIMPL_DEFAULT_01(_, ...) __VA_ARGS__
 #define PPUTLIMPL_DEFAULT_0(_, ...)  _
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [lang.cat]
+/// ----------
+/// concatenates two args. must be compatible with the ## operator.
+///
+/// PTL_CAT(foo, bar)          // foobar
+/// PTL_CAT(foo, PTL_EAT(bar)) // foo
+/// PTL_CAT(,)                 // <nothing>
+#define PTL_CAT(/* a: any, b: any */...) /* -> any */ PPUTLIMPL_CAT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_CAT_o(a, b) a##b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -320,23 +304,43 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [lang.cstr]
+/// -----------
+/// converts args to a C string literal.
+///
+/// C strings cannot be detected by macro functions or used
+/// in any meaningful way (except as generic arguments), as
+/// they are completely incompatible with the concatenation
+/// operator. as such, their type is considered `some`.
+///
+/// PTL_CSTR()                  // ""
+/// PTL_CSTR(foo, bar)          // "foo, bar"
+/// PTL_CSTR(PTL_CAT(foo, bar)) // "foobar"
+#define PTL_CSTR(/* any... */...) /* -> some */ PPUTLIMPL_CSTR_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_CSTR_o(...) #__VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [type.obj]
 /// ----------
 /// [extends some] a named, polymorphic, atom-addressable state container.
 ///
 /// objects have the form of NAME(...state) and can be created either directly
-/// or using a self-referential constructor (which terminates expansion).
+/// or using a directly-recursive constructor (direct recursion freezes tokens).
 ///
 /// example:
 ///
 ///   // obj types must be properly declared as a pputl symbol and object.
 ///   // object declarations represent the heirarchy and root obj construction.
-///   #define PTL_SYM_POS2D_IS_POS2D
-///   #define PTL_OBJ_POS2D(...) POS2D, PTL_OBJ(__VA_ARGS__)
+///   #define PTL_SYM_POS2D_IS_POS2D (POS2D)
+///   #define PTL_OBJ_POS2D(...) PTL_OBJ(__VA_ARGS__)
 ///
-///   // member names are atoms defined as follows (using their index):
-///   #define PTL_IDX_POS2D_Y 0
-///   #define PTL_IDX_POS2D_X 1
+///   // member names are atoms defined as follows:
+///   #define PTL_IDX_POS2D_Y 0 // atom Y refers to POS2D idx 0
+///   #define PTL_IDX_POS2D_X 1 // atom X refers to POS2D idx 1
 ///
 ///   // a constructor that handles copies, default, and member initialization
 ///   #define POS2D(...)
@@ -352,8 +356,8 @@
 ///   #define POS2D_ARGS(y, x)   POS2D(y, x)
 ///
 ///   // deriving from POS2D. note: derived comes before base in heirarchy
-///   #define PTL_SYM_POS3D_IS_POS3D
-///   #define PTL_OBJ_POS3D(...) POS3D, POS2D, PTL_OBJ(__VA_ARGS__)
+///   #define PTL_SYM_POS3D_IS_POS3D (POS3D, POS2D)
+///   #define PTL_OBJ_POS3D(...) PTL_OBJ(__VA_ARGS__)
 ///
 ///   // using a new index for this member. reusing an index overrides base.
 ///   #define PTL_IDX_POS3D_Z 2
@@ -376,6 +380,42 @@
 ///   #define POS   POS3D(3, 5, 4)
 ///   #define MOVED PTL_SET(FOO, X, PTL_INC(PTL_GET(FOO, X)))
 #define PTL_OBJ(/* ...state: any... */...) /* -> obj */ PTL_OBJ(__VA_ARGS__)
+
+/// [traits.is_any]
+/// ---------------
+/// checks if args is a single, potentially empty arg
+///
+/// PTL_IS_ANY()       // 1
+/// PTL_IS_ANY(foo)    // 1
+/// PTL_IS_ANY((a, b)) // 1
+/// PTL_IS_ANY(a, b)   // 0
+/// PTL_IS_ANY(, )     // 0
+/// PTL_IS_ANY(, , )   // 0
+#define PTL_IS_ANY(/* any... */...) /* -> bool */ PPUTLIMPL_IS_ANY_o(__VA_ARGS__.)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_IS_ANY_o(_, ...) PPUTLIMPL_IS_ANY_o_0##__VA_OPT__(1)
+#define PPUTLIMPL_IS_ANY_o_01      0
+#define PPUTLIMPL_IS_ANY_o_0       1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.any]
+/// ----------
+/// any potentially-empty, individual argument in __VA_ARGS__.
+/// this constructor asserts that args are either 0 or 1 in size.
+#define PTL_ANY(/* any... */...) /* -> any */                                   \
+  PTL_CAT(PPUTLIMPL_ANY_, PTL_IS_ANY(__VA_ARGS__))                              \
+  (PTL_ERR(PTL_ANY, "any can only represent args of size 0 or 1", __VA_ARGS__), \
+   __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_ANY_1(e, ...) __VA_ARGS__
+#define PPUTLIMPL_ANY_0(e, ...) PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 /// [traits.is_none]
 /// ----------------
@@ -436,23 +476,31 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
-/// [traits.is_any]
+/// [traits.is_atom]
+/// ----------------
+/// [extends is_some] checks if args is not a tup or obj.
+#define PTL_IS_ATOM(/* any... */...) /* -> bool */ __VA_ARGS__
+
+/// [traits.is_obj]
 /// ---------------
-/// checks if args is a single, potentially empty arg
+/// [extends is_some] checks if args is a pputl object.
+#define PTL_IS_OBJ(/* any... */...) /* -> bool */ __VA_ARGS__
+
+/// [traits.is_sym]
+/// ---------------
+/// [extends is_some] checks if args is a pputl sym.
 ///
-/// PTL_IS_ANY()       // 1
-/// PTL_IS_ANY(foo)    // 1
-/// PTL_IS_ANY((a, b)) // 1
-/// PTL_IS_ANY(a, b)   // 0
-/// PTL_IS_ANY(, )     // 0
-/// PTL_IS_ANY(, , )   // 0
-#define PTL_IS_ANY(/* any... */...) /* -> bool */ PPUTLIMPL_IS_ANY_o(__VA_ARGS__.)
+/// syms are created by defining a macro as follows:
+///   #define PTL_SYM_<sym name>_IS_<sym name> (<any...>)
+///
+/// this format enables sym equality comparisons and data storage.
+/// declaration macros must expand to a tuple, which may be empty.
+/// use lang.lookup to retrieve the items stored in the sym tuple.
+#define PTL_IS_SYM(/* any... */...) /* -> bool */ PPUTLIMPL_IS_SYM_o(__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_IS_ANY_o(_, ...) PPUTLIMPL_IS_ANY_o_0##__VA_OPT__(1)
-#define PPUTLIMPL_IS_ANY_o_01      0
-#define PPUTLIMPL_IS_ANY_o_0       1
+#define PPUTLIMPL_IS_SYM_o(...) PTL_IS_TUP(PTL_SYM##_##__VA_ARGS__##_IS_##__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
