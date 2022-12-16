@@ -111,8 +111,8 @@
 //         │     ├╴bool: false|true                                           //
 //         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
 //         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
-//         │     └╴word: a 12-bit integer                                     //
-//         │        ├╴int:  0x800-4096|0x801-4096|...|0|...|2046|2047         //
+//         │     └╴word: a 12-bit unsigned or signed two's complement int     //
+//         │        ├╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047     //
 //         │        └╴uint: 0u|1u|...|4094u|4095u                             //
 //         └╴obj: a named, polymorphic, member-addressable state container    //
 //            ├╴err:   an error message container for lang.fail               //
@@ -138,9 +138,10 @@
 //    same numeric meaning in pputl, the preprocessor, and C++.  Since the    //
 //    preprocessor does not support hyphens in identifiers,  negative ints    //
 //    are special syms that cannot form part of an identifier  (unlike all    //
-//    other syms).  However, the library is able to detect these sequences    //
-//    by concatenating with the hex prefix and dropping the rest. If using   ///
-//    an int to construct an identifier, use lang.cat to extract the hex.   ////
+//    other syms). Negative ints are designed to be fully parseable by the    //
+//    library while still meeting these requirements. When constructing an    //
+//    identifier from an int,  use lang.cat instead of the ## operator  to   ///
+//    replace negative ints with their 12-bit hex equivalent (e.g. 0x800).  ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 

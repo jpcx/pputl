@@ -49,8 +49,18 @@ inline def<"sym(...: any...) -> sym"> self = [](va args) {
        << "syms can be created by defining a macro as follows:"
        << "  #define " + self + "_<sym name>_IS_<sym name> (<any...>)"
        << ""
-       << "builtin syms (such as int and uint) use a different"
-       << "configuration to reduce the number of API identifiers."
+       << "builtin syms (such as int and uint) are defined"
+       << "differently to reduce the number of API identifiers."
+       << ""
+       << "all syms  are token sequences  that can be used to form"
+       << "identifiers except for the builtin negative ints. since"
+       << "hyphens or arithmetic symbols can't be used anywhere in"
+       << "identifiers,  the alternate bitwise complement operator"
+       << "compl  is used to represent negative ints in a way that"
+       << "retains the meaning across pputl, the preprocessor, and"
+       << "C++.  to illustrate,  the negative int compl(0x7FF) can"
+       << "help form a macro function call, but -2048 cannot. this"
+       << "exception to the sym model is only necessary to"
        << ""
        << "this format enables sym equality comparisons and data storage."
        << "declaration macros must expand to a tuple, which may be empty."
@@ -64,15 +74,13 @@ inline def<"sym(...: any...) -> sym"> self = [](va args) {
         }};
   }
 
-  for (int i = conf::int_max + 1; i < (conf::int_max + 1) * 2; ++i) {
+  for (int i = -conf::int_max - 1; i < 0; ++i) {
     stringstream stream;
-    stream << setfill('0') << setw(conf::word_size) << uppercase << hex << i;
+    stream << setfill('0') << setw(conf::word_size) << uppercase << hex << -i - 1;
     string s = "0x" + stream.str();
-    def{"\\" + s, [&] {
+    def{"compl_\\" + s, [&] {
           clang_format = false;
-          return pp::tup(s + "-" + to_string(conf::uint_max + 1),
-                         i - ((int)conf::size_max + 1))
-               + ",";
+          return pp::tup(pp::call("compl", s), i) + ",";
         }};
   }
 

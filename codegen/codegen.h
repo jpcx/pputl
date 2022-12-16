@@ -246,7 +246,7 @@ constexpr char const project_header[]{
     "//    other syms). Negative ints are designed to be fully parseable by the    //\n"
     "//    library while still meeting these requirements. When constructing an    //\n"
     "//    identifier from an int,  use lang.cat instead of the ## operator  to   ///\n"
-    "//    replace the expression with its 12-bit hex equivalent (e.g. 0x800).   ////\n"
+    "//    replace negative ints with their 12-bit hex equivalent (e.g. 0x800).  ////\n"
     "//                                                                         /////\n"
     "///////////////////////////////////////////////////////////////////////////// */"};
 
