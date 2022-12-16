@@ -1,8 +1,8 @@
 /* /////////////////////////////////////////////////////////////////////////////
-//                          __    ___                                         //
-//                         /\ \__/\_ \                                        //
-//   _____   _____   __  __\ \ ,_\//\ \                                       //
-//  /\ '__`\/\ '__`\/\ \/\ \\ \ \/ \ \ \                                      //
+//                          __    ___                                     `/////
+//                         /\ \__/\_ \                                     `////
+//   _____   _____   __  __\ \ ,_\//\ \                                     `///
+//  /\ '__`\/\ '__`\/\ \/\ \\ \ \/ \ \ \                                     `//
 //  \ \ \_\ \ \ \_\ \ \ \_\ \\ \ \_ \_\ \_                                    //
 //   \ \ ,__/\ \ ,__/\ \____/ \ \__\/\____\                                   //
 //    \ \ \   \ \ \   \/___/   \/__/\/____/                                   //
@@ -109,10 +109,11 @@
 //         ├╴sym: an explicitly defined equality-comparable token sequence    //
 //         │  └╴num: a builtin, totally-ordered, arithmetic sym               //
 //         │     ├╴bool: false|true                                           //
-//         │     ├╴int:  0x800-4096|0x801-4096|...|0|...|2046|2047            //
-//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
 //         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
-//         │     └╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
+//         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
+//         │     └╴word: a 12-bit integer                                     //
+//         │        ├╴int:  0x800-4096|0x801-4096|...|0|...|2046|2047         //
+//         │        └╴uint: 0u|1u|...|4094u|4095u                             //
 //         └╴obj: a named, polymorphic, member-addressable state container    //
 //            ├╴err:   an error message container for lang.fail               //
 //            ├╴vec:   a resizable array                                      //
@@ -209,15 +210,27 @@ ASSERT_PP_EQ((PTL_REST(a, b, , )), (b, ,));
 ASSERT_PP_EQ((PTL_EAT()), ());
 ASSERT_PP_EQ((PTL_EAT(foo)), ());
 
+ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
+ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
+ASSERT_PP_EQ((PTL_CAT(,)), ());
+
+ASSERT_PP_EQ((PTL_STR()), (""));
+ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
+ASSERT_PP_EQ((PTL_STR(PTL_CAT(foo, bar))), ("foobar"));
+ASSERT_PP_EQ((PTL_STR(foo)), ("foo"));
+ASSERT_PP_EQ((PTL_STR(, )), (","));
+ASSERT_PP_EQ((PTL_STR(, , )), (", ,"));
+ASSERT_PP_EQ((PTL_STR(a, )), ("a,"));
+ASSERT_PP_EQ((PTL_STR(a, , )), ("a, ,"));
+ASSERT_PP_EQ((PTL_STR(, a)), (", a"));
+ASSERT_PP_EQ((PTL_STR(, a, )), (", a,"));
+ASSERT_PP_EQ((PTL_STR(, , a)), (", , a"));
+
 ASSERT_PP_EQ((PTL_DEFAULT()), ());
 ASSERT_PP_EQ((PTL_DEFAULT(a)), (a));
 ASSERT_PP_EQ((PTL_DEFAULT(a,)), (a));
 ASSERT_PP_EQ((PTL_DEFAULT(a, b)), (b));
 ASSERT_PP_EQ((PTL_DEFAULT(a, b, c)), (b, c));
-
-ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
-ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
-ASSERT_PP_EQ((PTL_CAT(,)), ());
 
 ASSERT_PP_EQ((PTL_TRIM()), ());
 ASSERT_PP_EQ((PTL_TRIM(, )), ());
@@ -229,30 +242,6 @@ ASSERT_PP_EQ((PTL_TRIM(a, b, )), (a, b,));
 ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
 ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
-
-ASSERT_PP_EQ((PTL_CSTR()), (""));
-ASSERT_PP_EQ((PTL_CSTR(foo, bar)), ("foo, bar"));
-ASSERT_PP_EQ((PTL_CSTR(PTL_CAT(foo, bar))), ("foobar"));
-ASSERT_PP_EQ((PTL_CSTR(foo)), ("foo"));
-ASSERT_PP_EQ((PTL_CSTR(, )), (","));
-ASSERT_PP_EQ((PTL_CSTR(, , )), (", ,"));
-ASSERT_PP_EQ((PTL_CSTR(a, )), ("a,"));
-ASSERT_PP_EQ((PTL_CSTR(a, , )), ("a, ,"));
-ASSERT_PP_EQ((PTL_CSTR(, a)), (", a"));
-ASSERT_PP_EQ((PTL_CSTR(, a, )), (", a,"));
-ASSERT_PP_EQ((PTL_CSTR(, , a)), (", , a"));
-
-ASSERT_PP_EQ((PTL_IS_ANY()), (true));
-ASSERT_PP_EQ((PTL_IS_ANY(foo)), (true));
-ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (true));
-ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(, )), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(, , )), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(a, )), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(, a)), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (false));
-ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (false));
 
 ASSERT_PP_EQ((PTL_IS_NONE()), (true));
 ASSERT_PP_EQ((PTL_IS_NONE(foo)), (false));
@@ -301,4 +290,16 @@ ASSERT_PP_EQ((PTL_IS_TUP((a, , ))), (true));
 ASSERT_PP_EQ((PTL_IS_TUP((, a))), (true));
 ASSERT_PP_EQ((PTL_IS_TUP((, a, ))), (true));
 ASSERT_PP_EQ((PTL_IS_TUP((, , a))), (true));
+
+ASSERT_PP_EQ((PTL_IS_ANY()), (true));
+ASSERT_PP_EQ((PTL_IS_ANY(foo)), (true));
+ASSERT_PP_EQ((PTL_IS_ANY((a, b))), (true));
+ASSERT_PP_EQ((PTL_IS_ANY(a, b)), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(, )), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(, , )), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(a, )), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(, a)), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (false));
+ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (false));
 // clang-format on

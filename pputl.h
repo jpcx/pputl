@@ -1,10 +1,10 @@
 #ifndef PPUTL_H_INCLUDED
 #define PPUTL_H_INCLUDED
 /* /////////////////////////////////////////////////////////////////////////////
-//                          __    ___                                         //
-//                         /\ \__/\_ \                                        //
-//   _____   _____   __  __\ \ ,_\//\ \                                       //
-//  /\ '__`\/\ '__`\/\ \/\ \\ \ \/ \ \ \                                      //
+//                          __    ___                                     `/////
+//                         /\ \__/\_ \                                     `////
+//   _____   _____   __  __\ \ ,_\//\ \                                     `///
+//  /\ '__`\/\ '__`\/\ \/\ \\ \ \/ \ \ \                                     `//
 //  \ \ \_\ \ \ \_\ \ \ \_\ \\ \ \_ \_\ \_                                    //
 //   \ \ ,__/\ \ ,__/\ \____/ \ \__\/\____\                                   //
 //    \ \ \   \ \ \   \/___/   \/__/\/____/                                   //
@@ -111,10 +111,11 @@
 //         ├╴sym: an explicitly defined equality-comparable token sequence    //
 //         │  └╴num: a builtin, totally-ordered, arithmetic sym               //
 //         │     ├╴bool: false|true                                           //
-//         │     ├╴int:  0x800-4096|0x801-4096|...|0|...|2046|2047            //
-//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
 //         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
-//         │     └╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
+//         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
+//         │     └╴word: a 12-bit integer                                     //
+//         │        ├╴int:  0x800-4096|0x801-4096|...|0|...|2046|2047         //
+//         │        └╴uint: 0u|1u|...|4094u|4095u                             //
 //         └╴obj: a named, polymorphic, member-addressable state container    //
 //            ├╴err:   an error message container for lang.fail               //
 //            ├╴vec:   a resizable array                                      //
@@ -161,7 +162,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (UTC ISO8601).
-#define PTL_BUILD /* -> atom */ 20221215225022
+#define PTL_BUILD /* -> atom */ 20221216004346
 
 /// [config.uint_max]
 /// -----------------
@@ -174,7 +175,6 @@
 /// ----------------
 /// the minimum value of a pputl signed int.
 #define PTL_INT_MIN /* -> int */ 0x80-256
-
 // clang-format on
 
 /// [config.word_size]
@@ -242,6 +242,41 @@
 /// PTL_EAT(foo) // <nothing>
 #define PTL_EAT(/* any... */...) /* -> none */
 
+/// [lang.cat]
+/// ----------
+/// concatenates two args. must be compatible with the ## operator.
+///
+/// PTL_CAT(foo, bar)          // foobar
+/// PTL_CAT(foo, PTL_EAT(bar)) // foo
+/// PTL_CAT(,)                 // <nothing>
+#define PTL_CAT(/* a: any, b: any */...) /* -> any */ PPUTLIMPL_CAT_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_CAT_o(a, b) a##b
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [lang.str]
+/// ----------
+/// converts args to a C string literal.
+///
+/// C strings cannot be detected by macro functions or used
+/// in any meaningful way (except as generic arguments), as
+/// they are completely incompatible with the concatenation
+/// operator. as such, their type is considered `some`.
+///
+/// PTL_STR()                  // ""
+/// PTL_STR(foo, bar)          // "foo, bar"
+/// PTL_STR(PTL_CAT(foo, bar)) // "foobar"
+#define PTL_STR(/* any... */...) /* -> some */ PPUTLIMPL_STR_o(__VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_STR_o(...) #__VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [lang.default]
 /// --------------
 /// returns the first argument iff the rest of the arguments are nothing.
@@ -260,21 +295,6 @@
 #define PPUTLIMPL_DEFAULT_o(_, ...)  PPUTLIMPL_DEFAULT_0##__VA_OPT__(1)
 #define PPUTLIMPL_DEFAULT_01(_, ...) __VA_ARGS__
 #define PPUTLIMPL_DEFAULT_0(_, ...)  _
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [lang.cat]
-/// ----------
-/// concatenates two args. must be compatible with the ## operator.
-///
-/// PTL_CAT(foo, bar)          // foobar
-/// PTL_CAT(foo, PTL_EAT(bar)) // foo
-/// PTL_CAT(,)                 // <nothing>
-#define PTL_CAT(/* a: any, b: any */...) /* -> any */ PPUTLIMPL_CAT_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_CAT_o(a, b) a##b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -302,26 +322,6 @@
 #define PPUTLIMPL_TRIM_010(_, ...)  _
 #define PPUTLIMPL_TRIM_001(_, ...)  __VA_ARGS__
 #define PPUTLIMPL_TRIM_00(...)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [lang.cstr]
-/// -----------
-/// converts args to a C string literal.
-///
-/// C strings cannot be detected by macro functions or used
-/// in any meaningful way (except as generic arguments), as
-/// they are completely incompatible with the concatenation
-/// operator. as such, their type is considered `some`.
-///
-/// PTL_CSTR()                  // ""
-/// PTL_CSTR(foo, bar)          // "foo, bar"
-/// PTL_CSTR(PTL_CAT(foo, bar)) // "foobar"
-#define PTL_CSTR(/* any... */...) /* -> some */ PPUTLIMPL_CSTR_o(__VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_CSTR_o(...) #__VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
@@ -382,42 +382,6 @@
 ///   #define MOVED PTL_SET(FOO, X, PTL_INC(PTL_GET(FOO, X)))
 #define PTL_OBJ(/* ...state: any... */...) /* -> obj */ PTL_OBJ(__VA_ARGS__)
 
-/// [traits.is_any]
-/// ---------------
-/// checks if args is a single, potentially empty arg
-///
-/// PTL_IS_ANY()       // true
-/// PTL_IS_ANY(foo)    // true
-/// PTL_IS_ANY((a, b)) // true
-/// PTL_IS_ANY(a, b)   // false
-/// PTL_IS_ANY(, )     // false
-/// PTL_IS_ANY(, , )   // false
-#define PTL_IS_ANY(/* any... */...) /* -> bool */ PPUTLIMPL_IS_ANY_o(__VA_ARGS__.)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_IS_ANY_o(_, ...) PPUTLIMPL_IS_ANY_o_0##__VA_OPT__(1)
-#define PPUTLIMPL_IS_ANY_o_01      false
-#define PPUTLIMPL_IS_ANY_o_0       true
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
-/// [type.any]
-/// ----------
-/// any potentially-empty, individual argument in __VA_ARGS__.
-/// this constructor asserts that args are either 0 or 1 in size.
-#define PTL_ANY(/* any... */...) /* -> any */                                   \
-  PTL_CAT(PPUTLIMPL_ANY_, PTL_IS_ANY(__VA_ARGS__))                              \
-  (PTL_ERR(PTL_ANY, "any can only represent args of size 0 or 1", __VA_ARGS__), \
-   __VA_ARGS__)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
-
-#define PPUTLIMPL_ANY_true(e, ...)  __VA_ARGS__
-#define PPUTLIMPL_ANY_false(e, ...) PTL_FAIL(e)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
-
 /// [traits.is_none]
 /// ----------------
 /// [extends is_any] checks if args is the literal nothing
@@ -477,6 +441,320 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
+/// [type.sym]
+/// ----------
+/// [extends some] an explicitly defined equality-comparable token sequence.
+///
+/// syms can be created by defining a macro as follows:
+///   #define PTL_SYM_<sym name>_IS_<sym name> (<any...>)
+///
+/// builtin syms (such as int and uint) use a different
+/// configuration to reduce the number of API identifiers.
+///
+/// this format enables sym equality comparisons and data storage.
+/// declaration macros must expand to a tuple, which may be empty.
+/// use lang.lookup to retrieve the items stored in the sym tuple.
+#define PTL_SYM(/* any... */...) /* -> sym */ __VA_ARGS__
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+// clang-format off
+#define PPUTLIMPL_SYM_0xFF (0xFF-256, -1),
+#define PPUTLIMPL_SYM_0xFE (0xFE-256, -2),
+#define PPUTLIMPL_SYM_0xFD (0xFD-256, -3),
+#define PPUTLIMPL_SYM_0xFC (0xFC-256, -4),
+#define PPUTLIMPL_SYM_0xFB (0xFB-256, -5),
+#define PPUTLIMPL_SYM_0xFA (0xFA-256, -6),
+#define PPUTLIMPL_SYM_0xF9 (0xF9-256, -7),
+#define PPUTLIMPL_SYM_0xF8 (0xF8-256, -8),
+#define PPUTLIMPL_SYM_0xF7 (0xF7-256, -9),
+#define PPUTLIMPL_SYM_0xF6 (0xF6-256, -10),
+#define PPUTLIMPL_SYM_0xF5 (0xF5-256, -11),
+#define PPUTLIMPL_SYM_0xF4 (0xF4-256, -12),
+#define PPUTLIMPL_SYM_0xF3 (0xF3-256, -13),
+#define PPUTLIMPL_SYM_0xF2 (0xF2-256, -14),
+#define PPUTLIMPL_SYM_0xF1 (0xF1-256, -15),
+#define PPUTLIMPL_SYM_0xF0 (0xF0-256, -16),
+#define PPUTLIMPL_SYM_0xEF (0xEF-256, -17),
+#define PPUTLIMPL_SYM_0xEE (0xEE-256, -18),
+#define PPUTLIMPL_SYM_0xED (0xED-256, -19),
+#define PPUTLIMPL_SYM_0xEC (0xEC-256, -20),
+#define PPUTLIMPL_SYM_0xEB (0xEB-256, -21),
+#define PPUTLIMPL_SYM_0xEA (0xEA-256, -22),
+#define PPUTLIMPL_SYM_0xE9 (0xE9-256, -23),
+#define PPUTLIMPL_SYM_0xE8 (0xE8-256, -24),
+#define PPUTLIMPL_SYM_0xE7 (0xE7-256, -25),
+#define PPUTLIMPL_SYM_0xE6 (0xE6-256, -26),
+#define PPUTLIMPL_SYM_0xE5 (0xE5-256, -27),
+#define PPUTLIMPL_SYM_0xE4 (0xE4-256, -28),
+#define PPUTLIMPL_SYM_0xE3 (0xE3-256, -29),
+#define PPUTLIMPL_SYM_0xE2 (0xE2-256, -30),
+#define PPUTLIMPL_SYM_0xE1 (0xE1-256, -31),
+#define PPUTLIMPL_SYM_0xE0 (0xE0-256, -32),
+#define PPUTLIMPL_SYM_0xDF (0xDF-256, -33),
+#define PPUTLIMPL_SYM_0xDE (0xDE-256, -34),
+#define PPUTLIMPL_SYM_0xDD (0xDD-256, -35),
+#define PPUTLIMPL_SYM_0xDC (0xDC-256, -36),
+#define PPUTLIMPL_SYM_0xDB (0xDB-256, -37),
+#define PPUTLIMPL_SYM_0xDA (0xDA-256, -38),
+#define PPUTLIMPL_SYM_0xD9 (0xD9-256, -39),
+#define PPUTLIMPL_SYM_0xD8 (0xD8-256, -40),
+#define PPUTLIMPL_SYM_0xD7 (0xD7-256, -41),
+#define PPUTLIMPL_SYM_0xD6 (0xD6-256, -42),
+#define PPUTLIMPL_SYM_0xD5 (0xD5-256, -43),
+#define PPUTLIMPL_SYM_0xD4 (0xD4-256, -44),
+#define PPUTLIMPL_SYM_0xD3 (0xD3-256, -45),
+#define PPUTLIMPL_SYM_0xD2 (0xD2-256, -46),
+#define PPUTLIMPL_SYM_0xD1 (0xD1-256, -47),
+#define PPUTLIMPL_SYM_0xD0 (0xD0-256, -48),
+#define PPUTLIMPL_SYM_0xCF (0xCF-256, -49),
+#define PPUTLIMPL_SYM_0xCE (0xCE-256, -50),
+#define PPUTLIMPL_SYM_0xCD (0xCD-256, -51),
+#define PPUTLIMPL_SYM_0xCC (0xCC-256, -52),
+#define PPUTLIMPL_SYM_0xCB (0xCB-256, -53),
+#define PPUTLIMPL_SYM_0xCA (0xCA-256, -54),
+#define PPUTLIMPL_SYM_0xC9 (0xC9-256, -55),
+#define PPUTLIMPL_SYM_0xC8 (0xC8-256, -56),
+#define PPUTLIMPL_SYM_0xC7 (0xC7-256, -57),
+#define PPUTLIMPL_SYM_0xC6 (0xC6-256, -58),
+#define PPUTLIMPL_SYM_0xC5 (0xC5-256, -59),
+#define PPUTLIMPL_SYM_0xC4 (0xC4-256, -60),
+#define PPUTLIMPL_SYM_0xC3 (0xC3-256, -61),
+#define PPUTLIMPL_SYM_0xC2 (0xC2-256, -62),
+#define PPUTLIMPL_SYM_0xC1 (0xC1-256, -63),
+#define PPUTLIMPL_SYM_0xC0 (0xC0-256, -64),
+#define PPUTLIMPL_SYM_0xBF (0xBF-256, -65),
+#define PPUTLIMPL_SYM_0xBE (0xBE-256, -66),
+#define PPUTLIMPL_SYM_0xBD (0xBD-256, -67),
+#define PPUTLIMPL_SYM_0xBC (0xBC-256, -68),
+#define PPUTLIMPL_SYM_0xBB (0xBB-256, -69),
+#define PPUTLIMPL_SYM_0xBA (0xBA-256, -70),
+#define PPUTLIMPL_SYM_0xB9 (0xB9-256, -71),
+#define PPUTLIMPL_SYM_0xB8 (0xB8-256, -72),
+#define PPUTLIMPL_SYM_0xB7 (0xB7-256, -73),
+#define PPUTLIMPL_SYM_0xB6 (0xB6-256, -74),
+#define PPUTLIMPL_SYM_0xB5 (0xB5-256, -75),
+#define PPUTLIMPL_SYM_0xB4 (0xB4-256, -76),
+#define PPUTLIMPL_SYM_0xB3 (0xB3-256, -77),
+#define PPUTLIMPL_SYM_0xB2 (0xB2-256, -78),
+#define PPUTLIMPL_SYM_0xB1 (0xB1-256, -79),
+#define PPUTLIMPL_SYM_0xB0 (0xB0-256, -80),
+#define PPUTLIMPL_SYM_0xAF (0xAF-256, -81),
+#define PPUTLIMPL_SYM_0xAE (0xAE-256, -82),
+#define PPUTLIMPL_SYM_0xAD (0xAD-256, -83),
+#define PPUTLIMPL_SYM_0xAC (0xAC-256, -84),
+#define PPUTLIMPL_SYM_0xAB (0xAB-256, -85),
+#define PPUTLIMPL_SYM_0xAA (0xAA-256, -86),
+#define PPUTLIMPL_SYM_0xA9 (0xA9-256, -87),
+#define PPUTLIMPL_SYM_0xA8 (0xA8-256, -88),
+#define PPUTLIMPL_SYM_0xA7 (0xA7-256, -89),
+#define PPUTLIMPL_SYM_0xA6 (0xA6-256, -90),
+#define PPUTLIMPL_SYM_0xA5 (0xA5-256, -91),
+#define PPUTLIMPL_SYM_0xA4 (0xA4-256, -92),
+#define PPUTLIMPL_SYM_0xA3 (0xA3-256, -93),
+#define PPUTLIMPL_SYM_0xA2 (0xA2-256, -94),
+#define PPUTLIMPL_SYM_0xA1 (0xA1-256, -95),
+#define PPUTLIMPL_SYM_0xA0 (0xA0-256, -96),
+#define PPUTLIMPL_SYM_0x9F (0x9F-256, -97),
+#define PPUTLIMPL_SYM_0x9E (0x9E-256, -98),
+#define PPUTLIMPL_SYM_0x9D (0x9D-256, -99),
+#define PPUTLIMPL_SYM_0x9C (0x9C-256, -100),
+#define PPUTLIMPL_SYM_0x9B (0x9B-256, -101),
+#define PPUTLIMPL_SYM_0x9A (0x9A-256, -102),
+#define PPUTLIMPL_SYM_0x99 (0x99-256, -103),
+#define PPUTLIMPL_SYM_0x98 (0x98-256, -104),
+#define PPUTLIMPL_SYM_0x97 (0x97-256, -105),
+#define PPUTLIMPL_SYM_0x96 (0x96-256, -106),
+#define PPUTLIMPL_SYM_0x95 (0x95-256, -107),
+#define PPUTLIMPL_SYM_0x94 (0x94-256, -108),
+#define PPUTLIMPL_SYM_0x93 (0x93-256, -109),
+#define PPUTLIMPL_SYM_0x92 (0x92-256, -110),
+#define PPUTLIMPL_SYM_0x91 (0x91-256, -111),
+#define PPUTLIMPL_SYM_0x90 (0x90-256, -112),
+#define PPUTLIMPL_SYM_0x8F (0x8F-256, -113),
+#define PPUTLIMPL_SYM_0x8E (0x8E-256, -114),
+#define PPUTLIMPL_SYM_0x8D (0x8D-256, -115),
+#define PPUTLIMPL_SYM_0x8C (0x8C-256, -116),
+#define PPUTLIMPL_SYM_0x8B (0x8B-256, -117),
+#define PPUTLIMPL_SYM_0x8A (0x8A-256, -118),
+#define PPUTLIMPL_SYM_0x89 (0x89-256, -119),
+#define PPUTLIMPL_SYM_0x88 (0x88-256, -120),
+#define PPUTLIMPL_SYM_0x87 (0x87-256, -121),
+#define PPUTLIMPL_SYM_0x86 (0x86-256, -122),
+#define PPUTLIMPL_SYM_0x85 (0x85-256, -123),
+#define PPUTLIMPL_SYM_0x84 (0x84-256, -124),
+#define PPUTLIMPL_SYM_0x83 (0x83-256, -125),
+#define PPUTLIMPL_SYM_0x82 (0x82-256, -126),
+#define PPUTLIMPL_SYM_0x81 (0x81-256, -127),
+#define PPUTLIMPL_SYM_0x80 (0x80-256, -128),
+#define PPUTLIMPL_SYM_127_IS_127 (127, 127)
+#define PPUTLIMPL_SYM_126_IS_126 (126, 126)
+#define PPUTLIMPL_SYM_125_IS_125 (125, 125)
+#define PPUTLIMPL_SYM_124_IS_124 (124, 124)
+#define PPUTLIMPL_SYM_123_IS_123 (123, 123)
+#define PPUTLIMPL_SYM_122_IS_122 (122, 122)
+#define PPUTLIMPL_SYM_121_IS_121 (121, 121)
+#define PPUTLIMPL_SYM_120_IS_120 (120, 120)
+#define PPUTLIMPL_SYM_119_IS_119 (119, 119)
+#define PPUTLIMPL_SYM_118_IS_118 (118, 118)
+#define PPUTLIMPL_SYM_117_IS_117 (117, 117)
+#define PPUTLIMPL_SYM_116_IS_116 (116, 116)
+#define PPUTLIMPL_SYM_115_IS_115 (115, 115)
+#define PPUTLIMPL_SYM_114_IS_114 (114, 114)
+#define PPUTLIMPL_SYM_113_IS_113 (113, 113)
+#define PPUTLIMPL_SYM_112_IS_112 (112, 112)
+#define PPUTLIMPL_SYM_111_IS_111 (111, 111)
+#define PPUTLIMPL_SYM_110_IS_110 (110, 110)
+#define PPUTLIMPL_SYM_109_IS_109 (109, 109)
+#define PPUTLIMPL_SYM_108_IS_108 (108, 108)
+#define PPUTLIMPL_SYM_107_IS_107 (107, 107)
+#define PPUTLIMPL_SYM_106_IS_106 (106, 106)
+#define PPUTLIMPL_SYM_105_IS_105 (105, 105)
+#define PPUTLIMPL_SYM_104_IS_104 (104, 104)
+#define PPUTLIMPL_SYM_103_IS_103 (103, 103)
+#define PPUTLIMPL_SYM_102_IS_102 (102, 102)
+#define PPUTLIMPL_SYM_101_IS_101 (101, 101)
+#define PPUTLIMPL_SYM_100_IS_100 (100, 100)
+#define PPUTLIMPL_SYM_99_IS_99 (99, 99)
+#define PPUTLIMPL_SYM_98_IS_98 (98, 98)
+#define PPUTLIMPL_SYM_97_IS_97 (97, 97)
+#define PPUTLIMPL_SYM_96_IS_96 (96, 96)
+#define PPUTLIMPL_SYM_95_IS_95 (95, 95)
+#define PPUTLIMPL_SYM_94_IS_94 (94, 94)
+#define PPUTLIMPL_SYM_93_IS_93 (93, 93)
+#define PPUTLIMPL_SYM_92_IS_92 (92, 92)
+#define PPUTLIMPL_SYM_91_IS_91 (91, 91)
+#define PPUTLIMPL_SYM_90_IS_90 (90, 90)
+#define PPUTLIMPL_SYM_89_IS_89 (89, 89)
+#define PPUTLIMPL_SYM_88_IS_88 (88, 88)
+#define PPUTLIMPL_SYM_87_IS_87 (87, 87)
+#define PPUTLIMPL_SYM_86_IS_86 (86, 86)
+#define PPUTLIMPL_SYM_85_IS_85 (85, 85)
+#define PPUTLIMPL_SYM_84_IS_84 (84, 84)
+#define PPUTLIMPL_SYM_83_IS_83 (83, 83)
+#define PPUTLIMPL_SYM_82_IS_82 (82, 82)
+#define PPUTLIMPL_SYM_81_IS_81 (81, 81)
+#define PPUTLIMPL_SYM_80_IS_80 (80, 80)
+#define PPUTLIMPL_SYM_79_IS_79 (79, 79)
+#define PPUTLIMPL_SYM_78_IS_78 (78, 78)
+#define PPUTLIMPL_SYM_77_IS_77 (77, 77)
+#define PPUTLIMPL_SYM_76_IS_76 (76, 76)
+#define PPUTLIMPL_SYM_75_IS_75 (75, 75)
+#define PPUTLIMPL_SYM_74_IS_74 (74, 74)
+#define PPUTLIMPL_SYM_73_IS_73 (73, 73)
+#define PPUTLIMPL_SYM_72_IS_72 (72, 72)
+#define PPUTLIMPL_SYM_71_IS_71 (71, 71)
+#define PPUTLIMPL_SYM_70_IS_70 (70, 70)
+#define PPUTLIMPL_SYM_69_IS_69 (69, 69)
+#define PPUTLIMPL_SYM_68_IS_68 (68, 68)
+#define PPUTLIMPL_SYM_67_IS_67 (67, 67)
+#define PPUTLIMPL_SYM_66_IS_66 (66, 66)
+#define PPUTLIMPL_SYM_65_IS_65 (65, 65)
+#define PPUTLIMPL_SYM_64_IS_64 (64, 64)
+#define PPUTLIMPL_SYM_63_IS_63 (63, 63)
+#define PPUTLIMPL_SYM_62_IS_62 (62, 62)
+#define PPUTLIMPL_SYM_61_IS_61 (61, 61)
+#define PPUTLIMPL_SYM_60_IS_60 (60, 60)
+#define PPUTLIMPL_SYM_59_IS_59 (59, 59)
+#define PPUTLIMPL_SYM_58_IS_58 (58, 58)
+#define PPUTLIMPL_SYM_57_IS_57 (57, 57)
+#define PPUTLIMPL_SYM_56_IS_56 (56, 56)
+#define PPUTLIMPL_SYM_55_IS_55 (55, 55)
+#define PPUTLIMPL_SYM_54_IS_54 (54, 54)
+#define PPUTLIMPL_SYM_53_IS_53 (53, 53)
+#define PPUTLIMPL_SYM_52_IS_52 (52, 52)
+#define PPUTLIMPL_SYM_51_IS_51 (51, 51)
+#define PPUTLIMPL_SYM_50_IS_50 (50, 50)
+#define PPUTLIMPL_SYM_49_IS_49 (49, 49)
+#define PPUTLIMPL_SYM_48_IS_48 (48, 48)
+#define PPUTLIMPL_SYM_47_IS_47 (47, 47)
+#define PPUTLIMPL_SYM_46_IS_46 (46, 46)
+#define PPUTLIMPL_SYM_45_IS_45 (45, 45)
+#define PPUTLIMPL_SYM_44_IS_44 (44, 44)
+#define PPUTLIMPL_SYM_43_IS_43 (43, 43)
+#define PPUTLIMPL_SYM_42_IS_42 (42, 42)
+#define PPUTLIMPL_SYM_41_IS_41 (41, 41)
+#define PPUTLIMPL_SYM_40_IS_40 (40, 40)
+#define PPUTLIMPL_SYM_39_IS_39 (39, 39)
+#define PPUTLIMPL_SYM_38_IS_38 (38, 38)
+#define PPUTLIMPL_SYM_37_IS_37 (37, 37)
+#define PPUTLIMPL_SYM_36_IS_36 (36, 36)
+#define PPUTLIMPL_SYM_35_IS_35 (35, 35)
+#define PPUTLIMPL_SYM_34_IS_34 (34, 34)
+#define PPUTLIMPL_SYM_33_IS_33 (33, 33)
+#define PPUTLIMPL_SYM_32_IS_32 (32, 32)
+#define PPUTLIMPL_SYM_31_IS_31 (31, 31)
+#define PPUTLIMPL_SYM_30_IS_30 (30, 30)
+#define PPUTLIMPL_SYM_29_IS_29 (29, 29)
+#define PPUTLIMPL_SYM_28_IS_28 (28, 28)
+#define PPUTLIMPL_SYM_27_IS_27 (27, 27)
+#define PPUTLIMPL_SYM_26_IS_26 (26, 26)
+#define PPUTLIMPL_SYM_25_IS_25 (25, 25)
+#define PPUTLIMPL_SYM_24_IS_24 (24, 24)
+#define PPUTLIMPL_SYM_23_IS_23 (23, 23)
+#define PPUTLIMPL_SYM_22_IS_22 (22, 22)
+#define PPUTLIMPL_SYM_21_IS_21 (21, 21)
+#define PPUTLIMPL_SYM_20_IS_20 (20, 20)
+#define PPUTLIMPL_SYM_19_IS_19 (19, 19)
+#define PPUTLIMPL_SYM_18_IS_18 (18, 18)
+#define PPUTLIMPL_SYM_17_IS_17 (17, 17)
+#define PPUTLIMPL_SYM_16_IS_16 (16, 16)
+#define PPUTLIMPL_SYM_15_IS_15 (15, 15)
+#define PPUTLIMPL_SYM_14_IS_14 (14, 14)
+#define PPUTLIMPL_SYM_13_IS_13 (13, 13)
+#define PPUTLIMPL_SYM_12_IS_12 (12, 12)
+#define PPUTLIMPL_SYM_11_IS_11 (11, 11)
+#define PPUTLIMPL_SYM_10_IS_10 (10, 10)
+#define PPUTLIMPL_SYM_9_IS_9 (9, 9)
+#define PPUTLIMPL_SYM_8_IS_8 (8, 8)
+#define PPUTLIMPL_SYM_7_IS_7 (7, 7)
+#define PPUTLIMPL_SYM_6_IS_6 (6, 6)
+#define PPUTLIMPL_SYM_5_IS_5 (5, 5)
+#define PPUTLIMPL_SYM_4_IS_4 (4, 4)
+#define PPUTLIMPL_SYM_3_IS_3 (3, 3)
+#define PPUTLIMPL_SYM_2_IS_2 (2, 2)
+#define PPUTLIMPL_SYM_1_IS_1 (1, 1)
+#define PPUTLIMPL_SYM_0_IS_0 (0, 0)
+// clang-format on
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [traits.is_any]
+/// ---------------
+/// checks if args is a single, potentially empty arg
+///
+/// PTL_IS_ANY()       // true
+/// PTL_IS_ANY(foo)    // true
+/// PTL_IS_ANY((a, b)) // true
+/// PTL_IS_ANY(a, b)   // false
+/// PTL_IS_ANY(, )     // false
+/// PTL_IS_ANY(, , )   // false
+#define PTL_IS_ANY(/* any... */...) /* -> bool */ PPUTLIMPL_IS_ANY_o(__VA_ARGS__.)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_IS_ANY_o(_, ...) PPUTLIMPL_IS_ANY_o_0##__VA_OPT__(1)
+#define PPUTLIMPL_IS_ANY_o_01      false
+#define PPUTLIMPL_IS_ANY_o_0       true
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
+/// [type.any]
+/// ----------
+/// any potentially-empty, individual argument in __VA_ARGS__.
+/// this constructor asserts that args are either 0 or 1 in size.
+#define PTL_ANY(/* any... */...) /* -> any */                                   \
+  PTL_CAT(PPUTLIMPL_ANY_, PTL_IS_ANY(__VA_ARGS__))                              \
+  (PTL_ERR(PTL_ANY, "any can only represent args of size 0 or 1", __VA_ARGS__), \
+   __VA_ARGS__)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
+
+#define PPUTLIMPL_ANY_true(e, ...)  __VA_ARGS__
+#define PPUTLIMPL_ANY_false(e, ...) PTL_FAIL(e)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
+
 /// [traits.is_atom]
 /// ----------------
 /// [extends is_some] checks if args is not a tup or obj.
@@ -506,5 +784,16 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 
 // vim: fdm=marker:fmr={{{,}}}
+
+#define PTL_SYM_0x80 (),
+
+constexpr auto fo = compl(compl(0x80) xor (compl(0xFF)));
+
+constexpr auto ff = compl(127) + 1;
+
+#define PTL_INTCHK_compl(...) __VA_ARGS__
+
+constexpr auto foo = PTL_STR(PTL_CAT(PTL_SYM_, PTL_CAT(128, PTL_CAT(_IS_, 128))));
+constexpr auto bar = PTL_STR(PTL_CAT(PTL_INTCHK_, compl(compl(0x80)xor(compl(0xFF)))));
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_LANG_CSTR_CC
-#define CODEGEN_API_LANG_CSTR_CC
+#ifndef CODEGEN_API_LANG_STR_CC
+#define CODEGEN_API_LANG_STR_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -34,11 +34,11 @@
 namespace codegen {
 namespace api {
 
-namespace cstr_ {
+namespace str_ {
 
 using namespace std;
 
-inline def<"cstr(...: any...) -> some"> self = [](va args) {
+inline def<"str(...: any...) -> some"> self = [](va args) {
   category = "lang";
 
   docs << "converts args to a C string literal."
@@ -65,9 +65,9 @@ inline def<"cstr(...: any...) -> some"> self = [](va args) {
   }}(args);
 };
 
-} // namespace cstr_
+} // namespace str_
 
-inline constexpr auto& cstr = cstr_::self;
+inline constexpr auto& str = str_::self;
 
 } // namespace api
 } // namespace codegen

@@ -1015,9 +1015,9 @@ def_base::definitions() {
       auto cur_impl = v.category == "impl";
 
       if (last_clang_format and not v.clang_format)
-        chunks.push_back("\n\n// clang-format off\n\n");
+        chunks.push_back("\n// clang-format off");
       else if (not last_clang_format and v.clang_format)
-        chunks.push_back("\n\n// clang-format on\n\n");
+        chunks.push_back("// clang-format on\n");
       last_clang_format = v.clang_format;
 
       if (not last_impl and cur_impl)

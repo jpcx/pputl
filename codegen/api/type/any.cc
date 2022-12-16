@@ -30,7 +30,6 @@
 #include "codegen.h"
 
 #include "lang/cat.cc"
-#include "lang/cstr.cc"
 #include "traits/is_any.cc"
 
 namespace codegen {

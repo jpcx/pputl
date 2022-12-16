@@ -1,5 +1,5 @@
-#ifndef CODEGEN_API_TRAITS_IS_SYM_CC
-#define CODEGEN_API_TRAITS_IS_SYM_CC
+#ifndef CODEGEN_API_TYPE_SYM_CC
+#define CODEGEN_API_TYPE_SYM_CC
 /* /////////////////////////////////////////////////////////////////////////////
 //                          __    ___
 //                         /\ \__/\_ \
@@ -37,30 +37,51 @@
 namespace codegen {
 namespace api {
 
-namespace is_sym_ {
+namespace sym_ {
 
 using namespace std;
 
-inline def<"is_sym(...: any...) -> bool"> self = [](va args) {
-  category = "traits";
+inline def<"sym(...: any...) -> sym"> self = [](va args) {
+  category = "type";
 
-  docs << "[extends is_some] checks if args is a pputl sym."
+  docs << "[extends some] an explicitly defined equality-comparable token sequence."
        << ""
-       << "syms are created by defining a macro as follows:"
-       << "  #define " + apiname("sym") + "_<sym name>_IS_<sym name> (<any...>)"
+       << "syms can be created by defining a macro as follows:"
+       << "  #define " + self + "_<sym name>_IS_<sym name> (<any...>)"
+       << ""
+       << "builtin syms (such as int and uint) use a different"
+       << "configuration to reduce the number of API identifiers."
        << ""
        << "this format enables sym equality comparisons and data storage."
        << "declaration macros must expand to a tuple, which may be empty."
        << "use lang.lookup to retrieve the items stored in the sym tuple.";
 
-  return def<"o(...)">{[](va args) {
-    return is_tup(pp::cat(apiname("sym"), "_", args, "_IS_", args));
-  }}(args);
+  for (int i = 0; i < conf::int_max + 1; ++i) {
+    string s = to_string(i);
+    def{"\\" + s + "_IS_" + s, [&] {
+          clang_format = false;
+          return pp::tup(s, s);
+        }};
+  }
+
+  for (int i = conf::int_max + 1; i < (conf::int_max + 1) * 2; ++i) {
+    stringstream stream;
+    stream << setfill('0') << setw(conf::word_size) << uppercase << hex << i;
+    string s = "0x" + stream.str();
+    def{"\\" + s, [&] {
+          clang_format = false;
+          return pp::tup(s + "-" + to_string(conf::uint_max + 1),
+                         i - ((int)conf::size_max + 1))
+               + ",";
+        }};
+  }
+
+  return args;
 };
 
-} // namespace is_sym_
+} // namespace sym_
 
-inline constexpr auto& is_sym = is_sym_::self;
+inline constexpr auto& sym = sym_::self;
 
 } // namespace api
 } // namespace codegen
