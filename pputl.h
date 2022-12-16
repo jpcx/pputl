@@ -787,7 +787,7 @@
 
 #define PTL_SYM_0x80 (),
 
-constexpr auto fo = compl(compl(0x80) xor (compl(0xFF)));
+constexpr auto fo = compl(0x7FE);
 
 constexpr auto ff = compl(127) + 1;
 

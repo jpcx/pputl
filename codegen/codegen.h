@@ -217,7 +217,7 @@ constexpr char const project_header[]{
     "//         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //\n"
     "//         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //\n"
     "//         │     └╴word: a 12-bit unsigned or signed two's complement int     //\n"
-    "//         │        ├╴int:  compl(compl(0x800)xor(compl(0xFFF)))|...|2047     //\n"
+    "//         │        ├╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047     //\n"
     "//         │        └╴uint: 0u|1u|...|4094u|4095u                             //\n"
     "//         └╴obj: a named, polymorphic, member-addressable state container    //\n"
     "//            ├╴err:   an error message container for lang.fail               //\n"
@@ -243,9 +243,10 @@ constexpr char const project_header[]{
     "//    same numeric meaning in pputl, the preprocessor, and C++.  Since the    //\n"
     "//    preprocessor does not support hyphens in identifiers,  negative ints    //\n"
     "//    are special syms that cannot form part of an identifier  (unlike all    //\n"
-    "//    other syms).  However, the library is able to detect these sequences    //\n"
-    "//    by concatenating with the hex prefix and dropping the rest. If using   ///\n"
-    "//    an int to construct an identifier, use lang.cat to extract the hex.   ////\n"
+    "//    other syms). Negative ints are designed to be fully parseable by the    //\n"
+    "//    library while still meeting these requirements. When constructing an    //\n"
+    "//    identifier from an int,  use lang.cat instead of the ## operator  to   ///\n"
+    "//    replace the expression with its 12-bit hex equivalent (e.g. 0x800).   ////\n"
     "//                                                                         /////\n"
     "///////////////////////////////////////////////////////////////////////////// */"};
 
