@@ -46,7 +46,7 @@
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
 //    many language constructs  including a type system, integers, errors,    //
-//    recursion, polymorphic objects, and common datastructures.              //
+//    recursion, namespaces, polymorphic objects, and datastructures.         //
 //                                                                            //
 //    Speed, safety, and flexibility are its primary goals.                   //
 //                                                                            //
@@ -106,15 +106,14 @@
 //      └╴some: a non-empty argument; a presence of pp-tokens                 //
 //         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
 //         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
-//         ├╴sym: an explicitly defined equality-comparable token sequence    //
-//         │  └╴num: a builtin, totally-ordered, arithmetic sym               //
+//         ├╴sym: a global or namespace-qualified equality-comparable name    //
+//         │  └╴num: a builtin totally-ordered arithmetic sym                 //
 //         │     ├╴bool: false|true                                           //
 //         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
 //         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
-//         │     └╴word: a 12-bit unsigned or signed two's complement int     //
-//         │        ├╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047     //
-//         │        └╴uint: 0u|1u|...|4094u|4095u                             //
-//         └╴obj: a named, polymorphic, member-addressable state container    //
+//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
+//         │     └╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047        //
+//         └╴obj: a polymorphic sym-addressable mutable state container       //
 //            ├╴err:   an error message container for lang.fail               //
 //            ├╴vec:   a resizable array                                      //
 //            ├╴map:   a mapping of equality-comparable keys to any           //
@@ -134,14 +133,12 @@
 //    their arguments can be populated using macro expansion results. Args    //
 //    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
-//    pputl num types are mutually exclusive token sequences that have the    //
-//    same numeric meaning in pputl, the preprocessor, and C++.  Since the    //
-//    preprocessor does not support hyphens in identifiers,  negative ints    //
-//    are special syms that cannot form part of an identifier  (unlike all    //
-//    other syms). Negative ints are designed to be fully parseable by the    //
-//    library while still meeting these requirements. When constructing an    //
-//    identifier from an int,  use lang.cat instead of the ## operator  to   ///
-//    replace negative ints with their 12-bit hex equivalent (e.g. 0x800).  ////
+//    The sym type lays the foundation for arithmetic literals, obj member    //
+//    access, and negative integers.  Since arithmetic symbols cannot form    //
+//    identifiers,  the C++ compl operator is used to ensure that negative    //
+//    ints can be parsed by the library  and have the same meaning in both    //
+//    the preprocessor and C++ code. When using an int or num to construct   ///
+//    an identifier, use lang.cat (which converts ints < 0 to 12-bit hex).  ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 

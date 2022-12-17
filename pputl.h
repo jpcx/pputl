@@ -48,7 +48,7 @@
 //                                                                            //
 //    pputl is a powerful C++ preprocessor utilities library that provides    //
 //    many language constructs  including a type system, integers, errors,    //
-//    recursion, polymorphic objects, and common datastructures.              //
+//    recursion, namespaces, polymorphic objects, and datastructures.         //
 //                                                                            //
 //    Speed, safety, and flexibility are its primary goals.                   //
 //                                                                            //
@@ -108,15 +108,14 @@
 //      └╴some: a non-empty argument; a presence of pp-tokens                 //
 //         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
 //         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
-//         ├╴sym: an explicitly defined equality-comparable token sequence    //
-//         │  └╴num: a builtin, totally-ordered, arithmetic sym               //
+//         ├╴sym: a global or namespace-qualified equality-comparable name    //
+//         │  └╴num: a builtin totally-ordered arithmetic sym                 //
 //         │     ├╴bool: false|true                                           //
 //         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
 //         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
-//         │     └╴word: a 12-bit unsigned or signed two's complement int     //
-//         │        ├╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047     //
-//         │        └╴uint: 0u|1u|...|4094u|4095u                             //
-//         └╴obj: a named, polymorphic, member-addressable state container    //
+//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
+//         │     └╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047        //
+//         └╴obj: a polymorphic sym-addressable mutable state container       //
 //            ├╴err:   an error message container for lang.fail               //
 //            ├╴vec:   a resizable array                                      //
 //            ├╴map:   a mapping of equality-comparable keys to any           //
@@ -136,14 +135,12 @@
 //    their arguments can be populated using macro expansion results. Args    //
 //    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
-//    pputl num types are mutually exclusive token sequences that have the    //
-//    same numeric meaning in pputl, the preprocessor, and C++.  Since the    //
-//    preprocessor does not support hyphens in identifiers,  negative ints    //
-//    are special syms that cannot form part of an identifier  (unlike all    //
-//    other syms). Negative ints are designed to be fully parseable by the    //
-//    library while still meeting these requirements. When constructing an    //
-//    identifier from an int,  use lang.cat instead of the ## operator  to   ///
-//    replace negative ints with their 12-bit hex equivalent (e.g. 0x800).  ////
+//    The sym type lays the foundation for arithmetic literals, obj member    //
+//    access, and negative integers.  Since arithmetic symbols cannot form    //
+//    identifiers,  the C++ compl operator is used to ensure that negative    //
+//    ints can be parsed by the library  and have the same meaning in both    //
+//    the preprocessor and C++ code. When using an int or num to construct   ///
+//    an identifier, use lang.cat (which converts ints < 0 to 12-bit hex).  ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -163,7 +160,7 @@
 /// [config.build]
 /// --------------
 /// the build number of this pputl release (UTC ISO8601).
-#define PTL_BUILD /* -> atom */ 20221216044907
+#define PTL_BUILD /* -> atom */ 20221217005741
 
 /// [config.uint_max]
 /// -----------------
@@ -444,150 +441,162 @@
 
 /// [type.sym]
 /// ----------
-/// [extends some] an explicitly defined equality-comparable token sequence.
+/// [extends some] a global or namespace-qualified equality-comparable name.
 ///
-/// syms can be created by defining a macro as follows:
-///   #define PTL_SYM_<sym name>_IS_<sym name> (<any...>)
+/// syms are equality-comparable names that point to static storage.
+/// a sym can either be declared globally or wrapped in a namespace.
 ///
-/// builtin syms (such as int and uint) use a different
-/// configuration to reduce the number of API identifiers.
+/// global syms match /[\w\d_]+/ and are defined as follows:
 ///
-/// this format enables sym equality comparisons and data storage.
-/// declaration macros must expand to a tuple, which may be empty.
-/// use lang.lookup to retrieve the items stored in the sym tuple.
+///   #define PTL_SYM_<name>_IS_<name> (<sym traits...>)
+///
+/// namespaced syms match /[\w\d_]+\([\w\d_]+\)/ and are defined as follows:
+///
+///   #define PTL_SYM_<ns>(name)              (<ns>, name)
+///   #define PTL_SYM_<ns>_<name1>_IS_<name1> (<sym traits...>)
+///   #define PTL_SYM_<ns>_<name2>_IS_<name2> (<sym traits...>)
+///   ...
+///
+/// the sym type lays the foundation for pputl artihmetic literals,
+/// object member access, and negative integers.  negative integers
+/// cannot be represented using arithmetic symbols  and instead use
+/// C++ compl expressions  that can be parsed by the library  while
+/// retaining the same meaning in both the preprocessor and C++. In
+/// those cases, the namespace is compl and name is an integer.
 #define PTL_SYM(/* any... */...) /* -> sym */ __VA_ARGS__
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
 // clang-format off
-#define PPUTLIMPL_SYM_COMPL_0x00 (compl(0x00), -1),
-#define PPUTLIMPL_SYM_COMPL_0x01 (compl(0x01), -2),
-#define PPUTLIMPL_SYM_COMPL_0x02 (compl(0x02), -3),
-#define PPUTLIMPL_SYM_COMPL_0x03 (compl(0x03), -4),
-#define PPUTLIMPL_SYM_COMPL_0x04 (compl(0x04), -5),
-#define PPUTLIMPL_SYM_COMPL_0x05 (compl(0x05), -6),
-#define PPUTLIMPL_SYM_COMPL_0x06 (compl(0x06), -7),
-#define PPUTLIMPL_SYM_COMPL_0x07 (compl(0x07), -8),
-#define PPUTLIMPL_SYM_COMPL_0x08 (compl(0x08), -9),
-#define PPUTLIMPL_SYM_COMPL_0x09 (compl(0x09), -10),
-#define PPUTLIMPL_SYM_COMPL_0x0A (compl(0x0A), -11),
-#define PPUTLIMPL_SYM_COMPL_0x0B (compl(0x0B), -12),
-#define PPUTLIMPL_SYM_COMPL_0x0C (compl(0x0C), -13),
-#define PPUTLIMPL_SYM_COMPL_0x0D (compl(0x0D), -14),
-#define PPUTLIMPL_SYM_COMPL_0x0E (compl(0x0E), -15),
-#define PPUTLIMPL_SYM_COMPL_0x0F (compl(0x0F), -16),
-#define PPUTLIMPL_SYM_COMPL_0x10 (compl(0x10), -17),
-#define PPUTLIMPL_SYM_COMPL_0x11 (compl(0x11), -18),
-#define PPUTLIMPL_SYM_COMPL_0x12 (compl(0x12), -19),
-#define PPUTLIMPL_SYM_COMPL_0x13 (compl(0x13), -20),
-#define PPUTLIMPL_SYM_COMPL_0x14 (compl(0x14), -21),
-#define PPUTLIMPL_SYM_COMPL_0x15 (compl(0x15), -22),
-#define PPUTLIMPL_SYM_COMPL_0x16 (compl(0x16), -23),
-#define PPUTLIMPL_SYM_COMPL_0x17 (compl(0x17), -24),
-#define PPUTLIMPL_SYM_COMPL_0x18 (compl(0x18), -25),
-#define PPUTLIMPL_SYM_COMPL_0x19 (compl(0x19), -26),
-#define PPUTLIMPL_SYM_COMPL_0x1A (compl(0x1A), -27),
-#define PPUTLIMPL_SYM_COMPL_0x1B (compl(0x1B), -28),
-#define PPUTLIMPL_SYM_COMPL_0x1C (compl(0x1C), -29),
-#define PPUTLIMPL_SYM_COMPL_0x1D (compl(0x1D), -30),
-#define PPUTLIMPL_SYM_COMPL_0x1E (compl(0x1E), -31),
-#define PPUTLIMPL_SYM_COMPL_0x1F (compl(0x1F), -32),
-#define PPUTLIMPL_SYM_COMPL_0x20 (compl(0x20), -33),
-#define PPUTLIMPL_SYM_COMPL_0x21 (compl(0x21), -34),
-#define PPUTLIMPL_SYM_COMPL_0x22 (compl(0x22), -35),
-#define PPUTLIMPL_SYM_COMPL_0x23 (compl(0x23), -36),
-#define PPUTLIMPL_SYM_COMPL_0x24 (compl(0x24), -37),
-#define PPUTLIMPL_SYM_COMPL_0x25 (compl(0x25), -38),
-#define PPUTLIMPL_SYM_COMPL_0x26 (compl(0x26), -39),
-#define PPUTLIMPL_SYM_COMPL_0x27 (compl(0x27), -40),
-#define PPUTLIMPL_SYM_COMPL_0x28 (compl(0x28), -41),
-#define PPUTLIMPL_SYM_COMPL_0x29 (compl(0x29), -42),
-#define PPUTLIMPL_SYM_COMPL_0x2A (compl(0x2A), -43),
-#define PPUTLIMPL_SYM_COMPL_0x2B (compl(0x2B), -44),
-#define PPUTLIMPL_SYM_COMPL_0x2C (compl(0x2C), -45),
-#define PPUTLIMPL_SYM_COMPL_0x2D (compl(0x2D), -46),
-#define PPUTLIMPL_SYM_COMPL_0x2E (compl(0x2E), -47),
-#define PPUTLIMPL_SYM_COMPL_0x2F (compl(0x2F), -48),
-#define PPUTLIMPL_SYM_COMPL_0x30 (compl(0x30), -49),
-#define PPUTLIMPL_SYM_COMPL_0x31 (compl(0x31), -50),
-#define PPUTLIMPL_SYM_COMPL_0x32 (compl(0x32), -51),
-#define PPUTLIMPL_SYM_COMPL_0x33 (compl(0x33), -52),
-#define PPUTLIMPL_SYM_COMPL_0x34 (compl(0x34), -53),
-#define PPUTLIMPL_SYM_COMPL_0x35 (compl(0x35), -54),
-#define PPUTLIMPL_SYM_COMPL_0x36 (compl(0x36), -55),
-#define PPUTLIMPL_SYM_COMPL_0x37 (compl(0x37), -56),
-#define PPUTLIMPL_SYM_COMPL_0x38 (compl(0x38), -57),
-#define PPUTLIMPL_SYM_COMPL_0x39 (compl(0x39), -58),
-#define PPUTLIMPL_SYM_COMPL_0x3A (compl(0x3A), -59),
-#define PPUTLIMPL_SYM_COMPL_0x3B (compl(0x3B), -60),
-#define PPUTLIMPL_SYM_COMPL_0x3C (compl(0x3C), -61),
-#define PPUTLIMPL_SYM_COMPL_0x3D (compl(0x3D), -62),
-#define PPUTLIMPL_SYM_COMPL_0x3E (compl(0x3E), -63),
-#define PPUTLIMPL_SYM_COMPL_0x3F (compl(0x3F), -64),
-#define PPUTLIMPL_SYM_COMPL_0x40 (compl(0x40), -65),
-#define PPUTLIMPL_SYM_COMPL_0x41 (compl(0x41), -66),
-#define PPUTLIMPL_SYM_COMPL_0x42 (compl(0x42), -67),
-#define PPUTLIMPL_SYM_COMPL_0x43 (compl(0x43), -68),
-#define PPUTLIMPL_SYM_COMPL_0x44 (compl(0x44), -69),
-#define PPUTLIMPL_SYM_COMPL_0x45 (compl(0x45), -70),
-#define PPUTLIMPL_SYM_COMPL_0x46 (compl(0x46), -71),
-#define PPUTLIMPL_SYM_COMPL_0x47 (compl(0x47), -72),
-#define PPUTLIMPL_SYM_COMPL_0x48 (compl(0x48), -73),
-#define PPUTLIMPL_SYM_COMPL_0x49 (compl(0x49), -74),
-#define PPUTLIMPL_SYM_COMPL_0x4A (compl(0x4A), -75),
-#define PPUTLIMPL_SYM_COMPL_0x4B (compl(0x4B), -76),
-#define PPUTLIMPL_SYM_COMPL_0x4C (compl(0x4C), -77),
-#define PPUTLIMPL_SYM_COMPL_0x4D (compl(0x4D), -78),
-#define PPUTLIMPL_SYM_COMPL_0x4E (compl(0x4E), -79),
-#define PPUTLIMPL_SYM_COMPL_0x4F (compl(0x4F), -80),
-#define PPUTLIMPL_SYM_COMPL_0x50 (compl(0x50), -81),
-#define PPUTLIMPL_SYM_COMPL_0x51 (compl(0x51), -82),
-#define PPUTLIMPL_SYM_COMPL_0x52 (compl(0x52), -83),
-#define PPUTLIMPL_SYM_COMPL_0x53 (compl(0x53), -84),
-#define PPUTLIMPL_SYM_COMPL_0x54 (compl(0x54), -85),
-#define PPUTLIMPL_SYM_COMPL_0x55 (compl(0x55), -86),
-#define PPUTLIMPL_SYM_COMPL_0x56 (compl(0x56), -87),
-#define PPUTLIMPL_SYM_COMPL_0x57 (compl(0x57), -88),
-#define PPUTLIMPL_SYM_COMPL_0x58 (compl(0x58), -89),
-#define PPUTLIMPL_SYM_COMPL_0x59 (compl(0x59), -90),
-#define PPUTLIMPL_SYM_COMPL_0x5A (compl(0x5A), -91),
-#define PPUTLIMPL_SYM_COMPL_0x5B (compl(0x5B), -92),
-#define PPUTLIMPL_SYM_COMPL_0x5C (compl(0x5C), -93),
-#define PPUTLIMPL_SYM_COMPL_0x5D (compl(0x5D), -94),
-#define PPUTLIMPL_SYM_COMPL_0x5E (compl(0x5E), -95),
-#define PPUTLIMPL_SYM_COMPL_0x5F (compl(0x5F), -96),
-#define PPUTLIMPL_SYM_COMPL_0x60 (compl(0x60), -97),
-#define PPUTLIMPL_SYM_COMPL_0x61 (compl(0x61), -98),
-#define PPUTLIMPL_SYM_COMPL_0x62 (compl(0x62), -99),
-#define PPUTLIMPL_SYM_COMPL_0x63 (compl(0x63), -100),
-#define PPUTLIMPL_SYM_COMPL_0x64 (compl(0x64), -101),
-#define PPUTLIMPL_SYM_COMPL_0x65 (compl(0x65), -102),
-#define PPUTLIMPL_SYM_COMPL_0x66 (compl(0x66), -103),
-#define PPUTLIMPL_SYM_COMPL_0x67 (compl(0x67), -104),
-#define PPUTLIMPL_SYM_COMPL_0x68 (compl(0x68), -105),
-#define PPUTLIMPL_SYM_COMPL_0x69 (compl(0x69), -106),
-#define PPUTLIMPL_SYM_COMPL_0x6A (compl(0x6A), -107),
-#define PPUTLIMPL_SYM_COMPL_0x6B (compl(0x6B), -108),
-#define PPUTLIMPL_SYM_COMPL_0x6C (compl(0x6C), -109),
-#define PPUTLIMPL_SYM_COMPL_0x6D (compl(0x6D), -110),
-#define PPUTLIMPL_SYM_COMPL_0x6E (compl(0x6E), -111),
-#define PPUTLIMPL_SYM_COMPL_0x6F (compl(0x6F), -112),
-#define PPUTLIMPL_SYM_COMPL_0x70 (compl(0x70), -113),
-#define PPUTLIMPL_SYM_COMPL_0x71 (compl(0x71), -114),
-#define PPUTLIMPL_SYM_COMPL_0x72 (compl(0x72), -115),
-#define PPUTLIMPL_SYM_COMPL_0x73 (compl(0x73), -116),
-#define PPUTLIMPL_SYM_COMPL_0x74 (compl(0x74), -117),
-#define PPUTLIMPL_SYM_COMPL_0x75 (compl(0x75), -118),
-#define PPUTLIMPL_SYM_COMPL_0x76 (compl(0x76), -119),
-#define PPUTLIMPL_SYM_COMPL_0x77 (compl(0x77), -120),
-#define PPUTLIMPL_SYM_COMPL_0x78 (compl(0x78), -121),
-#define PPUTLIMPL_SYM_COMPL_0x79 (compl(0x79), -122),
-#define PPUTLIMPL_SYM_COMPL_0x7A (compl(0x7A), -123),
-#define PPUTLIMPL_SYM_COMPL_0x7B (compl(0x7B), -124),
-#define PPUTLIMPL_SYM_COMPL_0x7C (compl(0x7C), -125),
-#define PPUTLIMPL_SYM_COMPL_0x7D (compl(0x7D), -126),
-#define PPUTLIMPL_SYM_COMPL_0x7E (compl(0x7E), -127),
-#define PPUTLIMPL_SYM_COMPL_0x7F (compl(0x7F), -128),
+#define PPUTLIMPL_SYM_compl(ihex) (compl, ihex)
+#define PPUTLIMPL_SYM_compl_0x00_IS_0x00 (compl(0x00), -1),
+#define PPUTLIMPL_SYM_compl_0x01_IS_0x01 (compl(0x01), -2),
+#define PPUTLIMPL_SYM_compl_0x02_IS_0x02 (compl(0x02), -3),
+#define PPUTLIMPL_SYM_compl_0x03_IS_0x03 (compl(0x03), -4),
+#define PPUTLIMPL_SYM_compl_0x04_IS_0x04 (compl(0x04), -5),
+#define PPUTLIMPL_SYM_compl_0x05_IS_0x05 (compl(0x05), -6),
+#define PPUTLIMPL_SYM_compl_0x06_IS_0x06 (compl(0x06), -7),
+#define PPUTLIMPL_SYM_compl_0x07_IS_0x07 (compl(0x07), -8),
+#define PPUTLIMPL_SYM_compl_0x08_IS_0x08 (compl(0x08), -9),
+#define PPUTLIMPL_SYM_compl_0x09_IS_0x09 (compl(0x09), -10),
+#define PPUTLIMPL_SYM_compl_0x0A_IS_0x0A (compl(0x0A), -11),
+#define PPUTLIMPL_SYM_compl_0x0B_IS_0x0B (compl(0x0B), -12),
+#define PPUTLIMPL_SYM_compl_0x0C_IS_0x0C (compl(0x0C), -13),
+#define PPUTLIMPL_SYM_compl_0x0D_IS_0x0D (compl(0x0D), -14),
+#define PPUTLIMPL_SYM_compl_0x0E_IS_0x0E (compl(0x0E), -15),
+#define PPUTLIMPL_SYM_compl_0x0F_IS_0x0F (compl(0x0F), -16),
+#define PPUTLIMPL_SYM_compl_0x10_IS_0x10 (compl(0x10), -17),
+#define PPUTLIMPL_SYM_compl_0x11_IS_0x11 (compl(0x11), -18),
+#define PPUTLIMPL_SYM_compl_0x12_IS_0x12 (compl(0x12), -19),
+#define PPUTLIMPL_SYM_compl_0x13_IS_0x13 (compl(0x13), -20),
+#define PPUTLIMPL_SYM_compl_0x14_IS_0x14 (compl(0x14), -21),
+#define PPUTLIMPL_SYM_compl_0x15_IS_0x15 (compl(0x15), -22),
+#define PPUTLIMPL_SYM_compl_0x16_IS_0x16 (compl(0x16), -23),
+#define PPUTLIMPL_SYM_compl_0x17_IS_0x17 (compl(0x17), -24),
+#define PPUTLIMPL_SYM_compl_0x18_IS_0x18 (compl(0x18), -25),
+#define PPUTLIMPL_SYM_compl_0x19_IS_0x19 (compl(0x19), -26),
+#define PPUTLIMPL_SYM_compl_0x1A_IS_0x1A (compl(0x1A), -27),
+#define PPUTLIMPL_SYM_compl_0x1B_IS_0x1B (compl(0x1B), -28),
+#define PPUTLIMPL_SYM_compl_0x1C_IS_0x1C (compl(0x1C), -29),
+#define PPUTLIMPL_SYM_compl_0x1D_IS_0x1D (compl(0x1D), -30),
+#define PPUTLIMPL_SYM_compl_0x1E_IS_0x1E (compl(0x1E), -31),
+#define PPUTLIMPL_SYM_compl_0x1F_IS_0x1F (compl(0x1F), -32),
+#define PPUTLIMPL_SYM_compl_0x20_IS_0x20 (compl(0x20), -33),
+#define PPUTLIMPL_SYM_compl_0x21_IS_0x21 (compl(0x21), -34),
+#define PPUTLIMPL_SYM_compl_0x22_IS_0x22 (compl(0x22), -35),
+#define PPUTLIMPL_SYM_compl_0x23_IS_0x23 (compl(0x23), -36),
+#define PPUTLIMPL_SYM_compl_0x24_IS_0x24 (compl(0x24), -37),
+#define PPUTLIMPL_SYM_compl_0x25_IS_0x25 (compl(0x25), -38),
+#define PPUTLIMPL_SYM_compl_0x26_IS_0x26 (compl(0x26), -39),
+#define PPUTLIMPL_SYM_compl_0x27_IS_0x27 (compl(0x27), -40),
+#define PPUTLIMPL_SYM_compl_0x28_IS_0x28 (compl(0x28), -41),
+#define PPUTLIMPL_SYM_compl_0x29_IS_0x29 (compl(0x29), -42),
+#define PPUTLIMPL_SYM_compl_0x2A_IS_0x2A (compl(0x2A), -43),
+#define PPUTLIMPL_SYM_compl_0x2B_IS_0x2B (compl(0x2B), -44),
+#define PPUTLIMPL_SYM_compl_0x2C_IS_0x2C (compl(0x2C), -45),
+#define PPUTLIMPL_SYM_compl_0x2D_IS_0x2D (compl(0x2D), -46),
+#define PPUTLIMPL_SYM_compl_0x2E_IS_0x2E (compl(0x2E), -47),
+#define PPUTLIMPL_SYM_compl_0x2F_IS_0x2F (compl(0x2F), -48),
+#define PPUTLIMPL_SYM_compl_0x30_IS_0x30 (compl(0x30), -49),
+#define PPUTLIMPL_SYM_compl_0x31_IS_0x31 (compl(0x31), -50),
+#define PPUTLIMPL_SYM_compl_0x32_IS_0x32 (compl(0x32), -51),
+#define PPUTLIMPL_SYM_compl_0x33_IS_0x33 (compl(0x33), -52),
+#define PPUTLIMPL_SYM_compl_0x34_IS_0x34 (compl(0x34), -53),
+#define PPUTLIMPL_SYM_compl_0x35_IS_0x35 (compl(0x35), -54),
+#define PPUTLIMPL_SYM_compl_0x36_IS_0x36 (compl(0x36), -55),
+#define PPUTLIMPL_SYM_compl_0x37_IS_0x37 (compl(0x37), -56),
+#define PPUTLIMPL_SYM_compl_0x38_IS_0x38 (compl(0x38), -57),
+#define PPUTLIMPL_SYM_compl_0x39_IS_0x39 (compl(0x39), -58),
+#define PPUTLIMPL_SYM_compl_0x3A_IS_0x3A (compl(0x3A), -59),
+#define PPUTLIMPL_SYM_compl_0x3B_IS_0x3B (compl(0x3B), -60),
+#define PPUTLIMPL_SYM_compl_0x3C_IS_0x3C (compl(0x3C), -61),
+#define PPUTLIMPL_SYM_compl_0x3D_IS_0x3D (compl(0x3D), -62),
+#define PPUTLIMPL_SYM_compl_0x3E_IS_0x3E (compl(0x3E), -63),
+#define PPUTLIMPL_SYM_compl_0x3F_IS_0x3F (compl(0x3F), -64),
+#define PPUTLIMPL_SYM_compl_0x40_IS_0x40 (compl(0x40), -65),
+#define PPUTLIMPL_SYM_compl_0x41_IS_0x41 (compl(0x41), -66),
+#define PPUTLIMPL_SYM_compl_0x42_IS_0x42 (compl(0x42), -67),
+#define PPUTLIMPL_SYM_compl_0x43_IS_0x43 (compl(0x43), -68),
+#define PPUTLIMPL_SYM_compl_0x44_IS_0x44 (compl(0x44), -69),
+#define PPUTLIMPL_SYM_compl_0x45_IS_0x45 (compl(0x45), -70),
+#define PPUTLIMPL_SYM_compl_0x46_IS_0x46 (compl(0x46), -71),
+#define PPUTLIMPL_SYM_compl_0x47_IS_0x47 (compl(0x47), -72),
+#define PPUTLIMPL_SYM_compl_0x48_IS_0x48 (compl(0x48), -73),
+#define PPUTLIMPL_SYM_compl_0x49_IS_0x49 (compl(0x49), -74),
+#define PPUTLIMPL_SYM_compl_0x4A_IS_0x4A (compl(0x4A), -75),
+#define PPUTLIMPL_SYM_compl_0x4B_IS_0x4B (compl(0x4B), -76),
+#define PPUTLIMPL_SYM_compl_0x4C_IS_0x4C (compl(0x4C), -77),
+#define PPUTLIMPL_SYM_compl_0x4D_IS_0x4D (compl(0x4D), -78),
+#define PPUTLIMPL_SYM_compl_0x4E_IS_0x4E (compl(0x4E), -79),
+#define PPUTLIMPL_SYM_compl_0x4F_IS_0x4F (compl(0x4F), -80),
+#define PPUTLIMPL_SYM_compl_0x50_IS_0x50 (compl(0x50), -81),
+#define PPUTLIMPL_SYM_compl_0x51_IS_0x51 (compl(0x51), -82),
+#define PPUTLIMPL_SYM_compl_0x52_IS_0x52 (compl(0x52), -83),
+#define PPUTLIMPL_SYM_compl_0x53_IS_0x53 (compl(0x53), -84),
+#define PPUTLIMPL_SYM_compl_0x54_IS_0x54 (compl(0x54), -85),
+#define PPUTLIMPL_SYM_compl_0x55_IS_0x55 (compl(0x55), -86),
+#define PPUTLIMPL_SYM_compl_0x56_IS_0x56 (compl(0x56), -87),
+#define PPUTLIMPL_SYM_compl_0x57_IS_0x57 (compl(0x57), -88),
+#define PPUTLIMPL_SYM_compl_0x58_IS_0x58 (compl(0x58), -89),
+#define PPUTLIMPL_SYM_compl_0x59_IS_0x59 (compl(0x59), -90),
+#define PPUTLIMPL_SYM_compl_0x5A_IS_0x5A (compl(0x5A), -91),
+#define PPUTLIMPL_SYM_compl_0x5B_IS_0x5B (compl(0x5B), -92),
+#define PPUTLIMPL_SYM_compl_0x5C_IS_0x5C (compl(0x5C), -93),
+#define PPUTLIMPL_SYM_compl_0x5D_IS_0x5D (compl(0x5D), -94),
+#define PPUTLIMPL_SYM_compl_0x5E_IS_0x5E (compl(0x5E), -95),
+#define PPUTLIMPL_SYM_compl_0x5F_IS_0x5F (compl(0x5F), -96),
+#define PPUTLIMPL_SYM_compl_0x60_IS_0x60 (compl(0x60), -97),
+#define PPUTLIMPL_SYM_compl_0x61_IS_0x61 (compl(0x61), -98),
+#define PPUTLIMPL_SYM_compl_0x62_IS_0x62 (compl(0x62), -99),
+#define PPUTLIMPL_SYM_compl_0x63_IS_0x63 (compl(0x63), -100),
+#define PPUTLIMPL_SYM_compl_0x64_IS_0x64 (compl(0x64), -101),
+#define PPUTLIMPL_SYM_compl_0x65_IS_0x65 (compl(0x65), -102),
+#define PPUTLIMPL_SYM_compl_0x66_IS_0x66 (compl(0x66), -103),
+#define PPUTLIMPL_SYM_compl_0x67_IS_0x67 (compl(0x67), -104),
+#define PPUTLIMPL_SYM_compl_0x68_IS_0x68 (compl(0x68), -105),
+#define PPUTLIMPL_SYM_compl_0x69_IS_0x69 (compl(0x69), -106),
+#define PPUTLIMPL_SYM_compl_0x6A_IS_0x6A (compl(0x6A), -107),
+#define PPUTLIMPL_SYM_compl_0x6B_IS_0x6B (compl(0x6B), -108),
+#define PPUTLIMPL_SYM_compl_0x6C_IS_0x6C (compl(0x6C), -109),
+#define PPUTLIMPL_SYM_compl_0x6D_IS_0x6D (compl(0x6D), -110),
+#define PPUTLIMPL_SYM_compl_0x6E_IS_0x6E (compl(0x6E), -111),
+#define PPUTLIMPL_SYM_compl_0x6F_IS_0x6F (compl(0x6F), -112),
+#define PPUTLIMPL_SYM_compl_0x70_IS_0x70 (compl(0x70), -113),
+#define PPUTLIMPL_SYM_compl_0x71_IS_0x71 (compl(0x71), -114),
+#define PPUTLIMPL_SYM_compl_0x72_IS_0x72 (compl(0x72), -115),
+#define PPUTLIMPL_SYM_compl_0x73_IS_0x73 (compl(0x73), -116),
+#define PPUTLIMPL_SYM_compl_0x74_IS_0x74 (compl(0x74), -117),
+#define PPUTLIMPL_SYM_compl_0x75_IS_0x75 (compl(0x75), -118),
+#define PPUTLIMPL_SYM_compl_0x76_IS_0x76 (compl(0x76), -119),
+#define PPUTLIMPL_SYM_compl_0x77_IS_0x77 (compl(0x77), -120),
+#define PPUTLIMPL_SYM_compl_0x78_IS_0x78 (compl(0x78), -121),
+#define PPUTLIMPL_SYM_compl_0x79_IS_0x79 (compl(0x79), -122),
+#define PPUTLIMPL_SYM_compl_0x7A_IS_0x7A (compl(0x7A), -123),
+#define PPUTLIMPL_SYM_compl_0x7B_IS_0x7B (compl(0x7B), -124),
+#define PPUTLIMPL_SYM_compl_0x7C_IS_0x7C (compl(0x7C), -125),
+#define PPUTLIMPL_SYM_compl_0x7D_IS_0x7D (compl(0x7D), -126),
+#define PPUTLIMPL_SYM_compl_0x7E_IS_0x7E (compl(0x7E), -127),
+#define PPUTLIMPL_SYM_compl_0x7F_IS_0x7F (compl(0x7F), -128),
 #define PPUTLIMPL_SYM_127_IS_127 (127, 127)
 #define PPUTLIMPL_SYM_126_IS_126 (126, 126)
 #define PPUTLIMPL_SYM_125_IS_125 (125, 125)
@@ -770,17 +779,41 @@
 /// ---------------
 /// [extends is_some] checks if args is a pputl sym.
 ///
-/// syms are created by defining a macro as follows:
-///   #define PTL_SYM_<sym name>_IS_<sym name> (<any...>)
+/// syms are equality-comparable names that point to static storage.
+/// a sym can either be declared globally or wrapped in a namespace.
 ///
-/// this format enables sym equality comparisons and data storage.
-/// declaration macros must expand to a tuple, which may be empty.
-/// use lang.lookup to retrieve the items stored in the sym tuple.
-#define PTL_IS_SYM(/* any... */...) /* -> bool */ PPUTLIMPL_IS_SYM_o(__VA_ARGS__)
+/// global syms match /[\w\d_]+/ and are defined as follows:
+///
+///   #define PTL_SYM_<name>_IS_<name> (<sym traits...>)
+///
+/// namespaced syms match /[\w\d_]+\([\w\d_]+\)/ and are defined as follows:
+///
+///   #define PTL_SYM_<ns>(name)              (<ns>, name)
+///   #define PTL_SYM_<ns>_<name1>_IS_<name1> (<sym traits...>)
+///   #define PTL_SYM_<ns>_<name2>_IS_<name2> (<sym traits...>)
+///   ...
+///
+/// the sym type lays the foundation for pputl artihmetic literals,
+/// object member access, and negative integers.  negative integers
+/// cannot be represented using arithmetic symbols  and instead use
+/// C++ compl expressions  that can be parsed by the library  while
+/// retaining the same meaning in both the preprocessor and C++. In
+/// those cases, the namespace is compl and name is an integer.
+#define PTL_IS_SYM(/* any... */...) /* -> bool */                            \
+  PPUTLIMPL_IS_SYM_o(                                                        \
+      PTL_ERR(PTL_IS_SYM, "detected a redefined reserved sym", __VA_ARGS__), \
+      __VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{
 
-#define PPUTLIMPL_IS_SYM_o(...) PTL_IS_TUP(PTL_SYM##_##__VA_ARGS__##_IS_##__VA_ARGS__)
+#define PPUTLIMPL_IS_SYM_o(e, ...)                                               \
+  PTL_CAT(PPUTLIMPL_IS_SYM_, PTL_CAT(PTL_IS_TUP(PTL_SYM##_##__VA_ARGS__),        \
+                                     PTL_IS_TUP(PPUTLIMPL_SYM##_##__VA_ARGS__))) \
+  (e)
+#define PPUTLIMPL_IS_SYM_truetrue(e)   PTL_FAIL(e)
+#define PPUTLIMPL_IS_SYM_truefalse(e)  true
+#define PPUTLIMPL_IS_SYM_falsetrue(e)  true
+#define PPUTLIMPL_IS_SYM_falsefalse(e) false
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}}
 

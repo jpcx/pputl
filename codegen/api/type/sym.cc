@@ -44,27 +44,28 @@ using namespace std;
 inline def<"sym(...: any...) -> sym"> self = [](va args) {
   category = "type";
 
-  docs << "[extends some] an explicitly defined equality-comparable token sequence."
+  docs << "[extends some] a global or namespace-qualified equality-comparable name."
        << ""
-       << "syms can be created by defining a macro as follows:"
-       << "  #define " + self + "_<sym name>_IS_<sym name> (<any...>)"
+       << "syms are equality-comparable names that point to static storage."
+       << "a sym can either be declared globally or wrapped in a namespace."
        << ""
-       << "builtin syms (such as int and uint) are defined"
-       << "differently to reduce the number of API identifiers."
+       << "global syms match /[\\w\\d_]+/ and are defined as follows:"
        << ""
-       << "all syms  are token sequences  that can be used to form"
-       << "identifiers except for the builtin negative ints. since"
-       << "hyphens or arithmetic symbols can't be used anywhere in"
-       << "identifiers,  the alternate bitwise complement operator"
-       << "compl  is used to represent negative ints in a way that"
-       << "retains the meaning across pputl, the preprocessor, and"
-       << "C++.  to illustrate,  the negative int compl(0x7FF) can"
-       << "help form a macro function call, but -2048 cannot. this"
-       << "exception to the sym model is only necessary to"
+       << "  #define " + apiname("sym") + "_<name>_IS_<name> (<sym traits...>)"
        << ""
-       << "this format enables sym equality comparisons and data storage."
-       << "declaration macros must expand to a tuple, which may be empty."
-       << "use lang.lookup to retrieve the items stored in the sym tuple.";
+       << "namespaced syms match /[\\w\\d_]+\\([\\w\\d_]+\\)/ and are defined as follows:"
+       << ""
+       << "  #define " + apiname("sym") + "_<ns>(name)              (<ns>, name)"
+       << "  #define " + apiname("sym") + "_<ns>_<name1>_IS_<name1> (<sym traits...>)"
+       << "  #define " + apiname("sym") + "_<ns>_<name2>_IS_<name2> (<sym traits...>)"
+       << "  ..."
+       << ""
+       << "the sym type lays the foundation for pputl artihmetic literals,"
+       << "object member access, and negative integers.  negative integers"
+       << "cannot be represented using arithmetic symbols  and instead use"
+       << "C++ compl expressions  that can be parsed by the library  while"
+       << "retaining the same meaning in both the preprocessor and C++. In"
+       << "those cases, the namespace is compl and name is an integer.";
 
   for (int i = 0; i < conf::int_max + 1; ++i) {
     string s = to_string(i);
@@ -78,11 +79,16 @@ inline def<"sym(...: any...) -> sym"> self = [](va args) {
     stringstream stream;
     stream << setfill('0') << setw(conf::word_size) << uppercase << hex << -i - 1;
     string s = "0x" + stream.str();
-    def{"compl_\\" + s, [&] {
+    def{"\\compl_" + s + "_IS_" + s, [&] {
           clang_format = false;
           return pp::tup(pp::call("compl", s), i) + ",";
         }};
   }
+
+  def<"\\compl(ihex)">{} = [](arg ihex) {
+    clang_format = false;
+    return pp::tup("compl", ihex);
+  };
 
   return args;
 };

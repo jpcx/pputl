@@ -13,15 +13,15 @@
 //  pputl Preprocessor Utilities
 //  Copyright (C) 2020 - 2022 Justin Collier <m@jpcx.dev>
 //
-//	   This program is free software: you can redistribute it and/or modify
-//	   it under the terms of the GNU General Public License as published by
-//	   the Free Software Foundation, either version 3 of the License, or
-//	   (at your option) any later version.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-//	   This program is distributed in the hope that it will be useful,
-//	   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	   GNU General Public License for more details.
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //                                                                            //
 //  You should have received a copy of the GNU General Public License        ///
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.  ////
@@ -151,7 +151,7 @@ constexpr char const project_header[]{
     "//                                                                            //\n"
     "//    pputl is a powerful C++ preprocessor utilities library that provides    //\n"
     "//    many language constructs  including a type system, integers, errors,    //\n"
-    "//    recursion, polymorphic objects, and common datastructures.              //\n"
+    "//    recursion, namespaces, polymorphic objects, and datastructures.         //\n"
     "//                                                                            //\n"
     "//    Speed, safety, and flexibility are its primary goals.                   //\n"
     "//                                                                            //\n"
@@ -211,15 +211,14 @@ constexpr char const project_header[]{
     "//      └╴some: a non-empty argument; a presence of pp-tokens                 //\n"
     "//         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //\n"
     "//         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //\n"
-    "//         ├╴sym: an explicitly defined equality-comparable token sequence    //\n"
-    "//         │  └╴num: a builtin, totally-ordered, arithmetic sym               //\n"
+    "//         ├╴sym: a global or namespace-qualified equality-comparable name    //\n"
+    "//         │  └╴num: a builtin totally-ordered arithmetic sym                 //\n"
     "//         │     ├╴bool: false|true                                           //\n"
     "//         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //\n"
     "//         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //\n"
-    "//         │     └╴word: a 12-bit unsigned or signed two's complement int     //\n"
-    "//         │        ├╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047     //\n"
-    "//         │        └╴uint: 0u|1u|...|4094u|4095u                             //\n"
-    "//         └╴obj: a named, polymorphic, member-addressable state container    //\n"
+    "//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //\n"
+    "//         │     └╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047        //\n"
+    "//         └╴obj: a polymorphic sym-addressable state container               //\n"
     "//            ├╴err:   an error message container for lang.fail               //\n"
     "//            ├╴vec:   a resizable array                                      //\n"
     "//            ├╴map:   a mapping of equality-comparable keys to any           //\n"
@@ -239,14 +238,12 @@ constexpr char const project_header[]{
     "//    their arguments can be populated using macro expansion results. Args    //\n"
     "//    must not grow, shrink, or change types after the primary expansion.     //\n"
     "//                                                                            //\n"
-    "//    pputl num types are mutually exclusive token sequences that have the    //\n"
-    "//    same numeric meaning in pputl, the preprocessor, and C++.  Since the    //\n"
-    "//    preprocessor does not support hyphens in identifiers,  negative ints    //\n"
-    "//    are special syms that cannot form part of an identifier  (unlike all    //\n"
-    "//    other syms). Negative ints are designed to be fully parseable by the    //\n"
-    "//    library while still meeting these requirements. When constructing an    //\n"
-    "//    identifier from an int,  use lang.cat instead of the ## operator  to   ///\n"
-    "//    replace negative ints with their 12-bit hex equivalent (e.g. 0x800).  ////\n"
+    "//    The sym type lays the foundation for arithmetic literals, obj member    //\n"
+    "//    access, and negative integers.  Since arithmetic symbols cannot form    //\n"
+    "//    identifiers,  the C++ compl operator is used to ensure that negative    //\n"
+    "//    ints can be parsed by the library  and have the same meaning in both    //\n"
+    "//    the preprocessor and C++ code. When using an int or num to construct   ///\n"
+    "//    an identifier, use lang.cat (which converts ints < 0 to 12-bit hex).  ////\n"
     "//                                                                         /////\n"
     "///////////////////////////////////////////////////////////////////////////// */"};
 
