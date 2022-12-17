@@ -36,8 +36,8 @@ namespace int_min_ {
 
 using namespace std;
 
-inline string const str = "0x8" + utl::cat(vector<string>(conf::word_size - 1, "0")) + "-"
-                        + to_string(conf::uint_max + 1);
+inline string const str =
+    "compl(0x7" + utl::cat(vector<string>(conf::word_size - 1, "F")) + ")";
 
 inline def<"int_min -> int"> self = [] {
   category     = "config";

@@ -113,7 +113,7 @@
 //         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
 //         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
 //         │     └╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047        //
-//         └╴obj: a polymorphic sym-addressable mutable state container       //
+//         └╴obj: a polymorphic sym-addressable state container               //
 //            ├╴err:   an error message container for lang.fail               //
 //            ├╴vec:   a resizable array                                      //
 //            ├╴map:   a mapping of equality-comparable keys to any           //
@@ -208,9 +208,28 @@ ASSERT_PP_EQ((PTL_REST(a, b, , )), (b, ,));
 ASSERT_PP_EQ((PTL_EAT()), ());
 ASSERT_PP_EQ((PTL_EAT(foo)), ());
 
+ASSERT_PP_EQ((PTL_IS_NONE()), (true));
+ASSERT_PP_EQ((PTL_IS_NONE(foo)), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(PTL_ESC())), (true));
+ASSERT_PP_EQ((PTL_IS_NONE(, )), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(, , )), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(a, )), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(a, , )), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(, a)), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(, a, )), (false));
+ASSERT_PP_EQ((PTL_IS_NONE(, , a)), (false));
+
 ASSERT_PP_EQ((PTL_CAT(foo, bar)), (foobar));
 ASSERT_PP_EQ((PTL_CAT(foo, PTL_EAT(bar))), (foo));
 ASSERT_PP_EQ((PTL_CAT(,)), ());
+ASSERT_PP_EQ((PTL_CAT(is_, true)), (is_T));
+ASSERT_PP_EQ((PTL_CAT(is_, false)), (is_F));
+ASSERT_PP_EQ((PTL_CAT(foo_, compl(0x7FF))), (foo_0x800));
+ASSERT_PP_EQ((PTL_CAT(true, _is)), (T_is));
+ASSERT_PP_EQ((PTL_CAT(false, _is)), (F_is));
+ASSERT_PP_EQ((PTL_CAT(true, false)), (TF));
+ASSERT_PP_EQ((PTL_CAT(compl(0x7FF), _foo)), (0x800_foo));
 
 ASSERT_PP_EQ((PTL_STR()), (""));
 ASSERT_PP_EQ((PTL_STR(foo, bar)), ("foo, bar"));
@@ -240,18 +259,6 @@ ASSERT_PP_EQ((PTL_TRIM(a, b, )), (a, b,));
 ASSERT_PP_EQ((PTL_TRIM(a, b, c)), (a, b, c));
 ASSERT_PP_EQ((PTL_TRIM(, b)), (b));
 ASSERT_PP_EQ((PTL_TRIM(a, , c)), (a,  , c));
-
-ASSERT_PP_EQ((PTL_IS_NONE()), (true));
-ASSERT_PP_EQ((PTL_IS_NONE(foo)), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(foo, bar)), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(PTL_ESC())), (true));
-ASSERT_PP_EQ((PTL_IS_NONE(, )), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(, , )), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(a, )), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(a, , )), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(, a)), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(, a, )), (false));
-ASSERT_PP_EQ((PTL_IS_NONE(, , a)), (false));
 
 ASSERT_PP_EQ((PTL_IS_SOME()), (false));
 ASSERT_PP_EQ((PTL_IS_SOME(foo)), (true));
@@ -300,4 +307,13 @@ ASSERT_PP_EQ((PTL_IS_ANY(a, , )), (false));
 ASSERT_PP_EQ((PTL_IS_ANY(, a)), (false));
 ASSERT_PP_EQ((PTL_IS_ANY(, a, )), (false));
 ASSERT_PP_EQ((PTL_IS_ANY(, , a)), (false));
+
+ASSERT_PP_EQ((PTL_IS_SYM()), (false));
+ASSERT_PP_EQ((PTL_IS_SYM(())), (false));
+ASSERT_PP_EQ((PTL_IS_SYM(foo)), (false));
+ASSERT_PP_EQ((PTL_IS_SYM(foo, bar)), (false));
+ASSERT_PP_EQ((PTL_IS_SYM(false)), (true));
+ASSERT_PP_EQ((PTL_IS_SYM(0x00u)), (true));
+ASSERT_PP_EQ((PTL_IS_SYM(0)), (true));
+ASSERT_PP_EQ((PTL_IS_SYM(PTL_INT_MIN)), (true));
 // clang-format on

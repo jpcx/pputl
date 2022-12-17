@@ -32,7 +32,9 @@
 
 #include "codegen.h"
 
+#include "config/int_min.cc"
 #include "lang/cat.cc"
+#include "traits/is_some.cc"
 #include "traits/is_tup.cc"
 
 namespace codegen {
@@ -47,7 +49,11 @@ inline def<"is_sym(...: any...) -> bool"> self = [](va args) {
 
   docs << "[extends is_some] checks if args is a pputl sym."
        << ""
-       << "syms are equality-comparable names that point to static storage."
+       << "warning: breaks on single inputs that are not one of the"
+       << "         predefined types and are not compatible with the"
+       << "         concatenation operator."
+       << ""
+       << "syms are equality-comparable names that point to static traits."
        << "a sym can either be declared globally or wrapped in a namespace."
        << ""
        << "global syms match /[\\w\\d_]+/ and are defined as follows:"
@@ -68,29 +74,69 @@ inline def<"is_sym(...: any...) -> bool"> self = [](va args) {
        << "retaining the same meaning in both the preprocessor and C++. In"
        << "those cases, the namespace is compl and name is an integer.";
 
-  def<"\\falsefalse(e)"> _falsefalse = [](arg) {
+  tests << self("")         = "false" >> docs;
+  tests << self("()")       = "false" >> docs;
+  tests << self("foo")      = "false" >> docs;
+  tests << self("foo, bar") = "false" >> docs;
+  tests << self("false")    = "true" >> docs;
+  tests << self("0x00u")    = "true" >> docs;
+  tests << self("0")        = "true" >> docs;
+  tests << self(int_min)    = "true" >> docs;
+
+  def<"\\FF(e, ...)"> ff = [](arg, va) {
     return "false";
   };
 
-  def<"\\falsetrue(e)">{} = [](arg) {
-    return "true";
+  def<"\\TF(e, v)">{} = [](arg e, arg v) {
+    def<"\\FF(e, v)"> ff = [](arg e, arg v) {
+      def<"\\FF(e)"> ff = [](arg) {
+        return "false";
+      };
+
+      def<"\\FT(e)">{} = [](arg) {
+        return "true";
+      };
+
+      def<"\\TF(e)">{} = [](arg) {
+        return "true";
+      };
+
+      def<"\\TT(e)">{} = [](arg e) {
+        return pp::call(apiname("fail"), e);
+      };
+
+      return pp::call(cat(utl::slice(ff, -2),
+                          cat(is_tup(pp::cat(apiname("sym") + "_", v, "_IS_", v)),
+                              is_tup(pp::cat(implname("impl_sym") + "_", v, "_IS_", v)))),
+                      e);
+    };
+
+    def<"\\FT(e, v)">{} = [](arg, arg) {
+      return "true";
+    };
+
+    def<"\\TF(e, v)">{} = [](arg, arg) {
+      return "true";
+    };
+
+    def<"\\TT(e, v)">{} = [](arg e, arg) {
+      return pp::call(apiname("fail"), e);
+    };
+
+    return pp::call(
+        cat(utl::slice(ff, -2), cat(is_tup(pp::cat(apiname("sym") + "_", v)),
+                                    is_tup(pp::cat(implname("impl_sym") + "_", v)))),
+        e, v);
   };
 
-  def<"\\truefalse(e)">{} = [](arg) {
-    return "true";
+  def<"\\TT(e, v)">{} = [](arg, arg) {
+    return "false";
   };
 
-  def<"\\truetrue(e)">{} = [](arg e) {
-    return pp::call(apiname("fail"), e);
-  };
-
-  return def<"\\o(e, ...)">{[&](arg e, va args) {
-    return pp::call(cat(utl::slice(_falsefalse, -10),
-                        cat(is_tup(pp::cat(apiname("sym"), "_", args)),
-                            is_tup(pp::cat(implname("impl_sym"), "_", args)))),
-                    e);
-  }}(pp::call(apiname("err"), self, pp::str("detected a redefined reserved sym"), args),
-     args);
+  return pp::call(
+      cat(utl::slice(ff, -2), cat(is_some(args), is_tup(args))),
+      pp::call(apiname("err"), self, pp::str("detected a redefined reserved sym"), args),
+      args);
 };
 
 } // namespace is_sym_

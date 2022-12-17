@@ -46,7 +46,7 @@ inline def<"sym(...: any...) -> sym"> self = [](va args) {
 
   docs << "[extends some] a global or namespace-qualified equality-comparable name."
        << ""
-       << "syms are equality-comparable names that point to static storage."
+       << "syms are equality-comparable names that point to static traits."
        << "a sym can either be declared globally or wrapped in a namespace."
        << ""
        << "global syms match /[\\w\\d_]+/ and are defined as follows:"
@@ -71,7 +71,7 @@ inline def<"sym(...: any...) -> sym"> self = [](va args) {
     string s = to_string(i);
     def{"\\" + s + "_IS_" + s, [&] {
           clang_format = false;
-          return pp::tup(s, s);
+          return pp::tup();
         }};
   }
 
@@ -81,13 +81,23 @@ inline def<"sym(...: any...) -> sym"> self = [](va args) {
     string s = "0x" + stream.str();
     def{"\\compl_" + s + "_IS_" + s, [&] {
           clang_format = false;
-          return pp::tup(pp::call("compl", s), i) + ",";
+          return pp::tup();
         }};
   }
 
   def<"\\compl(ihex)">{} = [](arg ihex) {
     clang_format = false;
     return pp::tup("compl", ihex);
+  };
+
+  def<"\\false_IS_false">{} = [] {
+    clang_format = false;
+    return pp::tup();
+  };
+
+  def<"\\true_IS_true">{} = [] {
+    clang_format = false;
+    return pp::tup();
   };
 
   return args;

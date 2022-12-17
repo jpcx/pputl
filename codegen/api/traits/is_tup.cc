@@ -69,19 +69,19 @@ inline def<"is_tup(...: any...) -> bool"> self = [](va args) {
   tests << self("(, a, )")        = "true";
   tests << self("(, , a)")        = "true";
 
-  def<"\\false"> _false = [&] {
+  def<"\\F"> f = [&] {
     return def<"fail(...)">{[&](va) {
       return "false";
     }};
   };
 
-  def<"\\true">{} = [&] {
+  def<"\\T">{} = [&] {
     return def<"o(obj)">{[&](arg obj) {
       return is_none(eat + " " + obj);
     }};
   };
 
-  return pp::call(cat(utl::slice(_false, -5), is_some(args)), args);
+  return pp::call(cat(utl::slice(f, -1), is_some(args)), args);
 };
 
 } // namespace is_tup_
