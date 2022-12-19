@@ -60,8 +60,9 @@
 //    USAGE                                                                   //
 //    -----                                                                   //
 //                                                                            //
-//    pputl is a standalone single-header library. include pputl.h to use.    //
-//    A C++20-compliant preprocessor is required.                             //
+//    pputl is a standalone single-header library. Include pputl.h to use.    //
+//    Requires a C++ compiler  that supports C++20 preprocesssor standards    //
+//    for text replacement macros (especially __VA_OPT__).                    //
 //                                                                            //
 //    pputl  is completely generated and tested by a custom C++ framework.    //
 //    See the codegen/ folder for the full source.                            //
@@ -72,10 +73,9 @@
 //    The default build defines 12-bit words and an 8-bit size cap,  which    //
 //    complies with the following C++20 implementation limits [implimits]:    //
 //                                                                            //
-//     ‐ Macro identifiers simultaneously                                     //
-//       defined in one translation unit: [65536].                            //
-//     ‐ Parameters in one macro definition: [256].                           //
-//     ‐ Arguments in one macro invocation: [256].                            //
+//     ‐ Macro identifiers per translation unit: [65536].                     //
+//     ‐ Parameters per macro definition:        [256].                       //
+//     ‐ Arguments per macro invocation:         [256].                       //
 //                                                                            //
 //    Exceeding these limits  is possible but depends on the preprocessor.    //
 //    The size cap is bounded by the maximum number of parameters, and the    //
@@ -102,24 +102,24 @@
 //    to (or interpreted as) its parameter without losing information.        //
 //                                                                            //
 //     any: any potentially-empty, individual argument in __VA_ARGS__         //
-//      ├╴none: an empty argument; an absence of pp-tokens                    //
-//      └╴some: a non-empty argument; a presence of pp-tokens                 //
-//         ├╴tup: a parenthesized item sequence [e.g. (a, b, c)]              //
+//      ├╴none: an empty argument; an absence of non-whitespace tokens        //
+//      └╴some: a non-empty argument; a presence of non-whitespace tokens     //
+//         ├╴tup: a parenthesized token sequence [e.g. (a, b, c)]             //
 //         │  └╴pair: a two-tuple [e.g. (foo, bar)]                           //
-//         ├╴sym: a global or namespace-qualified equality-comparable name    //
-//         │  └╴num: a builtin totally-ordered arithmetic sym                 //
-//         │     ├╴bool: false|true                                           //
-//         │     ├╴hex:  0x0u|0x1u|...|0xEu|0xFu                              //
-//         │     ├╴size: 0x00u|0x01u|...|0xFEu|0xFFu                          //
-//         │     ├╴uint: 0u|1u|...|4094u|4095u                                //
-//         │     └╴int:  compl(0x7FF)|compl(0x7FE)|...|0|...|2046|2047        //
+//         ├╴sym: a global or namespace-qualified static storage pointer      //
+//         │  └╴word: a 12-bit unsigned or signed two's complement integer    //
+//         │     ├╴int: compl(2047)|compl(2046)|...|0|...|2046|2047           //
+//         │     │  └╴bool: 0|1                                               //
+//         │     └╴uint: 0u|1u|...|4094u|4095u                                //
+//         │        └╴size: 0u|1u|...|254u|255u                               //
 //         └╴obj: a polymorphic sym-addressable state container               //
 //            ├╴err:   an error message container for lang.fail               //
-//            ├╴vec:   a resizable array                                      //
-//            ├╴map:   a mapping of equality-comparable keys to any           //
-//            ├╴pq:    a priority queue                                       //
-//            ├╴queue: a FIFO queue                                           //
-//            └╴stack: a LIFO queue                                           //
+//            └╴range: a sized sequence container with element accessors      //
+//               ├╴vec:   a resizable array                                   //
+//               ├╴map:   a mapping of equality-comparable keys to any        //
+//               ├╴pq:    a priority queue                                    //
+//               ├╴queue: a FIFO queue                                        //
+//               └╴stack: a LIFO queue                                        //
 //                                                                            //
 //    NOTES                                                                   //
 //    -----                                                                   //
@@ -133,12 +133,17 @@
 //    their arguments can be populated using macro expansion results. Args    //
 //    must not grow, shrink, or change types after the primary expansion.     //
 //                                                                            //
-//    The sym type lays the foundation for arithmetic literals, obj member    //
-//    access, and negative integers.  Since arithmetic symbols cannot form    //
-//    identifiers,  the C++ compl operator is used to ensure that negative    //
-//    ints can be parsed by the library  and have the same meaning in both    //
-//    the preprocessor and C++ code. When using an int or num to construct   ///
-//    an identifier, use lang.cat (which converts ints < 0 to 12-bit hex).  ////
+//    sym serves as the foundation for obj member accessors and arithmetic    //
+//    literals, especially negative integers. Since special symbols cannot    //
+//    form identifiers, the C++ compl operator is used as a representation    //
+//    of negative integers that can be equivalently parsed by the library,    //
+//    the preprocessor, and the C++ compiler.                                 //
+//                                                                            //
+//    pputl arithmetic and comparison functions  accept and return generic    //
+//    words and perform casts when necessary. ints cannot be compared with    //
+//    uints but are promoted to uints during arithmetic if at least one of    //
+//    the operands is unsigned. words overflow or underflow without error.   ///
+//    All words except 0 and 0u are considered truthy; 0 and 0u are falsy.  ////
 //                                                                         /////
 ///////////////////////////////////////////////////////////////////////////// */
 

@@ -53,26 +53,27 @@ inline def<"is_sym(...: any...) -> bool"> self = [](va args) {
        << "         predefined types and are not compatible with the"
        << "         concatenation operator."
        << ""
-       << "syms are equality-comparable names that point to static traits."
-       << "a sym can either be declared globally or wrapped in a namespace."
+       << "syms are defined in two ways:"
        << ""
-       << "global syms match /[\\w\\d_]+/ and are defined as follows:"
+       << "globally: (sym matches /[\\w\\d_]+/)"
        << ""
-       << "  #define " + apiname("sym") + "_<name>_IS_<name> (<sym traits...>)"
+       << "  #define " + apiname("sym") + "_<name>_is_<name> (<data...>)"
        << ""
-       << "namespaced syms match /[\\w\\d_]+\\([\\w\\d_]+\\)/ and are defined as follows:"
+       << "namespace-qualified: (sym matches /[\\w\\d_]+\\([\\w\\d_]+\\)/)"
        << ""
        << "  #define " + apiname("sym") + "_<ns>(name)              (<ns>, name)"
-       << "  #define " + apiname("sym") + "_<ns>_<name1>_IS_<name1> (<sym traits...>)"
-       << "  #define " + apiname("sym") + "_<ns>_<name2>_IS_<name2> (<sym traits...>)"
+       << "  #define " + apiname("sym") + "_<ns>_<name1>_is_<name1> (<data...>)"
+       << "  #define " + apiname("sym") + "_<ns>_<name2>_is_<name2> (<data...>)"
        << "  ..."
        << ""
-       << "the sym type lays the foundation for pputl artihmetic literals,"
-       << "object member access, and negative integers.  negative integers"
-       << "cannot be represented using arithmetic symbols  and instead use"
-       << "C++ compl expressions  that can be parsed by the library  while"
-       << "retaining the same meaning in both the preprocessor and C++. In"
-       << "those cases, the namespace is compl and name is an integer.";
+       << "this layout allows syms to be compared using compare.eq and compare.ne."
+       << ""
+       << "the sym type lays the foundation for arithmetic literals, obj member"
+       << "access,  and negative integers.  since arithmetic tokens cannot form"
+       << "identifiers,  the C++ compl operator is used to ensure that negative"
+       << "ints  can be parsed by the library and have the same meaning in both"
+       << "the preprocessor and C++ code. when using an int or num to construct"
+       << "an identifier, use lang.cat (which converts ints < 0 to 12-bit hex).";
 
   tests << self("")         = "false" >> docs;
   tests << self("()")       = "false" >> docs;
@@ -106,8 +107,8 @@ inline def<"is_sym(...: any...) -> bool"> self = [](va args) {
       };
 
       return pp::call(cat(utl::slice(ff, -2),
-                          cat(is_tup(pp::cat(apiname("sym") + "_", v, "_IS_", v)),
-                              is_tup(pp::cat(implname("impl_sym") + "_", v, "_IS_", v)))),
+                          cat(is_tup(pp::cat(apiname("sym") + "_", v, "_is_", v)),
+                              is_tup(pp::cat(implname("impl_sym") + "_", v, "_is_", v)))),
                       e);
     };
 
